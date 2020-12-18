@@ -16,23 +16,7 @@ from microscopemetrics.analysis.tools import segment_image, compute_distances_ma
 from ..utilities.utilities import multi_airy_fun, airy_fun
 
 
-class ArgolightConfigurator(Configurator):
-    """This class handles the configuration properties of the argolight sample
-    - Defines configuration properties
-    - Helps in the generation of analysis_config files"""
-
-    CONFIG_SECTION = "ARGOLIGHT"
-
-    def define_metadata(self):
-        metadata_defs = [
-            {}
-        ]
-
-    def __init__(self, config):
-        super().__init__(config)
-
-
-@ArgolightConfigurator.register_sample_analysis
+@register_image_analysis
 class ArgolightBAnalysis(Analysis):
     """This class handles the analysis of the Argolight sample pattern B
     """
@@ -76,7 +60,6 @@ class ArgolightBAnalysis(Analysis):
                              optional=True,
                              default=False)
 
-    @register_image_analysis
     def run(self):
         logger.info("Validating requirements...")
         if not self.validate_requirements():
@@ -203,7 +186,7 @@ class ArgolightBAnalysis(Analysis):
         return True
 
 
-@ArgolightConfigurator.register_sample_analysis
+@register_image_analysis
 class ArgolightEAnalysis(Analysis):
     """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis
     """
@@ -232,7 +215,6 @@ class ArgolightEAnalysis(Analysis):
                              default=.4
                              )
 
-    @register_image_analysis
     def run(self):
         """A intermediate function to specify the axis to be analyzed"""
 

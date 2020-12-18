@@ -5,6 +5,8 @@ from pandas import DataFrame
 from skimage.filters import gaussian
 from skimage.feature import peak_local_max
 from scipy.optimize import curve_fit, fsolve
+from pydantic.color import Color
+
 from ..utilities.utilities import airy_fun, gaussian_fun
 
 # Import sample superclass
@@ -36,9 +38,9 @@ def _fit_airy(profile, guess=None):
 
     fitted_profile = airy_fun(x, popt[0], popt[1])
 
-    def _f(x):
+    def _f(d):
         return (
-            airy_fun(x, popt[0], popt[1])
+            airy_fun(d, popt[0], popt[1])
             - (fitted_profile.max() - fitted_profile.min()) / 2
         )
 
@@ -49,19 +51,7 @@ def _fit_airy(profile, guess=None):
     return fitted_profile, fwhm
 
 
-class PSFBeadsConfigurator(Configurator):
-    """This class handles the configuration properties of the psf_beads sample
-    - Defines configuration properties
-    - Helps in the generation of analysis_config files"""
-
-    CONFIG_SECTION = "PSF_BEADS"
-    ANALYSES = ["beads"]
-
-    def __init__(self, config):
-        super().__init__(config)
-
-
-@PSFBeadsConfigurator.register_sample_analysis
+@register_image_analysis
 class PSFBeadsAnalysis(Analysis):
     """This class handles a PSF beads sample
     """
@@ -189,8 +179,8 @@ class PSFBeadsAnalysis(Analysis):
         pos_intensity_disc = positions_3d[np.logical_not(intensity_keep_mask), :]
 
         bead_images = [image[:,
-                             (pos[1] - (min_distance // 2)) : (pos[1] + (min_distance // 2)),
-                             (pos[2] - (min_distance // 2)) : (pos[2] + (min_distance // 2)),
+                             (pos[1] - (min_distance // 2)): (pos[1] + (min_distance // 2)),
+                             (pos[2] - (min_distance // 2)): (pos[2] + (min_distance // 2)),
                              ] for pos in positions]
         return (
             bead_images,
@@ -206,7 +196,6 @@ class PSFBeadsAnalysis(Analysis):
         distance = self.get_metadata_values("min_lateral_distance_factor")
         return res * distance
 
-    @register_image_analysis
     def run(self):
         """Analyzes images of sub-resolution beads in order to extract data on the optical
         performance of the microscope.
@@ -217,6 +206,17 @@ class PSFBeadsAnalysis(Analysis):
             return False
 
         logger.info("Analyzing spots image...")
+
+        # Verify that image is not saturated
+        if np.issubdtype(self.input.data["beads_image"].dtype, np.integer):
+            if self.input.data["beads_image"].max() == np.iinfo(self.input.data["beads_image"].dtype).max:
+                logger.error("Image is saturated. No attempt to find beads will be done.")
+                return False
+        elif np.issubdtype(self.input.data["beads_image"].dtype, np.float):
+            if self.input.data["beads_image"].max() == np.finfo(self.input.data["beads_image"].dtype).max:
+                logger.error("Image is saturated. No attempt to find beads will be done.")
+                return False
+
 
         # Get some analysis_config parameters
         pixel_size_units = self.get_metadata_units("pixel_size")
@@ -262,14 +262,14 @@ class PSFBeadsAnalysis(Analysis):
                                          shapes=[model.Point(z=position[0].item(),
                                                              y=position[1].item(),
                                                              x=position[2].item(),
-                                                             stroke_color=(0, 255, 0, .0),
-                                                             fill_color=(50, 255, 50, .1))]))
+                                                             stroke_color=Color((0, 255, 0, .0)),
+                                                             fill_color=Color((50, 255, 50, .1)))]))
 
         edge_points = [model.Point(z=pos[0].item(),
                                    y=pos[1].item(),
                                    x=pos[2].item(),
-                                   stroke_color=(255, 0, 0, .6),
-                                   fill_color=(255, 50, 50, .1)
+                                   stroke_color=Color((255, 0, 0, .6)),
+                                   fill_color=Color((255, 50, 50, .1))
                                    ) for pos in positions_edge_discarded]
         self.output.append(model.Roi(name="Discarded_edge",
                                      description="Beads discarded for being to close to the edge of the image",
@@ -278,8 +278,8 @@ class PSFBeadsAnalysis(Analysis):
         proximity_points = [model.Point(z=pos[0].item(),
                                         y=pos[1].item(),
                                         x=pos[2].item(),
-                                        stroke_color=(255, 0, 0, .6),
-                                        fill_color=(255, 50, 50, .1)
+                                        stroke_color=Color((255, 0, 0, .6)),
+                                        fill_color=Color((255, 50, 50, .1))
                                         ) for pos in positions_proximity_discarded]
         self.output.append(model.Roi(name="Discarded_proximity",
                                      description="Beads discarded for being to close to each other",
@@ -288,8 +288,8 @@ class PSFBeadsAnalysis(Analysis):
         intensity_points = [model.Point(z=pos[0].item(),
                                         y=pos[1].item(),
                                         x=pos[2].item(),
-                                        stroke_color=(255, 0, 0, .6),
-                                        fill_color=(255, 50, 50, .1)
+                                        stroke_color=Color((255, 0, 0, .6)),
+                                        fill_color=Color((255, 50, 50, .1))
                                         ) for pos in positions_intensity_discarded]
         self.output.append(model.Roi(name="Discarded_intensity",
                                      description="Beads discarded for being to intense or to weak. "
@@ -338,15 +338,15 @@ class PSFBeadsAnalysis(Analysis):
 
         self.output.append(model.Table(name="Analysis_PSF_Z_profiles",
                                        description="Raw and fitted profiles along Z axis of beads",
-                                       table=DataFrame({e['name']: e['data'] for e in profiles_z_df})))
+                                       table=profiles_z_df))
 
         self.output.append(model.Table(name="Analysis_PSF_Y_profiles",
                                        description="Raw and fitted profiles along Y axis of beads",
-                                       table=DataFrame({e['name']: e['data'] for e in profiles_y_df})))
+                                       table=profiles_y_df))
 
         self.output.append(model.Table(name="Analysis_PSF_X_profiles",
                                        description="Raw and fitted profiles along X axis of beads",
-                                       table=DataFrame({e['name']: e['data'] for e in profiles_x_df})))
+                                       table=profiles_x_df))
 
         key_values = {"nr_of_beads_analyzed": positions.shape[0]}
 
