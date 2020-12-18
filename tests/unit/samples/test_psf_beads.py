@@ -9,7 +9,7 @@ import numpy as np
 @pytest.fixture()
 def psf_beads_analysis():
     temp_dir = path.abspath(TEST_DATA_DIR)
-    file_name = 'psf_beads_EM-488_MAG-40.npy'
+    file_name = '20191206_100xOil_A647_Cy3_FITC_DAPI_ri-1.512_na-1.4_100nm_561_002_SIR.npy'
     file_url = 'http://dev.mri.cnrs.fr/attachments/download/2295/psf_beads_EM-488_MAG-40.npy'
     try:
         data = np.load(path.join(temp_dir, file_name))

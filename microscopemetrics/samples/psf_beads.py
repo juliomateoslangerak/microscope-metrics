@@ -218,6 +218,17 @@ class PSFBeadsAnalysis(Analysis):
 
         logger.info("Analyzing spots image...")
 
+        # Verify that image is not saturated
+        if np.issubdtype(self.input.data["beads_image"].dtype, np.integer):
+            if self.input.data["beads_image"].max() == np.iinfo(self.input.data["beads_image"].dtype).max:
+                logger.error("Image is saturated. No attempt to find beads will be done.")
+                return False
+        elif np.issubdtype(self.input.data["beads_image"].dtype, np.float):
+            if self.input.data["beads_image"].max() == np.finfo(self.input.data["beads_image"].dtype).max:
+                logger.error("Image is saturated. No attempt to find beads will be done.")
+                return False
+
+
         # Get some analysis_config parameters
         pixel_size_units = self.get_metadata_units("pixel_size")
         pixel_size = self.get_metadata_values("pixel_size")
@@ -338,15 +349,15 @@ class PSFBeadsAnalysis(Analysis):
 
         self.output.append(model.Table(name="Analysis_PSF_Z_profiles",
                                        description="Raw and fitted profiles along Z axis of beads",
-                                       table=DataFrame({e['name']: e['data'] for e in profiles_z_df})))
+                                       table=profiles_z_df))
 
         self.output.append(model.Table(name="Analysis_PSF_Y_profiles",
                                        description="Raw and fitted profiles along Y axis of beads",
-                                       table=DataFrame({e['name']: e['data'] for e in profiles_y_df})))
+                                       table=profiles_y_df))
 
         self.output.append(model.Table(name="Analysis_PSF_X_profiles",
                                        description="Raw and fitted profiles along X axis of beads",
-                                       table=DataFrame({e['name']: e['data'] for e in profiles_x_df})))
+                                       table=profiles_x_df))
 
         key_values = {"nr_of_beads_analyzed": positions.shape[0]}
 
