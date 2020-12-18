@@ -13,19 +13,19 @@ PROGRESSION_ANALYSIS_REGISTRY = {}
 
 
 # Decorators to register exposed analysis functions
-def register_image_analysis(fn):
-    IMAGE_ANALYSIS_REGISTRY[fn.__name__] = fn
-    return fn
+def register_image_analysis(cls):
+    IMAGE_ANALYSIS_REGISTRY[cls.__name__] = cls
+    return cls
 
 
-def register_dataset_analysis(fn):
-    DATASET_ANALYSIS_REGISTRY[fn.__name__] = fn
-    return fn
+def register_dataset_analysis(cls):
+    DATASET_ANALYSIS_REGISTRY[cls.__name__] = cls
+    return cls
 
 
-def register_progression_analysis(fn):
-    PROGRESSION_ANALYSIS_REGISTRY[fn.__name__] = fn
-    return fn
+def register_progression_analysis(cls):
+    PROGRESSION_ANALYSIS_REGISTRY[cls.__name__] = cls
+    return cls
 
 
 # Create a logging service
