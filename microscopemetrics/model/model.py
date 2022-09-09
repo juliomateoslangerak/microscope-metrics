@@ -125,6 +125,15 @@ class MetricsOutput:
     description: str = field(default=None)
     properties: dict = field(default_factory=dict, init=False)
 
+    def describe_properties(self):
+        description = ""
+        for n, p in self.properties.items():
+            description += f"{n}\n"
+            description += p.describe()
+            description += "\n========\n"
+
+        return description
+
     def get_property(self, name: str):
         return self.properties[name]
 
