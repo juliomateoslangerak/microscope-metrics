@@ -64,7 +64,7 @@ class MetricsDataset:
         return str_output
 
     def list_unmet_requirements(self):
-        return [req.name for _, req in self.metadata.items() if not req.optional and req.value is None]
+        return [name for name, req in self.metadata.items() if not req.optional and req.value is None]
 
     def validate_requirements(self):
         return all(req.value is not None for _, req in self.metadata.items() if not req.optional)
@@ -124,6 +124,15 @@ class MetricsOutput:
     """
     description: str = field(default=None)
     properties: dict = field(default_factory=dict, init=False)
+
+    def describe_properties(self):
+        description = ""
+        for n, p in self.properties.items():
+            description += f"{n}\n"
+            description += p.describe()
+            description += "\n========\n"
+
+        return description
 
     def get_property(self, name: str):
         return self.properties[name]

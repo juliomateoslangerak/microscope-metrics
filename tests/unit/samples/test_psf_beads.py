@@ -15,7 +15,8 @@ def psf_beads_analysis():
         data = np.load(path.join(temp_dir, file_name))
     except FileNotFoundError as e:
         repos = np.DataSource(temp_dir)
-        repos.open(file_url)
+        file_obj = repos.open(file_url)
+        data = np.load(file_obj.name)
 
     analysis = psf_beads.PSFBeadsAnalysis()
     analysis.input.data = {'beads_image': data}

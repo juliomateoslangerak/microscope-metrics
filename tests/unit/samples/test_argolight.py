@@ -15,8 +15,8 @@ def argolight_b():
         data = np.load(path.join(temp_dir, file_name))
     except FileNotFoundError as e:
         repos = np.DataSource(temp_dir)
-        repos.open(file_url)
-        raise Exception from e
+        file_obj = repos.open(file_url)
+        data = np.load(file_obj.name)
 
     analysis = argolight.ArgolightBAnalysis()
     analysis.input.data = {'argolight_b': data}
