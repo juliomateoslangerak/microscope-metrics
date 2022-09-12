@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "microscopemetrics"
+version = "0.1.0"
+description = "A package providing analysis routines to measure the performance of micrsocopes used in biomedical research"
+authors = ["Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"]
+license = "GPL-3.0-only"
+
+[tool.poetry.dependencies]
+python = ">=3.7 <3.10"
+scikit-image = "^0.17.2"
+scipy = "^1.5.4"
+pandas = "^1.1.5"
+pydantic = "^1.7.3"
+pytest = "^6.2.0"
+
+[tool.poetry.dev-dependencies]
+blacked = "^0.1.0-alpha.4"
+poetry = "^1.1.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
