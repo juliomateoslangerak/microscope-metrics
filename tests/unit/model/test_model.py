@@ -21,7 +21,11 @@ def filled_input_dataset():
         def __init__(self):
             super().__init__()
     metrics_dataset = Dataset()
-    metrics_dataset.data = [[1, 2, 3], [4, 5, 6]]
+    metrics_dataset.add_data_requirement(name='some_data',
+                                         description="the description of some data",
+                                         data_type=List[list],
+                                         optional=False,
+                                         replace=False)
     metrics_dataset.add_metadata_requirement(name='pixel_size',
                                              description='Well you bet how big this is...',
                                              data_type=List[float],
@@ -93,27 +97,44 @@ def test_add_remove_input_metadata_requirements(empty_input_dataset):
     assert len(empty_input_dataset.metadata) == 0
 
 
-def test_set_get_del_metadata(filled_input_dataset):
-    filled_input_dataset.set_metadata('pixel_size', [.2, .2, .5])
+def test_set_get_del(filled_input_dataset):
+    filled_input_dataset.set_data_values('some_data', [[1, 2, 3], [4, 5, 6]])
+    assert filled_input_dataset.get_data_values("some_data") == [[1, 2, 3], [4, 5, 6]]
+    filled_input_dataset.set_data_values('some_data', [[1, 2, 3], [4, 5, 8]])
+    assert filled_input_dataset.get_data_values("some_data") == [[1, 2, 3], [4, 5, 8]]
+    with pytest.raises(ValidationError):
+        filled_input_dataset.set_data_values('some_data', [[1, 2, 3], 3])
+
+    filled_input_dataset.set_metadata_values('pixel_size', [.2, .2, .5])
     assert filled_input_dataset.get_metadata_values('pixel_size') == [.2, .2, .5]
-    filled_input_dataset.set_metadata('pixel_size', [.2, .2, 2])
+    filled_input_dataset.set_metadata_values('pixel_size', [.2, .2, 2])
     assert filled_input_dataset.get_metadata_values('pixel_size') == [.2, .2, 2]
     with pytest.raises(ValidationError):
-        filled_input_dataset.set_metadata('pixel_size', [.2, .2, 'not'])
+        filled_input_dataset.set_metadata_values('pixel_size', [.2, .2, 'not'])
 
-    filled_input_dataset.set_metadata('wavelength', 488)
+    filled_input_dataset.set_metadata_values('wavelength', 488)
     assert filled_input_dataset.get_metadata_values('wavelength') == 488.0
-    filled_input_dataset.set_metadata('wavelength', 488.7)
+    filled_input_dataset.set_metadata_values('wavelength', 488.7)
     assert filled_input_dataset.get_metadata_values('wavelength') == 488.7
     with pytest.raises(ValidationError):
-        filled_input_dataset.set_metadata('wavelength', 'blue')
-    filled_input_dataset.del_metadata('wavelength')
+        filled_input_dataset.set_metadata_values('wavelength', 'blue')
+    filled_input_dataset.del_metadata_values('wavelength')
     assert filled_input_dataset.get_metadata_values('wavelength') is None
 
 
 def test_describe_requirements(filled_input_dataset):
-    description = filled_input_dataset.describe_metadata_requirement()
-    assert description == ('----------\n'
+    description = filled_input_dataset.describe_requirements()
+    assert description == ('DATA requirements:\n'
+                           '\n'
+                           '----------\n'
+                           'Name: some_data\n'
+                           "some_data(value=None, description='the description of some data', "
+                           'optional=False)\n'
+                           '----------\n'
+                           '\n'
+                           'METADATA requirements:\n'
+                           '\n'
+                           '----------\n'
                            'Name: pixel_size\n'
                            "pixel_size(value=None, description='Well you bet how big this is...', "
                            'optional=False, units=None, default=None)\n'

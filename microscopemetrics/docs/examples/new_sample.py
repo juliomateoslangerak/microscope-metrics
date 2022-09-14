@@ -11,6 +11,8 @@ The procedure to follow is, in short:
     - define a 'run' method that will implement the logic of your analysis
     - if desired, define a 'plot' method returning a plot showing the results of the analysis
 """
+import numpy as np
+
 # import the sample functionality
 from microscopemetrics.samples import *
 
@@ -35,24 +37,27 @@ class DetectLinesAnalysis(Analysis):  # Subclass Analysis for each analysis you 
         super().__init__(output_description="This analysis returns...")
 
         # Add metadata requirements for the analysis
-        self.add_requirement(name='pixel_size',
-                             description='Physical size of the voxel y and x',
-                             data_type=Tuple[float, float],  # We can use complex data types
-                             units='MICRON',  # You should specify units when necessary
-                             optional=False,  # This parameter will not be optional
-                             )
-        self.add_requirement(name='threshold',
-                             description='Threshold',
-                             data_type=int,  # And we can use standard data types
-                             optional=True,  # When optional, this parameter will not have to be provided
-                             default=10  # If a requirement is optional you may provide a default value that will be
-                             )           # used in case you dont provide any value
-        self.add_requirement(name='line_length',
-                             description='Minimum accepted length of detected lines. '       # Python allows strings
-                                         'Increase the parameter to extract longer lines.',  # to be split like this
-                             data_type=int,
-                             optional=True  # When you don't provide a default to an optional requirement,
-                             )              # it will use None as default
+        self.add_data_requirement(name='image_with_lines',
+                                  description='An image with lines as a numpy array',
+                                  data_type=np.ndarray)
+        self.add_metadata_requirement(name='pixel_size',
+                                      description='Physical size of the voxel y and x',
+                                      data_type=Tuple[float, float],  # We can use complex data types
+                                      units='MICRON',  # You should specify units when necessary
+                                      optional=False,  # This parameter will not be optional
+                                      )
+        self.add_metadata_requirement(name='threshold',
+                                      description='Threshold',
+                                      data_type=int,  # And we can use standard data types
+                                      optional=True,  # When optional, this parameter will not have to be provided
+                                      default=10  # If a requirement is optional you may provide a default value that will be
+                                      )           # used in case you dont provide any value
+        self.add_metadata_requirement(name='line_length',
+                                      description='Minimum accepted length of detected lines. '       # Python allows strings
+                                                  'Increase the parameter to extract longer lines.',  # to be split like this
+                                      data_type=int,
+                                      optional=True  # When you don't provide a default to an optional requirement,
+                                      )              # it will use None as default
 
     # You must define a run method taking no parameters. This method will run the analysis
     def run(self):
@@ -75,7 +80,7 @@ class DetectLinesAnalysis(Analysis):  # Subclass Analysis for each analysis you 
             self.input.line_length.value = 50  # and if it is, we give it a value
 
         lines = probabilistic_hough_line(
-            image=self.input.data['image_with_lines'],  # The input image data is accessible through the input.data
+            image=self.get_data_values('image_with_lines'),  # The input image data is accessible through the input.data
             threshold=self.get_metadata_values('threshold'),  # You may access the metadata like this too
             line_length=self.input.line_length.value,
         )

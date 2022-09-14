@@ -25,40 +25,43 @@ class ArgolightBAnalysis(Analysis):
         super().__init__(output_description="Analysis output of the 'SPOTS' matrix (pattern B) from the argolight sample. "
                                             "It contains chromatic shifts and homogeneity."
                          )
-        self.add_requirement(name='spots_distance',
-                             description='Distance between argolight spots',
-                             data_type=float,
-                             units='MICRON',
-                             optional=False,
-                             )
-        self.add_requirement(name='pixel_size',
-                             description='Physical size of the voxel in z, y and x',
-                             data_type=Tuple[float, float, float],
-                             units='MICRON',
-                             optional=False,
-                             )
-        self.add_requirement(name='sigma',
-                             description='Smoothing factor for objects detection',
-                             data_type=Tuple[float, float, float],
-                             optional=True,
-                             default=(1, 3, 3))
-        self.add_requirement(name='lower_threshold_correction_factors',
-                             description='Correction factor for the lower thresholds. Must be a tuple with len = nr '
+        self.add_data_requirement(name='argolight_b',
+                                  description="Input image in the form of a numpy array",
+                                  data_type=np.ndarray)
+        self.add_metadata_requirement(name='spots_distance',
+                                      description='Distance between argolight spots',
+                                      data_type=float,
+                                      units='MICRON',
+                                      optional=False,
+                                      )
+        self.add_metadata_requirement(name='pixel_size',
+                                      description='Physical size of the voxel in z, y and x',
+                                      data_type=Tuple[float, float, float],
+                                      units='MICRON',
+                                      optional=False,
+                                      )
+        self.add_metadata_requirement(name='sigma',
+                                      description='Smoothing factor for objects detection',
+                                      data_type=Tuple[float, float, float],
+                                      optional=True,
+                                      default=(1, 3, 3))
+        self.add_metadata_requirement(name='lower_threshold_correction_factors',
+                                      description='Correction factor for the lower thresholds. Must be a tuple with len = nr '
                                          'of channels or a float if all equal',
-                             data_type=Union[List[float], Tuple[float], float],
-                             optional=True,
-                             default=None)
-        self.add_requirement(name='upper_threshold_correction_factors',
-                             description='Correction factor for the upper thresholds. Must be a tuple with len = nr '
+                                      data_type=Union[List[float], Tuple[float], float],
+                                      optional=True,
+                                      default=None)
+        self.add_metadata_requirement(name='upper_threshold_correction_factors',
+                                      description='Correction factor for the upper thresholds. Must be a tuple with len = nr '
                                          'of channels or a float if all equal',
-                             data_type=Union[List[float], Tuple[float], float],
-                             optional=True,
-                             default=None)
-        self.add_requirement(name='remove_center_cross',
-                             description='Remove the center cross found in some Argolight patterns',
-                             data_type=bool,
-                             optional=True,
-                             default=False)
+                                      data_type=Union[List[float], Tuple[float], float],
+                                      optional=True,
+                                      default=None)
+        self.add_metadata_requirement(name='remove_center_cross',
+                                      description='Remove the center cross found in some Argolight patterns',
+                                      data_type=bool,
+                                      optional=True,
+                                      default=False)
 
     def run(self):
         logger.info("Validating requirements...")
@@ -77,7 +80,7 @@ class ArgolightBAnalysis(Analysis):
         max_distance = self.get_metadata_values("spots_distance") * 0.4
 
         labels = segment_image(
-            image=self.input.data['argolight_b'],
+            image=self.get_data_values('argolight_b')',
             min_distance=min_distance,
             sigma=self.get_metadata_values('sigma'),
             method="local_max",
@@ -92,7 +95,7 @@ class ArgolightBAnalysis(Analysis):
                            )
 
         spots_properties, spots_positions = compute_spots_properties(
-            image=self.input.data['argolight_b'], labels=labels,
+            image=self.get_data_values('argolight_b'), labels=labels,
             remove_center_cross=self.get_metadata_values('remove_center_cross'),
         )
 
@@ -197,23 +200,26 @@ class ArgolightEAnalysis(Analysis):
                                "- axis 1 = Y resolution = lines along X axis"
                                "- axis 2 = X resolution = lines along Y axis"
             )
-        self.add_requirement(name='pixel_size',
-                             description='Physical size of the voxel in z, y and x',
-                             data_type=Tuple[float, float, float],
-                             units='MICRON',
-                             optional=False
-                             )
-        self.add_requirement(name='axis',
-                             description='axis along which resolution is being measured. 1=Y, 2=X',
-                             data_type=int,
-                             optional=False
-                             )
-        self.add_requirement(name='measured_band',
-                             description='Fraction of the image across which intensity profiles are measured',
-                             data_type=float,
-                             optional=True,
-                             default=.4
-                             )
+        self.add_data_requirement(name='argolight_e',
+                                  description="Input image in the form of a numpy array",
+                                  data_type=np.ndarray)
+        self.add_metadata_requirement(name='pixel_size',
+                                      description='Physical size of the voxel in z, y and x',
+                                      data_type=Tuple[float, float, float],
+                                      units='MICRON',
+                                      optional=False
+                                      )
+        self.add_metadata_requirement(name='axis',
+                                      description='axis along which resolution is being measured. 1=Y, 2=X',
+                                      data_type=int,
+                                      optional=False
+                                      )
+        self.add_metadata_requirement(name='measured_band',
+                                      description='Fraction of the image across which intensity profiles are measured',
+                                      data_type=float,
+                                      optional=True,
+                                      default=.4
+                                      )
 
     def run(self):
         """A intermediate function to specify the axis to be analyzed"""
@@ -225,7 +231,7 @@ class ArgolightEAnalysis(Analysis):
 
         logger.info("Analyzing resolution...")
 
-        return self._analyze_resolution(image=self.input.data['argolight_e'],
+        return self._analyze_resolution(image=self.get_data_values('argolight_e'),
                                         axis=self.get_metadata_values('axis'),
                                         measured_band=self.get_metadata_values("measured_band"),
                                         pixel_size=self.get_metadata_values('pixel_size'),

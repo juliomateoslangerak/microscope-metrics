@@ -58,33 +58,36 @@ class PSFBeadsAnalysis(Analysis):
     def __init__(self, config=None):
         super().__init__(output_description="Analysis output of samples containing PSF grade fluorescent beads. "
                                             "It contains information about resolution.")
-        self.add_requirement(name='pixel_size',
-                             description='Physical size of the voxel in z, y and x',
-                             data_type=Tuple[float, float, float],
-                             units='MICRON',
-                             optional=False)
-        self.add_requirement(name='min_lateral_distance_factor',
-                             description='Minimal distance that has to separate laterally the beads represented as the '
-                                         'number of times the theoretical resolution.',
-                             data_type=int,
-                             optional=True,
-                             default=20)
-        self.add_requirement(name='theoretical_fwhm_lateral_res',
-                             description='Theoretical FWHM lateral resolution of the sample.',
-                             data_type=float,
-                             units='MICRON',
-                             optional=False)
-        self.add_requirement(name='theoretical_fwhm_axial_res',
-                             description='Theoretical FWHM axial resolution of the sample.',
-                             data_type=float,
-                             units='MICRON',
-                             optional=False)
-        self.add_requirement(name='sigma',
-                             description='When provided, smoothing sigma to be applied to image prior to bead detection.'
-                                         'Does not apply to resolution measurements',
-                             data_type=float,
-                             optional=True,
-                             default=None)
+        self.add_data_requirement(name='beads_image',
+                                  description='The image containing the beads in teh form of a numpy array',
+                                  data_type=np.ndarray)
+        self.add_metadata_requirement(name='pixel_size',
+                                      description='Physical size of the voxel in z, y and x',
+                                      data_type=Tuple[float, float, float],
+                                      units='MICRON',
+                                      optional=False)
+        self.add_metadata_requirement(name='min_lateral_distance_factor',
+                                      description='Minimal distance that has to separate laterally the beads represented as the '
+                                                  'number of times the theoretical resolution.',
+                                      data_type=int,
+                                      optional=True,
+                                      default=20)
+        self.add_metadata_requirement(name='theoretical_fwhm_lateral_res',
+                                      description='Theoretical FWHM lateral resolution of the sample.',
+                                      data_type=float,
+                                      units='MICRON',
+                                      optional=False)
+        self.add_metadata_requirement(name='theoretical_fwhm_axial_res',
+                                      description='Theoretical FWHM axial resolution of the sample.',
+                                      data_type=float,
+                                      units='MICRON',
+                                      optional=False)
+        self.add_metadata_requirement(name='sigma',
+                                      description='When provided, smoothing sigma to be applied to image prior to bead detection.'
+                                                  'Does not apply to resolution measurements',
+                                      data_type=float,
+                                      optional=True,
+                                      default=None)
 
     @staticmethod
     def _analyze_bead(image):
@@ -208,12 +211,12 @@ class PSFBeadsAnalysis(Analysis):
         logger.info("Analyzing spots image...")
 
         # Verify that image is not saturated
-        if np.issubdtype(self.input.data["beads_image"].dtype, np.integer):
-            if self.input.data["beads_image"].max() == np.iinfo(self.input.data["beads_image"].dtype).max:
+        if np.issubdtype(self.get_data_values('beads_image').dtype, np.integer):
+            if self.get_data_values('beads_image').max() == np.iinfo(self.get_data_values('beads_image').dtype).max:
                 logger.error("Image is saturated. No attempt to find beads will be done.")
                 return False
-        elif np.issubdtype(self.input.data["beads_image"].dtype, np.float):
-            if self.input.data["beads_image"].max() == np.finfo(self.input.data["beads_image"].dtype).max:
+        elif np.issubdtype(self.get_data_values('beads_image').dtype, np.float):
+            if self.get_data_values('beads_image').max() == np.finfo(self.get_data_values('beads_image').dtype).max:
                 logger.error("Image is saturated. No attempt to find beads will be done.")
                 return False
 
@@ -224,7 +227,7 @@ class PSFBeadsAnalysis(Analysis):
         min_bead_distance = self.estimate_min_bead_distance()
 
         # Remove all negative intensities. eg. 3D-SIM images may contain negative values.
-        image_data = np.clip(self.input.data["beads_image"], a_min=0, a_max=None)
+        image_data = np.clip(self.get_data_values('beads_image'), a_min=0, a_max=None)
 
         # Validating nyquist
         try:

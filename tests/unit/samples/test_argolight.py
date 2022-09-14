@@ -19,7 +19,7 @@ def argolight_b():
         data = np.load(file_obj.name)
 
     analysis = argolight.ArgolightBAnalysis()
-    analysis.input.data = {'argolight_b': data}
+    analysis.set_data('argolight_b', data)
     analysis.set_metadata('spots_distance', 5)
     analysis.set_metadata('pixel_size', (.125, .39, .39))
 
@@ -39,7 +39,7 @@ def argolight_e_horizontal():
         raise Exception from e
 
     analysis = argolight.ArgolightEAnalysis()
-    analysis.input.data = {'argolight_e': data}
+    analysis.set_data('argolight_e', data)
     analysis.set_metadata('pixel_size', (.125, .39, .39))
     analysis.set_metadata('axis', 2)
 
@@ -59,7 +59,7 @@ def argolight_e_vertical():
         raise Exception from e
 
     analysis = argolight.ArgolightEAnalysis()
-    analysis.input.data = {'argolight_e': data}
+    analysis.set_data('argolight_e', data)
     analysis.set_metadata('pixel_size', (.125, .39, .39))
     analysis.set_metadata('axis', 1)
 

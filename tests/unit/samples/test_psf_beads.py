@@ -19,7 +19,7 @@ def psf_beads_analysis():
         data = np.load(file_obj.name)
 
     analysis = psf_beads.PSFBeadsAnalysis()
-    analysis.input.data = {'beads_image': data}
+    analysis.set_data('beads_image', data)
     analysis.set_metadata('theoretical_fwhm_lateral_res', 0.300)
     analysis.set_metadata('theoretical_fwhm_axial_res', 0.800)
     analysis.set_metadata('pixel_size', (.35, .06, .06))

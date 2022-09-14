@@ -15,6 +15,7 @@ from typing import Union, List, Tuple, Any
 
 class MetadataConfig(BaseConfig):
     validate_assignment = True
+    arbitrary_types_allowed = True
 
 
 @dataclass
@@ -24,6 +25,30 @@ class MetricsDataset:
 
     data: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
+
+    def add_data_requirement(self,
+                             name: str,
+                             description: str,
+                             data_type,
+                             optional: bool,
+                             replace: bool):
+        if not replace and name in self.data:
+            raise KeyError(f'The key {name} is already used. Use argument replace=True to explicitly replace it')
+
+        model = create_model(name,
+                             value=(data_type, None),
+                             description=(str, description),
+                             optional=(bool, optional),
+                             __config__=MetadataConfig)
+
+        self.data[name] = model()
+        setattr(self, name, self.data[name])
+
+    def remove_data_requirement(self, name: str):
+        try:
+            del (self.data[name])
+        except KeyError as e:
+            raise KeyError(f'Metadata "{name}" does not exist') from e
 
     def add_metadata_requirement(self,
                                  name: str,
@@ -53,8 +78,14 @@ class MetricsDataset:
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" does not exist') from e
 
-    def describe_metadata_requirement(self):
-        str_output = []
+    def describe_requirements(self):
+        str_output = ['DATA requirements:\n']
+        for name, req in self.data.items():
+            str_output.append('----------')
+            str_output.append('Name: ' + name)
+            str_output.append(req.__repr__())
+        str_output.append('----------\n')
+        str_output.append('METADATA requirements:\n')
         for name, req in self.metadata.items():
             str_output.append('----------')
             str_output.append('Name: ' + name)
@@ -64,10 +95,25 @@ class MetricsDataset:
         return str_output
 
     def list_unmet_requirements(self):
-        return [name for name, req in self.metadata.items() if not req.optional and req.value is None]
+        unmet_data_req = [name for name, req in self.data.items() if req.value is None]
+        unmet_metadata_req = [name for name, req in self.metadata.items() if not req.optional and req.value is None]
+        return unmet_data_req + unmet_metadata_req
 
     def validate_requirements(self):
-        return all(req.value is not None for _, req in self.metadata.items() if not req.optional)
+        data_req_met = all(req.value is not None for _, req in self.data.items())
+        metadata_req_met = all(req.value is not None for _, req in self.metadata.items() if not req.optional)
+        return data_req_met and metadata_req_met
+
+    def get_data_values(self, name: Union[str, list]):
+        if isinstance(name, str):
+            try:
+                return self.data[name].value
+            except KeyError as e:
+                raise KeyError(f'Datum "{name}" does not exist') from e
+        elif isinstance(name, list):
+            return {k: self.get_data_values(k) for k in name}
+        else:
+            raise TypeError('get_metadata_values requires a string or list of strings')
 
     def get_metadata_values(self, name: Union[str, list]):
         if isinstance(name, str):
@@ -102,17 +148,32 @@ class MetricsDataset:
         else:
             raise TypeError('get_metadata_units requires a string or list of strings')
 
-    def set_metadata(self, name: str, value):
+    def set_data_values(self, name: str, value):
+        try:
+            self.data[name].value = value
+        except KeyError as e:
+            raise KeyError(f'Metadata "{name}" is not a valid requirement') from e
+
+    def del_data_values(self, name: str):
+        try:
+            self.data[name].value = None
+        except KeyError as e:
+            raise KeyError(f'Metadata "{name}" does not exist') from e
+
+    def set_metadata_values(self, name: str, value):
         try:
             self.metadata[name].value = value
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" is not a valid requirement') from e
 
-    def del_metadata(self, name: str):
+    def del_metadata_values(self, name: str):
         try:
             self.metadata[name].value = None
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" does not exist') from e
+
+    def list_data_names(self):
+        return [k for k, _ in self.data]
 
     def list_metadata_names(self):
         return [k for k, _ in self.metadata]
