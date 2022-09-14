@@ -13,7 +13,7 @@ def argolight_b():
     analysis = argolight.ArgolightBAnalysis()
     analysis.set_data('argolight_b', data)
     analysis.set_metadata('spots_distance', 5)
-    analysis.set_metadata('pixel_size', (.125, .39, .39))
+    analysis.set_metadata('pixel_size', (.125, .039, .039))
 
     return analysis
 
@@ -25,7 +25,7 @@ def argolight_e_horizontal():
 
     analysis = argolight.ArgolightEAnalysis()
     analysis.set_data('argolight_e', data)
-    analysis.set_metadata('pixel_size', (.125, .39, .39))
+    analysis.set_metadata('pixel_size', (.125, .039, .039))
     analysis.set_metadata('axis', 2)
 
     return analysis
@@ -38,7 +38,7 @@ def argolight_e_vertical():
 
     analysis = argolight.ArgolightEAnalysis()
     analysis.set_data('argolight_e', data)
-    analysis.set_metadata('pixel_size', (.125, .39, .39))
+    analysis.set_metadata('pixel_size', (.125, .039, .039))
     analysis.set_metadata('axis', 1)
 
     return analysis
