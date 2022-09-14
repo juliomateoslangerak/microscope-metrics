@@ -1,6 +1,5 @@
 import pytest
-from os import path
-from tests.constants import *
+from tests.test_utilities import get_file
 
 from microscopemetrics.samples import argolight
 import numpy as np
@@ -8,15 +7,8 @@ import numpy as np
 
 @pytest.fixture
 def argolight_b():
-    temp_dir = path.abspath(TEST_DATA_DIR)
-    file_name = '201702_RI510_Argolight-1-1_010_SIR_ALX.npy'
-    file_url = 'http://dev.mri.cnrs.fr/attachments/download/2290/201702_RI510_Argolight-1-1_010_SIR_ALX.npy'
-    try:
-        data = np.load(path.join(temp_dir, file_name))
-    except FileNotFoundError as e:
-        repos = np.DataSource(temp_dir)
-        file_obj = repos.open(file_url)
-        data = np.load(file_obj.name)
+    file_path = get_file('https://dev.mri.cnrs.fr/attachments/download/2290/201702_RI510_Argolight-1-1_010_SIR_ALX.npy')
+    data = np.load(file_path)
 
     analysis = argolight.ArgolightBAnalysis()
     analysis.set_data('argolight_b', data)
@@ -28,15 +20,8 @@ def argolight_b():
 
 @pytest.fixture
 def argolight_e_horizontal():
-    temp_dir = path.abspath(TEST_DATA_DIR)
-    file_name = '201702_RI510_Argolight-1-1_005_SIR_ALX.npy'
-    file_url = 'http://dev.mri.cnrs.fr/attachments/download/2292/201702_RI510_Argolight-1-1_005_SIR_ALX.npy'
-    try:
-        data = np.load(path.join(temp_dir, file_name))
-    except FileNotFoundError as e:
-        repos = np.DataSource(temp_dir)
-        repos.open(file_url)
-        raise Exception from e
+    file_path = get_file('https://dev.mri.cnrs.fr/attachments/download/2292/201702_RI510_Argolight-1-1_005_SIR_ALX.npy')
+    data = np.load(file_path)
 
     analysis = argolight.ArgolightEAnalysis()
     analysis.set_data('argolight_e', data)
@@ -48,15 +33,8 @@ def argolight_e_horizontal():
 
 @pytest.fixture
 def argolight_e_vertical():
-    temp_dir = path.abspath(TEST_DATA_DIR)
-    file_name = '201702_RI510_Argolight-1-1_004_SIR_ALX.npy'
-    file_url = 'http://dev.mri.cnrs.fr/attachments/download/2291/201702_RI510_Argolight-1-1_004_SIR_ALX.npy'
-    try:
-        data = np.load(path.join(temp_dir, file_name))
-    except FileNotFoundError as e:
-        repos = np.DataSource(temp_dir)
-        repos.open(file_url)
-        raise Exception from e
+    file_path = get_file('https://dev.mri.cnrs.fr/attachments/download/2291/201702_RI510_Argolight-1-1_004_SIR_ALX.npy')
+    data = np.load(file_path)
 
     analysis = argolight.ArgolightEAnalysis()
     analysis.set_data('argolight_e', data)
