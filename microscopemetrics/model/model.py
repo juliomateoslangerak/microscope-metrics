@@ -26,82 +26,97 @@ class MetricsDataset:
     data: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
 
-    def add_data_requirement(self,
-                             name: str,
-                             description: str,
-                             data_type,
-                             optional: bool,
-                             replace: bool):
+    def add_data_requirement(
+        self, name: str, description: str, data_type, optional: bool, replace: bool
+    ):
         if not replace and name in self.data:
-            raise KeyError(f'The key {name} is already used. Use argument replace=True to explicitly replace it')
+            raise KeyError(
+                f"The key {name} is already used. Use argument replace=True to explicitly replace it"
+            )
 
-        model = create_model(name,
-                             value=(data_type, None),
-                             description=(str, description),
-                             optional=(bool, optional),
-                             __config__=MetadataConfig)
+        model = create_model(
+            name,
+            value=(data_type, None),
+            description=(str, description),
+            optional=(bool, optional),
+            __config__=MetadataConfig,
+        )
 
         self.data[name] = model()
         setattr(self, name, self.data[name])
 
     def remove_data_requirement(self, name: str):
         try:
-            del (self.data[name])
+            del self.data[name]
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" does not exist') from e
 
-    def add_metadata_requirement(self,
-                                 name: str,
-                                 description: str,
-                                 data_type,
-                                 optional: bool,
-                                 units: str = None,
-                                 default: Any = None,
-                                 replace: bool = False):
+    def add_metadata_requirement(
+        self,
+        name: str,
+        description: str,
+        data_type,
+        optional: bool,
+        units: str = None,
+        default: Any = None,
+        replace: bool = False,
+    ):
         if not replace and name in self.metadata:
-            raise KeyError(f'The key {name} is already used. Use argument replace=True to explicitly replace it')
+            raise KeyError(
+                f"The key {name} is already used. Use argument replace=True to explicitly replace it"
+            )
 
-        model = create_model(name,
-                             value=(data_type, default),
-                             description=(str, description),
-                             optional=(bool, optional),
-                             units=(str, units),
-                             default=(data_type, default),
-                             __config__=MetadataConfig)
+        model = create_model(
+            name,
+            value=(data_type, default),
+            description=(str, description),
+            optional=(bool, optional),
+            units=(str, units),
+            default=(data_type, default),
+            __config__=MetadataConfig,
+        )
 
         self.metadata[name] = model()
         setattr(self, name, self.metadata[name])
 
     def remove_metadata_requirement(self, name: str):
         try:
-            del (self.metadata[name])
+            del self.metadata[name]
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" does not exist') from e
 
     def describe_requirements(self):
-        str_output = ['DATA requirements:\n']
+        str_output = ["DATA requirements:\n"]
         for name, req in self.data.items():
-            str_output.append('----------')
-            str_output.append('Name: ' + name)
+            str_output.append("----------")
+            str_output.append("Name: " + name)
             str_output.append(req.__repr__())
-        str_output.append('----------\n')
-        str_output.append('METADATA requirements:\n')
+        str_output.append("----------\n")
+        str_output.append("METADATA requirements:\n")
         for name, req in self.metadata.items():
-            str_output.append('----------')
-            str_output.append('Name: ' + name)
+            str_output.append("----------")
+            str_output.append("Name: " + name)
             str_output.append(req.__repr__())
-        str_output.append('----------')
-        str_output = '\n'.join(str_output)
+        str_output.append("----------")
+        str_output = "\n".join(str_output)
         return str_output
 
     def list_unmet_requirements(self):
         unmet_data_req = [name for name, req in self.data.items() if req.value is None]
-        unmet_metadata_req = [name for name, req in self.metadata.items() if not req.optional and req.value is None]
+        unmet_metadata_req = [
+            name
+            for name, req in self.metadata.items()
+            if not req.optional and req.value is None
+        ]
         return unmet_data_req + unmet_metadata_req
 
     def validate_requirements(self):
         data_req_met = all(req.value is not None for _, req in self.data.items())
-        metadata_req_met = all(req.value is not None for _, req in self.metadata.items() if not req.optional)
+        metadata_req_met = all(
+            req.value is not None
+            for _, req in self.metadata.items()
+            if not req.optional
+        )
         return data_req_met and metadata_req_met
 
     def get_data_values(self, name: Union[str, list]):
@@ -113,7 +128,7 @@ class MetricsDataset:
         elif isinstance(name, list):
             return {k: self.get_data_values(k) for k in name}
         else:
-            raise TypeError('get_metadata_values requires a string or list of strings')
+            raise TypeError("get_metadata_values requires a string or list of strings")
 
     def get_metadata_values(self, name: Union[str, list]):
         if isinstance(name, str):
@@ -124,7 +139,7 @@ class MetricsDataset:
         elif isinstance(name, list):
             return {k: self.get_metadata_values(k) for k in name}
         else:
-            raise TypeError('get_metadata_values requires a string or list of strings')
+            raise TypeError("get_metadata_values requires a string or list of strings")
 
     def get_metadata_units(self, name: Union[str, list]):
         if isinstance(name, str):
@@ -135,7 +150,7 @@ class MetricsDataset:
         elif isinstance(name, list):
             return {k: self.get_metadata_units(k) for k in name}
         else:
-            raise TypeError('get_metadata_units requires a string or list of strings')
+            raise TypeError("get_metadata_units requires a string or list of strings")
 
     def get_metadata_defaults(self, name: Union[str, list]):
         if isinstance(name, str):
@@ -146,7 +161,7 @@ class MetricsDataset:
         elif isinstance(name, list):
             return {k: self.get_metadata_defaults(k) for k in name}
         else:
-            raise TypeError('get_metadata_units requires a string or list of strings')
+            raise TypeError("get_metadata_units requires a string or list of strings")
 
     def set_data_values(self, name: str, value):
         try:
@@ -181,8 +196,8 @@ class MetricsDataset:
 
 @dataclass
 class MetricsOutput:
-    """This class is used by microscopemetrics to return the output of an analysis.
-    """
+    """This class is used by microscopemetrics to return the output of an analysis."""
+
     description: str = field(default=None)
     properties: dict = field(default_factory=dict, init=False)
 
@@ -199,13 +214,13 @@ class MetricsOutput:
         return self.properties[name]
 
     def delete(self, name: str):
-        del (self.properties[name])
+        del self.properties[name]
 
     def append(self, output_property):
         if isinstance(output_property, OutputProperty):
             self.properties.update({output_property.name: output_property})
         else:
-            raise TypeError('Property appended must be a subtype of OutputProperty')
+            raise TypeError("Property appended must be a subtype of OutputProperty")
 
     def extend(self, properties_list: list):
         for p in properties_list:
@@ -215,22 +230,22 @@ class MetricsOutput:
         return [v for _, v in self.properties.items() if v.type == property_type]
 
     def get_images(self):
-        return self._get_properties_by_type('Image')
+        return self._get_properties_by_type("Image")
 
     def get_rois(self):
-        return self._get_properties_by_type('Roi')
+        return self._get_properties_by_type("Roi")
 
     def get_tags(self):
-        return self._get_properties_by_type('Tag')
+        return self._get_properties_by_type("Tag")
 
     def get_key_values(self):
-        return self._get_properties_by_type('KeyValues')
+        return self._get_properties_by_type("KeyValues")
 
     def get_tables(self):
-        return self._get_properties_by_type('Table')
+        return self._get_properties_by_type("Table")
 
     def get_comments(self):
-        return self._get_properties_by_type('Comment')
+        return self._get_properties_by_type("Comment")
 
 
 @dataclass
@@ -243,9 +258,11 @@ class OutputProperty(ABC):
         Returns a pretty string describing the property. Includes name, type and description.
         :return: str
         """
-        return f'Name: {self.name}\n' \
-               f'Type: {self.type}\n' \
-               f'Description: {self.description}'
+        return (
+            f"Name: {self.name}\n"
+            f"Type: {self.type}\n"
+            f"Description: {self.description}"
+        )
 
     @property
     def type(self):
@@ -260,12 +277,12 @@ class OutputProperty(ABC):
 class Image(OutputProperty):
     data: Any
 
-    @validator('data', allow_reuse=True)
+    @validator("data", allow_reuse=True)
     def _is_ndarray(cls, d):
         if isinstance(d, ndarray):
             return d
         else:
-            raise TypeError('image output must be a Numpy ndarray')
+            raise TypeError("image output must be a Numpy ndarray")
 
 
 @dataclass
@@ -286,37 +303,39 @@ class Shape(ABC):
 
 @dataclass
 class Point(Shape):
-    x: float = field(default=None, metadata={'units': 'PIXELS'})
-    y: float = field(default=None, metadata={'units': 'PIXELS'})
+    x: float = field(default=None, metadata={"units": "PIXELS"})
+    y: float = field(default=None, metadata={"units": "PIXELS"})
 
 
 @dataclass
 class Line(Shape):
-    x1: float = field(default=None, metadata={'units': 'PIXELS'})
-    y1: float = field(default=None, metadata={'units': 'PIXELS'})
-    x2: float = field(default=None, metadata={'units': 'PIXELS'})
-    y2: float = field(default=None, metadata={'units': 'PIXELS'})
+    x1: float = field(default=None, metadata={"units": "PIXELS"})
+    y1: float = field(default=None, metadata={"units": "PIXELS"})
+    x2: float = field(default=None, metadata={"units": "PIXELS"})
+    y2: float = field(default=None, metadata={"units": "PIXELS"})
 
 
 @dataclass
 class Rectangle(Shape):
-    x: float = field(default=None, metadata={'units': 'PIXELS'})
-    y: float = field(default=None, metadata={'units': 'PIXELS'})
-    w: float = field(default=None, metadata={'units': 'PIXELS'})
-    h: float = field(default=None, metadata={'units': 'PIXELS'})
+    x: float = field(default=None, metadata={"units": "PIXELS"})
+    y: float = field(default=None, metadata={"units": "PIXELS"})
+    w: float = field(default=None, metadata={"units": "PIXELS"})
+    h: float = field(default=None, metadata={"units": "PIXELS"})
 
 
 @dataclass
 class Ellipse(Shape):
-    x: float = field(default=None, metadata={'units': 'PIXELS'})
-    y: float = field(default=None, metadata={'units': 'PIXELS'})
-    x_rad: float = field(default=None, metadata={'units': 'PIXELS'})
-    y_rad: float = field(default=None, metadata={'units': 'PIXELS'})
+    x: float = field(default=None, metadata={"units": "PIXELS"})
+    y: float = field(default=None, metadata={"units": "PIXELS"})
+    x_rad: float = field(default=None, metadata={"units": "PIXELS"})
+    y_rad: float = field(default=None, metadata={"units": "PIXELS"})
 
 
 @dataclass
 class Polygon(Shape):
-    points: List[Tuple[float, float]] = field(default=None, metadata={'units': 'PIXELS'})
+    points: List[Tuple[float, float]] = field(
+        default=None, metadata={"units": "PIXELS"}
+    )
     is_open: bool = field(default=False)
 
 
@@ -333,24 +352,26 @@ class Tag(OutputProperty):
 class KeyValues(OutputProperty):
     key_values: dict
 
-    @validator('key_values', allow_reuse=True)
+    @validator("key_values", allow_reuse=True)
     def _may_be_casted_to_str(cls, k_v):
         if all(isinstance(v, (str, int, float, list, tuple)) for _, v in k_v.items()):
             return k_v
         else:
-            raise TypeError('Values for a KeyValue property must be str, int, float, list or tuple')
+            raise TypeError(
+                "Values for a KeyValue property must be str, int, float, list or tuple"
+            )
 
 
 @dataclass
 class Table(OutputProperty):
     table: Any
 
-    @validator('table', allow_reuse=True)
+    @validator("table", allow_reuse=True)
     def _may_be_casted_to_df(cls, t):
         if isinstance(t, (DataFrame, dict)):
             return t
         else:
-            raise TypeError('table must be a pandas DataFrame or a dict')
+            raise TypeError("table must be a pandas DataFrame or a dict")
 
 
 @dataclass

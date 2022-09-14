@@ -12,56 +12,72 @@ from skimage.transform import hough_line  # hough_line_peaks, probabilistic_houg
 from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 from scipy.interpolate import griddata
-from microscopemetrics.analysis.tools import segment_image, compute_distances_matrix, compute_spots_properties
+from microscopemetrics.analysis.tools import (
+    segment_image,
+    compute_distances_matrix,
+    compute_spots_properties,
+)
 from ..utilities.utilities import multi_airy_fun, airy_fun
 
 
 @register_image_analysis
 class ArgolightBAnalysis(Analysis):
-    """This class handles the analysis of the Argolight sample pattern B
-    """
+    """This class handles the analysis of the Argolight sample pattern B"""
 
     def __init__(self):
-        super().__init__(output_description="Analysis output of the 'SPOTS' matrix (pattern B) from the argolight sample. "
-                                            "It contains chromatic shifts and homogeneity."
-                         )
-        self.add_data_requirement(name='argolight_b',
-                                  description="Input image in the form of a numpy array",
-                                  data_type=np.ndarray)
-        self.add_metadata_requirement(name='spots_distance',
-                                      description='Distance between argolight spots',
-                                      data_type=float,
-                                      units='MICRON',
-                                      optional=False,
-                                      )
-        self.add_metadata_requirement(name='pixel_size',
-                                      description='Physical size of the voxel in z, y and x',
-                                      data_type=Tuple[float, float, float],
-                                      units='MICRON',
-                                      optional=False,
-                                      )
-        self.add_metadata_requirement(name='sigma',
-                                      description='Smoothing factor for objects detection',
-                                      data_type=Tuple[float, float, float],
-                                      optional=True,
-                                      default=(1, 3, 3))
-        self.add_metadata_requirement(name='lower_threshold_correction_factors',
-                                      description='Correction factor for the lower thresholds. Must be a tuple with len = nr '
-                                         'of channels or a float if all equal',
-                                      data_type=Union[List[float], Tuple[float], float],
-                                      optional=True,
-                                      default=None)
-        self.add_metadata_requirement(name='upper_threshold_correction_factors',
-                                      description='Correction factor for the upper thresholds. Must be a tuple with len = nr '
-                                         'of channels or a float if all equal',
-                                      data_type=Union[List[float], Tuple[float], float],
-                                      optional=True,
-                                      default=None)
-        self.add_metadata_requirement(name='remove_center_cross',
-                                      description='Remove the center cross found in some Argolight patterns',
-                                      data_type=bool,
-                                      optional=True,
-                                      default=False)
+        super().__init__(
+            output_description="Analysis output of the 'SPOTS' matrix (pattern B) from the argolight sample. "
+            "It contains chromatic shifts and homogeneity."
+        )
+        self.add_data_requirement(
+            name="argolight_b",
+            description="Input image in the form of a numpy array",
+            data_type=np.ndarray,
+        )
+        self.add_metadata_requirement(
+            name="spots_distance",
+            description="Distance between argolight spots",
+            data_type=float,
+            units="MICRON",
+            optional=False,
+        )
+        self.add_metadata_requirement(
+            name="pixel_size",
+            description="Physical size of the voxel in z, y and x",
+            data_type=Tuple[float, float, float],
+            units="MICRON",
+            optional=False,
+        )
+        self.add_metadata_requirement(
+            name="sigma",
+            description="Smoothing factor for objects detection",
+            data_type=Tuple[float, float, float],
+            optional=True,
+            default=(1, 3, 3),
+        )
+        self.add_metadata_requirement(
+            name="lower_threshold_correction_factors",
+            description="Correction factor for the lower thresholds. Must be a tuple with len = nr "
+            "of channels or a float if all equal",
+            data_type=Union[List[float], Tuple[float], float],
+            optional=True,
+            default=None,
+        )
+        self.add_metadata_requirement(
+            name="upper_threshold_correction_factors",
+            description="Correction factor for the upper thresholds. Must be a tuple with len = nr "
+            "of channels or a float if all equal",
+            data_type=Union[List[float], Tuple[float], float],
+            optional=True,
+            default=None,
+        )
+        self.add_metadata_requirement(
+            name="remove_center_cross",
+            description="Remove the center cross found in some Argolight patterns",
+            data_type=bool,
+            optional=True,
+            default=False,
+        )
 
     def run(self):
         logger.info("Validating requirements...")
@@ -73,36 +89,45 @@ class ArgolightBAnalysis(Analysis):
 
         # Calculating the distance between spots in pixels with a security margin
         min_distance = round(
-            (self.get_metadata_values('spots_distance') * 0.3) / max(self.get_metadata_values("pixel_size")[-2:])
+            (self.get_metadata_values("spots_distance") * 0.3)
+            / max(self.get_metadata_values("pixel_size")[-2:])
         )
 
         # Calculating the maximum tolerated distance in microns for the same spot in a different channels
         max_distance = self.get_metadata_values("spots_distance") * 0.4
 
         labels = segment_image(
-            image=self.get_data_values('argolight_b'),
+            image=self.get_data_values("argolight_b"),
             min_distance=min_distance,
-            sigma=self.get_metadata_values('sigma'),
+            sigma=self.get_metadata_values("sigma"),
             method="local_max",
-            low_corr_factors=self.get_metadata_values("lower_threshold_correction_factors"),
-            high_corr_factors=self.get_metadata_values("upper_threshold_correction_factors"),
+            low_corr_factors=self.get_metadata_values(
+                "lower_threshold_correction_factors"
+            ),
+            high_corr_factors=self.get_metadata_values(
+                "upper_threshold_correction_factors"
+            ),
         )
 
-        self.output.append(model.Image(name=list(self.input.data.keys())[0],
-                                       description="Labels image with detected spots. "
-                                                   "Image intensities correspond to roi labels.",
-                                       data=labels)
-                           )
+        self.output.append(
+            model.Image(
+                name=list(self.input.data.keys())[0],
+                description="Labels image with detected spots. "
+                "Image intensities correspond to roi labels.",
+                data=labels,
+            )
+        )
 
         spots_properties, spots_positions = compute_spots_properties(
-            image=self.get_data_values('argolight_b'), labels=labels,
-            remove_center_cross=self.get_metadata_values('remove_center_cross'),
+            image=self.get_data_values("argolight_b"),
+            labels=labels,
+            remove_center_cross=self.get_metadata_values("remove_center_cross"),
         )
 
         distances_df = compute_distances_matrix(
             positions=spots_positions,
             max_distance=max_distance,
-            pixel_size=self.get_metadata_values('pixel_size'),
+            pixel_size=self.get_metadata_values("pixel_size"),
         )
 
         properties_kv = {}
@@ -110,116 +135,185 @@ class ArgolightBAnalysis(Analysis):
 
         for ch, ch_spot_props in enumerate(spots_properties):
             ch_df = DataFrame()
-            ch_df['channel'] = [ch for _ in ch_spot_props]
+            ch_df["channel"] = [ch for _ in ch_spot_props]
             ch_df["mask_labels"] = [p["label"] for p in ch_spot_props]
             ch_df["volume"] = [p["area"] for p in ch_spot_props]
             ch_df["roi_volume_units"] = "VOXEL"
             ch_df["max_intensity"] = [p["max_intensity"] for p in ch_spot_props]
             ch_df["min_intensity"] = [p["min_intensity"] for p in ch_spot_props]
             ch_df["mean_intensity"] = [p["mean_intensity"] for p in ch_spot_props]
-            ch_df["integrated_intensity"] = [p["integrated_intensity"] for p in ch_spot_props]
-            ch_df["z_weighted_centroid"] = [p["weighted_centroid"][0] for p in ch_spot_props]
-            ch_df["y_weighted_centroid"] = [p["weighted_centroid"][1] for p in ch_spot_props]
-            ch_df["x_weighted_centroid"] = [p["weighted_centroid"][2] for p in ch_spot_props]
+            ch_df["integrated_intensity"] = [
+                p["integrated_intensity"] for p in ch_spot_props
+            ]
+            ch_df["z_weighted_centroid"] = [
+                p["weighted_centroid"][0] for p in ch_spot_props
+            ]
+            ch_df["y_weighted_centroid"] = [
+                p["weighted_centroid"][1] for p in ch_spot_props
+            ]
+            ch_df["x_weighted_centroid"] = [
+                p["weighted_centroid"][2] for p in ch_spot_props
+            ]
             ch_df["roi_weighted_centroid_units"] = "PIXEL"
 
             # Key metrics for spots intensities
             properties_kv[f"nr_of_spots_ch{ch:02d}"] = len(ch_df)
-            properties_kv[f"max_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].max().item()
-            properties_kv[f"max_intensity_roi_ch{ch:02d}"] = ch_df["integrated_intensity"].argmax().item()
-            properties_kv[f"min_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].min().item()
-            properties_kv[f"min_intensity_roi_ch{ch:02d}"] = ch_df["integrated_intensity"].argmin().item()
-            properties_kv[f"mean_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].mean().item()
-            properties_kv[f"median_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].median().item()
-            properties_kv[f"std_mean_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].std().item()
-            properties_kv[f"mad_mean_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].mad().item()
-            properties_kv[f"min-max_intensity_ratio_ch{ch:02d}"] = (properties_kv[f"min_intensity_ch{ch:02d}"] /
-                                                                    properties_kv[f"max_intensity_ch{ch:02d}"])
+            properties_kv[f"max_intensity_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].max().item()
+            )
+            properties_kv[f"max_intensity_roi_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].argmax().item()
+            )
+            properties_kv[f"min_intensity_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].min().item()
+            )
+            properties_kv[f"min_intensity_roi_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].argmin().item()
+            )
+            properties_kv[f"mean_intensity_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].mean().item()
+            )
+            properties_kv[f"median_intensity_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].median().item()
+            )
+            properties_kv[f"std_mean_intensity_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].std().item()
+            )
+            properties_kv[f"mad_mean_intensity_ch{ch:02d}"] = (
+                ch_df["integrated_intensity"].mad().item()
+            )
+            properties_kv[f"min-max_intensity_ratio_ch{ch:02d}"] = (
+                properties_kv[f"min_intensity_ch{ch:02d}"]
+                / properties_kv[f"max_intensity_ch{ch:02d}"]
+            )
 
             properties_df = properties_df.append(ch_df)
 
-            channel_shapes = [model.Point(x=p["weighted_centroid"][2].item(),
-                                          y=p["weighted_centroid"][1].item(),
-                                          z=p["weighted_centroid"][0].item(),
-                                          c=ch,
-                                          label=f'{p["label"]}')
-                              for p in ch_spot_props
-                              ]
-            self.output.append(model.Roi(name=f'Centroids_ch{ch:03d}',
-                                         description=f"weighted centroids channel {ch}",
-                                         shapes=channel_shapes)
-                               )
+            channel_shapes = [
+                model.Point(
+                    x=p["weighted_centroid"][2].item(),
+                    y=p["weighted_centroid"][1].item(),
+                    z=p["weighted_centroid"][0].item(),
+                    c=ch,
+                    label=f'{p["label"]}',
+                )
+                for p in ch_spot_props
+            ]
+            self.output.append(
+                model.Roi(
+                    name=f"Centroids_ch{ch:03d}",
+                    description=f"weighted centroids channel {ch}",
+                    shapes=channel_shapes,
+                )
+            )
 
-        distances_kv = {"distance_units": self.get_metadata_units('pixel_size')}
+        distances_kv = {"distance_units": self.get_metadata_units("pixel_size")}
 
-        for a, b in product(distances_df.channel_a.unique(), distances_df.channel_b.unique()):
-            temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
+        for a, b in product(
+            distances_df.channel_a.unique(), distances_df.channel_b.unique()
+        ):
+            temp_df = distances_df[
+                (distances_df.channel_a == a) & (distances_df.channel_b == b)
+            ]
             a = int(a)
             b = int(b)
 
-            distances_kv[f'mean_3d_dist_ch{a:02d}_ch{b:02d}'] = temp_df.dist_3d.mean().item()
-            distances_kv[f'median_3d_dist_ch{a:02d}_ch{b:02d}'] = temp_df.dist_3d.median().item()
-            distances_kv[f'std_3d_dist_ch{a:02d}_ch{b:02d}'] = temp_df.dist_3d.std().item()
-            distances_kv[f'mad_3d_dist_ch{a:02d}_ch{b:02d}'] = temp_df.dist_3d.mad().item()
-            distances_kv[f'mean_z_dist_ch{a:02d}_ch{b:02d}'] = temp_df.z_dist.mean().item()
-            distances_kv[f'median_z_dist_ch{a:02d}_ch{b:02d}'] = temp_df.z_dist.median().item()
-            distances_kv[f'std_z_dist_ch{a:02d}_ch{b:02d}'] = temp_df.z_dist.std().item()
-            distances_kv[f'mad_z_dist_ch{a:02d}_ch{b:02d}'] = temp_df.z_dist.mad().item()
+            distances_kv[
+                f"mean_3d_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.dist_3d.mean().item()
+            distances_kv[
+                f"median_3d_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.dist_3d.median().item()
+            distances_kv[
+                f"std_3d_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.dist_3d.std().item()
+            distances_kv[
+                f"mad_3d_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.dist_3d.mad().item()
+            distances_kv[
+                f"mean_z_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.z_dist.mean().item()
+            distances_kv[
+                f"median_z_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.z_dist.median().item()
+            distances_kv[
+                f"std_z_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.z_dist.std().item()
+            distances_kv[
+                f"mad_z_dist_ch{a:02d}_ch{b:02d}"
+            ] = temp_df.z_dist.mad().item()
 
-        self.output.append(model.KeyValues(name='Intensity Key Annotations',
-                                           description='Key Intensity Measurements on Argolight D spots',
-                                           key_values=properties_kv)
-                           )
+        self.output.append(
+            model.KeyValues(
+                name="Intensity Key Annotations",
+                description="Key Intensity Measurements on Argolight D spots",
+                key_values=properties_kv,
+            )
+        )
 
-        self.output.append(model.KeyValues(name='Distances Key Annotations',
-                                           description='Key Distance Measurements on Argolight D spots',
-                                           key_values=distances_kv)
-                           )
+        self.output.append(
+            model.KeyValues(
+                name="Distances Key Annotations",
+                description="Key Distance Measurements on Argolight D spots",
+                key_values=distances_kv,
+            )
+        )
 
-        self.output.append(model.Table(name='Properties',
-                                       description="Analysis_argolight_D_properties",
-                                       table=properties_df)
-                           )
+        self.output.append(
+            model.Table(
+                name="Properties",
+                description="Analysis_argolight_D_properties",
+                table=properties_df,
+            )
+        )
 
-        self.output.append(model.Table(name='Distances',
-                                       description="Analysis_argolight_D_distances",
-                                       table=distances_df)
-                           )
+        self.output.append(
+            model.Table(
+                name="Distances",
+                description="Analysis_argolight_D_distances",
+                table=distances_df,
+            )
+        )
 
         return True
 
 
 @register_image_analysis
 class ArgolightEAnalysis(Analysis):
-    """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis
-    """
+    """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
+
     def __init__(self):
         super().__init__(
             output_description="Analysis output of the lines (pattern E) from the argolight sample. "
-                               "It contains resolution data on the axis indicated:"
-                               "- axis 1 = Y resolution = lines along X axis"
-                               "- axis 2 = X resolution = lines along Y axis"
-            )
-        self.add_data_requirement(name='argolight_e',
-                                  description="Input image in the form of a numpy array",
-                                  data_type=np.ndarray)
-        self.add_metadata_requirement(name='pixel_size',
-                                      description='Physical size of the voxel in z, y and x',
-                                      data_type=Tuple[float, float, float],
-                                      units='MICRON',
-                                      optional=False
-                                      )
-        self.add_metadata_requirement(name='axis',
-                                      description='axis along which resolution is being measured. 1=Y, 2=X',
-                                      data_type=int,
-                                      optional=False
-                                      )
-        self.add_metadata_requirement(name='measured_band',
-                                      description='Fraction of the image across which intensity profiles are measured',
-                                      data_type=float,
-                                      optional=True,
-                                      default=.4
-                                      )
+            "It contains resolution data on the axis indicated:"
+            "- axis 1 = Y resolution = lines along X axis"
+            "- axis 2 = X resolution = lines along Y axis"
+        )
+        self.add_data_requirement(
+            name="argolight_e",
+            description="Input image in the form of a numpy array",
+            data_type=np.ndarray,
+        )
+        self.add_metadata_requirement(
+            name="pixel_size",
+            description="Physical size of the voxel in z, y and x",
+            data_type=Tuple[float, float, float],
+            units="MICRON",
+            optional=False,
+        )
+        self.add_metadata_requirement(
+            name="axis",
+            description="axis along which resolution is being measured. 1=Y, 2=X",
+            data_type=int,
+            optional=False,
+        )
+        self.add_metadata_requirement(
+            name="measured_band",
+            description="Fraction of the image across which intensity profiles are measured",
+            data_type=float,
+            optional=True,
+            default=0.4,
+        )
 
     def run(self):
         """A intermediate function to specify the axis to be analyzed"""
@@ -231,13 +325,17 @@ class ArgolightEAnalysis(Analysis):
 
         logger.info("Analyzing resolution...")
 
-        return self._analyze_resolution(image=self.get_data_values('argolight_e'),
-                                        axis=self.get_metadata_values('axis'),
-                                        measured_band=self.get_metadata_values("measured_band"),
-                                        pixel_size=self.get_metadata_values('pixel_size'),
-                                        pixel_size_units=self.get_metadata_units('pixel_size'))
+        return self._analyze_resolution(
+            image=self.get_data_values("argolight_e"),
+            axis=self.get_metadata_values("axis"),
+            measured_band=self.get_metadata_values("measured_band"),
+            pixel_size=self.get_metadata_values("pixel_size"),
+            pixel_size_units=self.get_metadata_units("pixel_size"),
+        )
 
-    def _analyze_resolution(self, image, axis, measured_band, pixel_size, pixel_size_units):
+    def _analyze_resolution(
+        self, image, axis, measured_band, pixel_size, pixel_size_units
+    ):
         (
             profiles,
             z_planes,
@@ -287,50 +385,50 @@ class ArgolightEAnalysis(Analysis):
                     # Measurements are taken at center of pixel so we add .5 pixel to peak positions
                     if axis == 1:  # Y resolution -> horizontal rois
                         axis_len = image.shape[-2]
-                        x1_pos = int(
-                            (axis_len / 2)
-                            - (axis_len * measured_band / 2)
-                        )
+                        x1_pos = int((axis_len / 2) - (axis_len * measured_band / 2))
                         y1_pos = peak + 0.5
-                        x2_pos = int(
-                            (axis_len / 2)
-                            + (axis_len * measured_band / 2)
-                        )
+                        x2_pos = int((axis_len / 2) + (axis_len * measured_band / 2))
                         y2_pos = peak + 0.5
                     elif axis == 2:  # X resolution -> vertical rois
                         axis_len = image.shape[-1]
-                        y1_pos = int(
-                            (axis_len / 2)
-                            - (axis_len * measured_band / 2)
-                        )
+                        y1_pos = int((axis_len / 2) - (axis_len * measured_band / 2))
                         x1_pos = peak + 0.5
-                        y2_pos = int(
-                            (axis_len / 2)
-                            + (axis_len * measured_band / 2)
-                        )
+                        y2_pos = int((axis_len / 2) + (axis_len * measured_band / 2))
                         x2_pos = peak + 0.5
 
-                    shapes.append(model.Line(x1=x1_pos,
-                                             y1=y1_pos,
-                                             x2=x2_pos,
-                                             y2=y2_pos,
-                                             z=z_planes[ch],
-                                             c=ch)
-                                  )
+                    shapes.append(
+                        model.Line(
+                            x1=x1_pos,
+                            y1=y1_pos,
+                            x2=x2_pos,
+                            y2=y2_pos,
+                            z=z_planes[ch],
+                            c=ch,
+                        )
+                    )
 
-            self.output.append(model.Roi(name=f"Peaks_ch{ch:03d}",
-                                         description=f"Lines where highest Rayleigh resolution was found in channel {ch}",
-                                         shapes=shapes)
-                               )
-        self.output.append(model.KeyValues(name='Key-Value Annotations',
-                                           description=f'Measurements on Argolight E pattern along axis={axis}',
-                                           key_values=key_values)
-                           )
-        self.output.append(model.Table(name='Profiles',
-                                       description='Raw and fitted profiles across the center of the image along the '
-                                                   'defined axis',
-                                       table=DataFrame.from_dict(out_tables))
-                           )
+            self.output.append(
+                model.Roi(
+                    name=f"Peaks_ch{ch:03d}",
+                    description=f"Lines where highest Rayleigh resolution was found in channel {ch}",
+                    shapes=shapes,
+                )
+            )
+        self.output.append(
+            model.KeyValues(
+                name="Key-Value Annotations",
+                description=f"Measurements on Argolight E pattern along axis={axis}",
+                key_values=key_values,
+            )
+        )
+        self.output.append(
+            model.Table(
+                name="Profiles",
+                description="Raw and fitted profiles across the center of the image along the "
+                "defined axis",
+                table=DataFrame.from_dict(out_tables),
+            )
+        )
 
         return True
 
@@ -520,13 +618,13 @@ class ArgolightReporter(Reporter):
                 [
                     pos_col_names.index(w_col)
                     for w_col in [
-                    "channel",
-                    "mask_labels",
-                    "x_weighted_centroid",
-                    "y_weighted_centroid",
-                ]
+                        "channel",
+                        "mask_labels",
+                        "x_weighted_centroid",
+                        "y_weighted_centroid",
+                    ]
                 ],
-           pos_table.getWhereList(
+                pos_table.getWhereList(
                     condition=f"channel=={ch_A}",
                     variables={},
                     start=0,
@@ -615,11 +713,11 @@ class ArgolightReporter(Reporter):
                 )
 
                 filtered_positions = positions_map[
-                                     np.intersect1d(
-                                         mask_labels, labels_map, assume_unique=True, return_indices=True
-                                     )[1],
-                                     :,
-                                     ]
+                    np.intersect1d(
+                        mask_labels, labels_map, assume_unique=True, return_indices=True
+                    )[1],
+                    :,
+                ]
 
                 grid_x, grid_y = np.mgrid[0:x_dim:1, 0:y_dim:1]
                 interpolated = griddata(
@@ -646,16 +744,22 @@ class ArgolightReporter(Reporter):
 
 
 def _profile_to_table(profile, channel):
-    table = {f'raw_profile_ch{channel:02d}': [v.item() for v in profile[0, :]]}
+    table = {f"raw_profile_ch{channel:02d}": [v.item() for v in profile[0, :]]}
 
     for p in range(1, profile.shape[0]):
-        table.update({f'fitted_profile_ch{channel:03d}_peak{p:03d}': [v.item() for v in profile[p, :]]})
+        table.update(
+            {
+                f"fitted_profile_ch{channel:03d}_peak{p:03d}": [
+                    v.item() for v in profile[p, :]
+                ]
+            }
+        )
 
     return table
 
 
 def _fit(
-        profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_tolerance=1
+    profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_tolerance=1
 ):
     guess = []
     lower_bounds = []
@@ -686,7 +790,7 @@ def _fit(
 
 
 def _compute_channel_resolution(
-        channel, axis, prominence, measured_band, do_fitting=True, do_angle_refinement=False
+    channel, axis, prominence, measured_band, do_fitting=True, do_angle_refinement=False
 ):
     """Computes the resolution on a pattern of lines with increasing separation"""
     # find the most contrasted z-slice
@@ -707,9 +811,9 @@ def _compute_channel_resolution(
     weight_profile = np.zeros(axis_len)
     # Calculates a band of relative width 'image_fraction' to integrate the profile
     weight_profile[
-    int((axis_len / 2) - (axis_len * measured_band / 2)): int(
-        (axis_len / 2) + (axis_len * measured_band / 2)
-    )
+        int((axis_len / 2) - (axis_len * measured_band / 2)) : int(
+            (axis_len / 2) + (axis_len * measured_band / 2)
+        )
     ] = 1
     profile = np.average(focus_slice, axis=-axis, weights=weight_profile)
 
@@ -717,7 +821,10 @@ def _compute_channel_resolution(
 
     # Find peaks: We implement Rayleigh limits that will be refined downstream
     peak_positions, properties = find_peaks(
-        normalized_profile, height=0.3, distance=2, prominence=prominence / 4,
+        normalized_profile,
+        height=0.3,
+        distance=2,
+        prominence=prominence / 4,
     )
 
     # From the properties we are interested in the amplitude
@@ -726,10 +833,10 @@ def _compute_channel_resolution(
     ray_filtered_peak_heights = []
 
     for peak, height, prom in zip(
-            peak_positions, properties["peak_heights"], properties["prominences"]
+        peak_positions, properties["peak_heights"], properties["prominences"]
     ):
         if (
-                prom / height
+            prom / height
         ) > prominence:  # This is calculating the prominence in relation to the local intensity
             ray_filtered_peak_pos.append(peak)
             ray_filtered_peak_heights.append(height)
@@ -756,7 +863,7 @@ def _compute_channel_resolution(
 
 
 def _compute_resolution(
-        image, axis, measured_band, prominence, do_angle_refinement=False
+    image, axis, measured_band, prominence, do_angle_refinement=False
 ):
     profiles = list()
     z_planes = []
@@ -790,6 +897,7 @@ def _compute_resolution(
         resolution_indexes,
         resolution_method,
     )
+
 
 # Calculate 2D FFT
 # slice_2d = raw_img[17, ...].reshape([1, n_channels, x_size, y_size])

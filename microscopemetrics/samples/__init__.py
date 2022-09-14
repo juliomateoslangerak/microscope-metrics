@@ -37,6 +37,7 @@ class Configurator(ABC):
     defines the metadata required for the different analyses. You should subclass this when you create a
     new sample. One for each type of configurator that you wish to have.
     """
+
     # The configuration section has to be defined for every subclass
     CONFIG_SECTION: str = None
 
@@ -69,31 +70,39 @@ class Analysis(ABC):
         """
         return cls.__module__.split(sep=".")[-1]
 
-    def add_data_requirement(self,
-                             name: str,
-                             description: str,
-                             data_type,
-                             optional: bool = False,
-                             replace: bool = False):
-        self.input.add_data_requirement(name=name,
-                                        description=description,
-                                        data_type=data_type,
-                                        optional=optional,
-                                        replace=replace)
+    def add_data_requirement(
+        self,
+        name: str,
+        description: str,
+        data_type,
+        optional: bool = False,
+        replace: bool = False,
+    ):
+        self.input.add_data_requirement(
+            name=name,
+            description=description,
+            data_type=data_type,
+            optional=optional,
+            replace=replace,
+        )
 
-    def add_metadata_requirement(self,
-                                 name: str,
-                                 description: str,
-                                 data_type,
-                                 optional: bool,
-                                 units: str = None,
-                                 default: Any = None):
-        self.input.add_metadata_requirement(name=name,
-                                            description=description,
-                                            data_type=data_type,
-                                            optional=optional,
-                                            units=units,
-                                            default=default)
+    def add_metadata_requirement(
+        self,
+        name: str,
+        description: str,
+        data_type,
+        optional: bool,
+        units: str = None,
+        default: Any = None,
+    ):
+        self.input.add_metadata_requirement(
+            name=name,
+            description=description,
+            data_type=data_type,
+            optional=optional,
+            units=units,
+            default=default,
+        )
 
     def describe_requirements(self):
         print(self.input.describe_requirements())
