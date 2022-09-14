@@ -8,8 +8,14 @@ import numpy as np
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
-    si = {'nanometer': 0.000000001, 'micrometer': 0.000001, 'millimeter': 0.001, 'meter': 1.0}
-    return val*si[unit_in.lower()]/si[unit_out.lower()]
+    si = {
+        "nanometer": 0.000000001,
+        "micrometer": 0.000001,
+        "millimeter": 0.001,
+        "meter": 1.0,
+    }
+    return val * si[unit_in.lower()] / si[unit_out.lower()]
+
 
 # def airy_fun(x, centre, a, exp):  # , amp, bg):
 #     if (x - centre) == 0:
@@ -23,22 +29,24 @@ def convert_SI(val, unit_in, unit_out):
 #     for i in range(0, len(params), 3):
 #         y = y + airy_fun(x, params[i], params[i+1], params[i+2])
 #     return y
-def airy_fun(x, centre, amp): # , exp):  # , amp, bg):
-    with np.errstate(divide='ignore', invalid='ignore'):
-        return np.where((x - centre) == 0,
-                        amp * .5 ** 2,
-                        amp * (special.j1(x - centre) / (x - centre)) ** 2)
+def airy_fun(x, centre, amp):  # , exp):  # , amp, bg):
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(
+            (x - centre) == 0,
+            amp * 0.5**2,
+            amp * (special.j1(x - centre) / (x - centre)) ** 2,
+        )
 
 
 def gaussian_fun(x, background, amplitude, center, sd):
-    gauss = np.exp(-np.power(x - center, 2.) / (2 * np.power(sd, 2.)))
+    gauss = np.exp(-np.power(x - center, 2.0) / (2 * np.power(sd, 2.0)))
     return background + (amplitude - background) * gauss
 
 
 def multi_airy_fun(x, *params):
     y = np.zeros_like(x)
     for i in range(0, len(params), 2):
-        y = y + airy_fun(x, params[i], params[i+1])
+        y = y + airy_fun(x, params[i], params[i + 1])
     return y
 
 
@@ -93,7 +101,6 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
 
 
 class MetricsConfig(ConfigParser):
-
     def getjson(self, section, option, **kwargs):
         value = self.get(section, option, **kwargs)
         try:
@@ -108,14 +115,18 @@ class MetricsConfig(ConfigParser):
         if type(output) is list:
             return output
         else:
-            raise Exception(f'The config option "{option}" in section "{section}" is not formatted as a list')
+            raise Exception(
+                f'The config option "{option}" in section "{section}" is not formatted as a list'
+            )
 
     def getlistint(self, section, option, **kwargs):
         try:
             output = [int(x) for x in self.getlist(section, option, **kwargs)]
             return output
         except Exception as e:
-            print(f'Some element in config option "{option}" in section "{section}" cannot be coerced into a integer')
+            print(
+                f'Some element in config option "{option}" in section "{section}" cannot be coerced into a integer'
+            )
             raise e
 
     def getlistfloat(self, section, option, **kwargs):
@@ -123,5 +134,7 @@ class MetricsConfig(ConfigParser):
             output = [float(x) for x in self.getlist(section, option, **kwargs)]
             return output
         except Exception as e:
-            print(f'Some element in config option "{option}" in section "{section}" cannot be coerced into a float')
+            print(
+                f'Some element in config option "{option}" in section "{section}" cannot be coerced into a float'
+            )
             raise e

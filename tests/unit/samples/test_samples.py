@@ -12,22 +12,25 @@ def sample_analysis():
         def __init__(self):
             description = "This is the description of the analysis class"
             super().__init__(output_description=description)
-            self.add_requirement(name='pixel_sizes',
-                                 description='This is the physical sizes of the pixels',
-                                 data_type=Tuple[float, float, float],
-                                 optional=False)
-            self.add_requirement(name='emission_wavelengths',
-                                 description='Emission Wavelengths',
-                                 data_type=tuple,
-                                 optional=False)
-            self.add_requirement(name='display_color',
-                                 description='This will make it rainbowy',
-                                 data_type=str,
-                                 optional=True)
+            self.add_data_requirement(name='input_data',
+                                      description='some desciption',
+                                      data_type=np.ndarray)
+            self.add_metadata_requirement(name='pixel_sizes',
+                                          description='This is the physical sizes of the pixels',
+                                          data_type=Tuple[float, float, float],
+                                          optional=False)
+            self.add_metadata_requirement(name='emission_wavelengths',
+                                          description='Emission Wavelengths',
+                                          data_type=tuple,
+                                          optional=False)
+            self.add_metadata_requirement(name='display_color',
+                                          description='This will make it rainbowy',
+                                          data_type=str,
+                                          optional=True)
 
         @register_image_analysis
         def run(self):
-            new_array = self.input.data + 1
+            new_array = self.get_data_values('input_data') + 1
             new_image = model.Image(name='output_image',
                                     description="Just a sum of 1 to input data",
                                     data=new_array)
@@ -55,7 +58,7 @@ def sample_analysis_with_data(sample_analysis):
 
     sample_analysis_with_data = sample_analysis()
 
-    sample_analysis_with_data.input.data = np.ndarray([0, 1, 2, 3, 4])
+    sample_analysis_with_data.set_data('input_data', np.ndarray([0, 1, 2, 3, 4]))
 
     sample_analysis_with_data.set_metadata('pixel_sizes', (.2, .2, .5))
     sample_analysis_with_data.set_metadata('emission_wavelengths', (488, 561, 642))

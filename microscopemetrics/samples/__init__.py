@@ -37,6 +37,7 @@ class Configurator(ABC):
     defines the metadata required for the different analyses. You should subclass this when you create a
     new sample. One for each type of configurator that you wish to have.
     """
+
     # The configuration section has to be defined for every subclass
     CONFIG_SECTION: str = None
 
@@ -57,6 +58,7 @@ class Configurator(ABC):
 class Analysis(ABC):
     """This is the superclass defining the interface to a sample object. You should subclass this when you create a
     new sample analysis."""
+
     def __init__(self, output_description):
         self.input = model.MetricsDataset()
         self.output = model.MetricsOutput(description=output_description)
@@ -68,23 +70,42 @@ class Analysis(ABC):
         """
         return cls.__module__.split(sep=".")[-1]
 
-    def add_requirement(self,
-                        name: str,
-                        description: str,
-                        data_type,
-                        optional: bool,
-                        units: str = None,
-                        default: Any = None):
-        self.input.add_metadata_requirement(name=name,
-                                            description=description,
-                                            data_type=data_type,
-                                            optional=optional,
-                                            units=units,
-                                            default=default)
+    def add_data_requirement(
+        self,
+        name: str,
+        description: str,
+        data_type,
+        optional: bool = False,
+        replace: bool = False,
+    ):
+        self.input.add_data_requirement(
+            name=name,
+            description=description,
+            data_type=data_type,
+            optional=optional,
+            replace=replace,
+        )
+
+    def add_metadata_requirement(
+        self,
+        name: str,
+        description: str,
+        data_type,
+        optional: bool,
+        units: str = None,
+        default: Any = None,
+    ):
+        self.input.add_metadata_requirement(
+            name=name,
+            description=description,
+            data_type=data_type,
+            optional=optional,
+            units=units,
+            default=default,
+        )
 
     def describe_requirements(self):
-        # TODO: must add description of image dataset
-        print(self.input.describe_metadata_requirement())
+        print(self.input.describe_requirements())
 
     def validate_requirements(self):
         return self.input.validate_requirements()
@@ -92,11 +113,20 @@ class Analysis(ABC):
     def list_unmet_requirements(self):
         return self.input.list_unmet_requirements()
 
+    def set_data(self, name: str, value):
+        self.input.set_data_values(name, value)
+
     def set_metadata(self, name: str, value):
-        self.input.set_metadata(name, value)
+        self.input.set_metadata_values(name, value)
+
+    def delete_data(self, name: str):
+        self.input.del_data_values(name)
 
     def delete_metadata(self, name: str):
-        self.input.del_metadata(name)
+        self.input.del_metadata_values(name)
+
+    def get_data_values(self, name: Union[str, list]):
+        return self.input.get_data_values(name)
 
     def get_metadata_values(self, name: Union[str, list]):
         return self.input.get_metadata_values(name)

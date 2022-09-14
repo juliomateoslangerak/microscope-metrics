@@ -16,112 +16,131 @@ import logging
 module_logger = logging.getLogger(__name__)
 
 
-def _segment_channel(channel, min_distance, method,
-                     threshold, sigma, low_corr_factor, high_corr_factor,
-                     indices):
-    """Segment a channel (3D numpy array)
-    """
+def _segment_channel(
+    channel,
+    min_distance,
+    method,
+    threshold,
+    sigma,
+    low_corr_factor,
+    high_corr_factor,
+    indices,
+):
+    """Segment a channel (3D numpy array)"""
     if threshold is None:
         threshold = threshold_otsu(channel)
 
     if sigma is not None:
-        channel = gaussian(image=channel,
-                           multichannel=False,
-                           sigma=sigma,
-                           preserve_range=True)
+        channel = gaussian(
+            image=channel, multichannel=False, sigma=sigma, preserve_range=True
+        )
 
-    if method == 'hysteresis':  # We may try here hysteresis threshold
-        thresholded = apply_hysteresis_threshold(channel,
-                                                 low=threshold * low_corr_factor,
-                                                 high=threshold * high_corr_factor
-                                                 )
+    if method == "hysteresis":  # We may try here hysteresis threshold
+        thresholded = apply_hysteresis_threshold(
+            channel, low=threshold * low_corr_factor, high=threshold * high_corr_factor
+        )
 
-    elif method == 'local_max':  # We are applying a local maxima algorithm
-        peaks = peak_local_max(channel,
-                               min_distance=min_distance,
-                               threshold_abs=(threshold * .5),
-                               indices=indices)
+    elif method == "local_max":  # We are applying a local maxima algorithm
+        peaks = peak_local_max(
+            channel,
+            min_distance=min_distance,
+            threshold_abs=(threshold * 0.5),
+            indices=indices,
+        )
         thresholded = np.copy(channel)
         thresholded[peaks] = thresholded.max()
-        thresholded = apply_hysteresis_threshold(thresholded,
-                                                 low=threshold * low_corr_factor,
-                                                 high=threshold * high_corr_factor,
-                                                 )
+        thresholded = apply_hysteresis_threshold(
+            thresholded,
+            low=threshold * low_corr_factor,
+            high=threshold * high_corr_factor,
+        )
     else:
-        raise Exception('A valid segmentation method was not provided')
+        raise Exception("A valid segmentation method was not provided")
 
     closed = closing(thresholded, cube(min_distance))
     cleared = clear_border(closed)
     return label(cleared)
 
 
-def segment_image(image,
-                  min_distance,
-                  sigma=None,
-                  method='local_max',
-                  low_corr_factors=None,
-                  high_corr_factors=None,
-                  indices=False):
+def segment_image(
+    image,
+    min_distance,
+    sigma=None,
+    method="local_max",
+    low_corr_factors=None,
+    high_corr_factors=None,
+    indices=False,
+):
     """Segment an image and return a labels object.
     Image must be provided as zctxy numpy array
     """
-    module_logger.info('Image being segmented...')
+    module_logger.info("Image being segmented...")
 
     if low_corr_factors is None:
-        low_corr_factors = [.95] * image.shape[1]
-        module_logger.warning('No low correction factor specified. Using defaults')
+        low_corr_factors = [0.95] * image.shape[1]
+        module_logger.warning("No low correction factor specified. Using defaults")
     if high_corr_factors is None:
         high_corr_factors = [1.05] * image.shape[1]
-        module_logger.warning('No high correction factor specified. Using defaults')
+        module_logger.warning("No high correction factor specified. Using defaults")
 
-    if len(high_corr_factors) != image.shape[1] or len(low_corr_factors) != image.shape[1]:
-        raise Exception('The number of correction factors does not match the number of channels.')
+    if (
+        len(high_corr_factors) != image.shape[1]
+        or len(low_corr_factors) != image.shape[1]
+    ):
+        raise Exception(
+            "The number of correction factors does not match the number of channels."
+        )
 
     # We create an empty array to store the output
     labels_image = np.zeros(image.shape, dtype=np.uint16)
     for c in range(image.shape[1]):
         for t in range(image.shape[2]):
-            labels_image[:, c, t, ...] = _segment_channel(image[:, c, t, ...],
-                                                          min_distance=min_distance,
-                                                          method=method,
-                                                          threshold=None,
-                                                          sigma=sigma,
-                                                          low_corr_factor=low_corr_factors[c],
-                                                          high_corr_factor=high_corr_factors[c],
-                                                          indices=indices)
+            labels_image[:, c, t, ...] = _segment_channel(
+                image[:, c, t, ...],
+                min_distance=min_distance,
+                method=method,
+                threshold=None,
+                sigma=sigma,
+                low_corr_factor=low_corr_factors[c],
+                high_corr_factor=high_corr_factors[c],
+                indices=indices,
+            )
     return labels_image
 
 
-def _compute_channel_spots_properties(channel, label_channel, remove_center_cross=False, pixel_size=None):
+def _compute_channel_spots_properties(
+    channel, label_channel, remove_center_cross=False, pixel_size=None
+):
     """Analyzes and extracts the properties of a single channel"""
 
     regions = regionprops(label_channel, channel)
 
     ch_properties = [
         {
-            'label': region.label,
-            'area': region.area,
-            'centroid': region.centroid,
-            'weighted_centroid': region.weighted_centroid,
-            'max_intensity': region.max_intensity,
-            'mean_intensity': region.mean_intensity,
-            'min_intensity': region.min_intensity,
-            'integrated_intensity': region.mean_intensity * region.area,
+            "label": region.label,
+            "area": region.area,
+            "centroid": region.centroid,
+            "weighted_centroid": region.weighted_centroid,
+            "max_intensity": region.max_intensity,
+            "mean_intensity": region.mean_intensity,
+            "min_intensity": region.min_intensity,
+            "integrated_intensity": region.mean_intensity * region.area,
         }
         for region in regions
     ]
 
-
-    if remove_center_cross:  # Argolight spots pattern contains a central cross that we might want to remove
+    if (
+        remove_center_cross
+    ):  # Argolight spots pattern contains a central cross that we might want to remove
         largest_area = 0
         largest_region = None
         for region in ch_properties:
-            if region['area'] > largest_area:  # We assume the cross is the largest area
-                largest_area = region['area']
+            if region["area"] > largest_area:  # We assume the cross is the largest area
+                largest_area = region["area"]
                 largest_region = region
         if largest_region:
             ch_properties.remove(largest_region)
-    ch_positions = np.array([x['weighted_centroid'] for x in ch_properties])
+    ch_positions = np.array([x["weighted_centroid"] for x in ch_properties])
     if pixel_size:
         ch_positions = ch_positions[0:] * pixel_size
 
@@ -135,10 +154,12 @@ def compute_spots_properties(image, labels, remove_center_cross=False, pixel_siz
 
     for c in range(image.shape[1]):
         for t in range(image.shape[2]):
-            pr, pos = _compute_channel_spots_properties(channel=image[:, c, t, ...],
-                                                        label_channel=labels[:, c, t, ...],
-                                                        remove_center_cross=remove_center_cross,
-                                                        pixel_size=pixel_size)
+            pr, pos = _compute_channel_spots_properties(
+                channel=image[:, c, t, ...],
+                label_channel=labels[:, c, t, ...],
+                remove_center_cross=remove_center_cross,
+                pixel_size=pixel_size,
+            )
             properties.append(pr)
             positions.append(pos)
 
@@ -146,18 +167,17 @@ def compute_spots_properties(image, labels, remove_center_cross=False, pixel_siz
 
 
 def compute_distances_matrix(positions, max_distance, pixel_size=None):
-    """Calculates Mutual Closest Neighbour distances between all channels and returns the values as
-    """
-    module_logger.info('Computing distances between spots')
+    """Calculates Mutual Closest Neighbour distances between all channels and returns the values as"""
+    module_logger.info("Computing distances between spots")
 
     if len(positions) < 2:
-        raise Exception('Not enough dimensions to do a distance measurement')
+        raise Exception("Not enough dimensions to do a distance measurement")
 
     channel_permutations = list(permutations(range(len(positions)), 2))
 
     if not pixel_size:  # TODO: make sure the units are corrected if no pixel size
         pixel_size = np.array((1, 1, 1))
-        module_logger.warning('No pixel size specified. Using the unit')
+        module_logger.warning("No pixel size specified. Using the unit")
     else:
         pixel_size = np.array(pixel_size)
 
@@ -168,22 +188,25 @@ def compute_distances_matrix(positions, max_distance, pixel_size=None):
 
         for i, (pos_A, d) in enumerate(zip(positions[a], distances_matrix)):
             if d.min() < max_distance:
-                distances_df = distances_df.append({"channel_a": a,
-                                                    "channel_b": b,
-                                                    "z_coord_a": pos_A[0],
-                                                    "y_coord_a": pos_A[1],
-                                                    "x_coord_a": pos_A[2],
-                                                    "z_coord_b": positions[b][d.argmin()][0],
-                                                    "y_coord_b": positions[b][d.argmin()][1],
-                                                    "x_coord_b": positions[b][d.argmin()][2],
-                                                    "z_dist": pos_A[0] - positions[b][d.argmin()][0],
-                                                    "y_dist": pos_A[1] - positions[b][d.argmin()][1],
-                                                    "x_dist": pos_A[2] - positions[b][d.argmin()][2],
-                                                    'dist_3d': d.min(),
-                                                    "labels_a": i,
-                                                    "labels_b": d.argmin()
-                                                    }, ignore_index=True
-                                                   )
+                distances_df = distances_df.append(
+                    {
+                        "channel_a": a,
+                        "channel_b": b,
+                        "z_coord_a": pos_A[0],
+                        "y_coord_a": pos_A[1],
+                        "x_coord_a": pos_A[2],
+                        "z_coord_b": positions[b][d.argmin()][0],
+                        "y_coord_b": positions[b][d.argmin()][1],
+                        "x_coord_b": positions[b][d.argmin()][2],
+                        "z_dist": pos_A[0] - positions[b][d.argmin()][0],
+                        "y_dist": pos_A[1] - positions[b][d.argmin()][1],
+                        "x_dist": pos_A[2] - positions[b][d.argmin()][2],
+                        "dist_3d": d.min(),
+                        "labels_a": i,
+                        "labels_b": d.argmin(),
+                    },
+                    ignore_index=True,
+                )
 
     return distances_df
 
@@ -212,10 +235,9 @@ def _channel_fft_2d(channel):
 
 def fft_2d(image):
     # Create an empty array to contain the transform
-    fft = np.zeros(shape=(image.shape[1],
-                          image.shape[2],
-                          image.shape[3] // 2 + 1),
-                   dtype='float64')
+    fft = np.zeros(
+        shape=(image.shape[1], image.shape[2], image.shape[3] // 2 + 1), dtype="float64"
+    )
     for c in range(image.shape[2]):
         fft[c, :, :] = _channel_fft_2d(image[..., c, :, :])
 
@@ -228,12 +250,16 @@ def _channel_fft_3d(channel):
 
 
 def fft_3d(image):
-    fft = np.zeros(shape=(image.shape[0],
-                          image.shape[1],
-                          image.shape[2],
-                          image.shape[3],
-                          image.shape[4] // 2 + 1),  # We only compute the real part of the FFT
-                   dtype='float64')
+    fft = np.zeros(
+        shape=(
+            image.shape[0],
+            image.shape[1],
+            image.shape[2],
+            image.shape[3],
+            image.shape[4] // 2 + 1,
+        ),  # We only compute the real part of the FFT
+        dtype="float64",
+    )
     for c in range(image.shape[-3]):
         fft[..., c, :, :] = _channel_fft_3d(image[..., c, :, :])
 

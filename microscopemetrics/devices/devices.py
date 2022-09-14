@@ -7,16 +7,18 @@ from math import sin, asin, cos
 
 # Creating logging services
 import logging
-module_logger = logging.getLogger('metrics.devices.devices')
+
+module_logger = logging.getLogger("metrics.devices.devices")
 
 
 DTYPES = {
-    'int': (tuple,),
-    'float': (tuple,),
-    'bool': (type(None),),
-    'str': (int,),
-    'tuple': (type(None),),
+    "int": (tuple,),
+    "float": (tuple,),
+    "bool": (type(None),),
+    "str": (int,),
+    "tuple": (type(None),),
 }
+
 
 def _call_if_callable(f):
     """Call callables, or return value of non-callables."""
@@ -24,13 +26,22 @@ def _call_if_callable(f):
 
 
 class _Setting:
-    """The code of this class was copied from https://github.com/MicronOxford/microscope
-    """
+    """The code of this class was copied from https://github.com/MicronOxford/microscope"""
+
     # Settings classes should be private: devices should use a factory method
     # rather than instantiate settings directly; most already use add_setting
     # for this.
     # TODO: Implement a get units
-    def __init__(self, name, dtype, get_from_db_func, get_from_conf_func, get_from_name_func, set_func, values=None):
+    def __init__(
+        self,
+        name,
+        dtype,
+        get_from_db_func,
+        get_from_conf_func,
+        get_from_name_func,
+        set_func,
+        values=None,
+    ):
         """Create a setting.
         :param name: the setting's name
         :param dtype: a data type from ('int', 'float', 'bool', 'enum', 'str')
@@ -45,11 +56,12 @@ class _Setting:
         """
         self.name = name
         if dtype not in DTYPES:
-            raise Exception('Unsupported dtype.')
+            raise Exception("Unsupported dtype.")
         elif not (isinstance(values, DTYPES[dtype]) or callable(values)):
-            raise Exception("Invalid values type for %s '%s':"
-                            " expected function or %s"
-                            % (dtype, name, DTYPES[dtype]))
+            raise Exception(
+                "Invalid values type for %s '%s':"
+                " expected function or %s" % (dtype, name, DTYPES[dtype])
+            )
         self.dtype = dtype
         self._get_from_db = get_from_db_func
         self._get_from_conf = get_from_conf_func
@@ -57,10 +69,8 @@ class _Setting:
         self._values = values
 
     def describe(self):
-        """Returns a dictionary describing the setting
-        """
-        return {'type': self.dtype,
-                'values': self.values()}
+        """Returns a dictionary describing the setting"""
+        return {"type": self.dtype, "values": self.values()}
 
     def get(self, **kwargs):
         """Get a setting"""
@@ -76,12 +86,12 @@ class _Setting:
             value = self._get_from_name(**kwargs)
             if value is not None:
                 return value
-        module_logger.warning(f'Device setting could not be retrieved: {self.name}')
+        module_logger.warning(f"Device setting could not be retrieved: {self.name}")
 
     def values(self):
         values = _call_if_callable(self._values)
         if values is not None:
-            if self.dtype == 'enum':
+            if self.dtype == "enum":
                 if isinstance(values, dict):
                     return list(values.items())
                 else:
@@ -93,11 +103,21 @@ class _Setting:
 
 class Device:
     """A superclass for all the microscope devices and eventually other type of devices."""
+
     def __init__(self, device_config):
         self.device_config = device_config
         self._settings = {}
 
-    def add_setting(self, name, dtype, get_from_db_func, get_from_conf_func, get_from_name_func, set_func, values=None):
+    def add_setting(
+        self,
+        name,
+        dtype,
+        get_from_db_func,
+        get_from_conf_func,
+        get_from_name_func,
+        set_func,
+        values=None,
+    ):
         """Add a setting definition.
         :param name: the setting's name
         :param dtype: a data type from ('int', 'float', 'bool', 'enum', 'str')
@@ -112,18 +132,22 @@ class Device:
         allowable values, and set the value.
         """
         if dtype not in DTYPES:
-            raise Exception('Unsupported dtype.')
+            raise Exception("Unsupported dtype.")
         elif not (isinstance(values, DTYPES[dtype]) or callable(values)):
-            raise Exception("Invalid values type for %s '%s':"
-                            " expected function or %s"
-                            % (dtype, name, DTYPES[dtype]))
+            raise Exception(
+                "Invalid values type for %s '%s':"
+                " expected function or %s" % (dtype, name, DTYPES[dtype])
+            )
         else:
-            self._settings[name] = _Setting(name, dtype,
-                                            get_from_db_func,
-                                            get_from_conf_func,
-                                            get_from_name_func,
-                                            set_func,
-                                            values)
+            self._settings[name] = _Setting(
+                name,
+                dtype,
+                get_from_db_func,
+                get_from_conf_func,
+                get_from_name_func,
+                set_func,
+                values,
+            )
 
     def get_setting(self, name, **kwargs):
         """Tries to get a specified setting from the following sources by order of preference:
@@ -139,12 +163,14 @@ class Device:
 
     def get_all_settings(self, **kwargs):
         """Return settings as a dict."""
+
         def catch(f):
             try:
                 return f(**kwargs)
             except Exception as err:
-                module_logger.error(f'getting {f.__self__.name}: {err}')
+                module_logger.error(f"getting {f.__self__.name}: {err}")
                 return None
+
         return {k: catch(v.get) for k, v in self._settings.items()}
 
     def set_setting(self, name, value):
@@ -174,16 +200,19 @@ class Device:
             their_keys = set(incoming.keys())
             update_keys = my_keys & their_keys
             if update_keys != my_keys:
-                missing = ', '.join([k for k in my_keys - their_keys])
-                msg = 'update_settings init=True but missing keys: %s.' % missing
+                missing = ", ".join([k for k in my_keys - their_keys])
+                msg = "update_settings init=True but missing keys: %s." % missing
                 _logger.debug(msg)
                 raise Exception(msg)
         else:
             # Only update changed values.
             my_keys = set(self._settings.keys())
             their_keys = set(incoming.keys())
-            update_keys = set(key for key in my_keys & their_keys
-                              if self.get_setting(key) != incoming[key])
+            update_keys = set(
+                key
+                for key in my_keys & their_keys
+                if self.get_setting(key) != incoming[key]
+            )
         results = {}
         # Update values.
         for key in update_keys:
@@ -203,16 +232,25 @@ class Device:
 
 class Microscope(Device):
     """A superclass for the microscopes. Inherit this class when you create a new type of microscope."""
+
     def __init__(self, device_config):
         super().__init__(device_config)
 
     def _get_conf_objective_nr(self, image):
         img_name = image.getName()
-        obj_nrs = [i for i, token in enumerate(self.device_config.getlist('OBJECTIVES', 'names')) if token in img_name]
+        obj_nrs = [
+            i
+            for i, token in enumerate(self.device_config.getlist("OBJECTIVES", "names"))
+            if token in img_name
+        ]
         if len(obj_nrs) > 1:
-            module_logger.error('More than one reference to an objective lens was found in the image name. Only the first one will be considered.')
+            module_logger.error(
+                "More than one reference to an objective lens was found in the image name. Only the first one will be considered."
+            )
         elif len(obj_nrs) == 0:
-            module_logger.info('No references to any objective lens were found in the image name')
+            module_logger.info(
+                "No references to any objective lens were found in the image name"
+            )
             return None
         return obj_nrs[0]
 
@@ -221,15 +259,21 @@ class Microscope(Device):
         if obj_nr is None:
             return None
         try:
-            values = eval(self.device_config.get('OBJECTIVES', option))
+            values = eval(self.device_config.get("OBJECTIVES", option))
         except NoOptionError as e:
-            module_logger.error(f'No parameters for {option} have been defined in the device configuration')
+            module_logger.error(
+                f"No parameters for {option} have been defined in the device configuration"
+            )
 
         except NameError as e:
-            module_logger.error(f'There was an error reading microscope objectives configuration option: {option}')
+            module_logger.error(
+                f"There was an error reading microscope objectives configuration option: {option}"
+            )
             return None
         if values is None:
-            module_logger.info(f'No information available for {option} in the microscope objectives configuration ')
+            module_logger.info(
+                f"No information available for {option} in the microscope objectives configuration "
+            )
             return None
         else:
             return values[obj_nr]
@@ -238,7 +282,7 @@ class Microscope(Device):
         img_name = image.getName()
         ch_nrs = list()
         token_positions = list()
-        for ch, ch_token in enumerate(self.device_config.getlist('CHANNELS', 'names')):
+        for ch, ch_token in enumerate(self.device_config.getlist("CHANNELS", "names")):
             token_pos = img_name.find(ch_token)
             if token_pos == -1:  # token not in name
                 continue
@@ -248,7 +292,9 @@ class Microscope(Device):
         # Sort channels according to their position in the name
         ch_nrs = tuple(ch for _, ch in sorted(zip(token_positions, ch_nrs)))
         if len(ch_nrs) == 0:
-            module_logger.info('No references to any channel were found in the image name')
+            module_logger.info(
+                "No references to any channel were found in the image name"
+            )
             return None
         return ch_nrs
 
@@ -257,12 +303,16 @@ class Microscope(Device):
         if ch_nrs is None:
             return None
         try:
-            values = eval(self.device_config.get('CHANNELS', option))
+            values = eval(self.device_config.get("CHANNELS", option))
         except NameError as e:
-            module_logger.error(f'There was an error reading microscope channel configuration option: {option}')
+            module_logger.error(
+                f"There was an error reading microscope channel configuration option: {option}"
+            )
             return None
         if values is None:
-            module_logger.info(f'No information available for {option} in the microscope channels configuration ')
+            module_logger.info(
+                f"No information available for {option} in the microscope channels configuration "
+            )
             return None
         else:
             return tuple(values[ch] for ch in ch_nrs)
@@ -272,7 +322,7 @@ class Microscope(Device):
         start = name.find(token_left)
         if start == -1:
             return None
-        name = name[start + len(token_left):]
+        name = name[start + len(token_left) :]
         end = name.find(token_right)
         value = metadata_type(name[:end])
         if metadata_type is None:
@@ -281,7 +331,9 @@ class Microscope(Device):
             try:
                 value = metadata_type(value)
             except ValueError as e:
-                module_logger.error(f'Could not cast {value} into {metadata_type}. Please verify file naming for token {token_left}')
+                module_logger.error(
+                    f"Could not cast {value} into {metadata_type}. Please verify file naming for token {token_left}"
+                )
                 return None
 
         return value
@@ -289,47 +341,63 @@ class Microscope(Device):
 
 class WideFieldMicroscope(Microscope):
     """A Widefield microscope"""
+
     def __init__(self, device_config):
         super().__init__(device_config)
 
         # Setting some objective lens settings
-        self.add_setting('objective_lens_refractive_index', 'float',
-                         # get_from_db_func=interface._get_objective_lens_refractive_index,
-                         get_from_db_func=self._get_objective_lens_refractive_index,
-                         get_from_conf_func=self._get_conf_objective_lens_refr_index,
-                         get_from_name_func=self._get_name_objective_lens_refr_index,
-                         set_func=None,
-                         values=(1.0, 2.0))
-        self.add_setting('objective_lens_na', 'float',
-                         # get_from_db_func=interface._get_objective_lens_na,
-                         get_from_db_func=self._get_objective_lens_na,
-                         get_from_conf_func=self._get_conf_objective_lens_na,
-                         get_from_name_func=self._get_name_objective_lens_na,
-                         set_func=None,
-                         values=(0.0, 2.0))
-        self.add_setting('objective_lens_nominal_magnification', 'float',
-                         # get_from_db_func=interface._get_objective_lens_nominal_magnification,
-                         get_from_db_func=self._get_objective_lens_nominal_magnification,
-                         get_from_conf_func=self._get_conf_objective_lens_nominal_magnification,
-                         get_from_name_func=self._get_name_objective_lens_nominal_magnification,
-                         set_func=None,
-                         values=(1.0, 1000.0))
+        self.add_setting(
+            "objective_lens_refractive_index",
+            "float",
+            # get_from_db_func=interface._get_objective_lens_refractive_index,
+            get_from_db_func=self._get_objective_lens_refractive_index,
+            get_from_conf_func=self._get_conf_objective_lens_refr_index,
+            get_from_name_func=self._get_name_objective_lens_refr_index,
+            set_func=None,
+            values=(1.0, 2.0),
+        )
+        self.add_setting(
+            "objective_lens_na",
+            "float",
+            # get_from_db_func=interface._get_objective_lens_na,
+            get_from_db_func=self._get_objective_lens_na,
+            get_from_conf_func=self._get_conf_objective_lens_na,
+            get_from_name_func=self._get_name_objective_lens_na,
+            set_func=None,
+            values=(0.0, 2.0),
+        )
+        self.add_setting(
+            "objective_lens_nominal_magnification",
+            "float",
+            # get_from_db_func=interface._get_objective_lens_nominal_magnification,
+            get_from_db_func=self._get_objective_lens_nominal_magnification,
+            get_from_conf_func=self._get_conf_objective_lens_nominal_magnification,
+            get_from_name_func=self._get_name_objective_lens_nominal_magnification,
+            set_func=None,
+            values=(1.0, 1000.0),
+        )
 
         # Setting some channel settings
-        self.add_setting('excitation_wavelengths', 'tuple',
-                         # get_from_db_func=interface._get_excitation_wavelengths,
-                         get_from_db_func=self._get_excitation_wavelengths,
-                         get_from_conf_func=self._get_conf_excitation_wavelengths,
-                         get_from_name_func=self._get_name_excitation_wavelengths,
-                         set_func=None,
-                         values=None)
-        self.add_setting('emission_wavelengths', 'tuple',
-                         # get_from_db_func=interface._get_emission_wavelengths,
-                         get_from_db_func=self._get_emission_wavelengths,
-                         get_from_conf_func=self._get_conf_emission_wavelengths,
-                         get_from_name_func=self._get_name_emission_wavelengths,
-                         set_func=None,
-                         values=None)
+        self.add_setting(
+            "excitation_wavelengths",
+            "tuple",
+            # get_from_db_func=interface._get_excitation_wavelengths,
+            get_from_db_func=self._get_excitation_wavelengths,
+            get_from_conf_func=self._get_conf_excitation_wavelengths,
+            get_from_name_func=self._get_name_excitation_wavelengths,
+            set_func=None,
+            values=None,
+        )
+        self.add_setting(
+            "emission_wavelengths",
+            "tuple",
+            # get_from_db_func=interface._get_emission_wavelengths,
+            get_from_db_func=self._get_emission_wavelengths,
+            get_from_conf_func=self._get_conf_emission_wavelengths,
+            get_from_name_func=self._get_name_emission_wavelengths,
+            set_func=None,
+            values=None,
+        )
 
     def get_all_settings(self, **kwargs):
         settings = super().get_all_settings(**kwargs)
@@ -339,34 +407,38 @@ class WideFieldMicroscope(Microscope):
         return settings
 
     def _get_conf_objective_lens_refr_index(self, image):
-        return self._get_conf_objective_setting('objective_lens_refractive_index', image)
+        return self._get_conf_objective_setting(
+            "objective_lens_refractive_index", image
+        )
 
     def _get_name_objective_lens_refr_index(self, image):
-        return self._get_metadata_from_name('_RI=', '_', float, image)
+        return self._get_metadata_from_name("_RI=", "_", float, image)
 
     def _get_conf_objective_lens_na(self, image):
-        return self._get_conf_objective_setting('objective_lens_na', image)
+        return self._get_conf_objective_setting("objective_lens_na", image)
 
     def _get_name_objective_lens_na(self, image):
-        return self._get_metadata_from_name('_NA=', '_', float, image)
+        return self._get_metadata_from_name("_NA=", "_", float, image)
 
     def _get_conf_objective_lens_nominal_magnification(self, image):
-        return self._get_conf_objective_setting('objective_lens_nominal_magnification', image)
+        return self._get_conf_objective_setting(
+            "objective_lens_nominal_magnification", image
+        )
 
     def _get_name_objective_lens_nominal_magnification(self, image):
-        return self._get_metadata_from_name('_MAG=', '_', float, image)
+        return self._get_metadata_from_name("_MAG=", "_", float, image)
 
     def _get_conf_excitation_wavelengths(self, image):
-        return self._get_conf_channel_settings('excitation_wavelengths', image)
+        return self._get_conf_channel_settings("excitation_wavelengths", image)
 
     def _get_name_excitation_wavelengths(self, image):
-        return self._get_metadata_from_name('_EX=', '_', list, image)
+        return self._get_metadata_from_name("_EX=", "_", list, image)
 
     def _get_conf_emission_wavelengths(self, image):
-        return self._get_conf_channel_settings('emission_wavelengths', image)
+        return self._get_conf_channel_settings("emission_wavelengths", image)
 
     def _get_name_emission_wavelengths(self, image):
-        return self._get_metadata_from_name('_EM=', '_', list, image)
+        return self._get_metadata_from_name("_EM=", "_", list, image)
 
     # TODO: to move to interface
     def _get_objective_lens_refractive_index(self, image):
@@ -422,21 +494,31 @@ class WideFieldMicroscope(Microscope):
                   'resolution_theoretical_fwhm_axial': list of axial resolutions for every channel,
                   'resolution_theoretical_fwhm_units': string specifying units}
         """
-        theoretical_res = {'resolution_theoretical_fwhm_lateral': [],
-                           'resolution_theoretical_fwhm_axial': [],
-                           'resolution_theoretical_fwhm_units': 'NANOMETER'}
-        na = self.get_setting('objective_lens_na', **kwargs)
-        for em in self.get_setting('emission_wavelengths', **kwargs):
+        theoretical_res = {
+            "resolution_theoretical_fwhm_lateral": [],
+            "resolution_theoretical_fwhm_axial": [],
+            "resolution_theoretical_fwhm_units": "NANOMETER",
+        }
+        na = self.get_setting("objective_lens_na", **kwargs)
+        for em in self.get_setting("emission_wavelengths", **kwargs):
             try:
-                theoretical_res['resolution_theoretical_fwhm_lateral'].append(.353 * em / na)
+                theoretical_res["resolution_theoretical_fwhm_lateral"].append(
+                    0.353 * em / na
+                )
             except TypeError as e:
-                module_logger.warning('FWHM theoretical resolution could not be calculated. Verify configuration files.')
-                theoretical_res['resolution_theoretical_fwhm_lateral'].append(None)
+                module_logger.warning(
+                    "FWHM theoretical resolution could not be calculated. Verify configuration files."
+                )
+                theoretical_res["resolution_theoretical_fwhm_lateral"].append(None)
             try:
-                theoretical_res['resolution_theoretical_fwhm_axial'].append(None)  # TODO: find formula for fwhm axial resolution
+                theoretical_res["resolution_theoretical_fwhm_axial"].append(
+                    None
+                )  # TODO: find formula for fwhm axial resolution
             except TypeError as e:
-                module_logger.warning('FWHM theoretical resolution could not be calculated. Verify configuration files.')
-                theoretical_res['resolution_theoretical_fwhm_axial'].append(None)
+                module_logger.warning(
+                    "FWHM theoretical resolution could not be calculated. Verify configuration files."
+                )
+                theoretical_res["resolution_theoretical_fwhm_axial"].append(None)
 
         return theoretical_res
 
@@ -449,22 +531,32 @@ class WideFieldMicroscope(Microscope):
                   'resolution_theoretical_rayleigh_axial': list of axial resolutions for every channel,
                   'resolution_theoretical_rayleigh_units': string specifying units}
         """
-        theoretical_res = {'resolution_theoretical_rayleigh_lateral': [],
-                           'resolution_theoretical_rayleigh_axial': [],
-                           'resolution_theoretical_rayleigh_units': 'NANOMETER'}
-        na = self.get_setting('objective_lens_na', **kwargs)
-        ri = self.get_setting('objective_lens_refractive_index', **kwargs)
-        for em in self.get_setting('emission_wavelengths', **kwargs):
+        theoretical_res = {
+            "resolution_theoretical_rayleigh_lateral": [],
+            "resolution_theoretical_rayleigh_axial": [],
+            "resolution_theoretical_rayleigh_units": "NANOMETER",
+        }
+        na = self.get_setting("objective_lens_na", **kwargs)
+        ri = self.get_setting("objective_lens_refractive_index", **kwargs)
+        for em in self.get_setting("emission_wavelengths", **kwargs):
             try:
-                theoretical_res['resolution_theoretical_rayleigh_lateral'].append(.61 * em / na)
+                theoretical_res["resolution_theoretical_rayleigh_lateral"].append(
+                    0.61 * em / na
+                )
             except TypeError as e:
-                module_logger.warning('Rayleigh theoretical lateral resolution could not be calculated. Verify configuration files.')
-                theoretical_res['resolution_theoretical_rayleigh_lateral'].append(None)
+                module_logger.warning(
+                    "Rayleigh theoretical lateral resolution could not be calculated. Verify configuration files."
+                )
+                theoretical_res["resolution_theoretical_rayleigh_lateral"].append(None)
             try:
-                theoretical_res['resolution_theoretical_rayleigh_axial'].append(2 * em * ri / na ** 2)
+                theoretical_res["resolution_theoretical_rayleigh_axial"].append(
+                    2 * em * ri / na**2
+                )
             except TypeError as e:
-                module_logger.warning('Rayleigh theoretical axial resolution could not be calculated. Verify configuration files.')
-                theoretical_res['resolution_theoretical_rayleigh_axial'].append(None)
+                module_logger.warning(
+                    "Rayleigh theoretical axial resolution could not be calculated. Verify configuration files."
+                )
+                theoretical_res["resolution_theoretical_rayleigh_axial"].append(None)
 
         return theoretical_res
 
@@ -478,24 +570,31 @@ class WideFieldMicroscope(Microscope):
         return theoretical_res
 
     def get_nyquist(self, **kwargs):
-        """Returns a dictionary containing the nyquist sampling criteria values for every channel in image.
-        """
-        nyquist_delta = {'nyquist_lateral': [],
-                         'nyquist_axial': [],
-                         'nyquist_units': 'NANOMETER'}  # TODO: FIX units for nyquist and resolution. Get them from wavelength units.
-        na = self.get_setting('objective_lens_na', **kwargs)
-        ri = self.get_setting('objective_lens_refractive_index', **kwargs)
-        for em in self.get_setting('emission_wavelengths', **kwargs):
+        """Returns a dictionary containing the nyquist sampling criteria values for every channel in image."""
+        nyquist_delta = {
+            "nyquist_lateral": [],
+            "nyquist_axial": [],
+            "nyquist_units": "NANOMETER",
+        }  # TODO: FIX units for nyquist and resolution. Get them from wavelength units.
+        na = self.get_setting("objective_lens_na", **kwargs)
+        ri = self.get_setting("objective_lens_refractive_index", **kwargs)
+        for em in self.get_setting("emission_wavelengths", **kwargs):
             try:
-                nyquist_delta['nyquist_lateral'].append(em / (4 * ri * (na / ri)))
+                nyquist_delta["nyquist_lateral"].append(em / (4 * ri * (na / ri)))
             except TypeError as e:
-                module_logger.warning('Lateral Nyquist criterion could not be calculated. Verify configuration files.')
-                nyquist_delta['nyquist_lateral'].append(None)
+                module_logger.warning(
+                    "Lateral Nyquist criterion could not be calculated. Verify configuration files."
+                )
+                nyquist_delta["nyquist_lateral"].append(None)
             try:
-                nyquist_delta['nyquist_axial'].append(em / (2 * ri * (1 - cos(asin(na / ri)))))
+                nyquist_delta["nyquist_axial"].append(
+                    em / (2 * ri * (1 - cos(asin(na / ri))))
+                )
             except TypeError as e:
-                module_logger.warning('Axial Nyquist criterion could not be calculated. Verify configuration files.')
-                nyquist_delta['nyquist_axial'].append(None)
+                module_logger.warning(
+                    "Axial Nyquist criterion could not be calculated. Verify configuration files."
+                )
+                nyquist_delta["nyquist_axial"].append(None)
 
         return nyquist_delta
         #
