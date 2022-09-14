@@ -80,7 +80,7 @@ class ArgolightBAnalysis(Analysis):
         max_distance = self.get_metadata_values("spots_distance") * 0.4
 
         labels = segment_image(
-            image=self.get_data_values('argolight_b')',
+            image=self.get_data_values('argolight_b'),
             min_distance=min_distance,
             sigma=self.get_metadata_values('sigma'),
             method="local_max",
