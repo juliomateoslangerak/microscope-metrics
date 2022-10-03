@@ -82,7 +82,7 @@ class ArgolightBAnalysis(Analysis):
     def run(self):
         logger.info("Validating requirements...")
         if not self.validate_requirements():
-            logger.error("Metadata requirements ara not valid")
+            logger.error("Metadata requirements are not valid")
             return False
 
         logger.info("Analyzing spots image...")
@@ -320,7 +320,7 @@ class ArgolightEAnalysis(Analysis):
 
         logger.info("Validating requirements...")
         if not self.validate_requirements():
-            logger.error("Metadata requirements ara not valid")
+            logger.error("Metadata requirements are not valid")
             return False
 
         logger.info("Analyzing resolution...")
