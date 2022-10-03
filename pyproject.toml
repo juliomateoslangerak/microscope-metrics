@@ -6,7 +6,7 @@ authors = ["Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"]
 license = "GPL-3.0-only"
 
 [tool.poetry.dependencies]
-python = ">=3.7 <3.9"
+python = ">=3.8 <3.10"
 scikit-image = "^0.17.2"
 scipy = "^1.5.4"
 pandas = "^1.1.5"
