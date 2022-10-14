@@ -11,17 +11,6 @@ testpaths = [
     "tests/unit"
 ]
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-requires = tox-poetry-dev-dependencies
-envlist = py38, py39, py310
-
-[testenv]
-poetry_add_dev_dependencies = True
-commands = pytest
-"""
-
 [tool.poetry.dependencies]
 python = ">=3.8 <3.10"
 scikit-image = "^0.19.3"
@@ -36,6 +25,7 @@ pytest = "^6.2.0"
 pytest-cov = "^4.0.0"
 jupyter = "^1.0.0"
 tox = "^3.26.0"
+tox-poetry = "^0.4.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
