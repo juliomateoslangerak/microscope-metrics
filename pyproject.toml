@@ -6,13 +6,13 @@ authors = ["Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"]
 license = "GPL-3.0-only"
 
 [tool.pytest.ini_options]
-addopts = "--cov=microscope-metrics"
+#addopts = "--cov=microscope-metrics"
 testpaths = [
     "tests/unit"
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8 <3.10"
+python = ">=3.8 <3.11"
 scikit-image = "^0.19.3"
 scipy = "^1.5.4"
 pandas = "^1.1.5"
@@ -25,7 +25,6 @@ pytest = "^6.2.0"
 pytest-cov = "^4.0.0"
 jupyter = "^1.0.0"
 tox = "^3.26.0"
-tox-poetry = "^0.4.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
