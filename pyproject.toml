@@ -5,17 +5,28 @@ description = "A package providing analysis routines to measure the performance 
 authors = ["Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"]
 license = "GPL-3.0-only"
 
+[tool.pytest.ini_options]
+addopts = "--cov"
+testpaths = [
+    "tests"
+]
+
 [tool.poetry.dependencies]
-python = ">=3.7 <3.9"
-scikit-image = "^0.17.2"
+python = ">=3.8 <3.11"
+scikit-image = "^0.19.3"
 scipy = "^1.5.4"
 pandas = "^1.1.5"
 pydantic = "^1.7.3"
 
-[tool.poetry.dev-dependencies]
-blacked = "^0.1.0-alpha.4"
-poetry = "^1.1.4"
+[tool.poetry.group.test.dependencies]
 pytest = "^6.2.0"
+pytest-cov = "^4.0.0"
+tox = "^3.26.0"
+
+[tool.poetry.group.dev.dependencies]
+blacked = "^0.1.0-alpha.4"
+poetry = "^1.2.2"
+jupyter = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -89,14 +89,18 @@ class MetricsDataset:
         str_output = ["DATA requirements:\n"]
         for name, req in self.data.items():
             str_output.append("----------")
-            str_output.append("Name: " + name)
-            str_output.append(req.__repr__())
+            str_output.append(f"Name: {name}")
+            str_output.append(f"Description: {req.description}")
+            str_output.append(f"Optional: {req.optional}")
         str_output.append("----------\n")
         str_output.append("METADATA requirements:\n")
         for name, req in self.metadata.items():
             str_output.append("----------")
             str_output.append("Name: " + name)
-            str_output.append(req.__repr__())
+            str_output.append(f"Description: {req.description}")
+            str_output.append(f"Optional: {req.optional}")
+            str_output.append(f"Units: {req.units}")
+            str_output.append(f"Default: {req.default}")
         str_output.append("----------")
         str_output = "\n".join(str_output)
         return str_output

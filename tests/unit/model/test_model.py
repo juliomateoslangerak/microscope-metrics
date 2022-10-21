@@ -128,20 +128,24 @@ def test_describe_requirements(filled_input_dataset):
                            '\n'
                            '----------\n'
                            'Name: some_data\n'
-                           "some_data(value=None, description='the description of some data', "
-                           'optional=False)\n'
+                           'Description: the description of some data\n'
+                           'Optional: False\n'
                            '----------\n'
                            '\n'
                            'METADATA requirements:\n'
                            '\n'
                            '----------\n'
                            'Name: pixel_size\n'
-                           "pixel_size(value=None, description='Well you bet how big this is...', "
-                           'optional=False, units=None, default=None)\n'
+                           'Description: Well you bet how big this is...\n'
+                           'Optional: False\n'
+                           'Units: None\n'
+                           'Default: None\n'
                            '----------\n'
                            'Name: wavelength\n'
-                           "wavelength(value=None, description='Well you bet what color this is...', "
-                           'optional=True, units=None, default=None)\n'
+                           'Description: Well you bet what color this is...\n'
+                           'Optional: True\n'
+                           'Units: None\n'
+                           'Default: None\n'
                            '----------')
 
 
