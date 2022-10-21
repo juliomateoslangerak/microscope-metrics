@@ -1,4 +1,0 @@
-scikit-image
-scipy
-pandas
-pydantic
