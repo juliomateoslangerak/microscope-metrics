@@ -6,7 +6,7 @@ authors = ["Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"]
 license = "GPL-3.0-only"
 
 [tool.pytest.ini_options]
-#addopts = "--cov=microscope-metrics"
+addopts = "--cov"
 testpaths = [
     "tests"
 ]
