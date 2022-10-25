@@ -1,5 +1,6 @@
 /venvs/
 /tests/data/*
+/dist/
 
 /.pytest_cache/
 /.tox/
