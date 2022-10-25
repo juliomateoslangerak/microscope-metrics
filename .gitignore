@@ -1,3 +1,7 @@
 /venvs/
 /tests/data/*
 
+/.pytest_cache/
+/.tox/
+/.venv/
+/.coverage
