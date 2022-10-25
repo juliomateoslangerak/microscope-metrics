@@ -3,7 +3,15 @@ name = "microscopemetrics"
 version = "0.1.0"
 description = "A package providing analysis routines to measure the performance of micrsocopes used in biomedical research"
 authors = ["Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"]
+maintainers = [
+    "Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>"
+]
 license = "GPL-3.0-only"
+readme = "README.md"
+homepage = "https://github.com/MontpellierRessourcesImagerie/microscope-metrics"
+repository = "https://github.com/MontpellierRessourcesImagerie/microscope-metrics"
+documentation = "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/tree/master/docs"
+keywords = ["microscopy", "metrology"]
 
 [tool.pytest.ini_options]
 addopts = "--cov"
