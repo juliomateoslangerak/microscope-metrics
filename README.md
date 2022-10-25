@@ -1,4 +1,3 @@
-# OMERO.metrics
-A python library to run micrsocope metrology
-
-Try it here [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/juliomateoslangerak/microscope-metrics/HEAD)
+# microscope-metrics
+A python library providing a number of analysis routines extracting relevant metrics from the images acquired on a 
+number of standardized samples. 
