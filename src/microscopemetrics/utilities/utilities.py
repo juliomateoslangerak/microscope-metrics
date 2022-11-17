@@ -138,3 +138,38 @@ class MetricsConfig(ConfigParser):
                 f'Some element in config option "{option}" in section "{section}" cannot be coerced into a float'
             )
             raise e
+
+
+def computeSaturationRatio(image, workIn3D):
+
+    bitDepth = image.dtype.itemsize * 8
+
+    if len(image.shape) == 2:
+        image.reshape(image.shape[0], image.shape[1],1)
+
+    maxLimit = pow(2.0, bitDepth) - 1.0
+    max = 0.0
+    saturatedArea = 0.0
+    totalArea = 0.0
+    binary_mask = np.ones((image.shape[0], image.shape[1]), dtype=bool)
+
+    if workIn3D:
+      for z in range(image.shape[3]):
+          for i in range(image.shape[2]):
+              if np.max(image[:,:,i,z]) == maxLimit:
+                  binary_mask = np.logical_and(binary_mask,image==maxLimit)
+          saturatedArea += binary_mask.sum()
+       for i in range(image.shape):
+           totalArea *= image.shape[i]
+    else:
+      if np.max(image) == maxLimit:
+        for i in range(image.shape[2]):
+           binary_mask = np.logical_and(binary_mask,image==maxLimit)
+
+        saturatedArea = binary_mask.sum()
+
+      for i in range(image.shape):
+          totalArea *= image.shape[i]
+
+    output = saturatedArea / totalArea
+    return output
