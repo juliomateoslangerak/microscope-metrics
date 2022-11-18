@@ -141,7 +141,14 @@ class MetricsConfig(ConfigParser):
 
 
 def computeSaturationRatio(image, workIn3D):
+    """
+    Python implementation of Metrolo_QC function
+    that was developped by Julien Cau.
 
+    This function computes the saturation ratio
+    of an image to determine if it ids acceptable
+    to run metrics
+    """
     bitDepth = image.dtype.itemsize * 8
 
     if len(image.shape) == 2:
