@@ -140,7 +140,22 @@ class MetricsConfig(ConfigParser):
             raise e
 
 
-def computeSaturationRatio(image, workIn3D):
+
+def get_max_limit(channel, thresh=0.01):
+    """
+    Checks if camera bitsize is not
+    in computer format(10,11,12 bits)
+    and return MaxLimit for saturation
+    """
+    bitdepths =[10,11,12]
+
+    for i in bitdepths:
+       if np.count_nonzero(np.max(channel)== pow(2,i)-1) > thresh:
+           return pow(2,i) - 1
+
+    return np.iinfo(channel).max
+
+def is_saturated(channel, thresh=0.03, bitDepth=None):
     """
     Python implementation of Metrolo_QC function
     that was developped by Julien Cau.
@@ -149,34 +164,18 @@ def computeSaturationRatio(image, workIn3D):
     of an image to determine if it ids acceptable
     to run metrics
     """
-    bitDepth = image.dtype.itemsize * 8
 
-    if len(image.shape) == 2:
-        image.reshape(image.shape[0], image.shape[1],1)
-
-    maxLimit = pow(2.0, bitDepth) - 1.0
-    max = 0.0
-    saturatedArea = 0.0
-    totalArea = 0.0
-    binary_mask = np.ones((image.shape[0], image.shape[1]), dtype=bool)
-
-    if workIn3D:
-      for z in range(image.shape[3]):
-          for i in range(image.shape[2]):
-              if np.max(image[:,:,i,z]) == maxLimit:
-                  binary_mask = np.logical_and(binary_mask,image==maxLimit)
-          saturatedArea += binary_mask.sum()
-       for i in range(image.shape):
-           totalArea *= image.shape[i]
+    if not bitDepth:
+        maxLimit = get_max_limit(channel.dtype)
     else:
-      if np.max(image) == maxLimit:
-        for i in range(image.shape[2]):
-           binary_mask = np.logical_and(binary_mask,image==maxLimit)
+        maxLimit = pow(2,bitDepth) - 1
 
-        saturatedArea = binary_mask.sum()
+    sat = (channel==maxLimit)
 
-      for i in range(image.shape):
-          totalArea *= image.shape[i]
+    sat_ratio = np.count_nonzero(sat) / channel.size
 
-    output = saturatedArea / totalArea
-    return output
+    if sat_ratio > thresh:
+        return True
+
+    return False
+
