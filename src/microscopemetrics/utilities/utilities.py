@@ -168,7 +168,7 @@ def is_saturated(channel, thresh=0.03, bitDepth=None):
     to run metrics
     """
 
-    if not bitDepth:
+    if bitDepth is None:
         maxLimit = get_max_limit(channel.dtype)
     else:
         maxLimit = pow(2,bitDepth) - 1
