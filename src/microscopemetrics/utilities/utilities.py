@@ -4,7 +4,7 @@ from configparser import ConfigParser
 import json
 from scipy import special
 import numpy as np
-
+import warnings
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
@@ -151,6 +151,7 @@ def get_max_limit(channel, thresh=0.01):
 
     for i in bitdepths:
        if np.count_nonzero(np.max(channel)== pow(2,i)-1) > thresh:
+           warnings.warn('Camera bitdepth is not a power of two')
            return pow(2,i) - 1
 
     return np.iinfo(channel).max
