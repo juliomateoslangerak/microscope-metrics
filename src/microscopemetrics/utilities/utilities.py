@@ -4,7 +4,7 @@ from configparser import ConfigParser
 import json
 from scipy import special
 import numpy as np
-
+import warnings
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
@@ -138,3 +138,47 @@ class MetricsConfig(ConfigParser):
                 f'Some element in config option "{option}" in section "{section}" cannot be coerced into a float'
             )
             raise e
+
+
+
+def get_max_limit(channel_dtype, thresh=0.01):
+    """
+    Checks if camera bitsize is not
+    in computer format(10,11,12 bits)
+    and return MaxLimit for saturation
+    """
+    bitdepths =[10,11,12]
+    if channel_dtype.kind == 'u':
+       for i in bitdepths:
+          if np.count_nonzero(np.max(channel_dtype)== pow(2,i)-1) > thresh:
+              warnings.warn('Camera bitdepth is not a power of two')
+              return pow(2,i) - 1
+
+        return np.iinfo(channel_dtype).max
+    elif channel_type.kind == 'f':
+        return np.finfo(channel_dtype).max
+
+def is_saturated(channel, thresh=0.03, bitDepth=None):
+    """
+    Python implementation of Metrolo_QC function
+    that was developped by Julien Cau.
+
+    This function computes the saturation ratio
+    of an image to determine if it ids acceptable
+    to run metrics
+    """
+
+    if bitDepth is None:
+        maxLimit = get_max_limit(channel.dtype)
+    else:
+        maxLimit = pow(2,bitDepth) - 1
+
+    sat = (channel==maxLimit)
+
+    sat_ratio = np.count_nonzero(sat) / channel.size
+
+    if sat_ratio > thresh:
+        return True
+
+    return False
+
