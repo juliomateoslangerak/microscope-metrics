@@ -102,6 +102,7 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     return int(r), int(g), int(b)
 
 
+# This class is not used after introduction of pydantic.
 class MetricsConfig(ConfigParser):
     def getjson(self, section, option, **kwargs):
         value = self.get(section, option, **kwargs)
