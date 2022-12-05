@@ -1,15 +1,14 @@
-from microscopemetrics.utilities import utilities
-import pytest
-from tests.test_utilities import get_file
 import numpy as np
 
-
-@pytest.fixture
-def is_saturated_b():
-    data = np.zeros((100, 100), "uint8")
-    data[10, 10] = 255
-    return utilities.is_saturated(data)
+from microscopemetrics.utilities import utilities
 
 
-def test_run_is_saturated():
-    assert not (is_saturated_b())
+def test_is_saturated():
+    unsaturated_data = np.zeros((10, 10), "uint8")
+    unsaturated_data[0:5, ...] = 100
+    saturated_data = np.zeros((10, 10), "uint8")
+    saturated_data[0:5, ...] = 255  # 50% of the image is saturated
+    assert not utilities.is_saturated(unsaturated_data)
+    assert not utilities.is_saturated(unsaturated_data, thresh=0.4)
+    assert utilities.is_saturated(saturated_data)
+    assert not utilities.is_saturated(saturated_data, thresh=0.6)

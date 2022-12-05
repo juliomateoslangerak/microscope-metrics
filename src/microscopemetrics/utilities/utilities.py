@@ -96,10 +96,10 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
         r = 0.0
         g = 0.0
         b = 0.0
-    r *= 255
-    g *= 255
-    b *= 255
-    return int(r), int(g), int(b)
+    r *= int(r * 255)
+    g *= int(g * 255)
+    g *= int(g * 255)
+    return r, g, b
 
 
 # This class is not used after introduction of pydantic.
@@ -147,8 +147,8 @@ def get_max_limit(channel_dtype, thresh=0.01):
     """
     Checks if camera bitsize is not in computer format(10,11,12 bits) and return MaxLimit for saturation
     """
-    bit_depths = [10, 11, 12]
     if channel_dtype.kind == "u":
+        bit_depths = [10, 11, 12]
         for i in bit_depths:
             if np.count_nonzero(np.max(channel_dtype) == pow(2, i) - 1) > thresh:
                 warnings.warn("Camera bit depth is not a power of two")
@@ -159,7 +159,7 @@ def get_max_limit(channel_dtype, thresh=0.01):
         return np.finfo(channel_dtype).max
 
 
-def is_saturated(channel, thresh=0.03, bit_depth=None):
+def is_saturated(channel, thresh=0.0, bit_depth=None):
     """
     Python implementation of MetroloJ_QC function that was developed by Julien Cau.
 
@@ -175,7 +175,4 @@ def is_saturated(channel, thresh=0.03, bit_depth=None):
 
     sat_ratio = np.count_nonzero(sat) / channel.size
 
-    if sat_ratio > thresh:
-        return True
-
-    return False
+    return sat_ratio > thresh
