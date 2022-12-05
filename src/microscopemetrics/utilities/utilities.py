@@ -155,7 +155,7 @@ def get_max_limit(channel_dtype, thresh=0.01):
                 return pow(2,i) - 1
 
         return np.iinfo(channel_dtype).max
-    elif channel_type.kind == 'f':
+    elif channel_dtype.kind == 'f':
         return np.finfo(channel_dtype).max
 
 def is_saturated(channel, thresh=0.03, bitDepth=None):
