@@ -149,16 +149,16 @@ def get_max_limit(channel_dtype, thresh=0.01):
     """
     bitdepths =[10,11,12]
     if channel_dtype.kind == 'u':
-       for i in bitdepths:
-          if np.count_nonzero(np.max(channel_dtype)== pow(2,i)-1) > thresh:
-              warnings.warn('Camera bitdepth is not a power of two')
-              return pow(2,i) - 1
+        for i in bitdepths:
+            if np.count_nonzero(np.max(channel_dtype)== pow(2,i)-1) > thresh:
+                warnings.warn('Camera bitdepth is not a power of two')
+                return pow(2,i) - 1
 
         return np.iinfo(channel_dtype).max
-    elif channel_type.kind == 'f':
+    elif channel_dtype.kind == 'f':
         return np.finfo(channel_dtype).max
 
-def is_saturated(channel, thresh=0.03, bitDepth=None):
+def is_saturated(channel, thresh=0.03, bit_depth=None):
     """
     Python implementation of Metrolo_QC function
     that was developped by Julien Cau.
@@ -168,10 +168,10 @@ def is_saturated(channel, thresh=0.03, bitDepth=None):
     to run metrics
     """
 
-    if bitDepth is None:
+    if bit_depth is None:
         maxLimit = get_max_limit(channel.dtype)
     else:
-        maxLimit = pow(2,bitDepth) - 1
+        maxLimit = pow(2, bit_depth) - 1
 
     sat = (channel==maxLimit)
 
