@@ -147,8 +147,8 @@ def get_max_limit(channel_dtype, thresh=0.01):
     """
     Checks if camera bitsize is not in computer format(10,11,12 bits) and return MaxLimit for saturation
     """
-    bit_depths = [10, 11, 12]
     if channel_dtype.kind == "u":
+        bit_depths = [10, 11, 12]
         for i in bit_depths:
             if np.count_nonzero(np.max(channel_dtype) == pow(2, i) - 1) > thresh:
                 warnings.warn("Camera bit depth is not a power of two")
