@@ -145,15 +145,13 @@ class MetricsConfig(ConfigParser):
 
 def get_max_limit(channel_dtype, thresh=0.01):
     """
-    Checks if camera bitsize is not
-    in computer format(10,11,12 bits)
-    and return MaxLimit for saturation
+    Checks if camera bitsize is not in computer format(10,11,12 bits) and return MaxLimit for saturation
     """
-    bitdepths = [10, 11, 12]
+    bit_depths = [10, 11, 12]
     if channel_dtype.kind == "u":
-        for i in bitdepths:
+        for i in bit_depths:
             if np.count_nonzero(np.max(channel_dtype) == pow(2, i) - 1) > thresh:
-                warnings.warn("Camera bitdepth is not a power of two")
+                warnings.warn("Camera bit depth is not a power of two")
                 return pow(2, i) - 1
 
         return np.iinfo(channel_dtype).max
@@ -163,20 +161,17 @@ def get_max_limit(channel_dtype, thresh=0.01):
 
 def is_saturated(channel, thresh=0.03, bit_depth=None):
     """
-    Python implementation of Metrolo_QC function
-    that was developped by Julien Cau.
+    Python implementation of MetroloJ_QC function that was developed by Julien Cau.
 
-    This function computes the saturation ratio
-    of an image to determine if it ids acceptable
-    to run metrics
+    This function computes the saturation ratio of an image to determine if it is acceptable to run metrics
     """
 
     if bit_depth is None:
-        maxLimit = get_max_limit(channel.dtype)
+        max_limit = get_max_limit(channel.dtype)
     else:
-        maxLimit = pow(2, bit_depth) - 1
+        max_limit = pow(2, bit_depth) - 1
 
-    sat = channel == maxLimit
+    sat = channel == max_limit
 
     sat_ratio = np.count_nonzero(sat) / channel.size
 
