@@ -25,6 +25,9 @@ from skimage.transform import probabilistic_hough_line
 from scipy.spatial import distance
 from math import atan2
 from pydantic.color import Color
+from skimage import draw
+from skimage.measure import regionprops
+import matplotlib.pyplot as plt
 
 
 def get_norm_intensity_matrix(img):
@@ -410,8 +413,8 @@ class FieldHomogeneityAnalysis(
 
 
         # 1. get normalized intensity profile
-        norm_intensity_profile = get_norm_intensity_profile(img)
-        norm_intensity_data = get_norm_intensity_matrix(img)
+        norm_intensity_profile = get_norm_intensity_profile(image)
+        norm_intensity_data = get_norm_intensity_matrix(image)
 
         # 2. get microscopy info
         #microscopy_info_table = get_microscopy_info(
@@ -419,13 +422,13 @@ class FieldHomogeneityAnalysis(
            )
 
         # 3. get centers' locations
-        max_intensity_region_table = get_max_intensity_region_table(img)
+        max_intensity_region_table = get_max_intensity_region_table(image)
 
         # 4. get intensity profiles
-        intensity_plot, intensity_plot_data = get_intensity_plot(img)
+        intensity_plot, intensity_plot_data = get_intensity_plot(image)
 
         # 5. get profiles statistics
-        profile_stat_table = get_profile_statistics_table(img)
+        profile_stat_table = get_profile_statistics_table(image)
 
 
         # We may add some rois to the output
@@ -460,9 +463,9 @@ class FieldHomogeneityAnalysis(
         # We append the dataframe into the output
         self.output.append(
             model.Table(
-                name="lines_table",
-                description="Dataframe containing coordinates, length and angle for every line",
-                table=lines_df,
+                name="max_intensity_region_table",
+                description="Dataframe containing coordinates",
+                table=max_intensity_data,
             )
         )
 
