@@ -1,10 +1,12 @@
 # This is a place to hold mere utilities for metrics
 
-from configparser import ConfigParser
 import json
-from scipy import special
-import numpy as np
 import warnings
+from configparser import ConfigParser
+
+import numpy as np
+from scipy import special
+
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):

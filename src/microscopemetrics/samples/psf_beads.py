@@ -1,19 +1,16 @@
+import logging
 from typing import Tuple
 
 import numpy as np
 from pandas import DataFrame
-from skimage.filters import gaussian
-from skimage.feature import peak_local_max
-from scipy.optimize import curve_fit, fsolve
 from pydantic.color import Color
+from scipy.optimize import curve_fit, fsolve
+from skimage.feature import peak_local_max
+from skimage.filters import gaussian
 
-from ..utilities.utilities import airy_fun, gaussian_fun
-
-# Import sample superclass
 from microscopemetrics.samples import *
 
-# Creating logging services
-import logging
+from ..utilities.utilities import airy_fun, gaussian_fun
 
 module_logger = logging.getLogger("metrics.samples.psf_beads")
 
