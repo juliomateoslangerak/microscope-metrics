@@ -1,9 +1,10 @@
-import numpy as np
+import logging
+from datetime import datetime
 from itertools import product
 
-# from metrics.interface import omero as interface
-from datetime import datetime
-import logging
+import numpy as np
+
+from microscopemetrics.devices import devices
 
 # import inspect
 # from os import path
@@ -14,8 +15,6 @@ import logging
 # import dataset analysis
 # from microscopemetrics.samples.dataset import DatasetConfigurator
 
-# import devices
-from microscopemetrics.devices import devices
 
 # import samples
 # from microscopemetrics.samples.argolight import ArgolightConfigurator

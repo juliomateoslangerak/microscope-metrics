@@ -1,10 +1,12 @@
 # This is a place to hold mere utilities for metrics
 
-from configparser import ConfigParser
 import json
-from scipy import special
-import numpy as np
 import warnings
+from configparser import ConfigParser
+
+import numpy as np
+from scipy import special
+
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
@@ -100,6 +102,7 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     return int(r), int(g), int(b)
 
 
+# This class is not used after introduction of pydantic.
 class MetricsConfig(ConfigParser):
     def getjson(self, section, option, **kwargs):
         value = self.get(section, option, **kwargs)
@@ -140,40 +143,35 @@ class MetricsConfig(ConfigParser):
             raise e
 
 
-
 def get_max_limit(channel_dtype, thresh=0.01):
     """
-    Checks if camera bitsize is not
-    in computer format(10,11,12 bits)
-    and return MaxLimit for saturation
+    Checks if camera bitsize is not in computer format(10,11,12 bits) and return MaxLimit for saturation
     """
-    bitdepths =[10,11,12]
-    if channel_dtype.kind == 'u':
-       for i in bitdepths:
-          if np.count_nonzero(np.max(channel_dtype)== pow(2,i)-1) > thresh:
-              warnings.warn('Camera bitdepth is not a power of two')
-              return pow(2,i) - 1
+    bit_depths = [10, 11, 12]
+    if channel_dtype.kind == "u":
+        for i in bit_depths:
+            if np.count_nonzero(np.max(channel_dtype) == pow(2, i) - 1) > thresh:
+                warnings.warn("Camera bit depth is not a power of two")
+                return pow(2, i) - 1
 
         return np.iinfo(channel_dtype).max
-    elif channel_type.kind == 'f':
+    elif channel_dtype.kind == "f":
         return np.finfo(channel_dtype).max
 
-def is_saturated(channel, thresh=0.03, bitDepth=None):
-    """
-    Python implementation of Metrolo_QC function
-    that was developped by Julien Cau.
 
-    This function computes the saturation ratio
-    of an image to determine if it ids acceptable
-    to run metrics
+def is_saturated(channel, thresh=0.03, bit_depth=None):
+    """
+    Python implementation of MetroloJ_QC function that was developed by Julien Cau.
+
+    This function computes the saturation ratio of an image to determine if it is acceptable to run metrics
     """
 
-    if bitDepth is None:
-        maxLimit = get_max_limit(channel.dtype)
+    if bit_depth is None:
+        max_limit = get_max_limit(channel.dtype)
     else:
-        maxLimit = pow(2,bitDepth) - 1
+        max_limit = pow(2, bit_depth) - 1
 
-    sat = (channel==maxLimit)
+    sat = channel == max_limit
 
     sat_ratio = np.count_nonzero(sat) / channel.size
 
@@ -181,4 +179,3 @@ def is_saturated(channel, thresh=0.03, bitDepth=None):
         return True
 
     return False
-

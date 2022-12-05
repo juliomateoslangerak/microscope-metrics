@@ -1,12 +1,10 @@
-from enum import Enum, EnumMeta
+import logging
 from configparser import NoOptionError
-from math import sin, asin, cos
-
+from enum import Enum, EnumMeta
+from math import asin, cos, sin
 
 # from microscopemetrics.interface import omero as interface
 
-# Creating logging services
-import logging
 
 module_logger = logging.getLogger("metrics.devices.devices")
 

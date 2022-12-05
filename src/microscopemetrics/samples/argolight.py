@@ -1,23 +1,20 @@
-# Import sample infrastructure
 from itertools import product
+from typing import List, Tuple, Union
 
-from microscopemetrics.samples import *
-
-from typing import Union, Tuple, List
-
-# Import analysis tools
 import numpy as np
 from pandas import DataFrame
-from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
-from scipy.signal import find_peaks
-from scipy.optimize import curve_fit
 from scipy.interpolate import griddata
-from microscopemetrics.analysis.tools import (
-    segment_image,
-    compute_distances_matrix,
-    compute_spots_properties,
-)
-from ..utilities.utilities import multi_airy_fun, airy_fun
+from scipy.optimize import curve_fit
+from scipy.signal import find_peaks
+from skimage.transform import \
+    hough_line  # hough_line_peaks, probabilistic_hough_line
+
+from microscopemetrics.analysis.tools import (compute_distances_matrix,
+                                              compute_spots_properties,
+                                              segment_image)
+from microscopemetrics.samples import *
+
+from ..utilities.utilities import airy_fun, multi_airy_fun
 
 
 @register_image_analysis

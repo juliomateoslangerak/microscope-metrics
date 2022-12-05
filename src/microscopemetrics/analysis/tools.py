@@ -1,16 +1,17 @@
 """These are some possibly useful code snippets"""
-from pandas import DataFrame
-from skimage.filters import threshold_otsu, apply_hysteresis_threshold, gaussian
-from skimage.segmentation import clear_border
-from skimage.measure import label, regionprops
-from skimage.morphology import closing, square, cube, octahedron, ball
-from skimage.feature import peak_local_max
-from scipy.spatial.distance import cdist
-from scipy import ndimage
-import numpy as np
+import logging
 from itertools import permutations
 
-import logging
+import numpy as np
+from pandas import DataFrame
+from scipy import ndimage
+from scipy.spatial.distance import cdist
+from skimage.feature import peak_local_max
+from skimage.filters import (apply_hysteresis_threshold, gaussian,
+                             threshold_otsu)
+from skimage.measure import label, regionprops
+from skimage.morphology import ball, closing, cube, octahedron, square
+from skimage.segmentation import clear_border
 
 # Creating logging services
 module_logger = logging.getLogger(__name__)

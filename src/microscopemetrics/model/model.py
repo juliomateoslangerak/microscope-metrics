@@ -3,14 +3,13 @@ It creates a few classes representing input data and output data
 """
 from abc import ABC
 from dataclasses import field
-from pydantic.dataclasses import dataclass
-from pydantic import validator, BaseConfig, create_model
-from pydantic.color import Color
+from typing import Any, List, Tuple, Union
 
-from pandas import DataFrame
 from numpy import ndarray
-
-from typing import Union, List, Tuple, Any
+from pandas import DataFrame
+from pydantic import BaseConfig, create_model, validator
+from pydantic.color import Color
+from pydantic.dataclasses import dataclass
 
 
 class MetadataConfig(BaseConfig):
