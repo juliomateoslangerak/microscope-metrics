@@ -96,10 +96,10 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
         r = 0.0
         g = 0.0
         b = 0.0
-    r *= 255
-    g *= 255
-    b *= 255
-    return int(r), int(g), int(b)
+    r *= int(r * 255)
+    g *= int(g * 255)
+    g *= int(g * 255)
+    return r, g, b
 
 
 # This class is not used after introduction of pydantic.
