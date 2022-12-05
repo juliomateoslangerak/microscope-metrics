@@ -175,7 +175,4 @@ def is_saturated(channel, thresh=0.03, bit_depth=None):
 
     sat_ratio = np.count_nonzero(sat) / channel.size
 
-    if sat_ratio > thresh:
-        return True
-
-    return False
+    return sat_ratio > thresh
