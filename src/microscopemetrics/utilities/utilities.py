@@ -159,7 +159,7 @@ def get_max_limit(channel_dtype, thresh=0.01):
         return np.finfo(channel_dtype).max
 
 
-def is_saturated(channel, thresh=0.03, bit_depth=None):
+def is_saturated(channel, thresh=0.0, bit_depth=None):
     """
     Python implementation of MetroloJ_QC function that was developed by Julien Cau.
 
