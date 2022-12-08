@@ -24,7 +24,6 @@ def _segment_channel(
     sigma,
     low_corr_factor,
     high_corr_factor,
-    indices,
 ):
     """Segment a channel (3D numpy array)"""
     if threshold is None:
@@ -45,10 +44,9 @@ def _segment_channel(
             channel,
             min_distance=min_distance,
             threshold_abs=(threshold * 0.5),
-            indices=indices,
         )
         thresholded = np.copy(channel)
-        thresholded[peaks] = thresholded.max()
+        thresholded[tuple(peaks.T)] = thresholded.max()
         thresholded = apply_hysteresis_threshold(
             thresholded,
             low=threshold * low_corr_factor,
@@ -69,7 +67,6 @@ def segment_image(
     method="local_max",
     low_corr_factors=None,
     high_corr_factors=None,
-    indices=False,
 ):
     """Segment an image and return a labels object.
     Image must be provided as zctxy numpy array
@@ -103,7 +100,6 @@ def segment_image(
                 sigma=sigma,
                 low_corr_factor=low_corr_factors[c],
                 high_corr_factor=high_corr_factors[c],
-                indices=indices,
             )
     return labels_image
 

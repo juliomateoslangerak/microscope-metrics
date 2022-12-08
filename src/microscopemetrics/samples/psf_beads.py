@@ -139,7 +139,7 @@ class PSFBeadsAnalysis(Analysis):
 
         # Find bead centers
         positions_2d = peak_local_max(
-            image=image_mip, threshold_rel=0.2, min_distance=5, indices=True
+            image=image_mip, threshold_rel=0.2, min_distance=5
         )
         # Add the mas intensity value in z
         positions_3d = np.insert(
