@@ -32,7 +32,7 @@ def _segment_channel(
 
     if sigma is not None:
         channel = gaussian(
-            image=channel, multichannel=False, sigma=sigma, preserve_range=True
+            image=channel, sigma=sigma, preserve_range=True, channel_axis=None
         )
 
     if method == "hysteresis":  # We may try here hysteresis threshold
