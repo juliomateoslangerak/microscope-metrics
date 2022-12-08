@@ -7,8 +7,7 @@ from pandas import DataFrame
 from scipy import ndimage
 from scipy.spatial.distance import cdist
 from skimage.feature import peak_local_max
-from skimage.filters import (apply_hysteresis_threshold, gaussian,
-                             threshold_otsu)
+from skimage.filters import apply_hysteresis_threshold, gaussian, threshold_otsu
 from skimage.measure import label, regionprops
 from skimage.morphology import ball, closing, cube, octahedron, square
 from skimage.segmentation import clear_border
