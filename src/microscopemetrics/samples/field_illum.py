@@ -416,11 +416,6 @@ class FieldHomogeneityAnalysis(
         norm_intensity_profile = get_norm_intensity_profile(image)
         norm_intensity_data = get_norm_intensity_matrix(image)
 
-        # 2. get microscopy info
-        #microscopy_info_table = get_microscopy_info(
-        #    microscope_type, wavelength, NA, sampling_rate, pinhole
-           )
-
         # 3. get centers' locations
         max_intensity_region_table = get_max_intensity_region_table(image)
 
@@ -465,28 +460,35 @@ class FieldHomogeneityAnalysis(
             model.Table(
                 name="max_intensity_region_table",
                 description="Dataframe containing coordinates",
-                table=max_intensity_data,
+                table=max_intensity_region_table,
             )
         )
 
-        # Lets extract some statistics...
-        stats = {
-            "mean_length": lines_df.length.mean(),
-            "median_length": lines_df.length.median(),
-            "std_length": lines_df.length.std(),
-            "mean_angle": lines_df.angle.mean(),
-            "median_angle": lines_df.angle.median(),
-            "std_angle": lines_df.angle.std(),
-        }
-
-        # ... and save them as key-value pairs
         self.output.append(
-            model.KeyValues(
-                name="stats",
-                description="Some basic statistics about the lines found",
-                key_values=stats,
+            model.Table(
+                name="norm_intensity_data",
+                description="Dataframe containing coordinates",
+                table=norm_intensity_data,
             )
         )
+
+        self.output.append(
+            model.Table(
+                name="intensity_plot_data",
+                description="Dataframe containing coordinates",
+                table=intensity_plot_data,
+            )
+        )
+
+        self.output.append(
+            model.Table(
+                name="profile_stat_table",
+                description="Dataframe containing coordinates",
+                table=profile_stat_table,
+            )
+        )
+
+
 
         # And that's about it. Don't forget to return True at the end
         return True
