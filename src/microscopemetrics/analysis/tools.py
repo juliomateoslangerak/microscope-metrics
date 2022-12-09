@@ -3,7 +3,7 @@ import logging
 from itertools import permutations
 
 import numpy as np
-from pandas import DataFrame
+import pandas as pd
 from scipy import ndimage
 from scipy.spatial.distance import cdist
 from skimage.feature import peak_local_max
@@ -180,29 +180,31 @@ def compute_distances_matrix(positions, max_distance, pixel_size=None):
     for a, b in channel_permutations:
         distances_matrix = cdist(positions[a], positions[b], w=pixel_size)
 
-        distances_df = DataFrame()
+        distances_ls = []
 
         for i, (pos_A, d) in enumerate(zip(positions[a], distances_matrix)):
             if d.min() < max_distance:
-                distances_df = distances_df.append(
-                    {
-                        "channel_a": a,
-                        "channel_b": b,
-                        "z_coord_a": pos_A[0],
-                        "y_coord_a": pos_A[1],
-                        "x_coord_a": pos_A[2],
-                        "z_coord_b": positions[b][d.argmin()][0],
-                        "y_coord_b": positions[b][d.argmin()][1],
-                        "x_coord_b": positions[b][d.argmin()][2],
-                        "z_dist": pos_A[0] - positions[b][d.argmin()][0],
-                        "y_dist": pos_A[1] - positions[b][d.argmin()][1],
-                        "x_dist": pos_A[2] - positions[b][d.argmin()][2],
-                        "dist_3d": d.min(),
-                        "labels_a": i,
-                        "labels_b": d.argmin(),
-                    },
-                    ignore_index=True,
+                distances_ls.append(
+                    pd.DataFrame(
+                        {
+                            "channel_a": [a],
+                            "channel_b": [b],
+                            "z_coord_a": [pos_A[0]],
+                            "y_coord_a": [pos_A[1]],
+                            "x_coord_a": [pos_A[2]],
+                            "z_coord_b": [positions[b][d.argmin()][0]],
+                            "y_coord_b": [positions[b][d.argmin()][1]],
+                            "x_coord_b": [positions[b][d.argmin()][2]],
+                            "z_dist": [pos_A[0] - positions[b][d.argmin()][0]],
+                            "y_dist": [pos_A[1] - positions[b][d.argmin()][1]],
+                            "x_dist": [pos_A[2] - positions[b][d.argmin()][2]],
+                            "dist_3d": [d.min()],
+                            "labels_a": [i],
+                            "labels_b": [d.argmin()],
+                        }
+                    )
                 )
+        distances_df = pd.concat(distances_ls, ignore_index=True)
 
     return distances_df
 

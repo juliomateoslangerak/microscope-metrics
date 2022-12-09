@@ -2,6 +2,7 @@ from itertools import product
 from typing import List, Tuple, Union
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
@@ -129,7 +130,7 @@ class ArgolightBAnalysis(Analysis):
         )
 
         properties_kv = {}
-        properties_df = DataFrame()
+        properties_ls = []
 
         for ch, ch_spot_props in enumerate(spots_properties):
             ch_df = DataFrame()
@@ -187,7 +188,7 @@ class ArgolightBAnalysis(Analysis):
                 / properties_kv[f"max_intensity_ch{ch:02d}"]
             )
 
-            properties_df = properties_df.append(ch_df)
+            properties_ls.append(ch_df)
 
             channel_shapes = [
                 model.Point(
@@ -206,6 +207,8 @@ class ArgolightBAnalysis(Analysis):
                     shapes=channel_shapes,
                 )
             )
+
+        properties_df = pd.concat(properties_ls)
 
         distances_kv = {"distance_units": self.get_metadata_units("pixel_size")}
 
