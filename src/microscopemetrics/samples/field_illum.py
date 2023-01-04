@@ -16,6 +16,9 @@ import numpy as np
 # import the sample functionality
 from microscopemetrics.samples import *
 
+# import utility function
+from microscopemetrics.utilities import is_saturated
+
 # import the types that you may be using
 from typing import Tuple
 
@@ -424,36 +427,6 @@ class FieldHomogeneityAnalysis(
 
         # 5. get profiles statistics
         profile_stat_table = get_profile_statistics_table(image)
-
-
-        # We may add some rois to the output
-        shapes = [
-            model.Line(
-                x1=x1, y1=y1, x2=x2, y2=y2, stroke_color=Color("red")
-            )  # With some color
-            for (x1, y1), (x2, y2) in lines
-        ]
-        self.output.append(
-            model.Roi(
-                name="lines",
-                description="lines found using a progressive probabilistic hough transform",
-                shapes=shapes,
-            )
-        )
-
-        # We may create a table with the coordinates...
-        lines_df = DataFrame.from_records(
-            [(a, b, c, d) for (a, b), (c, d) in lines],
-            columns=["x_1", "y_1", "x_2", "y_2"],
-        )
-
-        # ... and add some very interesting measurements
-        lines_df["length"] = lines_df.apply(
-            lambda l: distance.euclidean([l.x_1, l.y_1], [l.x_2, l.y_2]), axis=1
-        )
-        lines_df["angle"] = lines_df.apply(
-            lambda l: atan2(l.x_1 - l.x_2, l.y_1 - l.y_2), axis=1
-        )
 
         # We append the dataframe into the output
         self.output.append(
