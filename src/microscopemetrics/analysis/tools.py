@@ -1,16 +1,16 @@
 """These are some possibly useful code snippets"""
-from pandas import DataFrame
-from skimage.filters import threshold_otsu, apply_hysteresis_threshold, gaussian
-from skimage.segmentation import clear_border
-from skimage.measure import label, regionprops
-from skimage.morphology import closing, square, cube, octahedron, ball
-from skimage.feature import peak_local_max
-from scipy.spatial.distance import cdist
-from scipy import ndimage
-import numpy as np
+import logging
 from itertools import permutations
 
-import logging
+import numpy as np
+import pandas as pd
+from scipy import ndimage
+from scipy.spatial.distance import cdist
+from skimage.feature import peak_local_max
+from skimage.filters import apply_hysteresis_threshold, gaussian, threshold_otsu
+from skimage.measure import label, regionprops
+from skimage.morphology import ball, closing, cube, octahedron, square
+from skimage.segmentation import clear_border
 
 # Creating logging services
 module_logger = logging.getLogger(__name__)
@@ -24,7 +24,6 @@ def _segment_channel(
     sigma,
     low_corr_factor,
     high_corr_factor,
-    indices,
 ):
     """Segment a channel (3D numpy array)"""
     if threshold is None:
@@ -32,7 +31,7 @@ def _segment_channel(
 
     if sigma is not None:
         channel = gaussian(
-            image=channel, multichannel=False, sigma=sigma, preserve_range=True
+            image=channel, sigma=sigma, preserve_range=True, channel_axis=None
         )
 
     if method == "hysteresis":  # We may try here hysteresis threshold
@@ -45,10 +44,9 @@ def _segment_channel(
             channel,
             min_distance=min_distance,
             threshold_abs=(threshold * 0.5),
-            indices=indices,
         )
         thresholded = np.copy(channel)
-        thresholded[peaks] = thresholded.max()
+        thresholded[tuple(peaks.T)] = thresholded.max()
         thresholded = apply_hysteresis_threshold(
             thresholded,
             low=threshold * low_corr_factor,
@@ -69,7 +67,6 @@ def segment_image(
     method="local_max",
     low_corr_factors=None,
     high_corr_factors=None,
-    indices=False,
 ):
     """Segment an image and return a labels object.
     Image must be provided as zctxy numpy array
@@ -103,7 +100,6 @@ def segment_image(
                 sigma=sigma,
                 low_corr_factor=low_corr_factors[c],
                 high_corr_factor=high_corr_factors[c],
-                indices=indices,
             )
     return labels_image
 
@@ -184,29 +180,31 @@ def compute_distances_matrix(positions, max_distance, pixel_size=None):
     for a, b in channel_permutations:
         distances_matrix = cdist(positions[a], positions[b], w=pixel_size)
 
-        distances_df = DataFrame()
+        distances_ls = []
 
         for i, (pos_A, d) in enumerate(zip(positions[a], distances_matrix)):
             if d.min() < max_distance:
-                distances_df = distances_df.append(
-                    {
-                        "channel_a": a,
-                        "channel_b": b,
-                        "z_coord_a": pos_A[0],
-                        "y_coord_a": pos_A[1],
-                        "x_coord_a": pos_A[2],
-                        "z_coord_b": positions[b][d.argmin()][0],
-                        "y_coord_b": positions[b][d.argmin()][1],
-                        "x_coord_b": positions[b][d.argmin()][2],
-                        "z_dist": pos_A[0] - positions[b][d.argmin()][0],
-                        "y_dist": pos_A[1] - positions[b][d.argmin()][1],
-                        "x_dist": pos_A[2] - positions[b][d.argmin()][2],
-                        "dist_3d": d.min(),
-                        "labels_a": i,
-                        "labels_b": d.argmin(),
-                    },
-                    ignore_index=True,
+                distances_ls.append(
+                    pd.DataFrame(
+                        {
+                            "channel_a": [a],
+                            "channel_b": [b],
+                            "z_coord_a": [pos_A[0]],
+                            "y_coord_a": [pos_A[1]],
+                            "x_coord_a": [pos_A[2]],
+                            "z_coord_b": [positions[b][d.argmin()][0]],
+                            "y_coord_b": [positions[b][d.argmin()][1]],
+                            "x_coord_b": [positions[b][d.argmin()][2]],
+                            "z_dist": [pos_A[0] - positions[b][d.argmin()][0]],
+                            "y_dist": [pos_A[1] - positions[b][d.argmin()][1]],
+                            "x_dist": [pos_A[2] - positions[b][d.argmin()][2]],
+                            "dist_3d": [d.min()],
+                            "labels_a": [i],
+                            "labels_b": [d.argmin()],
+                        }
+                    )
                 )
+        distances_df = pd.concat(distances_ls, ignore_index=True)
 
     return distances_df
 

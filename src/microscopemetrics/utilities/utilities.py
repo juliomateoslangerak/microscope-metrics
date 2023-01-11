@@ -1,9 +1,11 @@
 # This is a place to hold mere utilities for metrics
 
-from configparser import ConfigParser
 import json
-from scipy import special
+import warnings
+from configparser import ConfigParser
+
 import numpy as np
+from scipy import special
 
 
 ## Some useful functions
@@ -94,12 +96,13 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
         r = 0.0
         g = 0.0
         b = 0.0
-    r *= 255
-    g *= 255
-    b *= 255
-    return int(r), int(g), int(b)
+    r *= int(r * 255)
+    g *= int(g * 255)
+    g *= int(g * 255)
+    return r, g, b
 
 
+# This class is not used after introduction of pydantic.
 class MetricsConfig(ConfigParser):
     def getjson(self, section, option, **kwargs):
         value = self.get(section, option, **kwargs)
@@ -138,3 +141,38 @@ class MetricsConfig(ConfigParser):
                 f'Some element in config option "{option}" in section "{section}" cannot be coerced into a float'
             )
             raise e
+
+
+def get_max_limit(channel_dtype, thresh=0.01):
+    """
+    Checks if camera bitsize is not in computer format(10,11,12 bits) and return MaxLimit for saturation
+    """
+    if channel_dtype.kind == "u":
+        bit_depths = [10, 11, 12]
+        for i in bit_depths:
+            if np.count_nonzero(np.max(channel_dtype) == pow(2, i) - 1) > thresh:
+                warnings.warn("Camera bit depth is not a power of two")
+                return pow(2, i) - 1
+
+        return np.iinfo(channel_dtype).max
+    elif channel_dtype.kind == "f":
+        return np.finfo(channel_dtype).max
+
+
+def is_saturated(channel, thresh=0.0, bit_depth=None):
+    """
+    Python implementation of MetroloJ_QC function that was developed by Julien Cau.
+
+    This function computes the saturation ratio of an image to determine if it is acceptable to run metrics
+    """
+
+    if bit_depth is None:
+        max_limit = get_max_limit(channel.dtype)
+    else:
+        max_limit = pow(2, bit_depth) - 1
+
+    sat = channel == max_limit
+
+    sat_ratio = np.count_nonzero(sat) / channel.size
+
+    return sat_ratio > thresh

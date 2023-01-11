@@ -1,10 +1,7 @@
+import logging
 from datetime import datetime
 
-# Import sample superclass
 from microscopemetrics.samples.samples import Analysis, Configurator
-
-# Creating logging services
-import logging
 
 module_logger = logging.getLogger("metrics.samples.dataset")
 
