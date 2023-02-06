@@ -1,0 +1,242 @@
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/model.py
+name: microscope-metrics
+prefixes:
+#  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
+#imports:
+#  - metrics:types
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+
+default_range: string
+
+classes:
+  Sample:
+    slots:
+      - id
+      - name
+      - description
+    attributes:
+      type:
+        required: true
+      preparation_protocol:
+        required: true
+        range: Protocol
+
+  Protocol:
+    slots:
+      - id
+      - name
+    attributes:
+      version:
+        required: true
+      authors:
+        range: Experimenter
+      url:
+        required: true
+
+  Experimenter:
+    slots:
+    attributes:
+      name:
+      orcid:
+        identifier: true
+
+  Data:
+    attributes:
+      id:
+        identifier: true
+      name:
+      description:
+
+  Metadata:
+    attributes:
+      id:
+        identifier: true
+      name:
+      description:
+
+  Metrics_dataset:
+    attributes:
+      id:
+        identifier: true
+      sample:
+        multivalued: true
+        range: Sample
+      data:
+        multivalued: true
+        range: Data
+      metadata:
+        multivalued: true
+        range: Metadata
+      output:
+        multivalued: true
+        range: Metrics_output
+
+  Metrics_output:
+    attributes:
+      name:
+        required: true
+      description:
+        required: true
+
+  Output_image:
+    is_a: Metrics_output
+    attributes:
+      data:
+        multivalued: true
+        range: integer
+
+  Output_ROI:
+    is_a: Metrics_output
+    attributes:
+      shapes:
+        multivalued: true
+        range: Shape
+
+  Shape:
+    abstract: true
+    attributes:
+      z:
+        range: float
+      c:
+        range: integer
+      t:
+        range: integer
+      fill_color:
+        range: Color
+      stroke_color:
+        range: Color
+      stroke_width:
+        range: integer
+
+#  Point:
+#    is_a: Shape
+#    attributes:
+#      x:
+#        multivalued: false
+#        range: float
+#      y:
+#        multivalued: false
+#        range: float
+#      units:
+#        range: Length_units
+#
+#  Line:
+#    is_a: Shape
+#    attributes:
+#      x1:
+#        multivalued: false
+#        range: float
+#      y1:
+#        multivalued: false
+#        range: float
+#      x2:
+#        multivalued: false
+#        range: float
+#      x3:
+#        multivalued: false
+#        range: float
+#      units:
+#        range: Length_units
+#
+#  Rectangle:
+#    is_a: Shape
+#    attributes:
+#      x:
+#        multivalued: false
+#        range: float
+#      y:
+#        multivalued: false
+#        range: float
+#      w:
+#        multivalued: false
+#        range: float
+#      h:
+#        multivalued: false
+#        range: float
+#      units:
+#        range: Length_units
+#
+#  Ellipse:
+#    is_a: Shape
+#    attributes:
+#      x:
+#        multivalued: false
+#        range: float
+#      y:
+#        multivalued: false
+#        range: float
+#      x_rad:
+#        multivalued: false
+#        range: float
+#      y_rad:
+#        multivalued: false
+#        range: float
+#      units:
+#        range: Length_units
+#
+#  Polygon:
+#    is_a: Shape
+#    attributes:
+#      points:
+#        multivalued: true
+#        attributes:
+#          x:
+#            multivalued: false
+#            range: float
+#          y:
+#            multivalued: false
+#            range: float
+#      is_open:
+#        range: bool
+#      units:
+#        range: Length_units
+
+  Color:
+    attributes:
+      R:
+        required: true
+        multivalued: false
+        range: integer
+        minimum_value: 0
+        maximum_value: 255
+      G:
+        required: true
+        multivalued: false
+        range: integer
+        minimum_value: 0
+        maximum_value: 255
+      B:
+        required: true
+        multivalued: false
+        range: integer
+        minimum_value: 0
+        maximum_value: 255
+      alpha:
+        required: false
+        multivalued: false
+        range: integer
+        minimum_value: 0
+        maximum_value: 255
+
+slots:
+  id:
+    identifier: true
+  name:
+  description:
+
+enums:
+  Length_units:
+    permissible_values:
+      METER:
+      CENTIMETER:
+      MILLIMETER:
+      MICROMETER:
+      NANOMETER:
+
+  PersonStatus:
+    permissible_values:
+      ALIVE:
+      DEAD:
+      UNKNOWN:
