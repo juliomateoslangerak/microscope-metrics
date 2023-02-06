@@ -2,16 +2,18 @@ from itertools import product
 from typing import List, Tuple, Union
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
-from skimage.transform import \
-    hough_line  # hough_line_peaks, probabilistic_hough_line
+from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
 
-from microscopemetrics.analysis.tools import (compute_distances_matrix,
-                                              compute_spots_properties,
-                                              segment_image)
+from microscopemetrics.analysis.tools import (
+    compute_distances_matrix,
+    compute_spots_properties,
+    segment_image,
+)
 from microscopemetrics.samples import *
 
 from ..utilities.utilities import airy_fun, multi_airy_fun
@@ -128,7 +130,7 @@ class ArgolightBAnalysis(Analysis):
         )
 
         properties_kv = {}
-        properties_df = DataFrame()
+        properties_ls = []
 
         for ch, ch_spot_props in enumerate(spots_properties):
             ch_df = DataFrame()
@@ -177,14 +179,16 @@ class ArgolightBAnalysis(Analysis):
                 ch_df["integrated_intensity"].std().item()
             )
             properties_kv[f"mad_mean_intensity_ch{ch:02d}"] = (
-                ch_df["integrated_intensity"].mad().item()
+                (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean())
+                .abs()
+                .mean()
             )
             properties_kv[f"min-max_intensity_ratio_ch{ch:02d}"] = (
                 properties_kv[f"min_intensity_ch{ch:02d}"]
                 / properties_kv[f"max_intensity_ch{ch:02d}"]
             )
 
-            properties_df = properties_df.append(ch_df)
+            properties_ls.append(ch_df)
 
             channel_shapes = [
                 model.Point(
@@ -203,6 +207,8 @@ class ArgolightBAnalysis(Analysis):
                     shapes=channel_shapes,
                 )
             )
+
+        properties_df = pd.concat(properties_ls)
 
         distances_kv = {"distance_units": self.get_metadata_units("pixel_size")}
 
@@ -224,9 +230,9 @@ class ArgolightBAnalysis(Analysis):
             distances_kv[
                 f"std_3d_dist_ch{a:02d}_ch{b:02d}"
             ] = temp_df.dist_3d.std().item()
-            distances_kv[
-                f"mad_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.mad().item()
+            distances_kv[f"mad_3d_dist_ch{a:02d}_ch{b:02d}"] = (
+                (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean().item()
+            )
             distances_kv[
                 f"mean_z_dist_ch{a:02d}_ch{b:02d}"
             ] = temp_df.z_dist.mean().item()
@@ -236,9 +242,9 @@ class ArgolightBAnalysis(Analysis):
             distances_kv[
                 f"std_z_dist_ch{a:02d}_ch{b:02d}"
             ] = temp_df.z_dist.std().item()
-            distances_kv[
-                f"mad_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.mad().item()
+            distances_kv[f"mad_z_dist_ch{a:02d}_ch{b:02d}"] = (
+                (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean().item()
+            )
 
         self.output.append(
             model.KeyValues(
