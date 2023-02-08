@@ -41,8 +41,8 @@ class PersonStatus(str, Enum):
 class Sample(ConfiguredBaseModel):
     
     id: Optional[str] = Field(None)
-    name: Optional[str] = Field(None)
-    description: Optional[str] = Field(None)
+    name: str = Field(None)
+    description: str = Field(None)
     type: str = Field(None)
     preparation_protocol: str = Field(None)
     
@@ -51,7 +51,7 @@ class Sample(ConfiguredBaseModel):
 class Protocol(ConfiguredBaseModel):
     
     id: Optional[str] = Field(None)
-    name: Optional[str] = Field(None)
+    name: str = Field(None)
     version: str = Field(None)
     authors: Optional[str] = Field(None)
     url: str = Field(None)
@@ -125,6 +125,89 @@ class Shape(ConfiguredBaseModel):
     
 
 
+class Point(Shape):
+    
+    x: Optional[float] = Field(None)
+    y: Optional[float] = Field(None)
+    units: Optional[LengthUnits] = Field(None)
+    z: Optional[float] = Field(None)
+    c: Optional[int] = Field(None)
+    t: Optional[int] = Field(None)
+    fill_color: Optional[Color] = Field(None)
+    stroke_color: Optional[Color] = Field(None)
+    stroke_width: Optional[int] = Field(None)
+    
+
+
+class Line(Shape):
+    
+    x1: Optional[float] = Field(None)
+    y1: Optional[float] = Field(None)
+    x2: Optional[float] = Field(None)
+    x3: Optional[float] = Field(None)
+    units: Optional[LengthUnits] = Field(None)
+    z: Optional[float] = Field(None)
+    c: Optional[int] = Field(None)
+    t: Optional[int] = Field(None)
+    fill_color: Optional[Color] = Field(None)
+    stroke_color: Optional[Color] = Field(None)
+    stroke_width: Optional[int] = Field(None)
+    
+
+
+class Rectangle(Shape):
+    
+    x: Optional[float] = Field(None)
+    y: Optional[float] = Field(None)
+    w: Optional[float] = Field(None)
+    h: Optional[float] = Field(None)
+    units: Optional[LengthUnits] = Field(None)
+    z: Optional[float] = Field(None)
+    c: Optional[int] = Field(None)
+    t: Optional[int] = Field(None)
+    fill_color: Optional[Color] = Field(None)
+    stroke_color: Optional[Color] = Field(None)
+    stroke_width: Optional[int] = Field(None)
+    
+
+
+class Ellipse(Shape):
+    
+    x: Optional[float] = Field(None)
+    y: Optional[float] = Field(None)
+    x_rad: Optional[float] = Field(None)
+    y_rad: Optional[float] = Field(None)
+    units: Optional[LengthUnits] = Field(None)
+    z: Optional[float] = Field(None)
+    c: Optional[int] = Field(None)
+    t: Optional[int] = Field(None)
+    fill_color: Optional[Color] = Field(None)
+    stroke_color: Optional[Color] = Field(None)
+    stroke_width: Optional[int] = Field(None)
+    
+
+
+class Polygon(Shape):
+    
+    points: Optional[List[Vertex]] = Field(default_factory=list)
+    is_open: Optional[bool] = Field(None)
+    units: Optional[LengthUnits] = Field(None)
+    z: Optional[float] = Field(None)
+    c: Optional[int] = Field(None)
+    t: Optional[int] = Field(None)
+    fill_color: Optional[Color] = Field(None)
+    stroke_color: Optional[Color] = Field(None)
+    stroke_width: Optional[int] = Field(None)
+    
+
+
+class Vertex(ConfiguredBaseModel):
+    
+    x: Optional[float] = Field(None)
+    y: Optional[float] = Field(None)
+    
+
+
 class Color(ConfiguredBaseModel):
     
     R: int = Field(None, ge=0, le=255)
@@ -147,5 +230,11 @@ MetricsOutput.update_forward_refs()
 OutputImage.update_forward_refs()
 OutputROI.update_forward_refs()
 Shape.update_forward_refs()
+Point.update_forward_refs()
+Line.update_forward_refs()
+Rectangle.update_forward_refs()
+Ellipse.update_forward_refs()
+Polygon.update_forward_refs()
+Vertex.update_forward_refs()
 Color.update_forward_refs()
 

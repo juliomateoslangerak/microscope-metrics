@@ -110,88 +110,91 @@ classes:
       stroke_width:
         range: integer
 
-#  Point:
-#    is_a: Shape
-#    attributes:
-#      x:
-#        multivalued: false
-#        range: float
-#      y:
-#        multivalued: false
-#        range: float
-#      units:
-#        range: Length_units
-#
-#  Line:
-#    is_a: Shape
-#    attributes:
-#      x1:
-#        multivalued: false
-#        range: float
-#      y1:
-#        multivalued: false
-#        range: float
-#      x2:
-#        multivalued: false
-#        range: float
-#      x3:
-#        multivalued: false
-#        range: float
-#      units:
-#        range: Length_units
-#
-#  Rectangle:
-#    is_a: Shape
-#    attributes:
-#      x:
-#        multivalued: false
-#        range: float
-#      y:
-#        multivalued: false
-#        range: float
-#      w:
-#        multivalued: false
-#        range: float
-#      h:
-#        multivalued: false
-#        range: float
-#      units:
-#        range: Length_units
-#
-#  Ellipse:
-#    is_a: Shape
-#    attributes:
-#      x:
-#        multivalued: false
-#        range: float
-#      y:
-#        multivalued: false
-#        range: float
-#      x_rad:
-#        multivalued: false
-#        range: float
-#      y_rad:
-#        multivalued: false
-#        range: float
-#      units:
-#        range: Length_units
-#
-#  Polygon:
-#    is_a: Shape
-#    attributes:
-#      points:
-#        multivalued: true
-#        attributes:
-#          x:
-#            multivalued: false
-#            range: float
-#          y:
-#            multivalued: false
-#            range: float
-#      is_open:
-#        range: bool
-#      units:
-#        range: Length_units
+  Point:
+    is_a: Shape
+    attributes:
+      x:
+        multivalued: false
+        range: float
+      y:
+        multivalued: false
+        range: float
+      units:
+        range: Length_units
+
+  Line:
+    is_a: Shape
+    attributes:
+      x1:
+        multivalued: false
+        range: float
+      y1:
+        multivalued: false
+        range: float
+      x2:
+        multivalued: false
+        range: float
+      x3:
+        multivalued: false
+        range: float
+      units:
+        range: Length_units
+
+  Rectangle:
+    is_a: Shape
+    attributes:
+      x:
+        multivalued: false
+        range: float
+      y:
+        multivalued: false
+        range: float
+      w:
+        multivalued: false
+        range: float
+      h:
+        multivalued: false
+        range: float
+      units:
+        range: Length_units
+
+  Ellipse:
+    is_a: Shape
+    attributes:
+      x:
+        multivalued: false
+        range: float
+      y:
+        multivalued: false
+        range: float
+      x_rad:
+        multivalued: false
+        range: float
+      y_rad:
+        multivalued: false
+        range: float
+      units:
+        range: Length_units
+
+  Polygon:
+    is_a: Shape
+    attributes:
+      points:
+        multivalued: true
+        range: Vertex
+      is_open:
+        range: boolean
+      units:
+        range: Length_units
+
+  Vertex:
+    attributes:
+      x:
+        multivalued: false
+        range: float
+      y:
+        multivalued: false
+        range: float
 
   Color:
     attributes:
@@ -224,7 +227,9 @@ slots:
   id:
     identifier: true
   name:
+    required: true
   description:
+    required: true
 
 enums:
   Length_units:
