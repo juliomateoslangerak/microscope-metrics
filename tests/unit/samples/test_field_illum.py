@@ -6,7 +6,7 @@ import numpy as np
 
 @pytest.fixture
 def field_illum_analysis():
-    file_path = get_file('https://dev.mri.cnrs.fr/attachments/download/2291/201702_RI510_Argolight-1-1_004_SIR_ALX.npy')
+    file_path = get_file('https://amubox.univ-amu.fr/s/to2aJbpBZKeiTJj/download/chroma.npy')
     data = np.load(file_path)
 
     analysis = field_illum.FieldHomogeneityAnalysis()

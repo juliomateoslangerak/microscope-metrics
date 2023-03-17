@@ -1,3 +1,4 @@
+
 """This file demonstrates how someone can create a new sample module. This example will create a fully functional
 but naive analysis where lines are detected through a progressive probabilistic hough transform from scikit-image.
 See official documentation at https://scikit-image.org/docs/0.7.0/api/skimage.transform.html#probabilistic-hough
@@ -17,7 +18,7 @@ import numpy as np
 from microscopemetrics.samples import *
 
 # import utility function
-from microscopemetrics.utilities import is_saturated
+#from microscopemetrics.utilities import is_saturated
 
 # import the types that you may be using
 from typing import Tuple
@@ -30,7 +31,6 @@ from math import atan2
 from pydantic.color import Color
 from skimage import draw
 from skimage.measure import regionprops
-import matplotlib.pyplot as plt
 
 
 def get_norm_intensity_matrix(img):
@@ -51,7 +51,7 @@ def get_norm_intensity_matrix(img):
     max_intensity = np.max(img)
     # the rule of three : max_intensity->100%, pixel_intensity*100/max
     norm_intensity_profile = np.round(img/max_intensity * 100)
-    return norm_intensity_profile
+    return DataFrame(norm_intensity_profile)
 
 
 def get_max_intensity_region_table(img):
@@ -107,7 +107,7 @@ def get_norm_intensity_profile(img, save_path=""):
     the provided path.
     Parameters
     ----------
-    img : np.arrray
+    img : np.array
         image on a 2d np.array format.
     save_path : str, optional
         path to save the generated figure including filename.
@@ -246,6 +246,7 @@ def get_intensity_plot(img, save_path=""):
     fig_data["y_axis_diagDU"] = diagDU
 
     # plot
+    """
     fig = plt.figure()
     plt.plot(get_x_axis(V_seg), V_seg, color="b", label="V_seg", figure=fig)
     plt.plot(get_x_axis(H_seg), H_seg, color="g", label="H_seg", figure=fig)
@@ -261,8 +262,8 @@ def get_intensity_plot(img, save_path=""):
     if save_path:
         plt.savefig(str(save_path),
                     bbox_inches='tight')
-
-    return fig, fig_data
+    """
+    return fig_data
 
 
 # 4. profile statistics
@@ -392,11 +393,7 @@ class FieldHomogeneityAnalysis(
 
         logger.info("Checking image saturation")
 
-        if (
-            not self.input.line_length.value
-        ):  # We check if the value of the line_length is None
-            self.input.line_length.value = 50  # and if it is, we give it a value
-
+        """
         saturated = is_saturated(
             image=self.get_data_values(
                 "image"
@@ -413,17 +410,17 @@ class FieldHomogeneityAnalysis(
             logger.info("Image is saturated")
             return False
         # 'lines' is now a list of lines defined by the coordinates ((x1, y1), (x2, y2))
-
-
+        """
+        image=self.get_data_values("image")
         # 1. get normalized intensity profile
-        norm_intensity_profile = get_norm_intensity_profile(image)
+        #norm_intensity_profile = get_norm_intensity_profile(image)
         norm_intensity_data = get_norm_intensity_matrix(image)
 
         # 3. get centers' locations
         max_intensity_region_table = get_max_intensity_region_table(image)
 
         # 4. get intensity profiles
-        intensity_plot, intensity_plot_data = get_intensity_plot(image)
+        intensity_plot_data = get_intensity_plot(image)
 
         # 5. get profiles statistics
         profile_stat_table = get_profile_statistics_table(image)
