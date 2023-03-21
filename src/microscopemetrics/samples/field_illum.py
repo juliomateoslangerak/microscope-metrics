@@ -1,36 +1,23 @@
-
-"""This file demonstrates how someone can create a new sample module. This example will create a fully functional
-but naive analysis where lines are detected through a progressive probabilistic hough transform from scikit-image.
-See official documentation at https://scikit-image.org/docs/0.7.0/api/skimage.transform.html#probabilistic-hough
-
-The procedure to follow is, in short:
-- import everything from the samples module
-- import the types that you might be using from the typing module
-- import any necessary libraries that you will need for your analysis
-- Create one or more subclasses of the Analysis abstract class of samples. Within each class:
-    - define your input requirements
-    - define a 'run' method that will implement the logic of your analysis
-    - if desired, define a 'plot' method returning a plot showing the results of the analysis
-"""
-import numpy as np
-
-# import the sample functionality
-from microscopemetrics.samples import *
-
-# import utility function
-#from microscopemetrics.utilities import is_saturated
+from math import atan2
 
 # import the types that you may be using
 from typing import Tuple
 
-# import anything you will need for your analysis
+import numpy as np
+
 from pandas import DataFrame
-from skimage.transform import probabilistic_hough_line
-from scipy.spatial import distance
-from math import atan2
 from pydantic.color import Color
+from scipy.spatial import distance
 from skimage import draw
 from skimage.measure import regionprops
+from skimage.transform import probabilistic_hough_line
+
+from microscopemetrics.samples import *
+
+# import utility function
+# from microscopemetrics.utilities import is_saturated
+
+
 
 
 def get_norm_intensity_matrix(img):
@@ -50,7 +37,7 @@ def get_norm_intensity_matrix(img):
 
     max_intensity = np.max(img)
     # the rule of three : max_intensity->100%, pixel_intensity*100/max
-    norm_intensity_profile = np.round(img/max_intensity * 100)
+    norm_intensity_profile = np.round(img / max_intensity * 100)
     return DataFrame(norm_intensity_profile)
 
 
@@ -74,7 +61,7 @@ def get_max_intensity_region_table(img):
     max_intensity = np.max(img)
 
     # define the maximum intensity
-    threshold_value = max_intensity-1
+    threshold_value = max_intensity - 1
 
     # label pixels with max intesity values: binary matrix.
     labeled_foreground = (img > threshold_value).astype(int)
@@ -83,8 +70,7 @@ def get_max_intensity_region_table(img):
     properties = regionprops(labeled_foreground, img)
 
     # identify the center of mass of the max intensity area
-    center_of_mass = (int(properties[0].centroid[0]),
-                      int(properties[0].centroid[1]))
+    center_of_mass = (int(properties[0].centroid[0]), int(properties[0].centroid[1]))
 
     # number of pixels of max intensity region
     nb_pixels = properties[0].area
@@ -93,8 +79,8 @@ def get_max_intensity_region_table(img):
     max_region_info = {
         "nb pixels": [nb_pixels],
         "center of mass": [center_of_mass],
-        "max intensity": [max_intensity]
-        }
+        "max intensity": [max_intensity],
+    }
 
     return max_region_info
 
@@ -145,7 +131,7 @@ def get_x_axis(y_axis):
     """
     nb_pixels = len(y_axis)
     # center the pixel value vector around 0
-    x_axis = np.arange(round(-nb_pixels/2), round(nb_pixels/2+1), 1)
+    x_axis = np.arange(round(-nb_pixels / 2), round(nb_pixels / 2 + 1), 1)
     # the center of the matrix is 4 pixels not one
     x_axis = x_axis[x_axis != 0]
     return x_axis
@@ -181,10 +167,10 @@ def get_intensity_plot(img, save_path=""):
     """
 
     xmax, ymax = np.shape(img)
-    xmax = xmax-1
-    ymax = ymax-1
-    xmid = round(xmax/2)
-    ymid = round(ymax/2)
+    xmax = xmax - 1
+    ymax = ymax - 1
+    xmid = round(xmax / 2)
+    ymid = round(ymax / 2)
     # mid vertical pixel segment
     V_seg = get_pixel_values_of_line(img, x0=0, y0=ymid, xf=xmax, yf=ymid)
     # mid horizontal pixel segment
@@ -273,10 +259,9 @@ def get_profile_statistics_table(img):
     # lm, cc, rm
     # bl, bm, br
 
-    xx, yy = np.meshgrid([0, img.shape[0] // 2, -1],
-                         [0, img.shape[1] // 2, -1])
+    xx, yy = np.meshgrid([0, img.shape[0] // 2, -1], [0, img.shape[1] // 2, -1])
     max_intensities = np.around(img[xx, yy].flatten(), 2)
-    max_intensities_relative = np.around(max_intensities/max_intensity, 2)
+    max_intensities_relative = np.around(max_intensities / max_intensity, 2)
 
     # replace central pixel value with max intensity
     max_intensities[4] = max_intensity
@@ -285,20 +270,19 @@ def get_profile_statistics_table(img):
     # build dictionnary
     profiles_statistics_dict = {}
     profiles_statistics_dict["location"] = [
-         "top-left corner",
-         "upper-middle pixel",
-         "top-right corner",
-         "left-middle pixel",
-         f"maximum found at {max_found_at}",
-         "right-middle pixel",
-         "bottom-left corner",
-         "bottom-middle pixel",
-         "bottom-right corner",
-     ]
+        "top-left corner",
+        "upper-middle pixel",
+        "top-right corner",
+        "left-middle pixel",
+        f"maximum found at {max_found_at}",
+        "right-middle pixel",
+        "bottom-left corner",
+        "bottom-middle pixel",
+        "bottom-right corner",
+    ]
 
     profiles_statistics_dict["intensity"] = max_intensities
-    profiles_statistics_dict["intensity relative to max"] = \
-        max_intensities_relative
+    profiles_statistics_dict["intensity relative to max"] = max_intensities_relative
 
     return profiles_statistics_dict
 
@@ -306,16 +290,12 @@ def get_profile_statistics_table(img):
 @register_image_analysis
 class FieldHomogeneityAnalysis(
     Analysis
-):  # Subclass Analysis for each analysis you want to implement for a given sample
-    """Write a good documentation:
-    This analysis creates a report on field illumination homogeneity based on input images"""
+):
+    """This analysis creates a report on field illumination homogeneity based on input images"""
 
-    # Define the __init__
     def __init__(self):
-        # Call the super __init__ method which takes a single argument: the description of the output
         super().__init__(output_description="This analysis returns...")
 
-        # Add metadata requirements for the analysis
         self.add_data_requirement(
             name="image",
             description="An image with lines as a numpy array",
@@ -331,27 +311,21 @@ class FieldHomogeneityAnalysis(
         self.add_metadata_requirement(
             name="threshold",
             description="Threshold for saturation",
-            data_type=int,  # And we can use standard data types
-            optional=True,  # When optional, this parameter will not have to be provided
-            default=10,  # If a requirement is optional you may provide a default value that will be
-        )  # used in case you dont provide any value
+            data_type=int,
+            optional=True,
+            default=10,
+        )
 
-
-    # You must define a run method taking no parameters. This method will run the analysis
     def run(self):
         logger.info(
             "Validating requirements..."
-        )  # You may use the logger function to log info
-
-        # It is a good practice to verify all the requirements before running the analysis
-        # This will verify that all the non optional requirements are provided
+        )
         if len(self.list_unmet_requirements()):
-            # we can use the logger to report errors
             logger.error(
                 f"The following metadata requirements ara not met: {self.list_unmet_requirements()}"
             )
             return (
-                False  # The run method should return False upon unsuccessful execution
+                False
             )
 
         logger.info("Checking image saturation")
@@ -374,9 +348,9 @@ class FieldHomogeneityAnalysis(
             return False
         # 'lines' is now a list of lines defined by the coordinates ((x1, y1), (x2, y2))
         """
-        image=self.get_data_values("image")
+        image = self.get_data_values("image")
         # 1. get normalized intensity profile
-        #norm_intensity_profile = get_norm_intensity_profile(image)
+        # norm_intensity_profile = get_norm_intensity_profile(image)
         norm_intensity_data = get_norm_intensity_matrix(image)
 
         # 3. get centers' locations
@@ -388,7 +362,6 @@ class FieldHomogeneityAnalysis(
         # 5. get profiles statistics
         profile_stat_table = get_profile_statistics_table(image)
 
-        # We append the dataframe into the output
         self.output.append(
             model.Table(
                 name="max_intensity_region_table",
@@ -421,7 +394,4 @@ class FieldHomogeneityAnalysis(
             )
         )
 
-
-
-        # And that's about it. Don't forget to return True at the end
         return True
