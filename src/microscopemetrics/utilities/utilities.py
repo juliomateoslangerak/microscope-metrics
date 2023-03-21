@@ -7,6 +7,8 @@ from configparser import ConfigParser
 import numpy as np
 from scipy import special
 
+DETECTOR_BIT_DEPTHS = [10, 11, 12, 15]
+
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
@@ -143,36 +145,45 @@ class MetricsConfig(ConfigParser):
             raise e
 
 
-def get_max_limit(channel_dtype, thresh=0.01):
+def is_saturated(channel, thresh=0.0, detector_bit_depth=None):
     """
-    Checks if camera bitsize is not in computer format(10,11,12 bits) and return MaxLimit for saturation
+    Checks if the channel is saturated.
+    A warning if it suspects that the detector bit depth does not match the datatype.
+    thresh: float
+        Threshold for the ratio of saturated pixels to total pixels
+    detector_bit_depth: int
+        Bit depth of the detector. Sometimes, detectors bit depth are not matching the datatype of the measureemnts.
+        Here it can be specified the bit depth of the detector if known. The function is going to raise
+        If None, it will be inferred from the channel dtype.
     """
-    if channel_dtype.kind == "u":
-        bit_depths = [10, 11, 12]
-        for i in bit_depths:
-            if np.count_nonzero(np.max(channel_dtype) == pow(2, i) - 1) > thresh:
-                warnings.warn("Camera bit depth is not a power of two")
-                return pow(2, i) - 1
+    if detector_bit_depth is None:
+        if np.issubdtype(channel.dtype, np.integer):
+            max_limit = np.iinfo(channel.dtype).max
+        elif np.issubdtype(channel.dtype, np.floating):
+            max_limit = np.finfo(channel.dtype).max
+        else:
+            raise ValueError("The channel provided is not a valid numpy dtype.")
 
-        return np.iinfo(channel_dtype).max
-    elif channel_dtype.kind == "f":
-        return np.finfo(channel_dtype).max
+        for bit_depth in DETECTOR_BIT_DEPTHS:
+            try:
+                saturated = is_saturated(
+                    channel, thresh=thresh, detector_bit_depth=bit_depth
+                )
+            except ValueError:
+                continue
+        if saturated:
+            warnings.warn(
+                "The channel might be saturated. The channel saturation matches a common detector bit depth"
+            )
 
-
-def is_saturated(channel, thresh=0.0, bit_depth=None):
-    """
-    Python implementation of MetroloJ_QC function that was developed by Julien Cau.
-
-    This function computes the saturation ratio of an image to determine if it is acceptable to run metrics
-    """
-
-    if bit_depth is None:
-        max_limit = get_max_limit(channel.dtype)
     else:
-        max_limit = pow(2, bit_depth) - 1
+        max_limit = pow(2, detector_bit_depth) - 1
+        if np.any(channel > max_limit):
+            raise ValueError(
+                "The channel provided has values larger than the bit depth of the detector."
+            )
 
-    sat = channel == max_limit
+    saturation_matrix = channel == max_limit
+    saturation_ratio = np.count_nonzero(saturation_matrix) / channel.size
 
-    sat_ratio = np.count_nonzero(sat) / channel.size
-
-    return sat_ratio > thresh
+    return saturation_ratio > thresh
