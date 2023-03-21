@@ -99,43 +99,6 @@ def get_max_intensity_region_table(img):
     return max_region_info
 
 
-def get_norm_intensity_profile(img, save_path=""):
-    """
-    plots the normalized intensity profile of the image.
-    the center of mass of the max intensity area is marked in red.
-    If save_path is not empty, the generated figure will be saved as png in
-    the provided path.
-    Parameters
-    ----------
-    img : np.array
-        image on a 2d np.array format.
-    save_path : str, optional
-        path to save the generated figure including filename.
-        The default is "".
-    Returns
-    -------
-    fig : matplotlib.figure.Figure
-        returns the normalized intensity profile of the image with
-        the center of mass of the max intensity area marked in red.
-    """
-
-    # normalized intensity array of the given image
-    norm_intensity_profile = get_norm_intensity_matrix(img)
-    # coordinates of center of mass of mac intensity area
-    x_mass, y_mass = get_max_intensity_region_table(img)["center of mass"][0]
-
-    # figure construction
-    fig, ax = plt.subplots()
-    ax.scatter(y_mass, x_mass, s=60, color="r", marker='+')
-    plt.imshow(norm_intensity_profile)
-    plt.colorbar()
-    plt.title("normalized intensity profile", figure=fig)
-    if save_path:
-        plt.savefig(str(save_path),
-                    bbox_inches='tight')
-
-    return fig
-
 
 # 3. intensity profiles
 
