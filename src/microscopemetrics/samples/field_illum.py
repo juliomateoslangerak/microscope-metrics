@@ -48,56 +48,65 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
     return np.expand_dims(output, axis=(0, 2))
 
 
-def _channel_line_profile(channel, x0, y0, x1, y1):
+def _channel_line_profile(channel, start, end, profile_size: int):
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation
     Parameters
     ----------
     channel : np.array.
         image on a 2d ndarray format.
-    x0 : int
-        raw number of the starting pixel
-    y0 : int
-        column number of the starting pixel.
-    x1 : int
-        raw number of the ending pixel.
-    y1 : int
-        column number of the ending pixel.
+    start : (int, int)
+        coordinates of the starting pixel
+    end : (int, int)
+        coordinates of the ending pixel
     Returns
     -------
     line_pixel_values : ndarray
         1d ndarray representing the values of the chosen line of pixels.
     """
-    x, y = np.linspace(x0, x1, 255), np.linspace(y0, y1, 255)
+    x, y = np.linspace(start[0], end[0], profile_size), np.linspace(start[1], end[1], profile_size)
 
     return scipy.ndimage.map_coordinates(channel, np.vstack((x, y)))
 
 
-def _image_line_profile(image: np.ndarray, x0, y0, x1, y1):
+def _image_line_profile(image: np.ndarray, profile_size: int):
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1
     Parameters
     ----------
     image : ndarray.
         image on a 3d ndarray format cxy.
-    x0 : int
-        raw number of the starting pixel
-    y0 : int
-        column number of the starting pixel.
-    x1 : int
-        raw number of the ending pixel.
-    y1 : int
-        column number of the ending pixel.
+    profile_size : int
+        size of the intensity profile.
     Returns
     -------
     line_pixel_values : ndarray
         2d ndarray representing the values of the chosen line of pixels for each channel.
     """
-    output = np.zeros((image.shape[0], 255))
-    for c in image.shape[0]:
-        output[c, :] = _channel_line_profile(np.squeeze(image[c, :, :]), x0, y0, x1, y1)
+    profile_coordinates = {
+        "leftTop_to_rightBottom": ((0, 0), (image.shape[1], image.shape[2])),
+        "leftBottom_to_rightTop": ((0, image.shape[2]), (image.shape[1], 0)),
+        "center_horizontal": ((0, image.shape[2] // 2), (image.shape[1], image.shape[2] // 2)),
+        "center_vertical": ((image.shape[1] // 2, 0), (image.shape[1] // 2, image.shape[2])),
+    }
+    output = pd.DataFrame()
+    for profile_name, (start, end) in profile_coordinates.items():
+        profiles = np.zeros((image.shape[0], 255))
+        for c in range(image.shape[0]):
+            profiles[c, :] = _channel_line_profile(
+                np.squeeze(image[c, :, :]), start, end, profile_size
+            )
+        output = pd.concat(
+            [
+                output,
+                pd.DataFrame(
+                    profiles.T, columns=[f"ch_{c}_{profile_name}" for c in range(image.shape[0])]
+                ),
+            ],
+            axis=1,
+        )
 
-    return pd.DataFrame(output.T, columns=[f"ch_{c}" for c in range(image.shape[0])])
+    return output
 
 
 def _segment_channel(channel, threshold: float, sigma: float):
@@ -335,6 +344,16 @@ class FieldHomogeneityAnalysis(Analysis):
                 data=_image_intensity_map(
                     image=image, map_size=self.get_metadata_values("intensity_map_size")
                 ),
+            )
+        )
+
+        self.output.append(
+            model.Table(
+                name="intensity_plot_data",
+                description="Dataframe containing intensity plot data"
+                "for each channel in the diagonal as well as the"
+                "horizontal and vertical image centers",
+                table=_image_line_profile(image, profile_size=255),
             )
         )
 
