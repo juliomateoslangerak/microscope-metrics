@@ -185,6 +185,7 @@ def _image_properties(image, corner_fraction: float, sigma: float, center_thresh
         pd.DataFrame showing the intensity values of the different regions and
         their ratio over the maximum intensity value of the array. One row per channel.
     """
+    properties = None
     for c in range(image.shape[0]):
         channel_properties = {"channel": c}
         channel_properties.update(
