@@ -171,6 +171,24 @@ def _channel_corner_properties(channel, corner_fraction=0.1):
     }
 
 
+def _channel_area_deciles(channel: np.array) -> dict:
+    """Computes the intensity deciles of an image.
+    Parameters
+    ----------
+    channel : np.array.
+        2d ndarray.
+    Returns
+    -------
+    deciles: dict
+        dict enclosing the intensity deciles of the provided channel.
+    """
+    channel = channel / np.max(channel)
+    deciles = {}
+    for i in range(10):
+        deciles[f"decile_{i}"] = np.percentile(channel, i * 10)
+    return deciles
+
+
 def _image_properties(image, corner_fraction: float, sigma: float, center_threshold: float):
     """
     given an image in a 3d ndarray format (cxy), this function return intensities for the corner and central regions
@@ -192,6 +210,7 @@ def _image_properties(image, corner_fraction: float, sigma: float, center_thresh
             _channel_max_intensity_properties(image[c], sigma, center_threshold)
         )
         channel_properties.update(_channel_corner_properties(image[c], corner_fraction))
+        channel_properties.update(_channel_area_deciles(image[c]))
         if c == 0:
             properties = pd.DataFrame(channel_properties, index=[c])
         else:
@@ -237,7 +256,7 @@ class FieldHomogeneityAnalysis(Analysis):
             description="The threshold for the center of the image",
             data_type=float,
             optional=True,
-            default=0.1,
+            default=0.9,
         )
         self.add_metadata_requirement(
             name="corner_fraction",
