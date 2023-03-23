@@ -98,3 +98,80 @@ def get_norm_intensity_profile(img, save_path=""):
         plt.savefig(str(save_path), bbox_inches="tight")
 
     return fig
+
+def get_intensity_plot(img, save_path=""):
+    """
+    get the distribution of pixel intensities of the mid
+    vertical, mid horizontal and the two diagonal lines of a given image.
+    the vertical line y=0 on the plot represent to the image center.
+    If save_path is not empty, the generated figure will be saved as png in
+    the provided path.
+    Parameters
+    ----------
+    img : np.array
+        image on a 2d np.array format.
+    save_path : str, optional
+        path to save the generated figure inluding file name.
+        The default is "".
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        distribution of pixel intensities of the mid vertical, mid horizontal
+        and the two diagonal lines of a given image.
+        the vertical line y=0 on the plot represent to the image center.
+    fig_data : dict
+        dict representing the data used to generate the fig.
+        the 8 keys are organised by pair with x axis and y axis data:
+            - x_axis_V_seg and y_axis_V_seg
+            - x_axis_H_seg and y_axis_H_seg
+            - x_axis_diagUD and y_axis_diagUD
+            - x_axis_diagDU and y_axis_diagDU
+    """
+
+    xmax, ymax = np.shape(img)
+    xmax = xmax - 1
+    ymax = ymax - 1
+    xmid = round(xmax / 2)
+    ymid = round(ymax / 2)
+    # mid vertical pixel segment
+    V_seg = get_pixel_values_of_line(img, x0=0, y0=ymid, xf=xmax, yf=ymid)
+    # mid horizontal pixel segment
+    H_seg = get_pixel_values_of_line(img, x0=xmid, y0=0, xf=xmid, yf=ymax)
+    # diagonal UpDown Left Right
+    diagUD = get_pixel_values_of_line(img, x0=0, y0=0, xf=xmax, yf=ymax)
+    # diagonal DownUp Left Right
+    diagDU = get_pixel_values_of_line(img, x0=xmax, y0=0, xf=0, yf=ymax)
+
+    # plot data into pandas array
+    fig_data = {}
+    fig_data["x_axis_V_seg"] = get_x_axis(V_seg)
+    fig_data["y_axis_V_seg"] = V_seg
+
+    fig_data["x_axis_H_seg"] = get_x_axis(H_seg)
+    fig_data["y_axis_H_seg"] = H_seg
+
+    fig_data["x_axis_diagUD"] = get_x_axis(diagUD)
+    fig_data["y_axis_diagUD"] = diagUD
+
+    fig_data["x_axis_diagDU"] = get_x_axis(diagDU)
+    fig_data["y_axis_diagDU"] = diagDU
+
+    # plot
+    """
+    fig = plt.figure()
+    plt.plot(get_x_axis(V_seg), V_seg, color="b", label="V_seg", figure=fig)
+    plt.plot(get_x_axis(H_seg), H_seg, color="g", label="H_seg", figure=fig)
+
+    plt.plot(get_x_axis(diagUD), diagUD, color="r", label="Diag1", figure=fig)
+    plt.plot(get_x_axis(diagDU), diagDU, color="y", label="Diag2", figure=fig)
+
+    plt.axvline(0, linestyle='--')
+    plt.title("Intensity Profiles", figure=fig)
+    plt.xlim((min(get_x_axis(diagUD))-25, max(get_x_axis(diagUD))+25))
+    plt.legend()
+
+    if save_path:
+        plt.savefig(str(save_path),
+                    bbox_inches='tight')
+    """
+    return fig_data
