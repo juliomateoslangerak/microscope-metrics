@@ -145,7 +145,7 @@ class MetricsConfig(ConfigParser):
             raise e
 
 
-def is_saturated(channel, thresh=0.0, detector_bit_depth=None):
+def is_saturated(channel, threshold=0.0, detector_bit_depth=None):
     """
     Checks if the channel is saturated.
     A warning if it suspects that the detector bit depth does not match the datatype.
@@ -167,7 +167,7 @@ def is_saturated(channel, thresh=0.0, detector_bit_depth=None):
         for bit_depth in DETECTOR_BIT_DEPTHS:
             try:
                 saturated = is_saturated(
-                    channel, thresh=thresh, detector_bit_depth=bit_depth
+                    channel, threshold=threshold, detector_bit_depth=bit_depth
                 )
             except ValueError:
                 continue
@@ -186,4 +186,4 @@ def is_saturated(channel, thresh=0.0, detector_bit_depth=None):
     saturation_matrix = channel == max_limit
     saturation_ratio = np.count_nonzero(saturation_matrix) / channel.size
 
-    return saturation_ratio > thresh
+    return saturation_ratio > threshold
