@@ -1,12 +1,10 @@
 import numpy as np
-import scipy
-
 import pandas as pd
+import scipy
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 from microscopemetrics.samples import *
-
 from microscopemetrics.utilities.utilities import is_saturated
 
 
@@ -104,9 +102,7 @@ def _image_line_profile(image: np.ndarray, x0, y0, x1, y1):
 
 def _segment_channel(channel, threshold: float, sigma: float):
     if sigma is not None:
-        channel = gaussian(
-            image=channel, sigma=sigma, preserve_range=True, channel_axis=None
-        )
+        channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
 
     channel_norm = channel / np.max(channel)
     return (channel_norm > threshold).astype(int)
@@ -135,13 +131,14 @@ def _channel_max_intensity_properties(
     max_int_mask = _segment_channel(channel, center_threshold, sigma)
     image_properties = regionprops(max_int_mask, channel)
 
-    return {"nb_pixels": image_properties[0].area,
-            "center_of_mass_x": image_properties[0].centroid_weighted[0],
-            "center_of_mass_y": image_properties[0].centroid_weighted[1],
-            "max_intensity": max_intensity,
-            "max_intensity_pos_x": max_intensity_indexes[0],
-            "max_intensity_pos_y": max_intensity_indexes[1],
-            }
+    return {
+        "nb_pixels": image_properties[0].area,
+        "center_of_mass_x": image_properties[0].centroid_weighted[0],
+        "center_of_mass_y": image_properties[0].centroid_weighted[1],
+        "max_intensity": max_intensity,
+        "max_intensity_pos_x": max_intensity_indexes[0],
+        "max_intensity_pos_y": max_intensity_indexes[1],
+    }
 
 
 def _channel_corner_properties(channel, corner_fraction=0.1):
@@ -152,25 +149,26 @@ def _channel_corner_properties(channel, corner_fraction=0.1):
     cr_x = int((channel.shape[0] - cfp) / 2)
     cr_y = int((channel.shape[1] - cfp) / 2)
 
-    return {"top-left_intensity_mean": np.mean(channel[0:cfp, 0:cfp]),
-            "top-left_intensity_ratio": np.mean(channel[0:cfp, 0:cfp]) / max_intensity,
-            "top-center_intensity_mean": np.mean(channel[0:cfp, cr_x:-cr_x]),
-            "top-center_intensity_ratio": np.mean(channel[0:cfp, cr_x:-cr_x]) / max_intensity,
-            "top-right_intensity_mean": np.mean(channel[0:cfp, -cfp:-1]),
-            "top-right_intensity_ratio": np.mean(channel[0:cfp, -cfp:-1]) / max_intensity,
-            "middle-left_intensity_mean": np.mean(channel[cr_y:-cr_y, 0:cfp]),
-            "middle-left_intensity_ratio": np.mean(channel[cr_y:-cr_y, 0:cfp]) / max_intensity,
-            "middle-center_intensity_mean": np.mean(channel[cr_y:-cr_y, cr_x:-cr_x]),
-            "middle-center_intensity_ratio": np.mean(channel[cr_y:-cr_y, cr_x:-cr_x]) / max_intensity,
-            "middle-right_intensity_mean": np.mean(channel[cr_y:-cr_y, -cfp:-1]),
-            "middle-right_intensity_ratio": np.mean(channel[cr_y:-cr_y, -cfp:-1]) / max_intensity,
-            "bottom-left_intensity_mean": np.mean(channel[-cfp:-1, 0:cfp]),
-            "bottom-left_intensity_ratio": np.mean(channel[-cfp:-1, 0:cfp]) / max_intensity,
-            "bottom-center_intensity_mean": np.mean(channel[-cfp:-1, cr_x:-cr_x]),
-            "bottom-center_intensity_ratio": np.mean(channel[-cfp:-1, cr_x:-cr_x]) / max_intensity,
-            "bottom-right_intensity_mean": np.mean(channel[-cfp:-1, -cfp:-1]),
-            "bottom-right_intensity_ratio": np.mean(channel[-cfp:-1, -cfp:-1]) / max_intensity,
-            }
+    return {
+        "top-left_intensity_mean": np.mean(channel[0:cfp, 0:cfp]),
+        "top-left_intensity_ratio": np.mean(channel[0:cfp, 0:cfp]) / max_intensity,
+        "top-center_intensity_mean": np.mean(channel[0:cfp, cr_x:-cr_x]),
+        "top-center_intensity_ratio": np.mean(channel[0:cfp, cr_x:-cr_x]) / max_intensity,
+        "top-right_intensity_mean": np.mean(channel[0:cfp, -cfp:-1]),
+        "top-right_intensity_ratio": np.mean(channel[0:cfp, -cfp:-1]) / max_intensity,
+        "middle-left_intensity_mean": np.mean(channel[cr_y:-cr_y, 0:cfp]),
+        "middle-left_intensity_ratio": np.mean(channel[cr_y:-cr_y, 0:cfp]) / max_intensity,
+        "middle-center_intensity_mean": np.mean(channel[cr_y:-cr_y, cr_x:-cr_x]),
+        "middle-center_intensity_ratio": np.mean(channel[cr_y:-cr_y, cr_x:-cr_x]) / max_intensity,
+        "middle-right_intensity_mean": np.mean(channel[cr_y:-cr_y, -cfp:-1]),
+        "middle-right_intensity_ratio": np.mean(channel[cr_y:-cr_y, -cfp:-1]) / max_intensity,
+        "bottom-left_intensity_mean": np.mean(channel[-cfp:-1, 0:cfp]),
+        "bottom-left_intensity_ratio": np.mean(channel[-cfp:-1, 0:cfp]) / max_intensity,
+        "bottom-center_intensity_mean": np.mean(channel[-cfp:-1, cr_x:-cr_x]),
+        "bottom-center_intensity_ratio": np.mean(channel[-cfp:-1, cr_x:-cr_x]) / max_intensity,
+        "bottom-right_intensity_mean": np.mean(channel[-cfp:-1, -cfp:-1]),
+        "bottom-right_intensity_ratio": np.mean(channel[-cfp:-1, -cfp:-1]) / max_intensity,
+    }
 
 
 def _image_properties(image, corner_fraction: float, sigma: float, center_threshold: float):
@@ -189,7 +187,9 @@ def _image_properties(image, corner_fraction: float, sigma: float, center_thresh
     """
     for c in range(image.shape[0]):
         channel_properties = {"channel": c}
-        channel_properties.update(_channel_max_intensity_properties(image[c], sigma, center_threshold))
+        channel_properties.update(
+            _channel_max_intensity_properties(image[c], sigma, center_threshold)
+        )
         channel_properties.update(_channel_corner_properties(image[c], corner_fraction))
         if c == 0:
             properties = pd.DataFrame(channel_properties, index=[c])
@@ -299,10 +299,12 @@ class FieldHomogeneityAnalysis(Analysis):
             model.Table(
                 name="regions_properties_table",
                 description="Dataframe containing properties of the regions",
-                table=_image_properties(image=image,
-                                        corner_fraction=self.get_metadata_values("corner_fraction"),
-                                        sigma=self.get_metadata_values("sigma"),
-                                        center_threshold=self.get_metadata_values("center_threshold")),
+                table=_image_properties(
+                    image=image,
+                    corner_fraction=self.get_metadata_values("corner_fraction"),
+                    sigma=self.get_metadata_values("sigma"),
+                    center_threshold=self.get_metadata_values("center_threshold"),
+                ),
             )
         )
 
@@ -310,14 +312,15 @@ class FieldHomogeneityAnalysis(Analysis):
             model.Image(
                 name="intensity_map",
                 description="Intensity map",
-                data=_image_intensity_map(image=image,
-                                           map_size=self.get_metadata_values("intensity_map_size")),
+                data=_image_intensity_map(
+                    image=image, map_size=self.get_metadata_values("intensity_map_size")
+                ),
             )
         )
 
-        #intensity_plot_data = get_intensity_plot(image)
+        # intensity_plot_data = get_intensity_plot(image)
 
-        #profile_stat_table = _image_properties(image)
+        # profile_stat_table = _image_properties(image)
 
         # self.output.append(
         #     model.Table(
