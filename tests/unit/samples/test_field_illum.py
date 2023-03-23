@@ -7,7 +7,7 @@ from tests.test_utilities import get_file
 
 @pytest.fixture
 def field_illum_analysis():
-    file_path = get_file("https://dev.mri.cnrs.fr/attachments/download/2922/chroma.npy")
+    file_path = get_file("https://dev.mri.cnrs.fr/attachments/download/2926/chroma.npy")
     data = np.load(file_path)
 
     analysis = field_illum.FieldHomogeneityAnalysis()
