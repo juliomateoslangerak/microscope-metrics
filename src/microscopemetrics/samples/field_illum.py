@@ -354,32 +354,4 @@ class FieldHomogeneityAnalysis(Analysis):
             )
         )
 
-        # intensity_plot_data = get_intensity_plot(image)
-
-        # profile_stat_table = _image_properties(image)
-
-        # self.output.append(
-        #     model.Table(
-        #         name="norm_intensity_data",
-        #         description="Dataframe containing coordinates",
-        #         table=image_norm,
-        #     )
-        # )
-        #
-        # self.output.append(
-        #     model.Table(
-        #         name="intensity_plot_data",
-        #         description="Dataframe containing coordinates",
-        #         table=intensity_plot_data,
-        #     )
-        # )
-        #
-        # self.output.append(
-        #     model.Table(
-        #         name="profile_stat_table",
-        #         description="Dataframe containing coordinates",
-        #         table=profile_stat_table,
-        #     )
-        # )
-
         return True
