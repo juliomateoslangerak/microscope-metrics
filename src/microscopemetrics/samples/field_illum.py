@@ -86,8 +86,14 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
     profile_coordinates = {
         "leftTop_to_rightBottom": ((0, 0), (image.shape[1], image.shape[2])),
         "leftBottom_to_rightTop": ((0, image.shape[2]), (image.shape[1], 0)),
-        "center_horizontal": ((0, image.shape[2] // 2), (image.shape[1], image.shape[2] // 2)),
-        "center_vertical": ((image.shape[1] // 2, 0), (image.shape[1] // 2, image.shape[2])),
+        "center_horizontal": (
+            (0, image.shape[2] // 2),
+            (image.shape[1], image.shape[2] // 2),
+        ),
+        "center_vertical": (
+            (image.shape[1] // 2, 0),
+            (image.shape[1] // 2, image.shape[2]),
+        ),
     }
     output = pd.DataFrame()
     for profile_name, (start, end) in profile_coordinates.items():
@@ -100,7 +106,8 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
             [
                 output,
                 pd.DataFrame(
-                    profiles.T, columns=[f"ch_{c}_{profile_name}" for c in range(image.shape[0])]
+                    profiles.T,
+                    columns=[f"ch_{c}_{profile_name}" for c in range(image.shape[0])],
                 ),
             ],
             axis=1,
@@ -153,7 +160,8 @@ def _channel_max_intensity_properties(
 def _channel_corner_properties(channel, corner_fraction=0.1):
     max_intensity = np.max(channel)
 
-    # calculate the corner fraction in pixels (cfp) of the image size to use as the corner size and the center range (cr)
+    # Calculate the corner fraction in pixels (cfp) of the image size
+    # to use as the corner size and the center range (cr)
     cfp = int(corner_fraction * (channel.shape[0] + channel.shape[1]) / 2)
     cr_x = int((channel.shape[0] - cfp) / 2)
     cr_y = int((channel.shape[1] - cfp) / 2)
