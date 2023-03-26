@@ -192,10 +192,7 @@ def _channel_area_deciles(channel: np.array) -> dict:
         dict enclosing the intensity deciles of the provided channel.
     """
     channel = channel / np.max(channel)
-    deciles = {}
-    for i in range(10):
-        deciles[f"decile_{i}"] = np.percentile(channel, i * 10)
-    return deciles
+    return {f"decile_{i}": np.percentile(channel, i * 10) for i in range(10)}
 
 
 def _image_properties(image, corner_fraction: float, sigma: float, center_threshold: float):
