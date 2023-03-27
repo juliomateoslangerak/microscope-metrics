@@ -63,6 +63,7 @@ def _segment_channel(
 def segment_image(
     image,
     min_distance,
+    threshold=None,
     sigma=None,
     method="local_max",
     low_corr_factors=None,
@@ -96,7 +97,7 @@ def segment_image(
                 image[:, c, t, ...],
                 min_distance=min_distance,
                 method=method,
-                threshold=None,
+                threshold=threshold,
                 sigma=sigma,
                 low_corr_factor=low_corr_factors[c],
                 high_corr_factor=high_corr_factors[c],

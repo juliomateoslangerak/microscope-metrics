@@ -9,6 +9,6 @@ def test_is_saturated():
     saturated_data = np.zeros((10, 10), "uint8")
     saturated_data[0:5, ...] = 255  # 50% of the image is saturated
     assert not utilities.is_saturated(unsaturated_data)
-    assert not utilities.is_saturated(unsaturated_data, thresh=0.4)
+    assert not utilities.is_saturated(unsaturated_data, threshold=0.4)
     assert utilities.is_saturated(saturated_data)
-    assert not utilities.is_saturated(saturated_data, thresh=0.6)
+    assert not utilities.is_saturated(saturated_data, threshold=0.6)

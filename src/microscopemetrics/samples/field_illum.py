@@ -1,464 +1,365 @@
-
-"""This file demonstrates how someone can create a new sample module. This example will create a fully functional
-but naive analysis where lines are detected through a progressive probabilistic hough transform from scikit-image.
-See official documentation at https://scikit-image.org/docs/0.7.0/api/skimage.transform.html#probabilistic-hough
-
-The procedure to follow is, in short:
-- import everything from the samples module
-- import the types that you might be using from the typing module
-- import any necessary libraries that you will need for your analysis
-- Create one or more subclasses of the Analysis abstract class of samples. Within each class:
-    - define your input requirements
-    - define a 'run' method that will implement the logic of your analysis
-    - if desired, define a 'plot' method returning a plot showing the results of the analysis
-"""
 import numpy as np
-
-# import the sample functionality
-from microscopemetrics.samples import *
-
-# import utility function
-#from microscopemetrics.utilities import is_saturated
-
-# import the types that you may be using
-from typing import Tuple
-
-# import anything you will need for your analysis
-from pandas import DataFrame
-from skimage.transform import probabilistic_hough_line
-from scipy.spatial import distance
-from math import atan2
-from pydantic.color import Color
-from skimage import draw
+import pandas as pd
+import scipy
+from skimage.filters import gaussian
 from skimage.measure import regionprops
 
+from microscopemetrics.samples import *
+from microscopemetrics.utilities.utilities import is_saturated
 
-def get_norm_intensity_matrix(img):
+
+def _channel_intensity_map(channel, map_size: int):
     """
-    get normalized intensity matrix: divide all the pixels' intensity
-    by the maximum intensity.
+    Compute the intensity map of a channel
     Parameters
     ----------
-    img : np.array
-        image on a 2d np.array format.
+    channel : np.array.
+        image on a 2d ndarray format.
+    map_size : int
+        size of the intensity map.
     Returns
     -------
-    norm_intensity_profile : np.array
-        2d np.array where pixel values are scaled by the max intensity of
-        the original image.
+    intensity_map : ndarray
+        2d ndarray representing the intensity map of the chosen channel.
     """
-
-    max_intensity = np.max(img)
-    # the rule of three : max_intensity->100%, pixel_intensity*100/max
-    norm_intensity_profile = np.round(img/max_intensity * 100)
-    return DataFrame(norm_intensity_profile)
+    channel = channel / channel.max()
+    return scipy.ndimage.zoom(channel, map_size / channel.shape[0])
 
 
-def get_max_intensity_region_table(img):
+def _image_intensity_map(image: np.ndarray, map_size: int):
     """
-    this function finds the max intensity area of the given image
-    in order to figure out the number of pixels,the center of mass and
-    the max intensity of the corresponding area.
+    Compute the intensity map of an image
     Parameters
     ----------
-    img : np.array.
-        2d np.array.
+    image : ndarray.
+        image on a 3d ndarray format cxy.
+    map_size : int
+        size of the intensity map.
+    Returns
+    -------
+    intensity_map : ndarray
+        3d ndarray representing the intensity map of the chosen image.
+    """
+    output = np.zeros((image.shape[0], map_size, map_size))
+    for c in range(image.shape[0]):
+        output[c, :, :] = _channel_intensity_map(np.squeeze(image[c, :, :]), map_size)
+
+    # We want to return a 5d array (adding z and t) for compatibility with the rest of the code
+    return np.expand_dims(output, axis=(0, 2))
+
+
+def _channel_line_profile(channel, start, end, profile_size: int):
+    """
+    Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation
+    Parameters
+    ----------
+    channel : np.array.
+        image on a 2d ndarray format.
+    start : (int, int)
+        coordinates of the starting pixel
+    end : (int, int)
+        coordinates of the ending pixel
+    Returns
+    -------
+    line_pixel_values : ndarray
+        1d ndarray representing the values of the chosen line of pixels.
+    """
+    x, y = np.linspace(start[0], end[0], profile_size), np.linspace(start[1], end[1], profile_size)
+
+    return scipy.ndimage.map_coordinates(channel, np.vstack((x, y)))
+
+
+def _image_line_profile(image: np.ndarray, profile_size: int):
+    """
+    Compute the intensity profile along a line between x0-y0 and x1-y1
+    Parameters
+    ----------
+    image : ndarray.
+        image on a 3d ndarray format cxy.
+    profile_size : int
+        size of the intensity profile.
+    Returns
+    -------
+    line_pixel_values : ndarray
+        2d ndarray representing the values of the chosen line of pixels for each channel.
+    """
+    profile_coordinates = {
+        "leftTop_to_rightBottom": ((0, 0), (image.shape[1], image.shape[2])),
+        "leftBottom_to_rightTop": ((0, image.shape[2]), (image.shape[1], 0)),
+        "center_horizontal": (
+            (0, image.shape[2] // 2),
+            (image.shape[1], image.shape[2] // 2),
+        ),
+        "center_vertical": (
+            (image.shape[1] // 2, 0),
+            (image.shape[1] // 2, image.shape[2]),
+        ),
+    }
+    output = pd.DataFrame()
+    for profile_name, (start, end) in profile_coordinates.items():
+        profiles = np.zeros((image.shape[0], 255))
+        for c in range(image.shape[0]):
+            profiles[c, :] = _channel_line_profile(
+                np.squeeze(image[c, :, :]), start, end, profile_size
+            )
+        output = pd.concat(
+            [
+                output,
+                pd.DataFrame(
+                    profiles.T,
+                    columns=[f"ch_{c}_{profile_name}" for c in range(image.shape[0])],
+                ),
+            ],
+            axis=1,
+        )
+
+    return output
+
+
+def _segment_channel(channel, threshold: float, sigma: float):
+    if sigma is not None:
+        channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
+
+    channel_norm = channel / np.max(channel)
+    return (channel_norm > threshold).astype(int)
+
+
+def _channel_max_intensity_properties(
+    channel: np.array, sigma: float, center_threshold: float
+) -> dict:
+    """Computes the center of mass and the max intensity of the maximum intensity region of an image.
+    Parameters
+    ----------
+    channel : np.array.
+        2d ndarray.
     Returns
     -------
     center_of_mass: dict
-        dict encolsing the number of pixels, the coordinates of the
+        dict enclosing the number of pixels, the coordinates of the
         center of mass of the and the max intensity value of the max intensity
         area of the provided image.
     """
+    max_intensity = np.max(channel)
+    # TODO: check if there is more than one pixel with the same intensity.
+    #  We take the first one but we should take the one closest to the center or use a find_peaks function
+    max_intensity_indexes = np.unravel_index(np.argmax(channel), channel.shape)
 
-    max_intensity = np.max(img)
+    max_int_mask = _segment_channel(channel, center_threshold, sigma)
+    image_properties = regionprops(max_int_mask, channel)
 
-    # define the maximum intensity
-    threshold_value = max_intensity-1
-
-    # label pixels with max intesity values: binary matrix.
-    labeled_foreground = (img > threshold_value).astype(int)
-
-    # identify the region of max intensity
-    properties = regionprops(labeled_foreground, img)
-
-    # identify the center of mass of the max intensity area
-    center_of_mass = (int(properties[0].centroid[0]),
-                      int(properties[0].centroid[1]))
-
-    # number of pixels of max intensity region
-    nb_pixels = properties[0].area
-
-    # organize info in dataframe
-    max_region_info = {
-        "nb pixels": [nb_pixels],
-        "center of mass": [center_of_mass],
-        "max intensity": [max_intensity]
-        }
-
-    return max_region_info
+    return {
+        "nb_pixels": image_properties[0].area,
+        "center_of_mass_x": image_properties[0].centroid_weighted[0],
+        "center_of_mass_y": image_properties[0].centroid_weighted[1],
+        "max_intensity": max_intensity,
+        "max_intensity_pos_x": max_intensity_indexes[0],
+        "max_intensity_pos_y": max_intensity_indexes[1],
+    }
 
 
-def get_norm_intensity_profile(img, save_path=""):
-    """
-    plots the normalized intensity profile of the image.
-    the center of mass of the max intensity area is marked in red.
-    If save_path is not empty, the generated figure will be saved as png in
-    the provided path.
+def _channel_corner_properties(channel, corner_fraction=0.1):
+    max_intensity = np.max(channel)
+
+    # Calculate the corner fraction in pixels (cfp) of the image size
+    # to use as the corner size and the center range (cr)
+    cfp = int(corner_fraction * (channel.shape[0] + channel.shape[1]) / 2)
+    cr_x = int((channel.shape[0] - cfp) / 2)
+    cr_y = int((channel.shape[1] - cfp) / 2)
+
+    return {
+        "top-left_intensity_mean": np.mean(channel[0:cfp, 0:cfp]),
+        "top-left_intensity_ratio": np.mean(channel[0:cfp, 0:cfp]) / max_intensity,
+        "top-center_intensity_mean": np.mean(channel[0:cfp, cr_x:-cr_x]),
+        "top-center_intensity_ratio": np.mean(channel[0:cfp, cr_x:-cr_x]) / max_intensity,
+        "top-right_intensity_mean": np.mean(channel[0:cfp, -cfp:-1]),
+        "top-right_intensity_ratio": np.mean(channel[0:cfp, -cfp:-1]) / max_intensity,
+        "middle-left_intensity_mean": np.mean(channel[cr_y:-cr_y, 0:cfp]),
+        "middle-left_intensity_ratio": np.mean(channel[cr_y:-cr_y, 0:cfp]) / max_intensity,
+        "middle-center_intensity_mean": np.mean(channel[cr_y:-cr_y, cr_x:-cr_x]),
+        "middle-center_intensity_ratio": np.mean(channel[cr_y:-cr_y, cr_x:-cr_x]) / max_intensity,
+        "middle-right_intensity_mean": np.mean(channel[cr_y:-cr_y, -cfp:-1]),
+        "middle-right_intensity_ratio": np.mean(channel[cr_y:-cr_y, -cfp:-1]) / max_intensity,
+        "bottom-left_intensity_mean": np.mean(channel[-cfp:-1, 0:cfp]),
+        "bottom-left_intensity_ratio": np.mean(channel[-cfp:-1, 0:cfp]) / max_intensity,
+        "bottom-center_intensity_mean": np.mean(channel[-cfp:-1, cr_x:-cr_x]),
+        "bottom-center_intensity_ratio": np.mean(channel[-cfp:-1, cr_x:-cr_x]) / max_intensity,
+        "bottom-right_intensity_mean": np.mean(channel[-cfp:-1, -cfp:-1]),
+        "bottom-right_intensity_ratio": np.mean(channel[-cfp:-1, -cfp:-1]) / max_intensity,
+    }
+
+
+def _channel_area_deciles(channel: np.array) -> dict:
+    """Computes the intensity deciles of an image.
     Parameters
     ----------
-    img : np.array
-        image on a 2d np.array format.
-    save_path : str, optional
-        path to save the generated figure including filename.
-        The default is "".
+    channel : np.array.
+        2d ndarray.
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        returns the normalized intensity profile of the image with
-        the center of mass of the max intensity area marked in red.
+    deciles: dict
+        dict enclosing the intensity deciles of the provided channel.
     """
-
-    # normalized intensity array of the given image
-    norm_intensity_profile = get_norm_intensity_matrix(img)
-    # coordinates of center of mass of mac intensity area
-    x_mass, y_mass = get_max_intensity_region_table(img)["center of mass"][0]
-
-    # figure construction
-    fig, ax = plt.subplots()
-    ax.scatter(y_mass, x_mass, s=60, color="r", marker='+')
-    plt.imshow(norm_intensity_profile)
-    plt.colorbar()
-    plt.title("normalized intensity profile", figure=fig)
-    if save_path:
-        plt.savefig(str(save_path),
-                    bbox_inches='tight')
-
-    return fig
+    channel = channel / np.max(channel)
+    return {f"decile_{i}": np.percentile(channel, i * 10) for i in range(10)}
 
 
-# 3. intensity profiles
-
-
-def get_pixel_values_of_line(img, x0, y0, xf, yf):
+def _image_properties(image, corner_fraction: float, sigma: float, center_threshold: float):
     """
-    get the value of a line of pixels.
-    the line defined by the user using the corresponding first and last
-    pixel indices.
+    given an image in a 3d ndarray format (cxy), this function return intensities for the corner and central regions
+    and their ratio over the maximum intensity value of the array.
     Parameters
     ----------
-    img : np.array.
-        image on a 2d np.array format.
-    x0 : int
-        raw number of the starting pixel
-    y0 : int
-        column number of the starting pixel.
-    xf : int
-        raw number of the ending pixel.
-    yf : int
-        column number of the ending pixel.
-    Returns
-    -------
-    line_pixel_values : np.array
-        1d np.array representing the values of the chosen line of pixels.
-    """
-    rr, cc = np.array(draw.line(x0, y0, xf, yf))
-    # line_pixel_values = [img[rr[i], cc[i]] for i in range(len(rr))]
-    line_pixel_values = img[rr, cc]
-    return line_pixel_values
-
-
-def get_x_axis(y_axis):
-    """
-    get x axis values for the intensity plot given y values.
-    Parameters
-    ----------
-    y : np.array
-        1d np.array representing the y axis values of the intensity plot.
-    Returns
-    -------
-    x_axis : np.array
-        x axis values for the intensity plot.
-    """
-    nb_pixels = len(y_axis)
-    # center the pixel value vector around 0
-    x_axis = np.arange(round(-nb_pixels/2), round(nb_pixels/2+1), 1)
-    # the center of the matrix is 4 pixels not one
-    x_axis = x_axis[x_axis != 0]
-    return x_axis
-
-
-def get_intensity_plot(img, save_path=""):
-    """
-    get the distribution of pixel intensities of the mid
-    vertical, mid horizontal and the two diagonal lines of a given image.
-    the vertical line y=0 on the plot represent to the image center.
-    If save_path is not empty, the generated figure will be saved as png in
-    the provided path.
-    Parameters
-    ----------
-    img : np.array
-        image on a 2d np.array format.
-    save_path : str, optional
-        path to save the generated figure inluding file name.
-        The default is "".
-    Returns
-    -------
-    fig : matplotlib.figure.Figure
-        distribution of pixel intensities of the mid vertical, mid horizontal
-        and the two diagonal lines of a given image.
-        the vertical line y=0 on the plot represent to the image center.
-    fig_data : dict
-        dict representing the data used to generate the fig.
-        the 8 keys are organised by pair with x axis and y axis data:
-            - x_axis_V_seg and y_axis_V_seg
-            - x_axis_H_seg and y_axis_H_seg
-            - x_axis_diagUD and y_axis_diagUD
-            - x_axis_diagDU and y_axis_diagDU
-    """
-
-    xmax, ymax = np.shape(img)
-    xmax = xmax-1
-    ymax = ymax-1
-    xmid = round(xmax/2)
-    ymid = round(ymax/2)
-    # mid vertical pixel segment
-    V_seg = get_pixel_values_of_line(img, x0=0, y0=ymid, xf=xmax, yf=ymid)
-    # mid horizontal pixel segment
-    H_seg = get_pixel_values_of_line(img, x0=xmid, y0=0, xf=xmid, yf=ymax)
-    # diagonal UpDown Left Right
-    diagUD = get_pixel_values_of_line(img, x0=0, y0=0, xf=xmax, yf=ymax)
-    # diagonal DownUp Left Right
-    diagDU = get_pixel_values_of_line(img, x0=xmax, y0=0, xf=0, yf=ymax)
-
-    # plot data into pandas array
-    fig_data = {}
-    fig_data["x_axis_V_seg"] = get_x_axis(V_seg)
-    fig_data["y_axis_V_seg"] = V_seg
-
-    fig_data["x_axis_H_seg"] = get_x_axis(H_seg)
-    fig_data["y_axis_H_seg"] = H_seg
-
-    fig_data["x_axis_diagUD"] = get_x_axis(diagUD)
-    fig_data["y_axis_diagUD"] = diagUD
-
-    fig_data["x_axis_diagDU"] = get_x_axis(diagDU)
-    fig_data["y_axis_diagDU"] = diagDU
-
-    # plot
-    """
-    fig = plt.figure()
-    plt.plot(get_x_axis(V_seg), V_seg, color="b", label="V_seg", figure=fig)
-    plt.plot(get_x_axis(H_seg), H_seg, color="g", label="H_seg", figure=fig)
-
-    plt.plot(get_x_axis(diagUD), diagUD, color="r", label="Diag1", figure=fig)
-    plt.plot(get_x_axis(diagDU), diagDU, color="y", label="Diag2", figure=fig)
-
-    plt.axvline(0, linestyle='--')
-    plt.title("Intensity Profiles", figure=fig)
-    plt.xlim((min(get_x_axis(diagUD))-25, max(get_x_axis(diagUD))+25))
-    plt.legend()
-
-    if save_path:
-        plt.savefig(str(save_path),
-                    bbox_inches='tight')
-    """
-    return fig_data
-
-
-# 4. profile statistics
-
-
-def get_profile_statistics_table(img):
-    """
-    given an image in a 2d np.array format, this function return the pixel
-    intensity values of 9 specific pixels and their ratio over the maximum
-    intensity. The 9 concerned pixels are:
-        - top-left corner
-        - upper-middle pixel
-        - top-right corner
-        - left-middle pixel
-        - maximum intensity pixel
-        - right-middle pixel
-        - bottom-left corner
-        - bottom-middle pixel
-        - bottom-right corner
-    Parameters
-    ----------
-    img : np.array
+    image : np.array
         image on a 2d np.array format.
     Returns
     -------
-    profiles_statistics : dict
-        dict showing the intensity values of the concerned 9 pixels and
-        their ratio over the maximum intensity value of the array.
+    profiles_statistics : pd.DataFrame
+        pd.DataFrame showing the intensity values of the different regions and
+        their ratio over the maximum intensity value of the array. One row per channel.
     """
+    properties = None
+    for c in range(image.shape[0]):
+        channel_properties = {"channel": c}
+        channel_properties.update(
+            _channel_max_intensity_properties(image[c], sigma, center_threshold)
+        )
+        channel_properties.update(_channel_corner_properties(image[c], corner_fraction))
+        channel_properties.update(_channel_area_deciles(image[c]))
+        if c == 0:
+            properties = pd.DataFrame(channel_properties, index=[c])
+        else:
+            properties = pd.concat(
+                [
+                    properties,
+                    pd.DataFrame(channel_properties, index=[c]),
+                ],
+            )
 
-    # find the maximum intensity and the corresponding pixel.
-    max_intensity = np.max(img)
-    xx_max, yy_max = np.where(img == max_intensity)
-
-    # if max intensity is in >1 pixels, we chose only the first localization
-    x_index_max_intensity = xx_max[0]
-    y_index_max_intensity = yy_max[0]
-
-    max_found_at = [x_index_max_intensity, y_index_max_intensity]
-
-    # 3 by 3 grid going through each corner and the middle of each line:
-
-    # tl, um, tr
-    # lm, cc, rm
-    # bl, bm, br
-
-    xx, yy = np.meshgrid([0, img.shape[0] // 2, -1],
-                         [0, img.shape[1] // 2, -1])
-    max_intensities = np.around(img[xx, yy].flatten(), 2)
-    max_intensities_relative = np.around(max_intensities/max_intensity, 2)
-
-    # replace central pixel value with max intensity
-    max_intensities[4] = max_intensity
-    max_intensities_relative[4] = 1.0
-
-    # build dictionnary
-    profiles_statistics_dict = {}
-    profiles_statistics_dict["location"] = [
-         "top-left corner",
-         "upper-middle pixel",
-         "top-right corner",
-         "left-middle pixel",
-         f"maximum found at {max_found_at}",
-         "right-middle pixel",
-         "bottom-left corner",
-         "bottom-middle pixel",
-         "bottom-right corner",
-     ]
-
-    profiles_statistics_dict["intensity"] = max_intensities
-    profiles_statistics_dict["intensity relative to max"] = \
-        max_intensities_relative
-
-    return profiles_statistics_dict
+    return properties
 
 
 @register_image_analysis
-class FieldHomogeneityAnalysis(
-    Analysis
-):  # Subclass Analysis for each analysis you want to implement for a given sample
-    """Write a good documentation:
-    This analysis creates a report on field illumination homogeneity based on input images"""
+class FieldHomogeneityAnalysis(Analysis):
+    """This analysis creates a report on field illumination homogeneity based on input images"""
 
-    # Define the __init__
     def __init__(self):
-        # Call the super __init__ method which takes a single argument: the description of the output
-        super().__init__(output_description="This analysis returns...")
+        super().__init__(
+            output_description="This analysis returns an analysis on the homogeneity of the field illumination"
+        )
 
-        # Add metadata requirements for the analysis
         self.add_data_requirement(
             name="image",
-            description="An image with lines as a numpy array",
+            description="An homogeneity provided as a numpy array with 5D zctxy shape",
             data_type=np.ndarray,
         )
         self.add_metadata_requirement(
-            name="bitDepth",
-            description="Camera bitDepth",
-            data_type=Tuple[float, float],  # We can use complex data types
-            units="bits",  # You should specify units when necessary
-            optional=True,  # This parameter will not be optional
+            name="bit_depth",
+            description="Detector bit depth",
+            data_type=int,
+            optional=True,
         )
         self.add_metadata_requirement(
             name="threshold",
-            description="Threshold for saturation",
-            data_type=int,  # And we can use standard data types
-            optional=True,  # When optional, this parameter will not have to be provided
-            default=10,  # If a requirement is optional you may provide a default value that will be
-        )  # used in case you dont provide any value
+            description="Tolerated saturation threshold",
+            data_type=float,
+            optional=True,
+            default=0.01,
+        )
+        self.add_metadata_requirement(
+            name="center_threshold",
+            description="The threshold for the center of the image",
+            data_type=float,
+            optional=True,
+            default=0.9,
+        )
+        self.add_metadata_requirement(
+            name="corner_fraction",
+            description="The proportion of the image to be considered as corner or center",
+            data_type=float,
+            optional=True,
+            default=0.1,
+        )
+        self.add_metadata_requirement(
+            name="sigma",
+            description="The sigma for the smoothing gaussian filter",
+            data_type=float,
+            optional=True,
+            default=2,
+        )
+        self.add_metadata_requirement(
+            name="intensity_map_size",
+            description="The size of the intensity map in pixels",
+            data_type=int,
+            optional=True,
+            default=100,
+        )
 
-
-    # You must define a run method taking no parameters. This method will run the analysis
     def run(self):
-        logger.info(
-            "Validating requirements..."
-        )  # You may use the logger function to log info
-
-        # It is a good practice to verify all the requirements before running the analysis
-        # This will verify that all the non optional requirements are provided
+        logger.info("Validating requirements...")
         if len(self.list_unmet_requirements()):
-            # we can use the logger to report errors
             logger.error(
                 f"The following metadata requirements ara not met: {self.list_unmet_requirements()}"
             )
-            return (
-                False  # The run method should return False upon unsuccessful execution
-            )
-
-        logger.info("Checking image saturation")
-
-        """
-        saturated = is_saturated(
-            image=self.get_data_values(
-                "image"
-            ),  # The input image data is accessible through the input.data
-            threshold=self.get_metadata_values(
-                "threshold"
-            ),  # You may access the metadata like this too
-            bitDepth=self.get_metadata_values(
-                "bitDepth"
-            ),
-        )
-
-        if saturated:
-            logger.info("Image is saturated")
             return False
-        # 'lines' is now a list of lines defined by the coordinates ((x1, y1), (x2, y2))
-        """
-        image=self.get_data_values("image")
-        # 1. get normalized intensity profile
-        #norm_intensity_profile = get_norm_intensity_profile(image)
-        norm_intensity_data = get_norm_intensity_matrix(image)
 
-        # 3. get centers' locations
-        max_intensity_region_table = get_max_intensity_region_table(image)
+        # Check image shape
+        logger.info("Checking image shape...")
+        image = self.get_data_values("image")
+        if len(image.shape) != 5:
+            logger.error("Image must be 5D")
+            return False
+        if image.shape[0] != 1 or image.shape[2] != 1:
+            logger.warning(
+                "Image must be single z and single timepoint. Using first z and timepoint."
+            )
+        image = image[0, :, 0, :, :].reshape((image.shape[1], image.shape[3], image.shape[4]))
 
-        # 4. get intensity profiles
-        intensity_plot_data = get_intensity_plot(image)
+        # Check image saturation
+        logger.info("Checking image saturation...")
+        saturated_channels = []
+        for c in range(image.shape[0]):
+            if is_saturated(
+                channel=image[c, :, :],
+                threshold=self.get_metadata_values(name="threshold"),
+                detector_bit_depth=self.get_metadata_values(name="bit_depth"),
+            ):
+                logger.error(f"Channel {c} is saturated")
+                saturated_channels.append(c)
+        if len(saturated_channels):
+            logger.error(f"Channels {saturated_channels} are saturated")
+            return False
 
-        # 5. get profiles statistics
-        profile_stat_table = get_profile_statistics_table(image)
-
-        # We append the dataframe into the output
         self.output.append(
             model.Table(
-                name="max_intensity_region_table",
-                description="Dataframe containing coordinates",
-                table=max_intensity_region_table,
+                name="regions_properties_table",
+                description="Dataframe containing properties of the regions",
+                table=_image_properties(
+                    image=image,
+                    corner_fraction=self.get_metadata_values("corner_fraction"),
+                    sigma=self.get_metadata_values("sigma"),
+                    center_threshold=self.get_metadata_values("center_threshold"),
+                ),
             )
         )
 
         self.output.append(
-            model.Table(
-                name="norm_intensity_data",
-                description="Dataframe containing coordinates",
-                table=norm_intensity_data,
+            model.Image(
+                name="intensity_map",
+                description="Intensity map",
+                data=_image_intensity_map(
+                    image=image, map_size=self.get_metadata_values("intensity_map_size")
+                ),
             )
         )
 
         self.output.append(
             model.Table(
                 name="intensity_plot_data",
-                description="Dataframe containing coordinates",
-                table=intensity_plot_data,
+                description="Dataframe containing intensity plot data"
+                "for each channel in the diagonal as well as the"
+                "horizontal and vertical image centers",
+                table=_image_line_profile(image, profile_size=255),
             )
         )
 
-        self.output.append(
-            model.Table(
-                name="profile_stat_table",
-                description="Dataframe containing coordinates",
-                table=profile_stat_table,
-            )
-        )
-
-
-
-        # And that's about it. Don't forget to return True at the end
         return True
