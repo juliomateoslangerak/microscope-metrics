@@ -138,7 +138,15 @@ class Analysis(ABC):
         return self.input.get_metadata_defaults(name)
 
     def run(self):
-        return self._run()
+        logger.info("Validating requirements...")
+        if len(self.list_unmet_requirements()):
+            logger.error(
+                f"The following metadata requirements ara not met: {self.list_unmet_requirements()}"
+            )
+            return False
+        else:
+            logger.info(f"Requirements are met. Running analysis {self.get_name()}...")
+            return self._run()
 
     @abstractmethod
     def _run(self):

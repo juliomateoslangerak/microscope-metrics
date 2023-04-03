@@ -295,13 +295,6 @@ class FieldHomogeneityAnalysis(Analysis):
         )
 
     def _run(self):
-        logger.info("Validating requirements...")
-        if len(self.list_unmet_requirements()):
-            logger.error(
-                f"The following metadata requirements ara not met: {self.list_unmet_requirements()}"
-            )
-            return False
-
         # Check image shape
         logger.info("Checking image shape...")
         image = self.get_data_values("image")

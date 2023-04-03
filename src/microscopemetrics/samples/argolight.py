@@ -79,13 +79,6 @@ class ArgolightBAnalysis(Analysis):
         )
 
     def _run(self):
-        logger.info("Validating requirements...")
-        if not self.validate_requirements():
-            logger.error("Metadata requirements are not valid")
-            return False
-
-        logger.info("Analyzing spots image...")
-
         # Calculating the distance between spots in pixels with a security margin
         min_distance = round(
             (self.get_metadata_values("spots_distance") * 0.3)
@@ -286,14 +279,6 @@ class ArgolightEAnalysis(Analysis):
 
     def _run(self):
         """A intermediate function to specify the axis to be analyzed"""
-
-        logger.info("Validating requirements...")
-        if not self.validate_requirements():
-            logger.error("Metadata requirements are not valid")
-            return False
-
-        logger.info("Analyzing resolution...")
-
         return self._analyze_resolution(
             image=self.get_data_values("argolight_e"),
             axis=self.get_metadata_values("axis"),

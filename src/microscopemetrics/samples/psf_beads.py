@@ -209,13 +209,6 @@ class PSFBeadsAnalysis(Analysis):
         """Analyzes images of sub-resolution beads in order to extract data on the optical
         performance of the microscope.
         """
-        logger.info("Validating requirements...")
-        if not self.validate_requirements():
-            logger.error("Metadata requirements are not valid")
-            return False
-
-        logger.info("Analyzing spots image...")
-
         # Verify that image is not saturated
         if np.issubdtype(self.get_data_values("beads_image").dtype, np.integer):
             if (
