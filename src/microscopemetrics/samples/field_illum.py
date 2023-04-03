@@ -294,7 +294,7 @@ class FieldHomogeneityAnalysis(Analysis):
             default=100,
         )
 
-    def run(self):
+    def _run(self):
         logger.info("Validating requirements...")
         if len(self.list_unmet_requirements()):
             logger.error(

@@ -137,6 +137,9 @@ class Analysis(ABC):
     def get_metadata_defaults(self, name: Union[str, list]):
         return self.input.get_metadata_defaults(name)
 
-    @abstractmethod
     def run(self):
+        return self._run()
+
+    @abstractmethod
+    def _run(self):
         raise NotImplemented()

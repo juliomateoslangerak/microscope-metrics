@@ -36,10 +36,7 @@ def _fit_airy(profile, guess=None):
     fitted_profile = airy_fun(x, popt[0], popt[1])
 
     def _f(d):
-        return (
-            airy_fun(d, popt[0], popt[1])
-            - (fitted_profile.max() - fitted_profile.min()) / 2
-        )
+        return airy_fun(d, popt[0], popt[1]) - (fitted_profile.max() - fitted_profile.min()) / 2
 
     guess = np.array([fitted_profile.argmax() - 1, fitted_profile.argmax() + 1])
     v = fsolve(_f, guess)
@@ -138,9 +135,7 @@ class PSFBeadsAnalysis(Analysis):
             )
 
         # Find bead centers
-        positions_2d = peak_local_max(
-            image=image_mip, threshold_rel=0.2, min_distance=5
-        )
+        positions_2d = peak_local_max(image=image_mip, threshold_rel=0.2, min_distance=5)
         # Add the mas intensity value in z
         positions_3d = np.insert(
             positions_2d[:],
@@ -159,16 +154,14 @@ class PSFBeadsAnalysis(Analysis):
             & (positions_2d[:, 1] > min_distance)
             & (positions_2d[:, 1] < image_mip.shape[1] - min_distance)
         )
-        module_logger.info(
-            f"Beads too close to the edge: {nr_beads - np.sum(edge_keep_mask)}"
-        )
+        module_logger.info(f"Beads too close to the edge: {nr_beads - np.sum(edge_keep_mask)}")
 
         # Exclude beads too close to each other
         proximity_keep_mask = np.ones((nr_beads, nr_beads), dtype=bool)
         for i, pos in enumerate(positions_2d):
-            proximity_keep_mask[i] = (
-                abs(positions_2d[:, 0] - pos[0]) > min_distance
-            ) | (abs(positions_2d[:, 1] - pos[1]) > min_distance)
+            proximity_keep_mask[i] = (abs(positions_2d[:, 0] - pos[0]) > min_distance) | (
+                abs(positions_2d[:, 1] - pos[1]) > min_distance
+            )
             proximity_keep_mask[i, i] = True  # Correcting the diagonal
         proximity_keep_mask = np.all(proximity_keep_mask, axis=0)
         module_logger.info(
@@ -212,7 +205,7 @@ class PSFBeadsAnalysis(Analysis):
         distance = self.get_metadata_values("min_lateral_distance_factor")
         return res * distance
 
-    def run(self):
+    def _run(self):
         """Analyzes images of sub-resolution beads in order to extract data on the optical
         performance of the microscope.
         """
@@ -229,18 +222,14 @@ class PSFBeadsAnalysis(Analysis):
                 self.get_data_values("beads_image").max()
                 == np.iinfo(self.get_data_values("beads_image").dtype).max
             ):
-                logger.error(
-                    "Image is saturated. No attempt to find beads will be done."
-                )
+                logger.error("Image is saturated. No attempt to find beads will be done.")
                 return False
         elif np.issubdtype(self.get_data_values("beads_image").dtype, np.float):
             if (
                 self.get_data_values("beads_image").max()
                 == np.finfo(self.get_data_values("beads_image").dtype).max
             ):
-                logger.error(
-                    "Image is saturated. No attempt to find beads will be done."
-                )
+                logger.error("Image is saturated. No attempt to find beads will be done.")
                 return False
 
         # Get some analysis_config parameters
@@ -253,18 +242,10 @@ class PSFBeadsAnalysis(Analysis):
 
         # Validating nyquist
         try:
-            if pixel_size[1] > (
-                2 * self.get_metadata_values("theoretical_fwhm_lateral_res")
-            ):
-                module_logger.warning(
-                    "Nyquist criterion is not fulfilled in the lateral direction"
-                )
-            if pixel_size[0] > (
-                2 * self.get_metadata_values("theoretical_fwhm_axial_res")
-            ):
-                module_logger.warning(
-                    "Nyquist criterion is not fulfilled in the axial direction"
-                )
+            if pixel_size[1] > (2 * self.get_metadata_values("theoretical_fwhm_lateral_res")):
+                module_logger.warning("Nyquist criterion is not fulfilled in the lateral direction")
+            if pixel_size[0] > (2 * self.get_metadata_values("theoretical_fwhm_axial_res")):
+                module_logger.warning("Nyquist criterion is not fulfilled in the axial direction")
         except (TypeError, IndexError) as e:
             module_logger.error("Could not validate Nyquist sampling criterion")
 
@@ -397,9 +378,7 @@ class PSFBeadsAnalysis(Analysis):
         profiles_y_df = DataFrame()
         profiles_x_df = DataFrame()
 
-        for i, (raw_profile, fitted_profile) in enumerate(
-            zip(raw_profiles, fitted_profiles)
-        ):
+        for i, (raw_profile, fitted_profile) in enumerate(zip(raw_profiles, fitted_profiles)):
             profiles_z_df[f"raw_z_profile_bead_{i:02d}"] = raw_profile[0]
             profiles_z_df[f"fitted_z_profile_bead_{i:02d}"] = fitted_profile[0]
             profiles_y_df[f"raw_y_profile_bead_{i:02d}"] = raw_profile[1]
@@ -451,9 +430,9 @@ class PSFBeadsAnalysis(Analysis):
         key_values["resolution_theoretical_fwhm_lateral"] = self.get_metadata_values(
             "theoretical_fwhm_lateral_res"
         )
-        key_values[
-            "resolution_theoretical_fwhm_lateral_units"
-        ] = self.get_metadata_units("theoretical_fwhm_lateral_res")
+        key_values["resolution_theoretical_fwhm_lateral_units"] = self.get_metadata_units(
+            "theoretical_fwhm_lateral_res"
+        )
         key_values["resolution_theoretical_fwhm_axial"] = self.get_metadata_values(
             "theoretical_fwhm_axial_res"
         )

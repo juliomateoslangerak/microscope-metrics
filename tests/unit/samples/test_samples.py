@@ -1,8 +1,8 @@
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
 
 import numpy as np
-
 import pytest
+
 from microscopemetrics.samples import *
 
 
@@ -35,7 +35,7 @@ def sample_analysis():
             )
 
         @register_image_analysis
-        def run(self):
+        def _run(self):
             new_array = self.get_data_values("input_data") + 1
             new_image = model.Image(
                 name="output_image",
@@ -96,6 +96,6 @@ def test_analysis_inheritance(sample_analysis_with_data):
 
     assert sample_analysis_with_data.validate_requirements() is True
 
-    IMAGE_ANALYSIS_REGISTRY["run"](sample_analysis_with_data)
+    IMAGE_ANALYSIS_REGISTRY["_run"](sample_analysis_with_data)
 
     assert len(sample_analysis_with_data.output.get_rois()) == 1

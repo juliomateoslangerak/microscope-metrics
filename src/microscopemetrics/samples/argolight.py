@@ -78,7 +78,7 @@ class ArgolightBAnalysis(Analysis):
             default=False,
         )
 
-    def run(self):
+    def _run(self):
         logger.info("Validating requirements...")
         if not self.validate_requirements():
             logger.error("Metadata requirements are not valid")
@@ -100,12 +100,8 @@ class ArgolightBAnalysis(Analysis):
             min_distance=min_distance,
             sigma=self.get_metadata_values("sigma"),
             method="local_max",
-            low_corr_factors=self.get_metadata_values(
-                "lower_threshold_correction_factors"
-            ),
-            high_corr_factors=self.get_metadata_values(
-                "upper_threshold_correction_factors"
-            ),
+            low_corr_factors=self.get_metadata_values("lower_threshold_correction_factors"),
+            high_corr_factors=self.get_metadata_values("upper_threshold_correction_factors"),
         )
 
         self.output.append(
@@ -141,31 +137,19 @@ class ArgolightBAnalysis(Analysis):
             ch_df["max_intensity"] = [p["max_intensity"] for p in ch_spot_props]
             ch_df["min_intensity"] = [p["min_intensity"] for p in ch_spot_props]
             ch_df["mean_intensity"] = [p["mean_intensity"] for p in ch_spot_props]
-            ch_df["integrated_intensity"] = [
-                p["integrated_intensity"] for p in ch_spot_props
-            ]
-            ch_df["z_weighted_centroid"] = [
-                p["weighted_centroid"][0] for p in ch_spot_props
-            ]
-            ch_df["y_weighted_centroid"] = [
-                p["weighted_centroid"][1] for p in ch_spot_props
-            ]
-            ch_df["x_weighted_centroid"] = [
-                p["weighted_centroid"][2] for p in ch_spot_props
-            ]
+            ch_df["integrated_intensity"] = [p["integrated_intensity"] for p in ch_spot_props]
+            ch_df["z_weighted_centroid"] = [p["weighted_centroid"][0] for p in ch_spot_props]
+            ch_df["y_weighted_centroid"] = [p["weighted_centroid"][1] for p in ch_spot_props]
+            ch_df["x_weighted_centroid"] = [p["weighted_centroid"][2] for p in ch_spot_props]
             ch_df["roi_weighted_centroid_units"] = "PIXEL"
 
             # Key metrics for spots intensities
             properties_kv[f"nr_of_spots_ch{ch:02d}"] = len(ch_df)
-            properties_kv[f"max_intensity_ch{ch:02d}"] = (
-                ch_df["integrated_intensity"].max().item()
-            )
+            properties_kv[f"max_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].max().item()
             properties_kv[f"max_intensity_roi_ch{ch:02d}"] = (
                 ch_df["integrated_intensity"].argmax().item()
             )
-            properties_kv[f"min_intensity_ch{ch:02d}"] = (
-                ch_df["integrated_intensity"].min().item()
-            )
+            properties_kv[f"min_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].min().item()
             properties_kv[f"min_intensity_roi_ch{ch:02d}"] = (
                 ch_df["integrated_intensity"].argmin().item()
             )
@@ -179,9 +163,7 @@ class ArgolightBAnalysis(Analysis):
                 ch_df["integrated_intensity"].std().item()
             )
             properties_kv[f"mad_mean_intensity_ch{ch:02d}"] = (
-                (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean())
-                .abs()
-                .mean()
+                (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean()).abs().mean()
             )
             properties_kv[f"min-max_intensity_ratio_ch{ch:02d}"] = (
                 properties_kv[f"min_intensity_ch{ch:02d}"]
@@ -212,36 +194,20 @@ class ArgolightBAnalysis(Analysis):
 
         distances_kv = {"distance_units": self.get_metadata_units("pixel_size")}
 
-        for a, b in product(
-            distances_df.channel_a.unique(), distances_df.channel_b.unique()
-        ):
-            temp_df = distances_df[
-                (distances_df.channel_a == a) & (distances_df.channel_b == b)
-            ]
+        for a, b in product(distances_df.channel_a.unique(), distances_df.channel_b.unique()):
+            temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
             a = int(a)
             b = int(b)
 
-            distances_kv[
-                f"mean_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.mean().item()
-            distances_kv[
-                f"median_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.median().item()
-            distances_kv[
-                f"std_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.std().item()
+            distances_kv[f"mean_3d_dist_ch{a:02d}_ch{b:02d}"] = temp_df.dist_3d.mean().item()
+            distances_kv[f"median_3d_dist_ch{a:02d}_ch{b:02d}"] = temp_df.dist_3d.median().item()
+            distances_kv[f"std_3d_dist_ch{a:02d}_ch{b:02d}"] = temp_df.dist_3d.std().item()
             distances_kv[f"mad_3d_dist_ch{a:02d}_ch{b:02d}"] = (
                 (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean().item()
             )
-            distances_kv[
-                f"mean_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.mean().item()
-            distances_kv[
-                f"median_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.median().item()
-            distances_kv[
-                f"std_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.std().item()
+            distances_kv[f"mean_z_dist_ch{a:02d}_ch{b:02d}"] = temp_df.z_dist.mean().item()
+            distances_kv[f"median_z_dist_ch{a:02d}_ch{b:02d}"] = temp_df.z_dist.median().item()
+            distances_kv[f"std_z_dist_ch{a:02d}_ch{b:02d}"] = temp_df.z_dist.std().item()
             distances_kv[f"mad_z_dist_ch{a:02d}_ch{b:02d}"] = (
                 (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean().item()
             )
@@ -318,7 +284,7 @@ class ArgolightEAnalysis(Analysis):
             default=0.4,
         )
 
-    def run(self):
+    def _run(self):
         """A intermediate function to specify the axis to be analyzed"""
 
         logger.info("Validating requirements...")
@@ -336,9 +302,7 @@ class ArgolightEAnalysis(Analysis):
             pixel_size_units=self.get_metadata_units("pixel_size"),
         )
 
-    def _analyze_resolution(
-        self, image, axis, measured_band, pixel_size, pixel_size_units
-    ):
+    def _analyze_resolution(self, image, axis, measured_band, pixel_size, pixel_size_units):
         (
             profiles,
             z_planes,
@@ -372,8 +336,7 @@ class ArgolightEAnalysis(Analysis):
                 for ind in indexes
             ]
             key_values[f"peak_heights_ch{ch:02d}"] = [
-                (peak_heights[ch][ind].item(), peak_heights[ch][ind + 1].item())
-                for ind in indexes
+                (peak_heights[ch][ind].item(), peak_heights[ch][ind + 1].item()) for ind in indexes
             ]
             key_values[f"focus_ch{ch:02d}"] = z_planes[ch].item()
 
@@ -441,19 +404,13 @@ def _profile_to_table(profile, channel):
 
     for p in range(1, profile.shape[0]):
         table.update(
-            {
-                f"fitted_profile_ch{channel:03d}_peak{p:03d}": [
-                    v.item() for v in profile[p, :]
-                ]
-            }
+            {f"fitted_profile_ch{channel:03d}_peak{p:03d}": [v.item() for v in profile[p, :]]}
         )
 
     return table
 
 
-def _fit(
-    profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_tolerance=1
-):
+def _fit(profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_tolerance=1):
     guess = []
     lower_bounds = []
     upper_bounds = []
@@ -538,26 +495,20 @@ def _compute_channel_resolution(
     peak_heights = ray_filtered_peak_heights
 
     if do_fitting:
-        peak_positions, peak_heights, fitted_profiles = _fit(
-            normalized_profile, peak_positions
-        )
+        peak_positions, peak_heights, fitted_profiles = _fit(normalized_profile, peak_positions)
         normalized_profile = np.append(
             np.expand_dims(normalized_profile, 0), fitted_profiles, axis=0
         )
 
     # Find the closest peaks to return it as a measure of resolution
-    peaks_distances = [
-        abs(a - b) for a, b in zip(peak_positions[0:-2], peak_positions[1:-1])
-    ]
+    peaks_distances = [abs(a - b) for a, b in zip(peak_positions[0:-2], peak_positions[1:-1])]
     res = min(peaks_distances)  # TODO: capture here the case where there are no peaks!
     res_indices = [i for i, x in enumerate(peaks_distances) if x == res]
 
     return normalized_profile, z_focus, peak_positions, peak_heights, res, res_indices
 
 
-def _compute_resolution(
-    image, axis, measured_band, prominence, do_angle_refinement=False
-):
+def _compute_resolution(image, axis, measured_band, prominence, do_angle_refinement=False):
     profiles = list()
     z_planes = []
     peaks_positions = list()
