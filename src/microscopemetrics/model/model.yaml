@@ -27,6 +27,7 @@ classes:
     slots:
       - id
       - name
+      - description
     attributes:
       version:
         required: true
@@ -43,23 +44,23 @@ classes:
         identifier: true
 
   Data:
-    attributes:
-      id:
-        identifier: true
-      name:
-      description:
+    slots:
+      - id
+      - name
+      - description
 
   Metadata:
-    attributes:
-      id:
-        identifier: true
-      name:
-      description:
+    slots:
+      - id
+      - name
+      - description
 
-  Metrics_dataset:
+  MetricsDataset:
+    slots:
+      - id
+      - name
+      - description
     attributes:
-      id:
-        identifier: true
       sample:
         multivalued: true
         range: Sample
@@ -71,24 +72,24 @@ classes:
         range: Metadata
       output:
         multivalued: true
-        range: Metrics_output
+        range: MetricsOutput
 
-  Metrics_output:
+  MetricsOutput:
     attributes:
       name:
         required: true
       description:
         required: true
 
-  Output_image:
-    is_a: Metrics_output
+  OutputImage:
+    is_a: MetricsOutput
     attributes:
       data:
         multivalued: true
         range: integer
 
-  Output_ROI:
-    is_a: Metrics_output
+  OutputROI:
+    is_a: MetricsOutput
     attributes:
       shapes:
         multivalued: true
@@ -226,10 +227,13 @@ classes:
 slots:
   id:
     identifier: true
+    range: string
   name:
     required: true
+    range: string
   description:
     required: true
+    range: string
 
 enums:
   Length_units:
@@ -239,9 +243,3 @@ enums:
       MILLIMETER:
       MICROMETER:
       NANOMETER:
-
-  PersonStatus:
-    permissible_values:
-      ALIVE:
-      DEAD:
-      UNKNOWN:
