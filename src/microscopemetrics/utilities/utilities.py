@@ -3,8 +3,10 @@
 import json
 import warnings
 from configparser import ConfigParser
+from typing import Optional
 
 import numpy as np
+from numpy import float64, ndarray
 from scipy import special
 
 DETECTOR_BIT_DEPTHS = [10, 11, 12, 15]
@@ -33,7 +35,7 @@ def convert_SI(val, unit_in, unit_out):
 #     for i in range(0, len(params), 3):
 #         y = y + airy_fun(x, params[i], params[i+1], params[i+2])
 #     return y
-def airy_fun(x, centre, amp):  # , exp):  # , amp, bg):
+def airy_fun(x: ndarray, centre: float64, amp: float64) -> ndarray:  # , exp):  # , amp, bg):
     with np.errstate(divide="ignore", invalid="ignore"):
         return np.where(
             (x - centre) == 0,
@@ -47,7 +49,7 @@ def gaussian_fun(x, background, amplitude, center, sd):
     return background + (amplitude - background) * gauss
 
 
-def multi_airy_fun(x, *params):
+def multi_airy_fun(x: ndarray, *params) -> ndarray:
     y = np.zeros_like(x)
     for i in range(0, len(params), 2):
         y = y + airy_fun(x, params[i], params[i + 1])
@@ -145,7 +147,9 @@ class MetricsConfig(ConfigParser):
             raise e
 
 
-def is_saturated(channel, threshold=0.0, detector_bit_depth=None):
+def is_saturated(
+    channel: ndarray, threshold: float = 0.0, detector_bit_depth: Optional[int] = None
+) -> bool:
     """
     Checks if the channel is saturated.
     A warning if it suspects that the detector bit depth does not match the datatype.
@@ -166,9 +170,7 @@ def is_saturated(channel, threshold=0.0, detector_bit_depth=None):
 
         for bit_depth in DETECTOR_BIT_DEPTHS:
             try:
-                saturated = is_saturated(
-                    channel, threshold=threshold, detector_bit_depth=bit_depth
-                )
+                saturated = is_saturated(channel, threshold=threshold, detector_bit_depth=bit_depth)
             except ValueError:
                 continue
         if saturated:

@@ -1,6 +1,10 @@
+from typing import Dict, Tuple
+
 import numpy as np
 import pandas as pd
 import scipy
+from numpy import float64, ndarray
+from pandas.core.frame import DataFrame
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
@@ -48,7 +52,9 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
     return np.expand_dims(output, axis=(0, 2))
 
 
-def _channel_line_profile(channel, start, end, profile_size: int):
+def _channel_line_profile(
+    channel: ndarray, start: Tuple[int, int], end: Tuple[int, int], profile_size: int
+) -> ndarray:
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation
     Parameters
@@ -69,7 +75,7 @@ def _channel_line_profile(channel, start, end, profile_size: int):
     return scipy.ndimage.map_coordinates(channel, np.vstack((x, y)))
 
 
-def _image_line_profile(image: np.ndarray, profile_size: int):
+def _image_line_profile(image: ndarray, profile_size: int):
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1
     Parameters
@@ -188,7 +194,7 @@ def _channel_corner_properties(channel, corner_fraction=0.1):
     }
 
 
-def _channel_area_deciles(channel: np.array) -> dict:
+def _channel_area_deciles(channel: ndarray) -> dict:
     """Computes the intensity deciles of an image.
     Parameters
     ----------
@@ -203,13 +209,15 @@ def _channel_area_deciles(channel: np.array) -> dict:
     return {f"decile_{i}": np.percentile(channel, i * 10) for i in range(10)}
 
 
-def _image_properties(image, corner_fraction: float, sigma: float, center_threshold: float):
+def _image_properties(
+    image: ndarray, corner_fraction: float, sigma: float, center_threshold: float
+):
     """
     given an image in a 3d ndarray format (cxy), this function return intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
     Parameters
     ----------
-    image : np.array
+    image : ndarray
         image on a 2d np.array format.
     Returns
     -------

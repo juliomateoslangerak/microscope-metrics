@@ -1,8 +1,9 @@
 from itertools import product
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy import float64, int64, ndarray
 from pandas import DataFrame
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
@@ -23,7 +24,7 @@ from ..utilities.utilities import airy_fun, multi_airy_fun
 class ArgolightBAnalysis(Analysis):
     """This class handles the analysis of the Argolight sample pattern B"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             output_description="Analysis output of the 'SPOTS' matrix (pattern B) from the argolight sample. "
             "It contains chromatic shifts and homogeneity."
@@ -78,7 +79,7 @@ class ArgolightBAnalysis(Analysis):
             default=False,
         )
 
-    def _run(self):
+    def _run(self) -> bool:
         # Calculating the distance between spots in pixels with a security margin
         min_distance = round(
             (self.get_metadata_values("spots_distance") * 0.3)
@@ -244,7 +245,7 @@ class ArgolightBAnalysis(Analysis):
 class ArgolightEAnalysis(Analysis):
     """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             output_description="Analysis output of the lines (pattern E) from the argolight sample. "
             "It contains resolution data on the axis indicated:"
@@ -277,7 +278,7 @@ class ArgolightEAnalysis(Analysis):
             default=0.4,
         )
 
-    def _run(self):
+    def _run(self) -> bool:
         """A intermediate function to specify the axis to be analyzed"""
         return self._analyze_resolution(
             image=self.get_data_values("argolight_e"),
@@ -287,7 +288,14 @@ class ArgolightEAnalysis(Analysis):
             pixel_size_units=self.get_metadata_units("pixel_size"),
         )
 
-    def _analyze_resolution(self, image, axis, measured_band, pixel_size, pixel_size_units):
+    def _analyze_resolution(
+        self,
+        image: ndarray,
+        axis: int,
+        measured_band: float,
+        pixel_size: Tuple[float, float, float],
+        pixel_size_units: str,
+    ) -> bool:
         (
             profiles,
             z_planes,
@@ -384,7 +392,7 @@ class ArgolightEAnalysis(Analysis):
         return True
 
 
-def _profile_to_table(profile, channel):
+def _profile_to_table(profile: ndarray, channel: int) -> Dict[str, List[float]]:
     table = {f"raw_profile_ch{channel:02d}": [v.item() for v in profile[0, :]]}
 
     for p in range(1, profile.shape[0]):
@@ -395,7 +403,15 @@ def _profile_to_table(profile, channel):
     return table
 
 
-def _fit(profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_tolerance=1):
+def _fit(
+    profile: ndarray,
+    peaks_guess: List[int64],
+    amp: int = 4,
+    exp: int = 2,
+    lower_amp: int = 3,
+    upper_amp: int = 5,
+    center_tolerance: int = 1,
+) -> Tuple[ndarray, ndarray, ndarray]:
     guess = []
     lower_bounds = []
     upper_bounds = []
@@ -425,8 +441,13 @@ def _fit(profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_to
 
 
 def _compute_channel_resolution(
-    channel, axis, prominence, measured_band, do_fitting=True, do_angle_refinement=False
-):
+    channel: ndarray,
+    axis: int,
+    prominence: float,
+    measured_band: float,
+    do_fitting: bool = True,
+    do_angle_refinement: bool = False,
+) -> Tuple[ndarray, int64, ndarray, ndarray, float64, List[int]]:
     """Computes the resolution on a pattern of lines with increasing separation"""
     # find the most contrasted z-slice
     z_stdev = np.std(channel, axis=(1, 2))
@@ -493,7 +514,15 @@ def _compute_channel_resolution(
     return normalized_profile, z_focus, peak_positions, peak_heights, res, res_indices
 
 
-def _compute_resolution(image, axis, measured_band, prominence, do_angle_refinement=False):
+def _compute_resolution(
+    image: ndarray,
+    axis: int,
+    measured_band: float,
+    prominence: float,
+    do_angle_refinement: bool = False,
+) -> Tuple[
+    List[ndarray], List[int64], List[ndarray], List[ndarray], List[float64], List[List[int]], str
+]:
     profiles = list()
     z_planes = []
     peaks_positions = list()
