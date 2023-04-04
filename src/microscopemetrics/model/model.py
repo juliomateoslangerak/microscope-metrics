@@ -3,9 +3,10 @@ It creates a few classes representing input data and output data
 """
 from abc import ABC
 from dataclasses import field
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from numpy import ndarray
+import pandas.core.frame
+from numpy import float64, ndarray
 from pandas import DataFrame
 from pydantic import BaseConfig, create_model, validator
 from pydantic.color import Color
@@ -26,8 +27,8 @@ class MetricsDataset:
     metadata: dict = field(default_factory=dict)
 
     def add_data_requirement(
-        self, name: str, description: str, data_type, optional: bool, replace: bool
-    ):
+        self, name: str, description: str, data_type: Type[ndarray], optional: bool, replace: bool
+    ) -> None:
         if not replace and name in self.data:
             raise KeyError(
                 f"The key {name} is already used. Use argument replace=True to explicitly replace it"
@@ -54,12 +55,12 @@ class MetricsDataset:
         self,
         name: str,
         description: str,
-        data_type,
+        data_type: Any,
         optional: bool,
         units: str = None,
         default: Any = None,
         replace: bool = False,
-    ):
+    ) -> None:
         if not replace and name in self.metadata:
             raise KeyError(
                 f"The key {name} is already used. Use argument replace=True to explicitly replace it"
@@ -104,25 +105,21 @@ class MetricsDataset:
         str_output = "\n".join(str_output)
         return str_output
 
-    def list_unmet_requirements(self):
+    def list_unmet_requirements(self) -> List[str]:
         unmet_data_req = [name for name, req in self.data.items() if req.value is None]
         unmet_metadata_req = [
-            name
-            for name, req in self.metadata.items()
-            if not req.optional and req.value is None
+            name for name, req in self.metadata.items() if not req.optional and req.value is None
         ]
         return unmet_data_req + unmet_metadata_req
 
-    def validate_requirements(self):
+    def validate_requirements(self) -> bool:
         data_req_met = all(req.value is not None for _, req in self.data.items())
         metadata_req_met = all(
-            req.value is not None
-            for _, req in self.metadata.items()
-            if not req.optional
+            req.value is not None for _, req in self.metadata.items() if not req.optional
         )
         return data_req_met and metadata_req_met
 
-    def get_data_values(self, name: Union[str, list]):
+    def get_data_values(self, name: Union[str, List[str]]) -> ndarray:
         if isinstance(name, str):
             try:
                 return self.data[name].value
@@ -133,7 +130,7 @@ class MetricsDataset:
         else:
             raise TypeError("get_metadata_values requires a string or list of strings")
 
-    def get_metadata_values(self, name: Union[str, list]):
+    def get_metadata_values(self, name: Union[str, List[str]]) -> Any:
         if isinstance(name, str):
             try:
                 return self.metadata[name].value
@@ -144,7 +141,7 @@ class MetricsDataset:
         else:
             raise TypeError("get_metadata_values requires a string or list of strings")
 
-    def get_metadata_units(self, name: Union[str, list]):
+    def get_metadata_units(self, name: Union[str, List[str]]) -> str:
         if isinstance(name, str):
             try:
                 return self.metadata[name].units
@@ -166,7 +163,7 @@ class MetricsDataset:
         else:
             raise TypeError("get_metadata_units requires a string or list of strings")
 
-    def set_data_values(self, name: str, value):
+    def set_data_values(self, name: str, value: Any) -> None:
         try:
             self.data[name].value = value
         except KeyError as e:
@@ -178,13 +175,13 @@ class MetricsDataset:
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" does not exist') from e
 
-    def set_metadata_values(self, name: str, value):
+    def set_metadata_values(self, name: str, value: Any) -> None:
         try:
             self.metadata[name].value = value
         except KeyError as e:
             raise KeyError(f'Metadata "{name}" is not a valid requirement') from e
 
-    def del_metadata_values(self, name: str):
+    def del_metadata_values(self, name: str) -> None:
         try:
             self.metadata[name].value = None
         except KeyError as e:
@@ -198,77 +195,19 @@ class MetricsDataset:
 
 
 @dataclass
-class MetricsOutput:
-    """This class is used by microscopemetrics to return the output of an analysis."""
-
-    description: str = field(default=None)
-    properties: dict = field(default_factory=dict, init=False)
-
-    def describe_properties(self):
-        description = ""
-        for n, p in self.properties.items():
-            description += f"{n}\n"
-            description += p.describe()
-            description += "\n========\n"
-
-        return description
-
-    def get_property(self, name: str):
-        return self.properties[name]
-
-    def delete(self, name: str):
-        del self.properties[name]
-
-    def append(self, output_property):
-        if isinstance(output_property, OutputProperty):
-            self.properties.update({output_property.name: output_property})
-        else:
-            raise TypeError("Property appended must be a subtype of OutputProperty")
-
-    def extend(self, properties_list: list):
-        for p in properties_list:
-            self.append(p)
-
-    def _get_properties_by_type(self, property_type):
-        return [v for _, v in self.properties.items() if v.type == property_type]
-
-    def get_images(self):
-        return self._get_properties_by_type("Image")
-
-    def get_rois(self):
-        return self._get_properties_by_type("Roi")
-
-    def get_tags(self):
-        return self._get_properties_by_type("Tag")
-
-    def get_key_values(self):
-        return self._get_properties_by_type("KeyValues")
-
-    def get_tables(self):
-        return self._get_properties_by_type("Table")
-
-    def get_comments(self):
-        return self._get_properties_by_type("Comment")
-
-
-@dataclass
 class OutputProperty(ABC):
     name: str
     description: str
 
-    def describe(self):
+    def describe(self) -> str:
         """
         Returns a pretty string describing the property. Includes name, type and description.
         :return: str
         """
-        return (
-            f"Name: {self.name}\n"
-            f"Type: {self.type}\n"
-            f"Description: {self.description}"
-        )
+        return f"Name: {self.name}\n" f"Type: {self.type}\n" f"Description: {self.description}"
 
     @property
-    def type(self):
+    def type(self) -> str:
         """
         Returns the type of the OutputProperty as a string.
         :return: str
@@ -336,9 +275,7 @@ class Ellipse(Shape):
 
 @dataclass
 class Polygon(Shape):
-    points: List[Tuple[float, float]] = field(
-        default=None, metadata={"units": "PIXELS"}
-    )
+    points: List[Tuple[float, float]] = field(default=None, metadata={"units": "PIXELS"})
     is_open: bool = field(default=False)
 
 
@@ -360,9 +297,7 @@ class KeyValues(OutputProperty):
         if all(isinstance(v, (str, int, float, list, tuple)) for _, v in k_v.items()):
             return k_v
         else:
-            raise TypeError(
-                "Values for a KeyValue property must be str, int, float, list or tuple"
-            )
+            raise TypeError("Values for a KeyValue property must be str, int, float, list or tuple")
 
 
 @dataclass
@@ -380,3 +315,57 @@ class Table(OutputProperty):
 @dataclass
 class Comment(OutputProperty):
     comment: str
+
+
+@dataclass
+class MetricsOutput:
+    """This class is used by microscopemetrics to return the output of an analysis."""
+
+    description: str = field(default=None)
+    properties: dict = field(default_factory=dict, init=False)
+
+    def describe_properties(self):
+        description = ""
+        for n, p in self.properties.items():
+            description += f"{n}\n"
+            description += p.describe()
+            description += "\n========\n"
+
+        return description
+
+    def get_property(self, name: str) -> Any:
+        return self.properties[name]
+
+    def delete(self, name: str) -> None:
+        del self.properties[name]
+
+    def append(self, output_property: OutputProperty) -> None:
+        if isinstance(output_property, OutputProperty):
+            self.properties.update({output_property.name: output_property})
+        else:
+            raise TypeError("Property appended must be a subtype of OutputProperty")
+
+    def extend(self, properties_list: List) -> None:
+        for p in properties_list:
+            self.append(p)
+
+    def _get_properties_by_type(self, property_type: str) -> List[Any]:
+        return [v for _, v in self.properties.items() if v.type == property_type]
+
+    def get_images(self) -> List[Any]:
+        return self._get_properties_by_type("Image")
+
+    def get_rois(self) -> List[Roi]:
+        return self._get_properties_by_type("Roi")
+
+    def get_tags(self) -> List[Tag]:
+        return self._get_properties_by_type("Tag")
+
+    def get_key_values(self) -> List[KeyValues]:
+        return self._get_properties_by_type("KeyValues")
+
+    def get_tables(self) -> List[Table]:
+        return self._get_properties_by_type("Table")
+
+    def get_comments(self) -> List[Comment]:
+        return self._get_properties_by_type("Comment")

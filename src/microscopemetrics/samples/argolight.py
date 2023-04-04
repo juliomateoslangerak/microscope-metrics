@@ -1,8 +1,9 @@
 from itertools import product
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy import float64, int64, ndarray
 from pandas import DataFrame
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
@@ -23,7 +24,7 @@ from ..utilities.utilities import airy_fun, multi_airy_fun
 class ArgolightBAnalysis(Analysis):
     """This class handles the analysis of the Argolight sample pattern B"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             output_description="Analysis output of the 'SPOTS' matrix (pattern B) from the argolight sample. "
             "It contains chromatic shifts and homogeneity."
@@ -78,14 +79,7 @@ class ArgolightBAnalysis(Analysis):
             default=False,
         )
 
-    def run(self):
-        logger.info("Validating requirements...")
-        if not self.validate_requirements():
-            logger.error("Metadata requirements are not valid")
-            return False
-
-        logger.info("Analyzing spots image...")
-
+    def _run(self) -> bool:
         # Calculating the distance between spots in pixels with a security margin
         min_distance = round(
             (self.get_metadata_values("spots_distance") * 0.3)
@@ -100,12 +94,8 @@ class ArgolightBAnalysis(Analysis):
             min_distance=min_distance,
             sigma=self.get_metadata_values("sigma"),
             method="local_max",
-            low_corr_factors=self.get_metadata_values(
-                "lower_threshold_correction_factors"
-            ),
-            high_corr_factors=self.get_metadata_values(
-                "upper_threshold_correction_factors"
-            ),
+            low_corr_factors=self.get_metadata_values("lower_threshold_correction_factors"),
+            high_corr_factors=self.get_metadata_values("upper_threshold_correction_factors"),
         )
 
         self.output.append(
@@ -141,31 +131,19 @@ class ArgolightBAnalysis(Analysis):
             ch_df["max_intensity"] = [p["max_intensity"] for p in ch_spot_props]
             ch_df["min_intensity"] = [p["min_intensity"] for p in ch_spot_props]
             ch_df["mean_intensity"] = [p["mean_intensity"] for p in ch_spot_props]
-            ch_df["integrated_intensity"] = [
-                p["integrated_intensity"] for p in ch_spot_props
-            ]
-            ch_df["z_weighted_centroid"] = [
-                p["weighted_centroid"][0] for p in ch_spot_props
-            ]
-            ch_df["y_weighted_centroid"] = [
-                p["weighted_centroid"][1] for p in ch_spot_props
-            ]
-            ch_df["x_weighted_centroid"] = [
-                p["weighted_centroid"][2] for p in ch_spot_props
-            ]
+            ch_df["integrated_intensity"] = [p["integrated_intensity"] for p in ch_spot_props]
+            ch_df["z_weighted_centroid"] = [p["weighted_centroid"][0] for p in ch_spot_props]
+            ch_df["y_weighted_centroid"] = [p["weighted_centroid"][1] for p in ch_spot_props]
+            ch_df["x_weighted_centroid"] = [p["weighted_centroid"][2] for p in ch_spot_props]
             ch_df["roi_weighted_centroid_units"] = "PIXEL"
 
             # Key metrics for spots intensities
             properties_kv[f"nr_of_spots_ch{ch:02d}"] = len(ch_df)
-            properties_kv[f"max_intensity_ch{ch:02d}"] = (
-                ch_df["integrated_intensity"].max().item()
-            )
+            properties_kv[f"max_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].max().item()
             properties_kv[f"max_intensity_roi_ch{ch:02d}"] = (
                 ch_df["integrated_intensity"].argmax().item()
             )
-            properties_kv[f"min_intensity_ch{ch:02d}"] = (
-                ch_df["integrated_intensity"].min().item()
-            )
+            properties_kv[f"min_intensity_ch{ch:02d}"] = ch_df["integrated_intensity"].min().item()
             properties_kv[f"min_intensity_roi_ch{ch:02d}"] = (
                 ch_df["integrated_intensity"].argmin().item()
             )
@@ -179,9 +157,7 @@ class ArgolightBAnalysis(Analysis):
                 ch_df["integrated_intensity"].std().item()
             )
             properties_kv[f"mad_mean_intensity_ch{ch:02d}"] = (
-                (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean())
-                .abs()
-                .mean()
+                (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean()).abs().mean()
             )
             properties_kv[f"min-max_intensity_ratio_ch{ch:02d}"] = (
                 properties_kv[f"min_intensity_ch{ch:02d}"]
@@ -212,36 +188,20 @@ class ArgolightBAnalysis(Analysis):
 
         distances_kv = {"distance_units": self.get_metadata_units("pixel_size")}
 
-        for a, b in product(
-            distances_df.channel_a.unique(), distances_df.channel_b.unique()
-        ):
-            temp_df = distances_df[
-                (distances_df.channel_a == a) & (distances_df.channel_b == b)
-            ]
+        for a, b in product(distances_df.channel_a.unique(), distances_df.channel_b.unique()):
+            temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
             a = int(a)
             b = int(b)
 
-            distances_kv[
-                f"mean_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.mean().item()
-            distances_kv[
-                f"median_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.median().item()
-            distances_kv[
-                f"std_3d_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.dist_3d.std().item()
+            distances_kv[f"mean_3d_dist_ch{a:02d}_ch{b:02d}"] = temp_df.dist_3d.mean().item()
+            distances_kv[f"median_3d_dist_ch{a:02d}_ch{b:02d}"] = temp_df.dist_3d.median().item()
+            distances_kv[f"std_3d_dist_ch{a:02d}_ch{b:02d}"] = temp_df.dist_3d.std().item()
             distances_kv[f"mad_3d_dist_ch{a:02d}_ch{b:02d}"] = (
                 (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean().item()
             )
-            distances_kv[
-                f"mean_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.mean().item()
-            distances_kv[
-                f"median_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.median().item()
-            distances_kv[
-                f"std_z_dist_ch{a:02d}_ch{b:02d}"
-            ] = temp_df.z_dist.std().item()
+            distances_kv[f"mean_z_dist_ch{a:02d}_ch{b:02d}"] = temp_df.z_dist.mean().item()
+            distances_kv[f"median_z_dist_ch{a:02d}_ch{b:02d}"] = temp_df.z_dist.median().item()
+            distances_kv[f"std_z_dist_ch{a:02d}_ch{b:02d}"] = temp_df.z_dist.std().item()
             distances_kv[f"mad_z_dist_ch{a:02d}_ch{b:02d}"] = (
                 (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean().item()
             )
@@ -285,7 +245,7 @@ class ArgolightBAnalysis(Analysis):
 class ArgolightEAnalysis(Analysis):
     """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             output_description="Analysis output of the lines (pattern E) from the argolight sample. "
             "It contains resolution data on the axis indicated:"
@@ -318,16 +278,8 @@ class ArgolightEAnalysis(Analysis):
             default=0.4,
         )
 
-    def run(self):
+    def _run(self) -> bool:
         """A intermediate function to specify the axis to be analyzed"""
-
-        logger.info("Validating requirements...")
-        if not self.validate_requirements():
-            logger.error("Metadata requirements are not valid")
-            return False
-
-        logger.info("Analyzing resolution...")
-
         return self._analyze_resolution(
             image=self.get_data_values("argolight_e"),
             axis=self.get_metadata_values("axis"),
@@ -337,8 +289,13 @@ class ArgolightEAnalysis(Analysis):
         )
 
     def _analyze_resolution(
-        self, image, axis, measured_band, pixel_size, pixel_size_units
-    ):
+        self,
+        image: ndarray,
+        axis: int,
+        measured_band: float,
+        pixel_size: Tuple[float, float, float],
+        pixel_size_units: str,
+    ) -> bool:
         (
             profiles,
             z_planes,
@@ -372,8 +329,7 @@ class ArgolightEAnalysis(Analysis):
                 for ind in indexes
             ]
             key_values[f"peak_heights_ch{ch:02d}"] = [
-                (peak_heights[ch][ind].item(), peak_heights[ch][ind + 1].item())
-                for ind in indexes
+                (peak_heights[ch][ind].item(), peak_heights[ch][ind + 1].item()) for ind in indexes
             ]
             key_values[f"focus_ch{ch:02d}"] = z_planes[ch].item()
 
@@ -436,334 +392,26 @@ class ArgolightEAnalysis(Analysis):
         return True
 
 
-class ArgolightReporter(Reporter):
-    """Reporter subclass to produce Argolight sample figures"""
-
-    def __init__(self):
-        image_report_to_func = {
-            "spots": self.full_report_spots,
-            "vertical_resolution": self.full_report_vertical_resolution,
-            "horizontal_resolution": self.full_report_horizontal_resolution,
-        }
-
-        super().__init__(image_report_to_func=image_report_to_func)
-
-    def produce_image_report(self, image):
-        pass
-
-    def full_report_spots(self, image):
-        pass
-
-    def full_report_vertical_resolution(self, image):
-        pass
-
-    def full_report_horizontal_resolution(self, image):
-        pass
-
-    def plot_homogeneity_map(self, image):
-        nr_channels = image.getSizeC()
-        x_dim = image.getSizeX()
-        y_dim = image.getSizeY()
-
-        tables = self.get_tables(
-            image, namespace_start="metrics", name_filter="properties"
-        )
-        if len(tables) != 1:
-            raise Exception(
-                "There are none or more than one properties tables. Verify data integrity."
-            )
-        table = tables[0]
-
-        row_count = table.getNumberOfRows()
-        col_names = [c.name for c in table.getHeaders()]
-        wanted_columns = [
-            "channel",
-            "max_intensity",
-            "mean_intensity",
-            "integrated_intensity",
-            "x_weighted_centroid",
-            "y_weighted_centroid",
-        ]
-
-        fig, axes = plt.subplots(
-            ncols=nr_channels, nrows=3, squeeze=False, figsize=(3 * nr_channels, 9)
-        )
-
-        for ch in range(nr_channels):
-            data = table.slice(
-                [col_names.index(w_col) for w_col in wanted_columns],
-                table.getWhereList(
-                    condition=f"channel=={ch}",
-                    variables={},
-                    start=0,
-                    stop=row_count,
-                    step=0,
-                ),
-            )
-            max_intensity = np.array(
-                [
-                    val
-                    for col in data.columns
-                    for val in col.values
-                    if col.name == "max_intensity"
-                ]
-            )
-            integrated_intensity = np.array(
-                [
-                    val
-                    for col in data.columns
-                    for val in col.values
-                    if col.name == "integrated_intensity"
-                ]
-            )
-            x_positions = np.array(
-                [
-                    val
-                    for col in data.columns
-                    for val in col.values
-                    if col.name == "x_weighted_centroid"
-                ]
-            )
-            y_positions = np.array(
-                [
-                    val
-                    for col in data.columns
-                    for val in col.values
-                    if col.name == "y_weighted_centroid"
-                ]
-            )
-            grid_x, grid_y = np.mgrid[0:x_dim, 0:y_dim]
-            image_intensities = get_intensities(image, c_range=ch, t_range=0).max(0)
-
-            try:
-                interpolated_max_int = griddata(
-                    np.stack((x_positions, y_positions), axis=1),
-                    max_intensity,
-                    (grid_x, grid_y),
-                    method="linear",
-                )
-                interpolated_intgr_int = griddata(
-                    np.stack((x_positions, y_positions), axis=1),
-                    integrated_intensity,
-                    (grid_x, grid_y),
-                    method="linear",
-                )
-            except Exception as e:
-                # TODO: Log a warning
-                interpolated_max_int = np.zeros((256, 256))
-
-            ax = axes.ravel()
-            ax[ch] = plt.subplot(3, 4, ch + 1)
-
-            ax[ch].imshow(np.squeeze(image_intensities), cmap="gray")
-            ax[ch].set_title("MIP_" + str(ch))
-
-            ax[ch + nr_channels].imshow(
-                np.flipud(interpolated_intgr_int),
-                extent=(0, x_dim, y_dim, 0),
-                origin="lower",
-                cmap=cm.hot,
-                vmin=np.amin(integrated_intensity),
-                vmax=np.amax(integrated_intensity),
-            )
-            ax[ch + nr_channels].plot(x_positions, y_positions, "k.", ms=2)
-            ax[ch + nr_channels].set_title("Integrated_int_" + str(ch))
-
-            ax[ch + 2 * nr_channels].imshow(
-                np.flipud(interpolated_max_int),
-                extent=(0, x_dim, y_dim, 0),
-                origin="lower",
-                cmap=cm.hot,
-                vmin=np.amin(image_intensities),
-                vmax=np.amax(image_intensities),
-            )
-            ax[ch + 2 * nr_channels].plot(x_positions, y_positions, "k.", ms=2)
-            ax[ch + 2 * nr_channels].set_title("Max_int_" + str(ch))
-
-        plt.show()
-
-    def plot_distances_map(self, image):
-        nr_channels = image.getSizeC()
-        x_dim = image.getSizeX()
-        y_dim = image.getSizeY()
-
-        tables = get_tables(image, namespace_start="metrics", name_filter="distances")
-        if len(tables) != 1:
-            raise Exception(
-                "There are none or more than one distances tables. Verify data integrity."
-            )
-        table = tables[0]
-        row_count = table.getNumberOfRows()
-        col_names = [c.name for c in table.getHeaders()]
-
-        # We need the positions too
-        pos_tables = get_tables(
-            image, namespace_start="metrics", name_filter="properties"
-        )
-        if len(tables) != 1:
-            raise Exception(
-                "There are none or more than one positions tables. Verify data integrity."
-            )
-        pos_table = pos_tables[0]
-        pos_row_count = pos_table.getNumberOfRows()
-        pos_col_names = [c.name for c in pos_table.getHeaders()]
-
-        fig, axes = plt.subplots(
-            ncols=nr_channels - 1,
-            nrows=nr_channels,
-            squeeze=False,
-            figsize=((nr_channels - 1) * 3, nr_channels * 3),
-        )
-
-        ax_index = 0
-        for ch_A in range(nr_channels):
-            pos_data = pos_table.slice(
-                [
-                    pos_col_names.index(w_col)
-                    for w_col in [
-                        "channel",
-                        "mask_labels",
-                        "x_weighted_centroid",
-                        "y_weighted_centroid",
-                    ]
-                ],
-                pos_table.getWhereList(
-                    condition=f"channel=={ch_A}",
-                    variables={},
-                    start=0,
-                    stop=pos_row_count,
-                    step=0,
-                ),
-            )
-
-            mask_labels = np.array(
-                [
-                    val
-                    for col in pos_data.columns
-                    for val in col.values
-                    if col.name == "mask_labels"
-                ]
-            )
-            x_positions = np.array(
-                [
-                    val
-                    for col in pos_data.columns
-                    for val in col.values
-                    if col.name == "x_weighted_centroid"
-                ]
-            )
-            y_positions = np.array(
-                [
-                    val
-                    for col in pos_data.columns
-                    for val in col.values
-                    if col.name == "y_weighted_centroid"
-                ]
-            )
-            positions_map = np.stack((x_positions, y_positions), axis=1)
-
-            for ch_B in [i for i in range(nr_channels) if i != ch_A]:
-                data = table.slice(
-                    list(range(len(col_names))),
-                    table.getWhereList(
-                        condition=f"(channel_A=={ch_A})&(channel_B=={ch_B})",
-                        variables={},
-                        start=0,
-                        stop=row_count,
-                        step=0,
-                    ),
-                )
-                labels_map = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "ch_A_roi_labels"
-                    ]
-                )
-                labels_map += 1  # Mask labels are augmented by one as 0 is background
-                distances_map_3d = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_3d"
-                    ]
-                )
-                distances_map_x = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_x"
-                    ]
-                )
-                distances_map_y = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_y"
-                    ]
-                )
-                distances_map_z = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_z"
-                    ]
-                )
-
-                filtered_positions = positions_map[
-                    np.intersect1d(
-                        mask_labels, labels_map, assume_unique=True, return_indices=True
-                    )[1],
-                    :,
-                ]
-
-                grid_x, grid_y = np.mgrid[0:x_dim:1, 0:y_dim:1]
-                interpolated = griddata(
-                    filtered_positions,
-                    distances_map_3d,
-                    (grid_x, grid_y),
-                    method="cubic",
-                )
-
-                ax = axes.ravel()
-                ax[ax_index].imshow(
-                    np.flipud(interpolated),
-                    extent=(0, x_dim, y_dim, 0),
-                    origin="lower",
-                    cmap=cm.hot,
-                    vmin=np.amin(distances_map_3d),
-                    vmax=np.amax(distances_map_3d),
-                )
-                ax[ax_index].set_title(f"Distance Ch{ch_A}-Ch{ch_B}")
-
-                ax_index += 1
-
-        plt.show()
-
-
-def _profile_to_table(profile, channel):
+def _profile_to_table(profile: ndarray, channel: int) -> Dict[str, List[float]]:
     table = {f"raw_profile_ch{channel:02d}": [v.item() for v in profile[0, :]]}
 
     for p in range(1, profile.shape[0]):
         table.update(
-            {
-                f"fitted_profile_ch{channel:03d}_peak{p:03d}": [
-                    v.item() for v in profile[p, :]
-                ]
-            }
+            {f"fitted_profile_ch{channel:03d}_peak{p:03d}": [v.item() for v in profile[p, :]]}
         )
 
     return table
 
 
 def _fit(
-    profile, peaks_guess, amp=4, exp=2, lower_amp=3, upper_amp=5, center_tolerance=1
-):
+    profile: ndarray,
+    peaks_guess: List[int64],
+    amp: int = 4,
+    exp: int = 2,
+    lower_amp: int = 3,
+    upper_amp: int = 5,
+    center_tolerance: int = 1,
+) -> Tuple[ndarray, ndarray, ndarray]:
     guess = []
     lower_bounds = []
     upper_bounds = []
@@ -793,8 +441,13 @@ def _fit(
 
 
 def _compute_channel_resolution(
-    channel, axis, prominence, measured_band, do_fitting=True, do_angle_refinement=False
-):
+    channel: ndarray,
+    axis: int,
+    prominence: float,
+    measured_band: float,
+    do_fitting: bool = True,
+    do_angle_refinement: bool = False,
+) -> Tuple[ndarray, int64, ndarray, ndarray, float64, List[int]]:
     """Computes the resolution on a pattern of lines with increasing separation"""
     # find the most contrasted z-slice
     z_stdev = np.std(channel, axis=(1, 2))
@@ -848,17 +501,13 @@ def _compute_channel_resolution(
     peak_heights = ray_filtered_peak_heights
 
     if do_fitting:
-        peak_positions, peak_heights, fitted_profiles = _fit(
-            normalized_profile, peak_positions
-        )
+        peak_positions, peak_heights, fitted_profiles = _fit(normalized_profile, peak_positions)
         normalized_profile = np.append(
             np.expand_dims(normalized_profile, 0), fitted_profiles, axis=0
         )
 
     # Find the closest peaks to return it as a measure of resolution
-    peaks_distances = [
-        abs(a - b) for a, b in zip(peak_positions[0:-2], peak_positions[1:-1])
-    ]
+    peaks_distances = [abs(a - b) for a, b in zip(peak_positions[0:-2], peak_positions[1:-1])]
     res = min(peaks_distances)  # TODO: capture here the case where there are no peaks!
     res_indices = [i for i, x in enumerate(peaks_distances) if x == res]
 
@@ -866,8 +515,14 @@ def _compute_channel_resolution(
 
 
 def _compute_resolution(
-    image, axis, measured_band, prominence, do_angle_refinement=False
-):
+    image: ndarray,
+    axis: int,
+    measured_band: float,
+    prominence: float,
+    do_angle_refinement: bool = False,
+) -> Tuple[
+    List[ndarray], List[int64], List[ndarray], List[ndarray], List[float64], List[List[int]], str
+]:
     profiles = list()
     z_planes = []
     peaks_positions = list()
