@@ -26,6 +26,8 @@ scipy = "^1.5.4"
 pandas = "^1.1.5"
 pydantic = "^1.7.3"
 matplotlib = "^3.7.1"
+linkml = "^1.5.0"
+linkml-runtime = "^1.5.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^6.2.0"
