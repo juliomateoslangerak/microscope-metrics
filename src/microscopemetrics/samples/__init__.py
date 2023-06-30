@@ -4,6 +4,11 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Union
 
+import argolight
+import chroma
+import field_illum
+import psf_beads
+
 from ..model import model
 
 # We are defining some global dictionaries to register the different analysis types
