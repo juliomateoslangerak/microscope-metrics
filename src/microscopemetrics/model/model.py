@@ -302,12 +302,12 @@ class KeyValues(OutputProperty):
 
 @dataclass
 class Table(OutputProperty):
-    table: DataFrame
+    table: Any
 
     @validator("table", allow_reuse=True)
     def _may_be_casted_to_df(cls, t):
         if isinstance(t, (DataFrame, dict)):
-            return t  # TODO: validate that the dict is a valid table and cast to DataFrame
+            return t
         else:
             raise TypeError("table must be a pandas DataFrame or a dict")
 
