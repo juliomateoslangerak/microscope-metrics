@@ -280,7 +280,9 @@ class Polygon(Shape):
 
 
 class Mask(Shape):
-    pass
+    x: float = field(default=None, metadata={"units": "PIXELS"})
+    y: float = field(default=None, metadata={"units": "PIXELS"})
+    mask: ndarray = field(default=None)
 
 
 @dataclass
