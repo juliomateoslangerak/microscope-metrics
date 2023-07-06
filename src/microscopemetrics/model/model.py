@@ -141,7 +141,7 @@ class MetricsDataset:
         else:
             raise TypeError("get_metadata_values requires a string or list of strings")
 
-    def get_metadata_units(self, name: Union[str, List[str]]) -> str:
+    def get_metadata_units(self, name: Union[str, List[str]]) -> Union[str, dict]:
         if isinstance(name, str):
             try:
                 return self.metadata[name].units
