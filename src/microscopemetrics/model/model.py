@@ -222,6 +222,7 @@ class Image(OutputProperty):
     @validator("data", allow_reuse=True)
     def _is_ndarray(cls, d):
         if isinstance(d, ndarray):
+            # TODO: validate format shape...
             return d
         else:
             raise TypeError("image output must be a Numpy ndarray")
