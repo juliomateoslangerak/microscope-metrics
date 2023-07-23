@@ -1,5 +1,5 @@
-id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/model.py
-name: microscope-metrics
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
+name: microscopemetrics_core_schema
 prefixes:
 #  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
 #imports:
@@ -7,6 +7,7 @@ prefixes:
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
+  - ./samples/field_illum_schema
 
 default_range: string
 
@@ -358,7 +359,8 @@ classes:
 
   Polygon:
     is_a: Shape
-    description: A polygon as defined by a series of vertexes and a boolean to indicate if closed or not
+    description: >-
+      A polygon as defined by a series of vertexes and a boolean to indicate if closed or not
     attributes:
       vertexes:
         multivalued: true
