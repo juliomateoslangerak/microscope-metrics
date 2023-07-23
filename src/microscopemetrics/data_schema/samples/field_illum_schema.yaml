@@ -61,6 +61,6 @@ classes:
       intensity_map_size:
         is_a: MetricsMetadata
         range: int
-        description: The max size of the output intensity map in pixels
+        description: The size of the output intensity map in pixels
         required: true
-        ifabsent: integer(100)
+        ifabsent: integer(64)
