@@ -1,0 +1,66 @@
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml
+name: microscopemetrics_samples_field_illum_schema
+prefixes:
+#  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
+#imports:
+#  - metrics:types
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+  - ../core_schema
+
+default_range: string
+
+
+classes:
+  FieldHomogeneity:
+    is_a: MetricsDataset
+    description: >-
+      A field homogeneity dataset
+    attributes:
+      image:
+        is_a: MetricsData
+        range: Image5D
+        description: >-
+          An homogeneity provided as a numpy array with 5D TZYXC shape
+        required: true
+        multivalued: false
+      bit_depth:
+        is_a: MetricsMetadata
+        range: integer
+        description: Detector bit depth
+        required: false
+        multivalued: false
+        minimum_value: 1
+        maximum_value: 64
+      saturation_threshold:
+        is_a: MetricsMetadata
+        range: float
+        description: Tolerated saturation threshold
+        required: true
+        ifabsent: float(0.01)
+      center_threshold:
+        is_a: MetricsMetadata
+        range: float
+        description: >-
+          Relative threshold for what is going to be considered as the intensity center of the image
+        required: true
+        ifabsent: float(0.9)
+      corner_fraction:
+        is_a: MetricsMetadata
+        range: float
+        description: The proportion of the image to be considered as corner or center
+        required: true
+        ifabsent: float(0.1)
+      sigma:
+        is_a: MetricsMetadata
+        range: float
+        description: The sigma for the smoothing gaussian filter
+        required: true
+        ifabsent: float(2.0)
+      intensity_map_size:
+        is_a: MetricsMetadata
+        range: int
+        description: The max size of the output intensity map in pixels
+        required: true
+        ifabsent: integer(100)
