@@ -81,13 +81,9 @@ classes:
       experimenter:
         multivalued: true
         range: Experimenter
-      data:
-        required: true
+      input:
         multivalued: true
-        range: MetricsData
-      metadata:
-        multivalued: true
-        range: MetricsMetadata
+        range: MetricsInput
       output:  # TODO: add as a conditional requirement
         multivalued: true
         range: MetricsOutput
