@@ -7,7 +7,7 @@ prefixes:
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
-  - ./samples/field_illum_schema
+#  - ./samples/field_illum_schema
 
 default_range: string
 
@@ -27,6 +27,7 @@ default_range: string
 classes:
   NamedObject:
     description: An object with a name and a description
+    abstract: true
     slots:
       - name
       - description
@@ -34,6 +35,7 @@ classes:
   MetricsObject:
     is_a: NamedObject
     description: A base object for all microscope-metrics objects
+    abstract: true
 
   Sample:
     is_a: NamedObject
