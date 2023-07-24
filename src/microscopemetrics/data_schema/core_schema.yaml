@@ -52,7 +52,7 @@ classes:
     is_a: NamedObject
     description: Set of instructions for preparing and imaging a sample
     attributes:
-      version:
+      version:  # make slot
         required: true
       authors:
         range: Experimenter
@@ -63,10 +63,10 @@ classes:
   Experimenter:
     description: The person that performed the experiment or developed the protocol
     attributes:
-      name:
+      name:  # make slot
         description: The name of the experimenter
         range: string
-      orcid:
+      orcid:  # make slot
         description: The ORCID of the experimenter
         identifier: true
 
