@@ -91,18 +91,25 @@ classes:
 
   MetricsInput:
     is_a: MetricsObject
+    mixin: true
     description: A base object for all microscope-metrics inputs
 
-  MetricsData:
-    is_a: MetricsInput
-    description: A base object for all microscope-metrics input data
+  MetricsInputImage2D:
+    mixins:
+      - MetricsInput
+      - Image2D
+    description: A microscope-metrics input 2Dimage
 
-  MetricsMetadata:
-    is_a: MetricsInput
-    description: A base object for all microscope-metrics input metadata
+  MetricsInputImage5D:
+    mixins:
+      - MetricsInput
+      - Image5D
+    description: A microscope-metrics input 5Dimage
+
 
   MetricsOutput:
     is_a: MetricsObject
+    mixin: true
     description: A base object for all microscope-metrics outputs
 
   MetricsOutputImage2D:
