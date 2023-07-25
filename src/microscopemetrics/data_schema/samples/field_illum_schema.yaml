@@ -1,9 +1,6 @@
 id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml
 name: microscopemetrics_samples_field_illum_schema
 prefixes:
-#  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
-#imports:
-#  - metrics:types
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
