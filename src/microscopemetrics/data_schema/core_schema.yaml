@@ -82,12 +82,12 @@ classes:
       experimenter:
         multivalued: true
         range: Experimenter
-      input:
-        multivalued: true
-        range: MetricsInput
-      output:  # TODO: add as a conditional requirement
-        multivalued: true
-        range: MetricsOutput
+#      input:
+#        multivalued: true
+#        range: MetricsInput
+#      output:  # TODO: add as a conditional requirement
+#        multivalued: true
+#        range: MetricsOutput
 
   MetricsInput:
     is_a: MetricsObject
