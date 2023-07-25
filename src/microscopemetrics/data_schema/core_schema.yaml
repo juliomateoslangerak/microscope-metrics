@@ -4,6 +4,7 @@ prefixes:
 #  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
 #imports:
 #  - metrics:types
+  NCIT: http://purl.obolibrary.org/obo/NCIT_
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
@@ -523,5 +524,15 @@ slots:
     required: true
     multivalued: false
     range: string
+
+types:
+  PixelCountType:
+    description: A pixel count as integer
+    uri: NCIT:C48367  ## pixel
+    typeof: integer
+  PixelType:
+    description: A unitless pixel as float
+    uri: NCIT:C48367  ## pixel
+    typeof: float
 
 enums:
