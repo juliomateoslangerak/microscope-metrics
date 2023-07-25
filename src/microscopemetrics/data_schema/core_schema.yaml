@@ -82,12 +82,6 @@ classes:
       experimenter:
         multivalued: true
         range: Experimenter
-#      input:
-#        multivalued: true
-#        range: MetricsInput
-#      output:  # TODO: add as a conditional requirement
-#        multivalued: true
-#        range: MetricsOutput
 
   MetricsInput:
     is_a: MetricsObject
@@ -98,16 +92,15 @@ classes:
     mixins:
       - MetricsInput
       - Image2D
-    description: A microscope-metrics input 2Dimage
+    description: A microscope-metrics input 2D-image
 
   MetricsInputImage5D:
     mixins:
       - MetricsInput
       - Image5D
-    description: A microscope-metrics input 5Dimage
+    description: A microscope-metrics input 5D-image
 
-
-  MetricsOutput:
+  MetricsOutput:  # TODO: add conditional rules
     is_a: MetricsObject
     mixin: true
     description: A base object for all microscope-metrics outputs
@@ -116,13 +109,13 @@ classes:
     mixins:
       - MetricsOutput
       - Image2D
-    description: A microscope-metrics output 2Dimage
+    description: A microscope-metrics output 2D-image
 
   MetricsOutputImage5D:
     mixins:
       - MetricsOutput
       - Image5D
-    description: A microscope-metrics output 5Dimage
+    description: A microscope-metrics output 5D-image
 
   Image:
     description: A base object for all microscope-metrics output images
