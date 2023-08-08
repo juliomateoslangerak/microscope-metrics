@@ -27,12 +27,14 @@ default_range: string
 classes:
   NamedObject:
     description: An object with a name and a description
+    abstract: true
     slots:
       - name
       - description
 
   MetricsObject:
     is_a: NamedObject
+    abstract: true
     description: A base object for all microscope-metrics objects
 
   Sample:
@@ -92,6 +94,7 @@ classes:
 
   MetricsInput:
     is_a: MetricsObject
+    abstract: true
     description: A base object for all microscope-metrics inputs
 
   MetricsData:
@@ -104,6 +107,7 @@ classes:
 
   MetricsOutput:
     is_a: MetricsObject
+    abstract: true
     description: A base object for all microscope-metrics outputs
 
   MetricsOutputImage2D:
@@ -279,8 +283,8 @@ classes:
         range: Shape
 
   Shape:
-    abstract: true
     description: A shape
+    abstract: true
     attributes:
       z:
         range: float
