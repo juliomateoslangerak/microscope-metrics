@@ -18,6 +18,7 @@ classes:
     description: >-
       A field homogeneity dataset
     attributes:
+      ## Input attributes
       image:
         is_a: MetricsData
         range: Image5D
@@ -64,3 +65,17 @@ classes:
         description: The size of the output intensity map in pixels
         required: true
         ifabsent: integer(64)
+      ## Output attributes
+      regions_properties_table:
+        is_a: MetricsOutputTable
+        description: A table containing the properties of the regions
+      intensity_map:
+        is_a: MetricsOutputImage2D
+        description: >-
+          An intensity map provided as a numpy array with 2D YX shape
+      intensity_plot_data:
+        is_a: MetricsOutputTable
+        description: |-
+          Dataframe containing intensity plot data 
+          for each channel in the diagonal as well as the 
+          horizontal and vertical image centers
