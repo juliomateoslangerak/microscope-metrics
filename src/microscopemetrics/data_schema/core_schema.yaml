@@ -7,7 +7,7 @@ prefixes:
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
-  - ./samples/field_illum_schema
+#  - ./samples/field_illum_schema
 
 default_range: string
 
@@ -81,29 +81,15 @@ classes:
       experimenter:
         multivalued: true
         range: Experimenter
-      data:
+      processed:
+        range: boolean
         required: true
-        multivalued: true
-        range: MetricsData
-      metadata:
-        multivalued: true
-        range: MetricsMetadata
-      output:  # TODO: add as a conditional requirement
-        multivalued: true
-        range: MetricsOutput
+        ifabsent: false
 
   MetricsInput:
     is_a: MetricsObject
     abstract: true
     description: A base object for all microscope-metrics inputs
-
-  MetricsData:
-    is_a: MetricsInput
-    description: A base object for all microscope-metrics input data
-
-  MetricsMetadata:
-    is_a: MetricsInput
-    description: A base object for all microscope-metrics input metadata
 
   MetricsOutput:
     is_a: MetricsObject
