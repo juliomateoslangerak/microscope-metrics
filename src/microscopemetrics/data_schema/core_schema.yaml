@@ -112,13 +112,13 @@ classes:
     mixins:
       - MetricsOutput
       - Image2D
-    description: A microscope-metrics output 2Dimage
+    description: A microscope-metrics output 2D image
 
   MetricsOutputImage5D:
     mixins:
       - MetricsOutput
       - Image5D
-    description: A microscope-metrics output 5Dimage
+    description: A microscope-metrics output 5D image
 
   Image:
     description: A base object for all microscope-metrics output images
