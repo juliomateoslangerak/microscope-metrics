@@ -96,6 +96,18 @@ classes:
     abstract: true
     description: A base object for all microscope-metrics outputs
 
+  MetricsInputImage2D:
+    mixins:
+      - MetricsInput
+      - Image2D
+    description: A microscope-metrics input 2D image
+
+  MetricsInputImage5D:
+    mixins:
+      - MetricsInput
+      - Image5D
+    description: A microscope-metrics input 5D image
+
   MetricsOutputImage2D:
     mixins:
       - MetricsOutput
