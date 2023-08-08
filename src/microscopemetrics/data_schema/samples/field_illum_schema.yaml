@@ -17,65 +17,103 @@ classes:
     is_a: MetricsDataset
     description: >-
       A field homogeneity dataset
-    attributes:
-      ## Input attributes
-      image:
-        is_a: MetricsData
-        range: Image5D
-        description: >-
-          An homogeneity provided as a numpy array with 5D TZYXC shape
-        required: true
-        multivalued: false
-      bit_depth:
-        is_a: MetricsMetadata
-        range: integer
-        description: Detector bit depth
-        required: false
-        multivalued: false
-        minimum_value: 1
-        maximum_value: 64
-      saturation_threshold:
-        is_a: MetricsMetadata
-        range: float
-        description: Tolerated saturation threshold
-        required: true
-        ifabsent: float(0.01)
-      center_threshold:
-        is_a: MetricsMetadata
-        range: float
-        description: >-
-          Relative threshold for what is going to be considered as the intensity center of the image
-        required: true
-        ifabsent: float(0.9)
-      corner_fraction:
-        is_a: MetricsMetadata
-        range: float
-        description: The proportion of the image to be considered as corner or center
-        required: true
-        ifabsent: float(0.1)
-      sigma:
-        is_a: MetricsMetadata
-        range: float
-        description: The sigma for the smoothing gaussian filter
-        required: true
-        ifabsent: float(2.0)
-      intensity_map_size:
-        is_a: MetricsMetadata
-        range: int
-        description: The size of the output intensity map in pixels
-        required: true
-        ifabsent: integer(64)
-      ## Output attributes
-      regions_properties_table:
-        is_a: MetricsOutputTable
-        description: A table containing the properties of the regions
-      intensity_map:
-        is_a: MetricsOutputImage2D
-        description: >-
-          An intensity map provided as a numpy array with 2D YX shape
-      intensity_plot_data:
-        is_a: MetricsOutputTable
-        description: |-
-          Dataframe containing intensity plot data 
-          for each channel in the diagonal as well as the 
-          horizontal and vertical image centers
+    slots:
+      - image
+      - bit_depth
+      - saturation_threshold
+      - center_threshold
+      - corner_fraction
+      - sigma
+      - intensity_map_size
+      - regions_properties_table
+      - intensity_map
+      - intensity_plot_data
+    rules:
+      - preconditions:
+          slot_conditions:
+            processed:
+              equals_number: 1
+        postconditions:
+          slot_conditions:
+            regions_properties_table:
+              required: true
+            intensity_map:
+              required: true
+            intensity_plot_data:
+              required: true
+
+
+slots:
+  image:
+    range: MetricsInputImage5D
+    description: >-
+      Input parameter: homogeneity image provided as a numpy array with 5D TZYXC shape. While the analysis accepts 
+      multiple channels, the T and Z dimensions are expected to be 1.
+    required: true
+    multivalued: false
+  bit_depth:
+    range: integer
+    description: >-
+      Input parameter: detector bit depth
+    required: false
+    multivalued: false
+    minimum_value: 1
+    maximum_value: 64
+  saturation_threshold:
+    range: float
+    description: >-
+      Input parameter: tolerated saturation threshold. If the amount of saturated pixels is above this threshold, 
+      the image is considered as saturated and the analysis is not performed.
+    required: true
+    ifabsent: float(0.01)
+    minimum_value: 0.0
+    maximum_value: 1.0
+  center_threshold:
+    range: float
+    description: >-
+      Input parameter: relative threshold for what is going to be considered as the intensity center of the image
+    required: true
+    ifabsent: float(0.9)
+    minimum_value: 0.0
+    maximum_value: 1.0
+  corner_fraction:
+    range: float
+    description: >-
+      Input parameter: the proportion of the image to be considered as corner or center
+    annotations:
+      review: A very useful class that is well defined
+    required: true
+    ifabsent: float(0.1)
+    minimum_value: 0.01
+    maximum_value: 0.49
+  sigma:
+    range: float
+    description: >-
+      Input parameter: the sigma for the smoothing gaussian filter to be applied prior to analysis
+    required: true
+    ifabsent: float(2.0)
+    minimum_value: 0.0
+    maximum_value: 100.0
+  intensity_map_size:
+    range: integer
+    description: >-
+      Input parameter: the size of the output intensity map in pixels
+    required: true
+    ifabsent: int(64)
+    minimum_value: 5
+    maximum_value: 512
+  regions_properties_table:
+    range: MetricsOutputTable
+    description: >-
+      Output: table containing the properties of the regions
+    multivalued: false
+  intensity_map:
+    range: MetricsOutputImage2D
+    description: >-
+      Output: intensity map provided as a numpy array with 2D YX shape
+    multivalued: true
+  intensity_plot_data:
+    range: MetricsOutputTable
+    description: >-
+      Output: table containing intensity plot data for each channel in the diagonal 
+      as well as the horizontal and vertical image centers
