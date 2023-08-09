@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from microscopemetrics.samples import field_illum
+from microscopemetrics.samples import field_illumination
 from tests.test_utilities import get_file
 
 

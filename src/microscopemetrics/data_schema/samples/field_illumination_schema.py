@@ -1,5 +1,5 @@
-# Auto generated from field_illum_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-09T11:36:58
+# Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
+# Generation date: 2023-08-09T11:48:19
 # Schema: microscopemetrics_samples_field_illum_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml
@@ -412,14 +412,6 @@ class Image(MetricsObject):
 
     name: str = None
     description: str = None
-    roi: Optional[Union[Union[dict, "ROI"], List[Union[dict, "ROI"]]]] = empty_list()
-
-    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        self._normalize_inlined_as_dict(
-            slot_name="roi", slot_type=ROI, key_name="image", keyed=False
-        )
-
-        super().__post_init__(**kwargs)
 
 
 @dataclass
@@ -1542,15 +1534,6 @@ slots.metricsDataset__outputs = Slot(
     model_uri=DEFAULT_.metricsDataset__outputs,
     domain=None,
     range=Optional[Union[str, List[str]]],
-)
-
-slots.image__roi = Slot(
-    uri="str(uriorcurie)",
-    name="image__roi",
-    curie=None,
-    model_uri=DEFAULT_.image__roi,
-    domain=None,
-    range=Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]],
 )
 
 slots.imageReference__data = Slot(
