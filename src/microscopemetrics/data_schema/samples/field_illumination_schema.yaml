@@ -29,6 +29,10 @@ classes:
       - intensity_map
       - intensity_plot_data
     slot_usage:
+      name:
+        ifabsent: string("Field illumination dataset")
+      description:
+        ifabsent: string("This dataset contains the results of the field illumination analysis")
       inputs:
         equals_string:
           - image
@@ -60,9 +64,9 @@ classes:
 
 slots:
   image:
-    range: Image5D
+    range: ImageAsNumpy
     description: >-
-      Input parameter: homogeneity image provided as a numpy array with 5D TZYXC shape. While the analysis accepts 
+      Input parameter: homogeneity image provided as a numpy array in the order. While the analysis accepts 
       multiple channels, the T and Z dimensions are expected to be 1.
     required: true
     multivalued: false
@@ -123,17 +127,17 @@ slots:
     minimum_value: 5
     maximum_value: 512
   regions_properties_table:
-    range: Table
+    range: TableAsPandasDF
     description: >-
       Output: table containing the properties of the regions
     multivalued: false
   intensity_map:
-    range: Image2D
+    range: Image5D
     description: >-
-      Output: intensity map provided as a numpy array with 2D YX shape
-    multivalued: true
+      Output: intensity map provided as a numpy array with 5D matching the order of the input image
+    multivalued: false
   intensity_plot_data:
-    range: Table
+    range: TableAsPandasDF
     description: >-
       Output: table containing intensity plot data for each channel in the diagonal 
       as well as the horizontal and vertical image centers

@@ -25,6 +25,9 @@ default_range: string
 ###
 
 classes:
+  MetaObject:
+    class_uri: linkml:Any
+
   NamedObject:
     description: An object with a name and a description
     abstract: true
@@ -92,6 +95,9 @@ classes:
       processing_date:
         range: date
         multivalued: false
+      processing_log:
+        range: string
+        multivalued: false
       inputs:
         range: string
         description: A list of the slots used as input for the analysis
@@ -103,34 +109,32 @@ classes:
 
   Image:
     is_a: MetricsObject
-    description: A base object for all microscope-metrics images. It may contain ROIs
+    description: A base object for all microscope-metrics images
     abstract: true
+    slots:
+      - uri
 
-  ImageReference:
+  ImageAsNumpy:
     is_a: Image
-    description: A base object for all microscope-metrics image stored as references
+    description: An image as a numpy array in TZYXC order
     attributes:
       data:
-        range: uri
-        multivalued: false
-        required: true
+        range: MetaObject
 
   ImageInline:
     is_a: Image
-    description: A base object for all microscope-metrics images that are stored as arrays in line. It may contain ROIs
+    description: A base object for all microscope-metrics images that are stored as arrays in line
     abstract: true
     attributes:
       data:
         implements:
           - linkml:elements
+        range: float
         multivalued: true
         required: true
-        any_of:
-          - range: float
-          - range: integer
 
   ImageMask:
-    is_a: Image
+    is_a: ImageInline
     description: A base object for all microscope-metrics masks
     attributes:
       x_position:
@@ -150,28 +154,32 @@ classes:
           - linkml:axis1
         required: true
       data:
+        implements:
+          - linkml:elements
         range: boolean
+        multivalued: true
+        required: true
 
   Image2D:
-    is_a: Image
-    description: A 2D image in XY order
+    is_a: ImageInline
+    description: A 2D image in YX order
     implements:
       - linkml:TwoDimensionalArray
       - linkml:RowOrderedArray
     attributes:
-      x:
+      y:
         range: PixelSeries
         implements:
           - linkml:axis0
         required: true
-      y:
+      x:
         range: PixelSeries
         implements:
           - linkml:axis1
         required: true
 
   Image5D:
-    is_a: Image
+    is_a: ImageInline
     description: A 5D image in TZYXC order
     implements:
       - linkml:FiveDimensionalArray
@@ -204,7 +212,8 @@ classes:
         required: true
 
   PixelSeries:
-    description: A series whose values represent pixels or voxels
+    description: >-
+      A series whose values represent pixels or voxels or a single integer defining the shape of the dimension
     implements:
       - linkml:OneDimensionalSeries
     attributes:
@@ -239,7 +248,8 @@ classes:
       - linkml:OneDimensionalSeries
     attributes:
       values:
-        range: Channel
+#        range: Channel
+        range: integer
         multivalued: true
         implements:
           - linkml:elements
@@ -457,7 +467,22 @@ classes:
         multivalued: false
 
   Table:
+    is_a: MetricsObject
     description: A table
+    abstract: true
+
+  TableAsPandasDF:
+    is_a: Table
+    description: A table as a Pandas DataFrame
+    attributes:
+      df:
+        range: MetaObject
+        required: true
+        multivalued: false
+
+  TableInlined:
+    is_a: Table
+    description: A table inlined in a metrics dataset
     attributes:
       columns:
           range: Column
@@ -478,6 +503,10 @@ classes:
 
 
 slots:
+  uri:
+    range: uri
+    description: An URI
+    multivalued: false
   id:
     range: string
     description: The unique identifier for an entity
@@ -487,10 +516,9 @@ slots:
   name:
     range: string
     description: The name of an entity
-    required: true
+    required: false
     multivalued: false
   description:
     range: string
     description: A description of an entity
-    required: true
     multivalued: false

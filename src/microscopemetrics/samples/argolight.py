@@ -21,7 +21,7 @@ from ..utilities.utilities import airy_fun, multi_airy_fun
 
 
 @register_image_analysis
-class ArgolightBAnalysis(Analysis):
+class ArgolightBAnalysis(AnalysisMixin):
     """This class handles the analysis of the Argolight sample pattern B"""
 
     def __init__(self) -> None:
@@ -242,7 +242,7 @@ class ArgolightBAnalysis(Analysis):
 
 
 @register_image_analysis
-class ArgolightEAnalysis(Analysis):
+class ArgolightEAnalysis(AnalysisMixin):
     """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
 
     def __init__(self) -> None:
