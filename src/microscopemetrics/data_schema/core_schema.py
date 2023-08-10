@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-10T14:19:48
+# Generation date: 2023-08-10T16:14:30
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -58,6 +58,10 @@ DEFAULT_ = CurieNamespace(
 # Types
 
 # Class references
+class SampleType(extended_str):
+    pass
+
+
 class ExperimenterOrcid(extended_str):
     pass
 
@@ -137,7 +141,7 @@ class Sample(NamedObject):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Sample"
     )
 
-    type: Union[str, "SampleType"] = None
+    type: Union[str, SampleType] = None
     protocol: Union[dict, "Protocol"] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -249,7 +253,7 @@ class MetricsDataset(NamedObject):
     )
 
     processed: Union[bool, Bool] = False
-    sample: Optional[Union[Union[dict, Sample], List[Union[dict, Sample]]]] = empty_list()
+    sample: Optional[Union[str, SampleType]] = None
     experimenter: Optional[
         Union[Union[str, ExperimenterOrcid], List[Union[str, ExperimenterOrcid]]]
     ] = empty_list()
@@ -265,9 +269,8 @@ class MetricsDataset(NamedObject):
         if not isinstance(self.processed, Bool):
             self.processed = Bool(self.processed)
 
-        self._normalize_inlined_as_dict(
-            slot_name="sample", slot_type=Sample, key_name="type", keyed=False
-        )
+        if self.sample is not None and not isinstance(self.sample, SampleType):
+            self.sample = SampleType(self.sample)
 
         if not isinstance(self.experimenter, list):
             self.experimenter = [self.experimenter] if self.experimenter is not None else []
@@ -1188,17 +1191,6 @@ class Column(YAMLRoot):
 
 
 # Enumerations
-class SampleType(EnumDefinitionImpl):
-    """
-    The type of sample
-    """
-
-    FieldIllumination = PermissibleValue(text="FieldIllumination")
-
-    _defn = EnumDefinition(
-        name="SampleType",
-        description="The type of sample",
-    )
 
 
 # Slots
@@ -1248,7 +1240,7 @@ slots.sample__type = Slot(
     curie=DEFAULT_.curie("type"),
     model_uri=DEFAULT_.sample__type,
     domain=None,
-    range=Union[str, "SampleType"],
+    range=URIRef,
 )
 
 slots.sample__protocol = Slot(
@@ -1311,7 +1303,7 @@ slots.metricsDataset__sample = Slot(
     curie=DEFAULT_.curie("sample"),
     model_uri=DEFAULT_.metricsDataset__sample,
     domain=None,
-    range=Optional[Union[Union[dict, Sample], List[Union[dict, Sample]]]],
+    range=Optional[Union[str, SampleType]],
 )
 
 slots.metricsDataset__experimenter = Slot(

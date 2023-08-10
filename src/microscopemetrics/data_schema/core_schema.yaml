@@ -32,8 +32,9 @@ classes:
     description: A sample is a standard physical object that is imaged by a microscope
     attributes:
       type:   # TODO: develop the sample class
-        range: sample_type
+        range: string
         required: true
+        identifier: true
       protocol:
         range: Protocol
         required: true
@@ -72,7 +73,8 @@ classes:
     attributes:
       sample:
         range: Sample
-        multivalued: true
+        multivalued: false
+        inlined: false
       experimenter:
         range: Experimenter
         multivalued: true
@@ -498,7 +500,3 @@ slots:
 
 
 enums:
-  sample_type:
-    description: The type of sample
-    permissible_values:
-      - FieldIllumination
