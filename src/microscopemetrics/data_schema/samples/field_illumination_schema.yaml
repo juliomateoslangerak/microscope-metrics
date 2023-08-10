@@ -30,9 +30,9 @@ classes:
       - intensity_plot_data
     slot_usage:
       name:
-        ifabsent: string("Field illumination dataset")
+        ifabsent: string(FieldIlluminationDataset)
       description:
-        ifabsent: string("This dataset contains the results of the field illumination analysis")
+        ifabsent: string(This dataset contains the results of the field illumination analysis)
       inputs:
         equals_string:
           - image

@@ -1,5 +1,5 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-09T16:36:31
+# Generation date: 2023-08-10T11:11:01
 # Schema: microscopemetrics_samples_field_illum_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml
@@ -92,14 +92,14 @@ class FieldIlluminationDataset(MetricsDataset):
     corner_fraction: float = 0.1
     sigma: float = 2.0
     intensity_map_size: int = 64
-    name: str = '"Field illumination dataset"'
     bit_depth: Optional[int] = None
     regions_properties_table: Optional[Union[dict, TableAsPandasDF]] = None
     intensity_map: Optional[Union[dict, Image5D]] = None
     intensity_plot_data: Optional[Union[dict, TableAsPandasDF]] = None
+    name: Optional[str] = "FieldIlluminationDataset"
     description: Optional[
         str
-    ] = '"This dataset contains the results of the field illumination analysis"'
+    ] = "This dataset contains the results of the field illumination analysis"
     inputs: Optional[Union[str, List[str]]] = empty_list()
     outputs: Optional[Union[str, List[str]]] = empty_list()
 
@@ -134,11 +134,6 @@ class FieldIlluminationDataset(MetricsDataset):
         if not isinstance(self.intensity_map_size, int):
             self.intensity_map_size = int(self.intensity_map_size)
 
-        if self._is_empty(self.name):
-            self.MissingRequiredField("name")
-        if not isinstance(self.name, str):
-            self.name = str(self.name)
-
         if self.bit_depth is not None and not isinstance(self.bit_depth, int):
             self.bit_depth = int(self.bit_depth)
 
@@ -156,6 +151,9 @@ class FieldIlluminationDataset(MetricsDataset):
             self.intensity_plot_data, TableAsPandasDF
         ):
             self.intensity_plot_data = TableAsPandasDF(**as_dict(self.intensity_plot_data))
+
+        if self.name is not None and not isinstance(self.name, str):
+            self.name = str(self.name)
 
         if self.description is not None and not isinstance(self.description, str):
             self.description = str(self.description)

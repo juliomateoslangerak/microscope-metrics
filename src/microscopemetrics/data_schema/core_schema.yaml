@@ -45,11 +45,12 @@ classes:
     description: A sample is a standard physical object that is imaged by a microscope
     attributes:
       type:   # TODO: develop the sample class
+        range: sample_type
         required: true
       protocol:
+        range: Protocol
         required: true
         multivalued: false
-        range: Protocol
 
   Protocol:
     is_a: NamedObject
@@ -60,6 +61,7 @@ classes:
       authors:
         range: Experimenter
         multivalued: true
+        inlined: false
       url:
         required: true
 
@@ -67,10 +69,13 @@ classes:
     description: The person that performed the experiment or developed the protocol
     attributes:
       name:
-        description: The name of the experimenter
         range: string
+        description: The name of the experimenter
+        required: true
       orcid:
+        range: string
         description: The ORCID of the experimenter
+        recommended: true
         identifier: true
 
   MetricsDataset:
@@ -224,31 +229,12 @@ classes:
           - linkml:elements
         required: true
 
-  Channel:
-    description: A channel
-    attributes:
-      name:
-        range: string
-        required: false
-      rendering_color:
-        range: Color
-        required: false
-      emission_wavelength:
-        range: float
-        unit:
-          ucum_code: nm
-      excitation_wavelength:
-        range: float
-        unit:
-          ucum_code: nm
-
   ChannelSeries:
     description: A series whose values represent channel
     implements:
       - linkml:OneDimensionalSeries
     attributes:
       values:
-#        range: Channel
         range: integer
         multivalued: true
         implements:
@@ -522,3 +508,10 @@ slots:
     range: string
     description: A description of an entity
     multivalued: false
+
+
+enums:
+  sample_type:
+    description: The type of sample
+    permissible_values:
+      - FieldIllumination

@@ -9,7 +9,7 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 import microscopemetrics.data_schema.samples.field_illumination_schema as schema
-from microscopemetrics.samples import *
+from microscopemetrics.samples import AnalysisMixin, logger
 from microscopemetrics.utilities.utilities import is_saturated
 
 
