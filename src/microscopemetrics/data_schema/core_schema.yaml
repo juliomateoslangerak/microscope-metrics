@@ -7,22 +7,9 @@ prefixes:
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
-#  - ./samples/field_illum_schema
 
 default_range: string
 
-
-###
-# Classes properties to consider
-# - required: true
-# - multivalued: true
-# - range: string
-# - minimum_value: 0
-# - maximum_value: 255
-# - identifier: true
-# - abstract: true
-# - tree_root: true
-###
 
 classes:
   MetaObject:
