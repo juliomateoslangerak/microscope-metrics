@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-11T13:39:13
+# Generation date: 2023-08-11T17:36:44
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -66,7 +66,7 @@ class ExperimenterOrcid(extended_str):
     pass
 
 
-class KeyValuePairName(extended_str):
+class KeyValuesKeys(extended_str):
     pass
 
 
@@ -616,6 +616,7 @@ class ROI(YAMLRoot):
     )
 
     image: Union[Union[dict, Image], List[Union[dict, Image]]] = None
+    label: Optional[str] = None
     shapes: Optional[Union[Union[dict, "Shape"], List[Union[dict, "Shape"]]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -624,6 +625,9 @@ class ROI(YAMLRoot):
         if not isinstance(self.image, list):
             self.image = [self.image] if self.image is not None else []
         self.image = [v if isinstance(v, Image) else Image(**as_dict(v)) for v in self.image]
+
+        if self.label is not None and not isinstance(self.label, str):
+            self.label = str(self.label)
 
         if not isinstance(self.shapes, list):
             self.shapes = [self.shapes] if self.shapes is not None else []
@@ -984,49 +988,21 @@ class KeyValues(YAMLRoot):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/KeyValues"
     )
 
-    key_values: Union[
-        Dict[Union[str, KeyValuePairName], Union[dict, "KeyValuePair"]],
-        List[Union[dict, "KeyValuePair"]],
-    ] = empty_dict()
+    keys: Union[Union[str, KeyValuesKeys], List[Union[str, KeyValuesKeys]]] = None
+    values: Union[str, List[str]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.key_values):
-            self.MissingRequiredField("key_values")
-        self._normalize_inlined_as_dict(
-            slot_name="key_values", slot_type=KeyValuePair, key_name="name", keyed=True
-        )
+        if self._is_empty(self.keys):
+            self.MissingRequiredField("keys")
+        if not isinstance(self.keys, list):
+            self.keys = [self.keys] if self.keys is not None else []
+        self.keys = [v if isinstance(v, KeyValuesKeys) else KeyValuesKeys(v) for v in self.keys]
 
-        super().__post_init__(**kwargs)
-
-
-@dataclass
-class KeyValuePair(YAMLRoot):
-    """
-    A key-value pair
-    """
-
-    _inherited_slots: ClassVar[List[str]] = []
-
-    class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/KeyValuePair"
-    )
-    class_class_curie: ClassVar[str] = None
-    class_name: ClassVar[str] = "KeyValuePair"
-    class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/KeyValuePair"
-    )
-
-    name: Union[str, KeyValuePairName] = None
-    value: Optional[str] = None
-
-    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.name):
-            self.MissingRequiredField("name")
-        if not isinstance(self.name, KeyValuePairName):
-            self.name = KeyValuePairName(self.name)
-
-        if self.value is not None and not isinstance(self.value, str):
-            self.value = str(self.value)
+        if self._is_empty(self.values):
+            self.MissingRequiredField("values")
+        if not isinstance(self.values, list):
+            self.values = [self.values] if self.values is not None else []
+        self.values = [v if isinstance(v, str) else str(v) for v in self.values]
 
         super().__post_init__(**kwargs)
 
@@ -1539,6 +1515,15 @@ slots.timeSeries__values = Slot(
     range=Union[float, List[float]],
 )
 
+slots.rOI__label = Slot(
+    uri=DEFAULT_.label,
+    name="rOI__label",
+    curie=DEFAULT_.curie("label"),
+    model_uri=DEFAULT_.rOI__label,
+    domain=None,
+    range=Optional[str],
+)
+
 slots.rOI__image = Slot(
     uri=DEFAULT_.image,
     name="rOI__image",
@@ -1827,34 +1812,22 @@ slots.color__alpha = Slot(
     range=Optional[int],
 )
 
-slots.keyValues__key_values = Slot(
-    uri=DEFAULT_.key_values,
-    name="keyValues__key_values",
-    curie=DEFAULT_.curie("key_values"),
-    model_uri=DEFAULT_.keyValues__key_values,
-    domain=None,
-    range=Union[
-        Dict[Union[str, KeyValuePairName], Union[dict, KeyValuePair]],
-        List[Union[dict, KeyValuePair]],
-    ],
-)
-
-slots.keyValuePair__name = Slot(
-    uri=DEFAULT_.name,
-    name="keyValuePair__name",
-    curie=DEFAULT_.curie("name"),
-    model_uri=DEFAULT_.keyValuePair__name,
+slots.keyValues__keys = Slot(
+    uri=DEFAULT_.keys,
+    name="keyValues__keys",
+    curie=DEFAULT_.curie("keys"),
+    model_uri=DEFAULT_.keyValues__keys,
     domain=None,
     range=URIRef,
 )
 
-slots.keyValuePair__value = Slot(
-    uri=DEFAULT_.value,
-    name="keyValuePair__value",
-    curie=DEFAULT_.curie("value"),
-    model_uri=DEFAULT_.keyValuePair__value,
+slots.keyValues__values = Slot(
+    uri=DEFAULT_.values,
+    name="keyValues__values",
+    curie=DEFAULT_.curie("values"),
+    model_uri=DEFAULT_.keyValues__values,
     domain=None,
-    range=Optional[str],
+    range=Union[str, List[str]],
 )
 
 slots.tag__id = Slot(

@@ -1,8 +1,8 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-10T11:11:01
-# Schema: microscopemetrics_samples_field_illum_schema
+# Generation date: 2023-08-11T15:36:20
+# Schema: microscopemetrics_samples_field_illumination_schema
 #
-# id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml
+# id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 # description:
 # license: https://creativecommons.org/publicdomain/zero/1.0/
 
@@ -45,7 +45,7 @@ from ..core_schema import (
     Image5D,
     ImageAsNumpy,
     MetricsDataset,
-    Sample,
+    SampleType,
     TableAsPandasDF,
 )
 
@@ -59,7 +59,7 @@ dataclasses._init_fn = dataclasses_init_fn_with_kwargs
 LINKML = CurieNamespace("linkml", "https://w3id.org/linkml/")
 DEFAULT_ = CurieNamespace(
     "",
-    "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml/",
+    "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/",
 )
 
 
@@ -77,12 +77,12 @@ class FieldIlluminationDataset(MetricsDataset):
     _inherited_slots: ClassVar[List[str]] = []
 
     class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml/FieldIlluminationDataset"
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationDataset"
     )
     class_class_curie: ClassVar[str] = None
     class_name: ClassVar[str] = "FieldIlluminationDataset"
     class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml/FieldIlluminationDataset"
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationDataset"
     )
 
     image: Union[dict, ImageAsNumpy] = None

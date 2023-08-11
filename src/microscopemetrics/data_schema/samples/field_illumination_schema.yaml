@@ -1,5 +1,5 @@
-id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illum_schema.yaml
-name: microscopemetrics_samples_field_illum_schema
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+name: microscopemetrics_samples_field_illumination_schema
 prefixes:
 #  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
 #imports:
@@ -47,19 +47,19 @@ classes:
           - regions_properties_table
           - intensity_map
           - intensity_plot_data
-    rules:
-      - preconditions:
-          slot_conditions:
-            processed:
-              equals_number: 1
-        postconditions:
-          slot_conditions:
-            regions_properties_table:
-              required: true
-            intensity_map:
-              required: true
-            intensity_plot_data:
-              required: true
+#    rules:
+#      - preconditions:
+#          slot_conditions:
+#            processed:
+#              equals_number: 1
+#        postconditions:
+#          slot_conditions:
+#            regions_properties_table:
+#              required: true
+#            intensity_map:
+#              required: true
+#            intensity_plot_data:
+#              required: true
 
 
 slots:

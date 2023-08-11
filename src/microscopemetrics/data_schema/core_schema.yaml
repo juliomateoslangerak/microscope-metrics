@@ -252,6 +252,10 @@ classes:
   ROI:
     description: A ROI. Collection of shapes and an image to which they are applied
     attributes:
+      label:
+        range: string
+        required: false
+        multivalued: false
       image:
         range: Image
         required: true
@@ -416,21 +420,15 @@ classes:
   KeyValues:
     description: A collection of key-value pairs
     attributes:
-      key_values:
-        range: KeyValuePair
+      keys:
+        range: string
+        required: true
+        key: true
+        multivalued: true
+      values:
+        range: string
         required: true
         multivalued: true
-        inlined: true
-        inlined_as_list: false
-
-  KeyValuePair:
-    description: A key-value pair
-    attributes:
-      name:
-        range: string
-        key: true
-      value:
-        range: string
 
   Tag:
     description: A tag

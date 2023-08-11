@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import product
 from typing import Dict, List, Tuple, Union
 
@@ -10,117 +11,86 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
 
+import microscopemetrics.data_schema.samples.argolight_schema as schema
 from microscopemetrics.analysis.tools import (
     compute_distances_matrix,
     compute_spots_properties,
     segment_image,
 )
-from microscopemetrics.samples import *
+from microscopemetrics.data_schema import core_schema
+from microscopemetrics.samples import (
+    AnalysisMixin,
+    logger,
+    numpy_to_inlined_image,
+    numpy_to_inlined_mask,
+)
+from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
 
-from ..utilities.utilities import airy_fun, multi_airy_fun
 
-
-@register_image_analysis
-class ArgolightBAnalysis(AnalysisMixin):
+class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
     """This class handles the analysis of the Argolight sample pattern B"""
 
-    def __init__(self) -> None:
-        super().__init__(
-            output_description="Analysis output of the 'SPOTS' matrix (pattern B) from the argolight sample. "
-            "It contains chromatic shifts and homogeneity."
-        )
-        self.add_data_requirement(
-            name="argolight_b",
-            description="Input image in the form of a numpy array",
-            data_type=np.ndarray,
-        )
-        self.add_metadata_requirement(
-            name="spots_distance",
-            description="Distance between argolight spots",
-            data_type=float,
-            units="MICRON",
-            optional=False,
-        )
-        self.add_metadata_requirement(
-            name="pixel_size",
-            description="Physical size of the voxel in z, y and x",
-            data_type=Tuple[float, float, float],
-            units="MICRON",
-            optional=False,
-        )
-        self.add_metadata_requirement(
-            name="sigma",
-            description="Smoothing factor for objects detection",
-            data_type=Tuple[float, float, float],
-            optional=True,
-            default=(1, 3, 3),
-        )
-        self.add_metadata_requirement(
-            name="lower_threshold_correction_factors",
-            description="Correction factor for the lower thresholds. Must be a tuple with len = nr "
-            "of channels or a float if all equal",
-            data_type=Union[List[float], Tuple[float], float],
-            optional=True,
-            default=None,
-        )
-        self.add_metadata_requirement(
-            name="upper_threshold_correction_factors",
-            description="Correction factor for the upper thresholds. Must be a tuple with len = nr "
-            "of channels or a float if all equal",
-            data_type=Union[List[float], Tuple[float], float],
-            optional=True,
-            default=None,
-        )
-        self.add_metadata_requirement(
-            name="remove_center_cross",
-            description="Remove the center cross found in some Argolight patterns",
-            data_type=bool,
-            optional=True,
-            default=False,
-        )
+    def run(self) -> bool:
+        self.validate_requirements()
 
-    def _run(self) -> bool:
+        # Check image shape
+        logger.info("Checking image shape...")
+        image = self.argolight_b_image.data
+        if len(image.shape) != 5:
+            logger.error("Image must be 5D")
+            return False
+
+        # Check image saturation
+        logger.info("Checking image saturation...")
+        saturated_channels = []
+        for c in range(image.shape[-1]):
+            if is_saturated(
+                channel=image[:, :, :, :, c],
+                threshold=self.saturation_threshold,
+                detector_bit_depth=self.bit_depth,
+            ):
+                logger.error(f"Channel {c} is saturated")
+                saturated_channels.append(c)
+        if len(saturated_channels):
+            logger.error(f"Channels {saturated_channels} are saturated")
+            return False
+
         # Calculating the distance between spots in pixels with a security margin
-        min_distance = round(
-            (self.get_metadata_values("spots_distance") * 0.3)
-            / max(self.get_metadata_values("pixel_size")[-2:])
-        )
+        min_distance = round(self.spots_distance * 0.3)
 
         # Calculating the maximum tolerated distance in microns for the same spot in a different channels
-        max_distance = self.get_metadata_values("spots_distance") * 0.4
+        max_distance = self.spots_distance * 0.4
 
         labels = segment_image(
-            image=self.get_data_values("argolight_b"),
+            image=image,
             min_distance=min_distance,
-            sigma=self.get_metadata_values("sigma"),
+            sigma=(self.sigma_z, self.sigma_y, self.sigma_x),
             method="local_max",
-            low_corr_factors=self.get_metadata_values("lower_threshold_correction_factors"),
-            high_corr_factors=self.get_metadata_values("upper_threshold_correction_factors"),
+            low_corr_factors=self.lower_threshold_correction_factors,
+            high_corr_factors=self.upper_threshold_correction_factors,
         )
 
-        self.output.append(
-            model.Image(
-                name=list(self.input.data.keys())[0],
-                description="Labels image with detected spots. "
-                "Image intensities correspond to roi labels.",
-                data=labels,
-            )
+        self.spots_labels_image = schema.ImageAsNumpy(
+            data=labels,
+            name=f"{self.argolight_b_image.name}_spots_labels",
+            description=f"Spots labels of {self.argolight_b_image.uri}",
+            uri=None,
         )
 
         spots_properties, spots_positions = compute_spots_properties(
-            image=self.get_data_values("argolight_b"),
+            image=image,
             labels=labels,
-            remove_center_cross=self.get_metadata_values("remove_center_cross"),
+            remove_center_cross=self.remove_center_cross,
         )
 
         distances_df = compute_distances_matrix(
             positions=spots_positions,
             max_distance=max_distance,
-            pixel_size=self.get_metadata_values("pixel_size"),
         )
 
         properties_kv = {}
         properties_ls = []
+        spots_centroids = []
 
         for ch, ch_spot_props in enumerate(spots_properties):
             ch_df = DataFrame()
@@ -167,26 +137,28 @@ class ArgolightBAnalysis(AnalysisMixin):
             properties_ls.append(ch_df)
 
             channel_shapes = [
-                model.Point(
+                core_schema.Point(
                     x=p["weighted_centroid"][2].item(),
                     y=p["weighted_centroid"][1].item(),
                     z=p["weighted_centroid"][0].item(),
                     c=ch,
                     label=f'{p["label"]}',
+                    # TODO: put some color
                 )
                 for p in ch_spot_props
             ]
-            self.output.append(
-                model.Roi(
-                    name=f"Centroids_ch{ch:03d}",
-                    description=f"weighted centroids channel {ch}",
+
+            spots_centroids.append(
+                schema.ROI(
+                    label=f"Centroids_ch{ch:03d}",
+                    image=self.argolight_b_image,
                     shapes=channel_shapes,
                 )
             )
 
         properties_df = pd.concat(properties_ls)
 
-        distances_kv = {"distance_units": self.get_metadata_units("pixel_size")}
+        distances_kv = {"distance_units": "PIXEL"}
 
         for a, b in product(distances_df.channel_a.unique(), distances_df.channel_b.unique()):
             temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
@@ -206,42 +178,34 @@ class ArgolightBAnalysis(AnalysisMixin):
                 (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean().item()
             )
 
-        self.output.append(
-            model.KeyValues(
-                name="Intensity Key Annotations",
-                description="Key Intensity Measurements on Argolight D spots",
-                key_values=properties_kv,
-            )
+        self.intensity_measurements = core_schema.KeyValues(
+            keys=[k for k in properties_kv.keys()],
+            values=[v for v in properties_kv.values()],
         )
 
-        self.output.append(
-            model.KeyValues(
-                name="Distances Key Annotations",
-                description="Key Distance Measurements on Argolight D spots",
-                key_values=distances_kv,
-            )
+        self.distance_measurements = core_schema.KeyValues(
+            keys=[k for k in distances_kv.keys()],
+            values=[v for v in distances_kv.values()],
         )
 
-        self.output.append(
-            model.Table(
-                name="Properties",
-                description="Analysis_argolight_D_properties",
-                table=properties_df,
-            )
+        self.spots_properties = schema.TableAsPandasDF(
+            name="spots_properties",
+            description="This table contains data describing the intensity measurements of the spots",
+            df=properties_df,
         )
 
-        self.output.append(
-            model.Table(
-                name="Distances",
-                description="Analysis_argolight_D_distances",
-                table=distances_df,
-            )
+        self.spots_distances = schema.TableAsPandasDF(
+            name="spots_distances",
+            description="This table contains data describing the distance measurements between the spots in the different channels",
+            df=distances_df,
         )
+
+        self.processing_date = datetime.today()
+        self.processed = True
 
         return True
 
 
-@register_image_analysis
 class ArgolightEAnalysis(AnalysisMixin):
     """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
 

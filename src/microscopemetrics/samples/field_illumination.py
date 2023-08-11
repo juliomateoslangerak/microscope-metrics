@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import Dict, Tuple
 
 import numpy as np
@@ -250,7 +250,7 @@ def _image_properties(
 class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
     """This analysis creates a report on field illumination homogeneity based on input images"""
 
-    def run(self):
+    def run(self) -> bool:
         self.validate_requirements()
 
         # Check image shape
@@ -301,7 +301,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             df=_image_line_profile(image, profile_size=255)
         )
 
-        self.processing_date = datetime.date.today()
+        self.processing_date = datetime.today()
         self.processed = True
 
         return True
