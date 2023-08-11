@@ -200,6 +200,9 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             df=distances_df,
         )
 
+        self.spots_centroids = spots_centroids
+        breakpoint()
+
         self.processing_date = datetime.today()
         self.processed = True
 
