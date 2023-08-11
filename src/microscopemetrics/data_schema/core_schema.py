@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-10T16:14:30
+# Generation date: 2023-08-11T13:39:13
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -345,7 +345,6 @@ class ImageAsNumpy(Image):
     data: Optional[Union[dict, MetaObject]] = None
 
 
-@dataclass
 class ImageInline(Image):
     """
     A base object for all microscope-metrics images that are stored as arrays in line
@@ -361,17 +360,6 @@ class ImageInline(Image):
     class_model_uri: ClassVar[URIRef] = URIRef(
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/ImageInline"
     )
-
-    data: Union[float, List[float]] = None
-
-    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.data):
-            self.MissingRequiredField("data")
-        if not isinstance(self.data, list):
-            self.data = [self.data] if self.data is not None else []
-        self.data = [v if isinstance(v, float) else float(v) for v in self.data]
-
-        super().__post_init__(**kwargs)
 
 
 @dataclass
@@ -391,22 +379,22 @@ class ImageMask(ImageInline):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/ImageMask"
     )
 
-    x: Union[dict, "PixelSeries"] = None
     y: Union[dict, "PixelSeries"] = None
+    x: Union[dict, "PixelSeries"] = None
     data: Union[Union[bool, Bool], List[Union[bool, Bool]]] = None
-    x_position: Optional[float] = 0.0
-    y_position: Optional[float] = 0.0
+    y_position: Optional[int] = 0
+    x_position: Optional[int] = 0
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.x):
-            self.MissingRequiredField("x")
-        if not isinstance(self.x, PixelSeries):
-            self.x = PixelSeries(**as_dict(self.x))
-
         if self._is_empty(self.y):
             self.MissingRequiredField("y")
         if not isinstance(self.y, PixelSeries):
             self.y = PixelSeries(**as_dict(self.y))
+
+        if self._is_empty(self.x):
+            self.MissingRequiredField("x")
+        if not isinstance(self.x, PixelSeries):
+            self.x = PixelSeries(**as_dict(self.x))
 
         if self._is_empty(self.data):
             self.MissingRequiredField("data")
@@ -414,11 +402,11 @@ class ImageMask(ImageInline):
             self.data = [self.data] if self.data is not None else []
         self.data = [v if isinstance(v, Bool) else Bool(v) for v in self.data]
 
-        if self.x_position is not None and not isinstance(self.x_position, float):
-            self.x_position = float(self.x_position)
+        if self.y_position is not None and not isinstance(self.y_position, int):
+            self.y_position = int(self.y_position)
 
-        if self.y_position is not None and not isinstance(self.y_position, float):
-            self.y_position = float(self.y_position)
+        if self.x_position is not None and not isinstance(self.x_position, int):
+            self.x_position = int(self.x_position)
 
         super().__post_init__(**kwargs)
 
@@ -440,9 +428,9 @@ class Image2D(ImageInline):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Image2D"
     )
 
-    data: Union[float, List[float]] = None
     y: Union[dict, "PixelSeries"] = None
     x: Union[dict, "PixelSeries"] = None
+    data: Union[float, List[float]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.y):
@@ -454,6 +442,12 @@ class Image2D(ImageInline):
             self.MissingRequiredField("x")
         if not isinstance(self.x, PixelSeries):
             self.x = PixelSeries(**as_dict(self.x))
+
+        if self._is_empty(self.data):
+            self.MissingRequiredField("data")
+        if not isinstance(self.data, list):
+            self.data = [self.data] if self.data is not None else []
+        self.data = [v if isinstance(v, float) else float(v) for v in self.data]
 
         super().__post_init__(**kwargs)
 
@@ -475,12 +469,12 @@ class Image5D(ImageInline):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Image5D"
     )
 
-    data: Union[float, List[float]] = None
     t: Union[dict, "TimeSeries"] = None
     z: Union[dict, "PixelSeries"] = None
     y: Union[dict, "PixelSeries"] = None
     x: Union[dict, "PixelSeries"] = None
     c: Union[dict, "ChannelSeries"] = None
+    data: Union[float, List[float]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.t):
@@ -507,6 +501,12 @@ class Image5D(ImageInline):
             self.MissingRequiredField("c")
         if not isinstance(self.c, ChannelSeries):
             self.c = ChannelSeries(**as_dict(self.c))
+
+        if self._is_empty(self.data):
+            self.MissingRequiredField("data")
+        if not isinstance(self.data, list):
+            self.data = [self.data] if self.data is not None else []
+        self.data = [v if isinstance(v, float) else float(v) for v in self.data]
 
         super().__post_init__(**kwargs)
 
@@ -649,6 +649,7 @@ class Shape(YAMLRoot):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Shape"
     )
 
+    label: Optional[str] = None
     z: Optional[float] = None
     c: Optional[int] = None
     t: Optional[int] = None
@@ -657,6 +658,9 @@ class Shape(YAMLRoot):
     stroke_width: Optional[int] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
+        if self.label is not None and not isinstance(self.label, str):
+            self.label = str(self.label)
+
         if self.z is not None and not isinstance(self.z, float):
             self.z = float(self.z)
 
@@ -695,15 +699,19 @@ class Point(Shape):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Point"
     )
 
-    x: Optional[float] = None
-    y: Optional[float] = None
+    y: float = None
+    x: float = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self.x is not None and not isinstance(self.x, float):
-            self.x = float(self.x)
-
-        if self.y is not None and not isinstance(self.y, float):
+        if self._is_empty(self.y):
+            self.MissingRequiredField("y")
+        if not isinstance(self.y, float):
             self.y = float(self.y)
+
+        if self._is_empty(self.x):
+            self.MissingRequiredField("x")
+        if not isinstance(self.x, float):
+            self.x = float(self.x)
 
         super().__post_init__(**kwargs)
 
@@ -1378,13 +1386,13 @@ slots.imageAsNumpy__data = Slot(
     range=Optional[Union[dict, MetaObject]],
 )
 
-slots.imageInline__data = Slot(
-    uri=DEFAULT_.data,
-    name="imageInline__data",
-    curie=DEFAULT_.curie("data"),
-    model_uri=DEFAULT_.imageInline__data,
+slots.imageMask__y_position = Slot(
+    uri=DEFAULT_.y_position,
+    name="imageMask__y_position",
+    curie=DEFAULT_.curie("y_position"),
+    model_uri=DEFAULT_.imageMask__y_position,
     domain=None,
-    range=Union[float, List[float]],
+    range=Optional[int],
 )
 
 slots.imageMask__x_position = Slot(
@@ -1393,25 +1401,7 @@ slots.imageMask__x_position = Slot(
     curie=DEFAULT_.curie("x_position"),
     model_uri=DEFAULT_.imageMask__x_position,
     domain=None,
-    range=Optional[float],
-)
-
-slots.imageMask__y_position = Slot(
-    uri=DEFAULT_.y_position,
-    name="imageMask__y_position",
-    curie=DEFAULT_.curie("y_position"),
-    model_uri=DEFAULT_.imageMask__y_position,
-    domain=None,
-    range=Optional[float],
-)
-
-slots.imageMask__x = Slot(
-    uri=DEFAULT_.x,
-    name="imageMask__x",
-    curie=DEFAULT_.curie("x"),
-    model_uri=DEFAULT_.imageMask__x,
-    domain=None,
-    range=Union[dict, PixelSeries],
+    range=Optional[int],
 )
 
 slots.imageMask__y = Slot(
@@ -1419,6 +1409,15 @@ slots.imageMask__y = Slot(
     name="imageMask__y",
     curie=DEFAULT_.curie("y"),
     model_uri=DEFAULT_.imageMask__y,
+    domain=None,
+    range=Union[dict, PixelSeries],
+)
+
+slots.imageMask__x = Slot(
+    uri=DEFAULT_.x,
+    name="imageMask__x",
+    curie=DEFAULT_.curie("x"),
+    model_uri=DEFAULT_.imageMask__x,
     domain=None,
     range=Union[dict, PixelSeries],
 )
@@ -1448,6 +1447,15 @@ slots.image2D__x = Slot(
     model_uri=DEFAULT_.image2D__x,
     domain=None,
     range=Union[dict, PixelSeries],
+)
+
+slots.image2D__data = Slot(
+    uri=DEFAULT_.data,
+    name="image2D__data",
+    curie=DEFAULT_.curie("data"),
+    model_uri=DEFAULT_.image2D__data,
+    domain=None,
+    range=Union[float, List[float]],
 )
 
 slots.image5D__t = Slot(
@@ -1495,6 +1503,15 @@ slots.image5D__c = Slot(
     range=Union[dict, ChannelSeries],
 )
 
+slots.image5D__data = Slot(
+    uri=DEFAULT_.data,
+    name="image5D__data",
+    curie=DEFAULT_.curie("data"),
+    model_uri=DEFAULT_.image5D__data,
+    domain=None,
+    range=Union[float, List[float]],
+)
+
 slots.pixelSeries__values = Slot(
     uri=DEFAULT_.values,
     name="pixelSeries__values",
@@ -1538,6 +1555,15 @@ slots.rOI__shapes = Slot(
     model_uri=DEFAULT_.rOI__shapes,
     domain=None,
     range=Optional[Union[Union[dict, Shape], List[Union[dict, Shape]]]],
+)
+
+slots.shape__label = Slot(
+    uri=DEFAULT_.label,
+    name="shape__label",
+    curie=DEFAULT_.curie("label"),
+    model_uri=DEFAULT_.shape__label,
+    domain=None,
+    range=Optional[str],
 )
 
 slots.shape__z = Slot(
@@ -1594,22 +1620,22 @@ slots.shape__stroke_width = Slot(
     range=Optional[int],
 )
 
-slots.point__x = Slot(
-    uri=DEFAULT_.x,
-    name="point__x",
-    curie=DEFAULT_.curie("x"),
-    model_uri=DEFAULT_.point__x,
-    domain=None,
-    range=Optional[float],
-)
-
 slots.point__y = Slot(
     uri=DEFAULT_.y,
     name="point__y",
     curie=DEFAULT_.curie("y"),
     model_uri=DEFAULT_.point__y,
     domain=None,
-    range=Optional[float],
+    range=float,
+)
+
+slots.point__x = Slot(
+    uri=DEFAULT_.x,
+    name="point__x",
+    curie=DEFAULT_.curie("x"),
+    model_uri=DEFAULT_.point__x,
+    domain=None,
+    range=float,
 )
 
 slots.line__x1 = Slot(

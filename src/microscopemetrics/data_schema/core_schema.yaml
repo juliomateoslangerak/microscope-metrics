@@ -119,33 +119,26 @@ classes:
     is_a: Image
     description: A base object for all microscope-metrics images that are stored as arrays in line
     abstract: true
-    attributes:
-      data:
-        implements:
-          - linkml:elements
-        range: float
-        multivalued: true
-        required: true
 
   ImageMask:
     is_a: ImageInline
     description: A base object for all microscope-metrics masks
     attributes:
-      x_position:
-        range: float
-        ifabsent: float(0.0)
       y_position:
-        range: float
-        ifabsent: float(0.0)
-      x:
-        range: PixelSeries
-        implements:
-          - linkml:axis0
-        required: true
+        range: integer
+        ifabsent: int(0)
+      x_position:
+        range: integer
+        ifabsent: int(0)
       y:
         range: PixelSeries
         implements:
           - linkml:axis1
+        required: true
+      x:
+        range: PixelSeries
+        implements:
+          - linkml:axis0
         required: true
       data:
         implements:
@@ -170,6 +163,12 @@ classes:
         range: PixelSeries
         implements:
           - linkml:axis1
+        required: true
+      data:
+        implements:
+          - linkml:elements
+        range: float
+        multivalued: true
         required: true
 
   Image5D:
@@ -203,6 +202,12 @@ classes:
         range: ChannelSeries
         implements:
           - linkml:axis4
+        required: true
+      data:
+        implements:
+          - linkml:elements
+        range: float
+        multivalued: true
         required: true
 
   PixelSeries:
@@ -260,29 +265,40 @@ classes:
     description: A shape
     abstract: true
     attributes:
+      label:
+        range: string
+        required: false
       z:
         range: float
+        required: false
       c:
         range: integer
+        required: false
       t:
         range: integer
+        required: false
       fill_color:
         range: Color
+        required: false
       stroke_color:
         range: Color
+        required: false
       stroke_width:
         range: integer
+        required: false
 
   Point:
     is_a: Shape
     description: A point as defined by x and y coordinates
     attributes:
-      x:
-        range: float
-        multivalued: false
       y:
         range: float
         multivalued: false
+        required: true
+      x:
+        range: float
+        multivalued: false
+        required: true
 
   Line:
     is_a: Shape
@@ -347,7 +363,7 @@ classes:
       is_open:
         range: boolean
         multivalued: false
-        ifabsent: False
+        ifabsent: false
 
   Vertex:
     description: A vertex as defined by x and y coordinates
