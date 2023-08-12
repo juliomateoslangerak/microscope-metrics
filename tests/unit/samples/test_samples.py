@@ -8,7 +8,7 @@ from microscopemetrics.samples import *
 
 @pytest.fixture
 def sample_analysis():
-    class MyAnalysis(Analysis):
+    class MyAnalysis(AnalysisMixin):
         def __init__(self):
             description = "This is the description of the analysis class"
             super().__init__(output_description=description)
@@ -92,7 +92,7 @@ def test_analysis_requirements(sample_analysis_with_data):
 
 def test_analysis_inheritance(sample_analysis_with_data):
 
-    assert isinstance(sample_analysis_with_data, Analysis)
+    assert isinstance(sample_analysis_with_data, AnalysisMixin)
 
     assert sample_analysis_with_data.validate_requirements() is True
 

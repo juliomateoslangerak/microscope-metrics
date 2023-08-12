@@ -1,0 +1,261 @@
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+name: microscopemetrics_samples_argolight_schema
+prefixes:
+#  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
+#imports:
+#  - metrics:types
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+  - ../core_schema  # TODO: change to metrics:core_schema
+
+default_range: string
+
+
+classes:
+  ArgolightBDataset:
+    is_a: MetricsDataset
+    description: >-
+      An Argolight sample pattern B dataset
+    slots:
+      - argolight_b_image
+      - bit_depth
+      - saturation_threshold
+      - spots_distance
+      - sigma_z
+      - sigma_y
+      - sigma_x
+      - lower_threshold_correction_factors
+      - upper_threshold_correction_factors
+      - remove_center_cross
+      - spots_labels_image
+      - spots_centroids
+      - intensity_measurements
+      - distance_measurements
+      - spots_properties
+      - spots_distances
+    slot_usage:
+      name:
+        ifabsent: string(ArgolightBDataset)
+      description:
+        ifabsent: string(This dataset contains the results of the Argolight B analysis)
+      inputs:
+        equals_string:
+          - argolight_b_image
+          - bit_depth
+          - saturation_threshold
+          - spots_distance
+          - sigma_z
+          - sigma_y
+          - sigma_x
+          - lower_threshold_correction_factors
+          - upper_threshold_correction_factors
+          - remove_center_cross
+      outputs:
+        equals_string:
+          - spots_labels_image
+          - spots_centroids
+          - intensity_measurements
+          - distance_measurements
+          - spots_properties
+          - spots_distances
+
+  ArgolightEDataset:
+    is_a: MetricsDataset
+    description: |-
+      An Argolight sample pattern E dataset.
+      It contains resolution data on the axis indicated:
+      - axis 1 = Y resolution = lines along X axis
+      - axis 2 = X resolution = lines along Y axis
+    slots:
+      - argolight_e_image
+      - bit_depth
+      - saturation_threshold
+      - axis
+      - measured_band
+      - peaks_rois
+      - key_measurements
+      - intensity_profiles
+    slot_usage:
+      name:
+        ifabsent: string(ArgolightEDataset)
+      description:
+        ifabsent: string(This dataset contains the results of the Argolight E analysis)
+      inputs:
+        equals_string:
+          - argolight_e_image
+          - bit_depth
+          - saturation_threshold
+          - axis
+          - measured_band
+      outputs:
+        equals_string:
+          - peaks_rois
+          - key_measurements
+          - intensity_profiles
+
+
+slots:
+  bit_depth:
+    range: integer
+    description: >-
+      Input parameter: detector bit depth
+    required: false
+    multivalued: false
+    minimum_value: 1
+    maximum_value: 64
+  saturation_threshold:
+    range: float
+    description: >-
+      Input parameter: tolerated saturation threshold. If the amount of saturated pixels is above this threshold, 
+      the image is considered as saturated and the analysis is not performed.
+    required: true
+    multivalued: false
+    ifabsent: float(0.01)
+    minimum_value: 0.0
+    maximum_value: 1.0
+
+  # Argolight B inputs
+  argolight_b_image:
+    range: ImageAsNumpy
+    description: >-
+      Input parameter: image of the argolight b pattern provided as a 5D numpy array in the order TZYXC
+    required: true
+    multivalued: false
+  spots_distance:
+    range: float
+    description: >-
+      Input parameter: distance between argolight spots
+    required: true
+    multivalued: false
+  sigma_z:
+    range: float
+    description: >-
+      Input parameter: smoothing factor for objects detection in the Z axis
+    required: true
+    multivalued: false
+    minimum_value: 0.0
+    maximum_value: 5.0
+    ifabsent: float(1.0)
+  sigma_y:
+    range: float
+    description: >-
+      Input parameter: smoothing factor for objects detection in the Y axis
+    required: true
+    multivalued: false
+    minimum_value: 0.0
+    maximum_value: 10.0
+    ifabsent: float(3.0)
+  sigma_x:
+    range: float
+    description: >-
+      Input parameter: smoothing factor for objects detection in the X axis
+    required: true
+    multivalued: false
+    minimum_value: 0.0
+    maximum_value: 10.0
+    ifabsent: float(3.0)
+  lower_threshold_correction_factors:
+    range: float
+    description: >-
+      Input parameter: correction factor for the lower thresholds. 
+      Must be a tuple with len = nr of channels or a float if all equal
+    required: false
+    multivalued: true
+  upper_threshold_correction_factors:
+    range: float
+    description: >-
+      Input parameter: correction factor for the upper thresholds.
+      Must be a tuple with len = nr of channels or a float if all equal
+    required: false
+    multivalued: true
+  remove_center_cross:
+    range: boolean
+    description: >-
+      Input parameter: remove the center cross found in some Argolight patterns
+    required: false
+    multivalued: false
+    ifabsent: false
+  # Argolight B outputs
+  spots_labels_image:
+    range: ImageAsNumpy
+    description: >-
+      Output parameter: mask of the argolight spots provided as a 5D numpy array in the order TZYXC.
+      Image intensities correspond to roi labels
+    required: false
+    multivalued: false
+  spots_centroids:
+    range: ROI
+    description: >-
+      Output parameter: centroids of the argolight spots provided as a list of ROIs, one per channel
+    required: false
+    multivalued: true
+  intensity_measurements:
+    range: KeyValues
+    description: >-
+      Output parameter: Key Intensity Measurements on Argolight spots
+    required: false
+    inlined: true
+    multivalued: false
+  distance_measurements:
+    range: KeyValues
+    description: >-
+      Output parameter: Key Distance Measurements on Argolight spots
+    required: false
+    multivalued: false
+  spots_properties:
+    range: TableAsPandasDF
+    description: >-
+      Output parameter: Table of properties of the argolight spots
+    required: false
+    multivalued: false
+  spots_distances:
+    range: TableAsPandasDF
+    description: >-
+      Output parameter: Table of distances between argolight spots
+    required: false
+    multivalued: false
+
+  # Argolight E inputs
+  argolight_e_image:
+    range: ImageAsNumpy
+    description: >-
+      Input parameter: image of the argolight e pattern provided as a 5D numpy array in the order TZYXC
+    required: true
+    multivalued: false
+  axis:
+    range: integer
+    description: >-
+      Input parameter: axis along which resolution is being measured. 1=Y, 2=X
+    required: true
+    multivalued: false
+    minimum_value: 1
+    maximum_value: 2
+  measured_band:
+    range: float
+    description: >-
+      Input parameter: Fraction of the image across which intensity profiles are measured
+    required: false
+    multivalued: false
+    minimum_value: 0.1
+    maximum_value: 1.0
+    ifabsent: float(0.4)
+  # Argolight E outputs
+  peaks_rois:
+    range: ROI
+    description: >-
+      Output parameter: ROIs of the peaks found in the argolight images
+    required: false
+    multivalued: true
+  key_measurements:
+    range: KeyValues
+    description: >-
+      Output parameter: Key measurements on Argolight lines
+    required: false
+    multivalued: false
+  intensity_profiles:
+    range: TableAsPandasDF
+    description: >-
+      Output parameter: Intensity profiles of the argolight lines provided as table
+    required: false
+    multivalued: false
