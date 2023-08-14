@@ -24,4 +24,5 @@ def field_illumination_analysis():
 
 def test_run_field_illumination(field_illumination_analysis):
     assert field_illumination_analysis.run()
+    breakpoint()
     assert field_illumination_analysis.processed

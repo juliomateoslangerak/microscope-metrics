@@ -47,14 +47,27 @@ classes:
       - intensity_map_size
   FieldIlluminationOutput:
     is_a: MetricsOutput
-    slots:
-      - regions_properties
-      - intensity_map
-      - intensity_plots
-  FieldIlluminationKeyValue:
+    attributes:
+      key_values:
+        range: FieldIlluminationKeyValues
+        description: >-
+          Output: table containing the Key measurements for the field illumination analysis
+        multivalued: false
+      intensity_plots:
+        range: FieldIlluminationIntensityPlots
+      intensity_map:
+        range: Image5D
+        description: >-
+          Output: intensity map provided as a numpy array with 5D matching the order of the input image
+        multivalued: false
+      profile_rois:
+        range: ROI
+        description: >-
+          Output: ROIs used to compute the intensity profile
+        multivalued: false
+
+  FieldIlluminationKeyValues:
     is_a: KeyValues
-    description: >-
-      Key measurements for the field illumination analysis
     slots:
       - channel
       - nb_pixels
@@ -63,24 +76,24 @@ classes:
       - max_intensity
       - max_intensity_pos_x
       - max_intensity_pos_y
-      - top-left_intensity_mean
-      - top-left_intensity_ratio
-      - top-center_intensity_mean
-      - top-center_intensity_ratio
-      - top-right_intensity_mean
-      - top-right_intensity_ratio
-      - middle-left_intensity_mean
-      - middle-left_intensity_ratio
-      - middle-center_intensity_mean
-      - middle-center_intensity_ratio
-      - middle-right_intensity_mean
-      - middle-right_intensity_ratio
-      - bottom-left_intensity_mean
-      - bottom-left_intensity_ratio
-      - bottom-center_intensity_mean
-      - bottom-center_intensity_ratio
-      - bottom-right_intensity_mean
-      - bottom-right_intensity_ratio
+      - top_left_intensity_mean
+      - top_left_intensity_ratio
+      - top_center_intensity_mean
+      - top_center_intensity_ratio
+      - top_right_intensity_mean
+      - top_right_intensity_ratio
+      - middle_left_intensity_mean
+      - middle_left_intensity_ratio
+      - middle_center_intensity_mean
+      - middle_center_intensity_ratio
+      - middle_right_intensity_mean
+      - middle_right_intensity_ratio
+      - bottom_left_intensity_mean
+      - bottom_left_intensity_ratio
+      - bottom_center_intensity_mean
+      - bottom_center_intensity_ratio
+      - bottom_right_intensity_mean
+      - bottom_right_intensity_ratio
       - decile_0
       - decile_1
       - decile_2
@@ -92,6 +105,11 @@ classes:
       - decile_8
       - decile_9
 
+  FieldIlluminationIntensityPlots:
+    is_a: TableAsDict
+    description: >-
+      Intensity plots for the field illumination analysis in the different directions
+  
 
 slots:
   field_illumination_image:
@@ -157,11 +175,6 @@ slots:
     ifabsent: int(64)
     minimum_value: 5
     maximum_value: 512
-  regions_properties:
-    range: TableAsPandasDF
-    description: >-
-      Output: table containing the properties of the regions
-    multivalued: false
 
   channel:
     range: integer
@@ -198,100 +211,100 @@ slots:
     description: >-
       The y coordinate of the maximum intensity of the center of illumination. In pixels
     multivalued: true
-  top-left_intensity_mean:
+  top_left_intensity_mean:
     range: float
     description: >-
       The mean intensity of the top-left corner of the image
     multivalued: true
-  top-left_intensity_ratio:
+  top_left_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the top-left corner of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  top-center_intensity_mean:
+  top_center_intensity_mean:
     range: float
     description: >-
       The mean intensity of the top-center of the image
     multivalued: true
-  top-center_intensity_ratio:
+  top_center_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the top-center of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  top-right_intensity_mean:
+  top_right_intensity_mean:
     range: float
     description: >-
       The mean intensity of the top-right corner of the image
     multivalued: true
-  top-right_intensity_ratio:
+  top_right_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the top-right corner of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  middle-left_intensity_mean:
+  middle_left_intensity_mean:
     range: float
     description: >-
       The mean intensity of the middle-left of the image
     multivalued: true
-  middle-left_intensity_ratio:
+  middle_left_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the middle-left of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  middle-center_intensity_mean:
+  middle_center_intensity_mean:
     range: float
     description: >-
       The mean intensity of the middle-center of the image
     multivalued: true
-  middle-center_intensity_ratio:
+  middle_center_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the middle-center of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  middle-right_intensity_mean:
+  middle_right_intensity_mean:
     range: float
     description: >-
       The mean intensity of the middle-right of the image
     multivalued: true
-  middle-right_intensity_ratio:
+  middle_right_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the middle-right of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  bottom-left_intensity_mean:
+  bottom_left_intensity_mean:
     range: float
     description: >-
       The mean intensity of the bottom-left of the image
     multivalued: true
-  bottom-left_intensity_ratio:
+  bottom_left_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the bottom-left of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  bottom-center_intensity_mean:
+  bottom_center_intensity_mean:
     range: float
     description: >-
       The mean intensity of the bottom-center of the image
     multivalued: true
-  bottom-center_intensity_ratio:
+  bottom_center_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the bottom-center of the image 
       divided by the maximum intensity of the center of illumination
     multivalued: true
-  bottom-right_intensity_mean:
+  bottom_right_intensity_mean:
     range: float
     description: >-
       The mean intensity of the bottom-right of the image
     multivalued: true
-  bottom-right_intensity_ratio:
+  bottom_right_intensity_ratio:
     range: float
     description: >-
       The mean intensity of the bottom-right of the image 
@@ -348,13 +361,3 @@ slots:
       The 9th decile of the intensity distribution of the maximum intensity
     multivalued: true
 
-  intensity_map:
-    range: Image5D
-    description: >-
-      Output: intensity map provided as a numpy array with 5D matching the order of the input image
-    multivalued: false
-  intensity_plots:
-    range: TableAsPandasDF
-    description: >-
-      Output: table containing intensity plot data for each channel in the diagonal
-      as well as the horizontal and vertical image centers

@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-14T12:43:50
+# Generation date: 2023-08-14T15:46:49
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -67,6 +67,10 @@ class ExperimenterOrcid(extended_str):
 
 
 class TagId(extended_int):
+    pass
+
+
+class ColumnName(extended_str):
     pass
 
 
@@ -287,7 +291,7 @@ class MetricsDataset(NamedObject):
 
 class MetricsInput(YAMLRoot):
     """
-    A metaclass for analysis inputs
+    An abstract class for analysis inputs
     """
 
     _inherited_slots: ClassVar[List[str]] = []
@@ -304,7 +308,7 @@ class MetricsInput(YAMLRoot):
 
 class MetricsOutput(YAMLRoot):
     """
-    A metaclass for analysis outputs
+    An abstract class for analysis outputs
     """
 
     _inherited_slots: ClassVar[List[str]] = []
@@ -1128,13 +1132,15 @@ class TableInlined(Table):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/TableInlined"
     )
 
-    columns: Union[Union[dict, "Column"], List[Union[dict, "Column"]]] = None
+    columns: Union[
+        Dict[Union[str, ColumnName], Union[dict, "Column"]], List[Union[dict, "Column"]]
+    ] = empty_dict()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.columns):
             self.MissingRequiredField("columns")
         self._normalize_inlined_as_dict(
-            slot_name="columns", slot_type=Column, key_name="name", keyed=False
+            slot_name="columns", slot_type=Column, key_name="name", keyed=True
         )
 
         super().__post_init__(**kwargs)
@@ -1157,14 +1163,14 @@ class Column(YAMLRoot):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Column"
     )
 
-    name: str = None
+    name: Union[str, ColumnName] = None
     values: Union[str, List[str]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.name):
             self.MissingRequiredField("name")
-        if not isinstance(self.name, str):
-            self.name = str(self.name)
+        if not isinstance(self.name, ColumnName):
+            self.name = ColumnName(self.name)
 
         if self._is_empty(self.values):
             self.MissingRequiredField("values")
@@ -1846,7 +1852,7 @@ slots.tableInlined__columns = Slot(
     curie=DEFAULT_.curie("columns"),
     model_uri=DEFAULT_.tableInlined__columns,
     domain=None,
-    range=Union[Union[dict, Column], List[Union[dict, Column]]],
+    range=Union[Dict[Union[str, ColumnName], Union[dict, Column]], List[Union[dict, Column]]],
 )
 
 slots.column__name = Slot(
@@ -1855,7 +1861,7 @@ slots.column__name = Slot(
     curie=DEFAULT_.curie("name"),
     model_uri=DEFAULT_.column__name,
     domain=None,
-    range=str,
+    range=URIRef,
 )
 
 slots.column__values = Slot(

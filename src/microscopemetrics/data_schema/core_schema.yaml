@@ -100,11 +100,11 @@ classes:
 #        multivalued: true
 
   MetricsInput:
-    description: A metaclass for analysis inputs
+    description: An abstract class for analysis inputs
     abstract: true
 
   MetricsOutput:
-    description: A metaclass for analysis outputs
+    description: An abstract class for analysis outputs
     abstract: true
 
   Image:
@@ -467,14 +467,17 @@ classes:
         required: true
         multivalued: false
 
-  TableInlined:
+  TableAsDict:
     is_a: Table
+    abstract: true
     description: A table inlined in a metrics dataset
     attributes:
       columns:
-          range: Column
-          required: true
-          multivalued: true
+        range: Column
+        required: true
+        multivalued: true
+        inlined: true
+        inlined_as_list: false
 
   Column:
     description: A column
@@ -482,7 +485,7 @@ classes:
       name:
         range: string
         required: true
-        multivalued: false
+        identifier: true
       values:
         range: string
         required: true

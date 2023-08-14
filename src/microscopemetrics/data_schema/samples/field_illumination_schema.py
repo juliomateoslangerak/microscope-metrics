@@ -1,5 +1,5 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-14T12:48:35
+# Generation date: 2023-08-14T15:47:02
 # Schema: microscopemetrics_samples_field_illumination_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
@@ -41,6 +41,9 @@ from linkml_runtime.utils.yamlutils import (
 from rdflib import Namespace, URIRef
 
 from ..core_schema import (
+    ROI,
+    Column,
+    ColumnName,
     ExperimenterOrcid,
     Image5D,
     ImageAsNumpy,
@@ -49,7 +52,7 @@ from ..core_schema import (
     MetricsInput,
     MetricsOutput,
     SampleType,
-    TableAsPandasDF,
+    TableInlined,
 )
 
 metamodel_version = "1.7.0"
@@ -175,42 +178,42 @@ class FieldIlluminationOutput(MetricsOutput):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationOutput"
     )
 
-    regions_properties: Optional[Union[dict, TableAsPandasDF]] = None
+    key_values: Optional[Union[dict, "FieldIlluminationKeyValues"]] = None
+    intensity_plots: Optional[Union[dict, "FieldIlluminationIntensityPlots"]] = None
     intensity_map: Optional[Union[dict, Image5D]] = None
-    intensity_plots: Optional[Union[dict, TableAsPandasDF]] = None
+    profile_rois: Optional[Union[dict, ROI]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self.regions_properties is not None and not isinstance(
-            self.regions_properties, TableAsPandasDF
+        if self.key_values is not None and not isinstance(
+            self.key_values, FieldIlluminationKeyValues
         ):
-            self.regions_properties = TableAsPandasDF(**as_dict(self.regions_properties))
+            self.key_values = FieldIlluminationKeyValues(**as_dict(self.key_values))
+
+        if self.intensity_plots is not None and not isinstance(
+            self.intensity_plots, FieldIlluminationIntensityPlots
+        ):
+            self.intensity_plots = FieldIlluminationIntensityPlots(**as_dict(self.intensity_plots))
 
         if self.intensity_map is not None and not isinstance(self.intensity_map, Image5D):
             self.intensity_map = Image5D(**as_dict(self.intensity_map))
 
-        if self.intensity_plots is not None and not isinstance(
-            self.intensity_plots, TableAsPandasDF
-        ):
-            self.intensity_plots = TableAsPandasDF(**as_dict(self.intensity_plots))
+        if self.profile_rois is not None and not isinstance(self.profile_rois, ROI):
+            self.profile_rois = ROI(**as_dict(self.profile_rois))
 
         super().__post_init__(**kwargs)
 
 
 @dataclass
-class FieldIlluminationKeyValue(KeyValues):
-    """
-    Key measurements for the field illumination analysis
-    """
-
+class FieldIlluminationKeyValues(KeyValues):
     _inherited_slots: ClassVar[List[str]] = []
 
     class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValue"
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValues"
     )
     class_class_curie: ClassVar[str] = None
-    class_name: ClassVar[str] = "FieldIlluminationKeyValue"
+    class_name: ClassVar[str] = "FieldIlluminationKeyValues"
     class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValue"
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValues"
     )
 
     channel: Optional[Union[int, List[int]]] = empty_list()
@@ -511,6 +514,28 @@ class FieldIlluminationKeyValue(KeyValues):
         super().__post_init__(**kwargs)
 
 
+@dataclass
+class FieldIlluminationIntensityPlots(TableInlined):
+    """
+    Intensity plots for the field illumination analysis in the different directions
+    """
+
+    _inherited_slots: ClassVar[List[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationIntensityPlots"
+    )
+    class_class_curie: ClassVar[str] = None
+    class_name: ClassVar[str] = "FieldIlluminationIntensityPlots"
+    class_model_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationIntensityPlots"
+    )
+
+    columns: Union[
+        Dict[Union[str, ColumnName], Union[dict, Column]], List[Union[dict, Column]]
+    ] = empty_dict()
+
+
 # Enumerations
 
 
@@ -582,15 +607,6 @@ slots.intensity_map_size = Slot(
     range=int,
 )
 
-slots.regions_properties = Slot(
-    uri=DEFAULT_.regions_properties,
-    name="regions_properties",
-    curie=DEFAULT_.curie("regions_properties"),
-    model_uri=DEFAULT_.regions_properties,
-    domain=None,
-    range=Optional[Union[dict, TableAsPandasDF]],
-)
-
 slots.channel = Slot(
     uri=DEFAULT_.channel,
     name="channel",
@@ -656,7 +672,7 @@ slots.max_intensity_pos_y = Slot(
 
 slots.top_left_intensity_mean = Slot(
     uri=DEFAULT_.top_left_intensity_mean,
-    name="top-left_intensity_mean",
+    name="top_left_intensity_mean",
     curie=DEFAULT_.curie("top_left_intensity_mean"),
     model_uri=DEFAULT_.top_left_intensity_mean,
     domain=None,
@@ -665,7 +681,7 @@ slots.top_left_intensity_mean = Slot(
 
 slots.top_left_intensity_ratio = Slot(
     uri=DEFAULT_.top_left_intensity_ratio,
-    name="top-left_intensity_ratio",
+    name="top_left_intensity_ratio",
     curie=DEFAULT_.curie("top_left_intensity_ratio"),
     model_uri=DEFAULT_.top_left_intensity_ratio,
     domain=None,
@@ -674,7 +690,7 @@ slots.top_left_intensity_ratio = Slot(
 
 slots.top_center_intensity_mean = Slot(
     uri=DEFAULT_.top_center_intensity_mean,
-    name="top-center_intensity_mean",
+    name="top_center_intensity_mean",
     curie=DEFAULT_.curie("top_center_intensity_mean"),
     model_uri=DEFAULT_.top_center_intensity_mean,
     domain=None,
@@ -683,7 +699,7 @@ slots.top_center_intensity_mean = Slot(
 
 slots.top_center_intensity_ratio = Slot(
     uri=DEFAULT_.top_center_intensity_ratio,
-    name="top-center_intensity_ratio",
+    name="top_center_intensity_ratio",
     curie=DEFAULT_.curie("top_center_intensity_ratio"),
     model_uri=DEFAULT_.top_center_intensity_ratio,
     domain=None,
@@ -692,7 +708,7 @@ slots.top_center_intensity_ratio = Slot(
 
 slots.top_right_intensity_mean = Slot(
     uri=DEFAULT_.top_right_intensity_mean,
-    name="top-right_intensity_mean",
+    name="top_right_intensity_mean",
     curie=DEFAULT_.curie("top_right_intensity_mean"),
     model_uri=DEFAULT_.top_right_intensity_mean,
     domain=None,
@@ -701,7 +717,7 @@ slots.top_right_intensity_mean = Slot(
 
 slots.top_right_intensity_ratio = Slot(
     uri=DEFAULT_.top_right_intensity_ratio,
-    name="top-right_intensity_ratio",
+    name="top_right_intensity_ratio",
     curie=DEFAULT_.curie("top_right_intensity_ratio"),
     model_uri=DEFAULT_.top_right_intensity_ratio,
     domain=None,
@@ -710,7 +726,7 @@ slots.top_right_intensity_ratio = Slot(
 
 slots.middle_left_intensity_mean = Slot(
     uri=DEFAULT_.middle_left_intensity_mean,
-    name="middle-left_intensity_mean",
+    name="middle_left_intensity_mean",
     curie=DEFAULT_.curie("middle_left_intensity_mean"),
     model_uri=DEFAULT_.middle_left_intensity_mean,
     domain=None,
@@ -719,7 +735,7 @@ slots.middle_left_intensity_mean = Slot(
 
 slots.middle_left_intensity_ratio = Slot(
     uri=DEFAULT_.middle_left_intensity_ratio,
-    name="middle-left_intensity_ratio",
+    name="middle_left_intensity_ratio",
     curie=DEFAULT_.curie("middle_left_intensity_ratio"),
     model_uri=DEFAULT_.middle_left_intensity_ratio,
     domain=None,
@@ -728,7 +744,7 @@ slots.middle_left_intensity_ratio = Slot(
 
 slots.middle_center_intensity_mean = Slot(
     uri=DEFAULT_.middle_center_intensity_mean,
-    name="middle-center_intensity_mean",
+    name="middle_center_intensity_mean",
     curie=DEFAULT_.curie("middle_center_intensity_mean"),
     model_uri=DEFAULT_.middle_center_intensity_mean,
     domain=None,
@@ -737,7 +753,7 @@ slots.middle_center_intensity_mean = Slot(
 
 slots.middle_center_intensity_ratio = Slot(
     uri=DEFAULT_.middle_center_intensity_ratio,
-    name="middle-center_intensity_ratio",
+    name="middle_center_intensity_ratio",
     curie=DEFAULT_.curie("middle_center_intensity_ratio"),
     model_uri=DEFAULT_.middle_center_intensity_ratio,
     domain=None,
@@ -746,7 +762,7 @@ slots.middle_center_intensity_ratio = Slot(
 
 slots.middle_right_intensity_mean = Slot(
     uri=DEFAULT_.middle_right_intensity_mean,
-    name="middle-right_intensity_mean",
+    name="middle_right_intensity_mean",
     curie=DEFAULT_.curie("middle_right_intensity_mean"),
     model_uri=DEFAULT_.middle_right_intensity_mean,
     domain=None,
@@ -755,7 +771,7 @@ slots.middle_right_intensity_mean = Slot(
 
 slots.middle_right_intensity_ratio = Slot(
     uri=DEFAULT_.middle_right_intensity_ratio,
-    name="middle-right_intensity_ratio",
+    name="middle_right_intensity_ratio",
     curie=DEFAULT_.curie("middle_right_intensity_ratio"),
     model_uri=DEFAULT_.middle_right_intensity_ratio,
     domain=None,
@@ -764,7 +780,7 @@ slots.middle_right_intensity_ratio = Slot(
 
 slots.bottom_left_intensity_mean = Slot(
     uri=DEFAULT_.bottom_left_intensity_mean,
-    name="bottom-left_intensity_mean",
+    name="bottom_left_intensity_mean",
     curie=DEFAULT_.curie("bottom_left_intensity_mean"),
     model_uri=DEFAULT_.bottom_left_intensity_mean,
     domain=None,
@@ -773,7 +789,7 @@ slots.bottom_left_intensity_mean = Slot(
 
 slots.bottom_left_intensity_ratio = Slot(
     uri=DEFAULT_.bottom_left_intensity_ratio,
-    name="bottom-left_intensity_ratio",
+    name="bottom_left_intensity_ratio",
     curie=DEFAULT_.curie("bottom_left_intensity_ratio"),
     model_uri=DEFAULT_.bottom_left_intensity_ratio,
     domain=None,
@@ -782,7 +798,7 @@ slots.bottom_left_intensity_ratio = Slot(
 
 slots.bottom_center_intensity_mean = Slot(
     uri=DEFAULT_.bottom_center_intensity_mean,
-    name="bottom-center_intensity_mean",
+    name="bottom_center_intensity_mean",
     curie=DEFAULT_.curie("bottom_center_intensity_mean"),
     model_uri=DEFAULT_.bottom_center_intensity_mean,
     domain=None,
@@ -791,7 +807,7 @@ slots.bottom_center_intensity_mean = Slot(
 
 slots.bottom_center_intensity_ratio = Slot(
     uri=DEFAULT_.bottom_center_intensity_ratio,
-    name="bottom-center_intensity_ratio",
+    name="bottom_center_intensity_ratio",
     curie=DEFAULT_.curie("bottom_center_intensity_ratio"),
     model_uri=DEFAULT_.bottom_center_intensity_ratio,
     domain=None,
@@ -800,7 +816,7 @@ slots.bottom_center_intensity_ratio = Slot(
 
 slots.bottom_right_intensity_mean = Slot(
     uri=DEFAULT_.bottom_right_intensity_mean,
-    name="bottom-right_intensity_mean",
+    name="bottom_right_intensity_mean",
     curie=DEFAULT_.curie("bottom_right_intensity_mean"),
     model_uri=DEFAULT_.bottom_right_intensity_mean,
     domain=None,
@@ -809,7 +825,7 @@ slots.bottom_right_intensity_mean = Slot(
 
 slots.bottom_right_intensity_ratio = Slot(
     uri=DEFAULT_.bottom_right_intensity_ratio,
-    name="bottom-right_intensity_ratio",
+    name="bottom_right_intensity_ratio",
     curie=DEFAULT_.curie("bottom_right_intensity_ratio"),
     model_uri=DEFAULT_.bottom_right_intensity_ratio,
     domain=None,
@@ -906,24 +922,6 @@ slots.decile_9 = Slot(
     range=Optional[Union[float, List[float]]],
 )
 
-slots.intensity_map = Slot(
-    uri=DEFAULT_.intensity_map,
-    name="intensity_map",
-    curie=DEFAULT_.curie("intensity_map"),
-    model_uri=DEFAULT_.intensity_map,
-    domain=None,
-    range=Optional[Union[dict, Image5D]],
-)
-
-slots.intensity_plots = Slot(
-    uri=DEFAULT_.intensity_plots,
-    name="intensity_plots",
-    curie=DEFAULT_.curie("intensity_plots"),
-    model_uri=DEFAULT_.intensity_plots,
-    domain=None,
-    range=Optional[Union[dict, TableAsPandasDF]],
-)
-
 slots.fieldIlluminationDataset__input = Slot(
     uri=DEFAULT_.input,
     name="fieldIlluminationDataset__input",
@@ -940,4 +938,40 @@ slots.fieldIlluminationDataset__output = Slot(
     model_uri=DEFAULT_.fieldIlluminationDataset__output,
     domain=None,
     range=Optional[Union[dict, FieldIlluminationOutput]],
+)
+
+slots.fieldIlluminationOutput__key_values = Slot(
+    uri=DEFAULT_.key_values,
+    name="fieldIlluminationOutput__key_values",
+    curie=DEFAULT_.curie("key_values"),
+    model_uri=DEFAULT_.fieldIlluminationOutput__key_values,
+    domain=None,
+    range=Optional[Union[dict, FieldIlluminationKeyValues]],
+)
+
+slots.fieldIlluminationOutput__intensity_plots = Slot(
+    uri=DEFAULT_.intensity_plots,
+    name="fieldIlluminationOutput__intensity_plots",
+    curie=DEFAULT_.curie("intensity_plots"),
+    model_uri=DEFAULT_.fieldIlluminationOutput__intensity_plots,
+    domain=None,
+    range=Optional[Union[dict, FieldIlluminationIntensityPlots]],
+)
+
+slots.fieldIlluminationOutput__intensity_map = Slot(
+    uri=DEFAULT_.intensity_map,
+    name="fieldIlluminationOutput__intensity_map",
+    curie=DEFAULT_.curie("intensity_map"),
+    model_uri=DEFAULT_.fieldIlluminationOutput__intensity_map,
+    domain=None,
+    range=Optional[Union[dict, Image5D]],
+)
+
+slots.fieldIlluminationOutput__profile_rois = Slot(
+    uri=DEFAULT_.profile_rois,
+    name="fieldIlluminationOutput__profile_rois",
+    curie=DEFAULT_.curie("profile_rois"),
+    model_uri=DEFAULT_.fieldIlluminationOutput__profile_rois,
+    domain=None,
+    range=Optional[Union[dict, ROI]],
 )
