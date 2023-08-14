@@ -17,56 +17,87 @@ classes:
     is_a: MetricsDataset
     description: >-
       A field illumination dataset
+    attributes:
+      input:
+        range: FieldIlluminationInput
+        required: true
+        multivalued: false
+      output:
+        range: FieldIlluminationOutput
+        required: false
+        multivalued: false
+    rules:
+      - preconditions:
+          slot_conditions:
+            processed:
+              equals_number: 1
+        postconditions:
+          slot_conditions:
+            output:
+              required: true
+  FieldIlluminationInput:
+    is_a: MetricsInput
     slots:
-      - image
+      - field_illumination_image
       - bit_depth
       - saturation_threshold
       - center_threshold
       - corner_fraction
       - sigma
       - intensity_map_size
-      - regions_properties_table
+  FieldIlluminationOutput:
+    is_a: MetricsOutput
+    slots:
+      - regions_properties
       - intensity_map
-      - intensity_plot_data
-    slot_usage:
-      name:
-        ifabsent: string(FieldIlluminationDataset)
-      description:
-        ifabsent: string(This dataset contains the results of the field illumination analysis)
-      inputs:
-        equals_string:
-          - image
-          - bit_depth
-          - saturation_threshold
-          - center_threshold
-          - corner_fraction
-          - sigma
-          - intensity_map_size
-      outputs:
-        equals_string:
-          - regions_properties_table
-          - intensity_map
-          - intensity_plot_data
-#    rules:
-#      - preconditions:
-#          slot_conditions:
-#            processed:
-#              equals_number: 1
-#        postconditions:
-#          slot_conditions:
-#            regions_properties_table:
-#              required: true
-#            intensity_map:
-#              required: true
-#            intensity_plot_data:
-#              required: true
+      - intensity_plots
+  FieldIlluminationKeyValue:
+    is_a: KeyValues
+    description: >-
+      Key measurements for the field illumination analysis
+    slots:
+      - channel
+      - nb_pixels
+      - center_of_mass_x
+      - center_of_mass_y
+      - max_intensity
+      - max_intensity_pos_x
+      - max_intensity_pos_y
+      - top-left_intensity_mean
+      - top-left_intensity_ratio
+      - top-center_intensity_mean
+      - top-center_intensity_ratio
+      - top-right_intensity_mean
+      - top-right_intensity_ratio
+      - middle-left_intensity_mean
+      - middle-left_intensity_ratio
+      - middle-center_intensity_mean
+      - middle-center_intensity_ratio
+      - middle-right_intensity_mean
+      - middle-right_intensity_ratio
+      - bottom-left_intensity_mean
+      - bottom-left_intensity_ratio
+      - bottom-center_intensity_mean
+      - bottom-center_intensity_ratio
+      - bottom-right_intensity_mean
+      - bottom-right_intensity_ratio
+      - decile_0
+      - decile_1
+      - decile_2
+      - decile_3
+      - decile_4
+      - decile_5
+      - decile_6
+      - decile_7
+      - decile_8
+      - decile_9
 
 
 slots:
-  image:
+  field_illumination_image:
     range: ImageAsNumpy
     description: >-
-      Input parameter: homogeneity image provided as a numpy array in the order. While the analysis accepts 
+      Input parameter: homogeneity image provided as a numpy array in the order. While the analysis accepts
       multiple channels, the T and Z dimensions are expected to be 1.
     required: true
     multivalued: false
@@ -81,7 +112,7 @@ slots:
   saturation_threshold:
     range: float
     description: >-
-      Input parameter: tolerated saturation threshold. If the amount of saturated pixels is above this threshold, 
+      Input parameter: tolerated saturation threshold. If the amount of saturated pixels is above this threshold,
       the image is considered as saturated and the analysis is not performed.
     required: true
     multivalued: false
@@ -126,18 +157,204 @@ slots:
     ifabsent: int(64)
     minimum_value: 5
     maximum_value: 512
-  regions_properties_table:
+  regions_properties:
     range: TableAsPandasDF
     description: >-
       Output: table containing the properties of the regions
     multivalued: false
+
+  channel:
+    range: integer
+    description: >-
+      The channel number to which the measurements apply
+    multivalued: true
+  nb_pixels:
+    range: integer
+    description: >-
+      The area occupied by the center of illumination region. In pixels
+    multivalued: true
+  center_of_mass_x:
+    range: float
+    description: >-
+      The x coordinate of the center of mass of the center of illumination region. In pixels
+    multivalued: true
+  center_of_mass_y:
+    range: float
+    description: >-
+      The y coordinate of the center of mass of the center of illumination region. In pixels
+    multivalued: true
+  max_intensity:
+    range: float
+    description: >-
+      The maximum intensity of the center of illumination
+    multivalued: true
+  max_intensity_pos_x:
+    range: float
+    description: >-
+      The x coordinate of the maximum intensity of the center of illumination. In pixels
+    multivalued: true
+  max_intensity_pos_y:
+    range: float
+    description: >-
+      The y coordinate of the maximum intensity of the center of illumination. In pixels
+    multivalued: true
+  top-left_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the top-left corner of the image
+    multivalued: true
+  top-left_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the top-left corner of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  top-center_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the top-center of the image
+    multivalued: true
+  top-center_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the top-center of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  top-right_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the top-right corner of the image
+    multivalued: true
+  top-right_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the top-right corner of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  middle-left_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the middle-left of the image
+    multivalued: true
+  middle-left_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the middle-left of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  middle-center_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the middle-center of the image
+    multivalued: true
+  middle-center_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the middle-center of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  middle-right_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the middle-right of the image
+    multivalued: true
+  middle-right_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the middle-right of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  bottom-left_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the bottom-left of the image
+    multivalued: true
+  bottom-left_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the bottom-left of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  bottom-center_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the bottom-center of the image
+    multivalued: true
+  bottom-center_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the bottom-center of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  bottom-right_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the bottom-right of the image
+    multivalued: true
+  bottom-right_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the bottom-right of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  decile_0:
+    range: float
+    description: >-
+      The 0th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_1:
+    range: float
+    description: >-
+      The 1st decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_2:
+    range: float
+    description: >-
+      The 2nd decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_3:
+    range: float
+    description: >-
+      The 3rd decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_4:
+    range: float
+    description: >-
+      The 4th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_5:
+    range: float
+    description: >-
+      The 5th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_6:
+    range: float
+    description: >-
+      The 6th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_7:
+    range: float
+    description: >-
+      The 7th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_8:
+    range: float
+    description: >-
+      The 8th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_9:
+    range: float
+    description: >-
+      The 9th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+
   intensity_map:
     range: Image5D
     description: >-
       Output: intensity map provided as a numpy array with 5D matching the order of the input image
     multivalued: false
-  intensity_plot_data:
+  intensity_plots:
     range: TableAsPandasDF
     description: >-
-      Output: table containing intensity plot data for each channel in the diagonal 
+      Output: table containing intensity plot data for each channel in the diagonal
       as well as the horizontal and vertical image centers

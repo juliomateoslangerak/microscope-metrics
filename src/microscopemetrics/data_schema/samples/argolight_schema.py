@@ -45,7 +45,6 @@ from ..core_schema import (
     ExperimenterOrcid,
     ImageAsNumpy,
     KeyValues,
-    KeyValuesKeys,
     MetricsDataset,
     SampleType,
     TableAsPandasDF,

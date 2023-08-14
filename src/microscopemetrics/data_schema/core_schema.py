@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-11T17:36:44
+# Generation date: 2023-08-14T12:43:50
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -63,10 +63,6 @@ class SampleType(extended_str):
 
 
 class ExperimenterOrcid(extended_str):
-    pass
-
-
-class KeyValuesKeys(extended_str):
     pass
 
 
@@ -260,8 +256,6 @@ class MetricsDataset(NamedObject):
     acquisition_date: Optional[Union[str, XSDDate]] = None
     processing_date: Optional[Union[str, XSDDate]] = None
     processing_log: Optional[str] = None
-    inputs: Optional[Union[str, List[str]]] = empty_list()
-    outputs: Optional[Union[str, List[str]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.processed):
@@ -288,15 +282,41 @@ class MetricsDataset(NamedObject):
         if self.processing_log is not None and not isinstance(self.processing_log, str):
             self.processing_log = str(self.processing_log)
 
-        if not isinstance(self.inputs, list):
-            self.inputs = [self.inputs] if self.inputs is not None else []
-        self.inputs = [v if isinstance(v, str) else str(v) for v in self.inputs]
-
-        if not isinstance(self.outputs, list):
-            self.outputs = [self.outputs] if self.outputs is not None else []
-        self.outputs = [v if isinstance(v, str) else str(v) for v in self.outputs]
-
         super().__post_init__(**kwargs)
+
+
+class MetricsInput(YAMLRoot):
+    """
+    A metaclass for analysis inputs
+    """
+
+    _inherited_slots: ClassVar[List[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/MetricsInput"
+    )
+    class_class_curie: ClassVar[str] = None
+    class_name: ClassVar[str] = "MetricsInput"
+    class_model_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/MetricsInput"
+    )
+
+
+class MetricsOutput(YAMLRoot):
+    """
+    A metaclass for analysis outputs
+    """
+
+    _inherited_slots: ClassVar[List[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/MetricsOutput"
+    )
+    class_class_curie: ClassVar[str] = None
+    class_name: ClassVar[str] = "MetricsOutput"
+    class_model_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/MetricsOutput"
+    )
 
 
 @dataclass
@@ -971,7 +991,6 @@ class Color(YAMLRoot):
         super().__post_init__(**kwargs)
 
 
-@dataclass
 class KeyValues(YAMLRoot):
     """
     A collection of key-value pairs
@@ -987,24 +1006,6 @@ class KeyValues(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = URIRef(
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/KeyValues"
     )
-
-    keys: Union[Union[str, KeyValuesKeys], List[Union[str, KeyValuesKeys]]] = None
-    values: Union[str, List[str]] = None
-
-    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.keys):
-            self.MissingRequiredField("keys")
-        if not isinstance(self.keys, list):
-            self.keys = [self.keys] if self.keys is not None else []
-        self.keys = [v if isinstance(v, KeyValuesKeys) else KeyValuesKeys(v) for v in self.keys]
-
-        if self._is_empty(self.values):
-            self.MissingRequiredField("values")
-        if not isinstance(self.values, list):
-            self.values = [self.values] if self.values is not None else []
-        self.values = [v if isinstance(v, str) else str(v) for v in self.values]
-
-        super().__post_init__(**kwargs)
 
 
 @dataclass
@@ -1333,24 +1334,6 @@ slots.metricsDataset__processing_log = Slot(
     model_uri=DEFAULT_.metricsDataset__processing_log,
     domain=None,
     range=Optional[str],
-)
-
-slots.metricsDataset__inputs = Slot(
-    uri=DEFAULT_.inputs,
-    name="metricsDataset__inputs",
-    curie=DEFAULT_.curie("inputs"),
-    model_uri=DEFAULT_.metricsDataset__inputs,
-    domain=None,
-    range=Optional[Union[str, List[str]]],
-)
-
-slots.metricsDataset__outputs = Slot(
-    uri=DEFAULT_.outputs,
-    name="metricsDataset__outputs",
-    curie=DEFAULT_.curie("outputs"),
-    model_uri=DEFAULT_.metricsDataset__outputs,
-    domain=None,
-    range=Optional[Union[str, List[str]]],
 )
 
 slots.imageAsNumpy__data = Slot(
@@ -1810,24 +1793,6 @@ slots.color__alpha = Slot(
     model_uri=DEFAULT_.color__alpha,
     domain=None,
     range=Optional[int],
-)
-
-slots.keyValues__keys = Slot(
-    uri=DEFAULT_.keys,
-    name="keyValues__keys",
-    curie=DEFAULT_.curie("keys"),
-    model_uri=DEFAULT_.keyValues__keys,
-    domain=None,
-    range=URIRef,
-)
-
-slots.keyValues__values = Slot(
-    uri=DEFAULT_.values,
-    name="keyValues__values",
-    curie=DEFAULT_.curie("values"),
-    model_uri=DEFAULT_.keyValues__values,
-    domain=None,
-    range=Union[str, List[str]],
 )
 
 slots.tag__id = Slot(

@@ -222,11 +222,12 @@ def _image_properties(
         image on a 2d np.ndarray in yxc format.
     Returns
     -------
-    profiles_statistics : pd.DataFrame
-        pd.DataFrame showing the intensity values of the different regions and
-        their ratio over the maximum intensity value of the array. One row per channel.
+    profiles_statistics : dict
+        Dictionary showing the intensity values of the different regions and
+        their ratio over the maximum intensity value of the array.
+        Dictionary values will be lists in case of multiple channels.
     """
-    properties = None
+    properties = []
     for c in range(image.shape[2]):
         channel_properties = {"channel": c}
         channel_properties.update(
@@ -234,16 +235,12 @@ def _image_properties(
         )
         channel_properties.update(_channel_corner_properties(image[:, :, c], corner_fraction))
         channel_properties.update(_channel_area_deciles(image[:, :, c]))
-        if c == 0:
-            properties = pd.DataFrame(channel_properties, index=[c])
+        if image.shape[2] == 1:
+            return channel_properties
         else:
-            properties = pd.concat(
-                [
-                    properties,
-                    pd.DataFrame(channel_properties, index=[c]),
-                ],
-            )
+            properties.append(channel_properties)
 
+    properties = {k: [i[k] for i in properties] for k in properties[0]}
     return properties
 
 
@@ -255,7 +252,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
 
         # Check image shape
         logger.info("Checking image shape...")
-        image = self.image.data
+        image = self.input.field_illumination_image.data
         if len(image.shape) != 5:
             logger.error("Image must be 5D")
             return False
@@ -272,8 +269,8 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
         for c in range(image.shape[2]):
             if is_saturated(
                 channel=image[:, :, c],
-                threshold=self.saturation_threshold,
-                detector_bit_depth=self.bit_depth,
+                threshold=self.input.saturation_threshold,
+                detector_bit_depth=self.input.bit_depth,
             ):
                 logger.error(f"Channel {c} is saturated")
                 saturated_channels.append(c)
@@ -281,23 +278,30 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             logger.error(f"Channels {saturated_channels} are saturated")
             return False
 
-        self.regions_properties_table = schema.TableAsPandasDF(
-            df=_image_properties(
-                image=image,
-                corner_fraction=self.corner_fraction,
-                sigma=self.sigma,
-                center_threshold=self.center_threshold,
-            )
+        self.output.regions_properties = _image_properties(
+            image=image,
+            corner_fraction=self.input.corner_fraction,
+            sigma=self.input.sigma,
+            center_threshold=self.input.center_threshold,
         )
 
-        self.intensity_map = numpy_to_inlined_image(
-            array=_image_intensity_map(image=image, map_size=self.intensity_map_size),
-            name=f"{self.image.name}_intensity_map",
-            description=f"Intensity map of {self.image.uri}",
+        # self.output.regions_properties = schema.TableAsPandasDF(
+        #     df=_image_properties(
+        #         image=image,
+        #         corner_fraction=self.input.corner_fraction,
+        #         sigma=self.input.sigma,
+        #         center_threshold=self.input.center_threshold,
+        #     )
+        # )
+
+        self.output.intensity_map = numpy_to_inlined_image(
+            array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
+            name=f"{self.input.field_illumination_image.name}_intensity_map",
+            description=f"Intensity map of {self.input.field_illumination_image.uri}",
             uri=None,
         )
 
-        self.intensity_plot_data = schema.TableAsPandasDF(
+        self.output.intensity_plots = schema.TableAsPandasDF(
             df=_image_line_profile(image, profile_size=255)
         )
 
