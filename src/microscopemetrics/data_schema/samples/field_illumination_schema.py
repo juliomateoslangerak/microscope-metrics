@@ -1,5 +1,5 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-14T15:47:02
+# Generation date: 2023-08-14T16:59:35
 # Schema: microscopemetrics_samples_field_illumination_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
@@ -42,8 +42,6 @@ from rdflib import Namespace, URIRef
 
 from ..core_schema import (
     ROI,
-    Column,
-    ColumnName,
     ExperimenterOrcid,
     Image5D,
     ImageAsNumpy,
@@ -52,7 +50,7 @@ from ..core_schema import (
     MetricsInput,
     MetricsOutput,
     SampleType,
-    TableInlined,
+    TableAsDict,
 )
 
 metamodel_version = "1.7.0"
@@ -179,7 +177,7 @@ class FieldIlluminationOutput(MetricsOutput):
     )
 
     key_values: Optional[Union[dict, "FieldIlluminationKeyValues"]] = None
-    intensity_plots: Optional[Union[dict, "FieldIlluminationIntensityPlots"]] = None
+    intensity_plots: Optional[Union[dict, TableAsDict]] = None
     intensity_map: Optional[Union[dict, Image5D]] = None
     profile_rois: Optional[Union[dict, ROI]] = None
 
@@ -189,10 +187,8 @@ class FieldIlluminationOutput(MetricsOutput):
         ):
             self.key_values = FieldIlluminationKeyValues(**as_dict(self.key_values))
 
-        if self.intensity_plots is not None and not isinstance(
-            self.intensity_plots, FieldIlluminationIntensityPlots
-        ):
-            self.intensity_plots = FieldIlluminationIntensityPlots(**as_dict(self.intensity_plots))
+        if self.intensity_plots is not None and not isinstance(self.intensity_plots, TableAsDict):
+            self.intensity_plots = TableAsDict(**as_dict(self.intensity_plots))
 
         if self.intensity_map is not None and not isinstance(self.intensity_map, Image5D):
             self.intensity_map = Image5D(**as_dict(self.intensity_map))
@@ -514,28 +510,6 @@ class FieldIlluminationKeyValues(KeyValues):
         super().__post_init__(**kwargs)
 
 
-@dataclass
-class FieldIlluminationIntensityPlots(TableInlined):
-    """
-    Intensity plots for the field illumination analysis in the different directions
-    """
-
-    _inherited_slots: ClassVar[List[str]] = []
-
-    class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationIntensityPlots"
-    )
-    class_class_curie: ClassVar[str] = None
-    class_name: ClassVar[str] = "FieldIlluminationIntensityPlots"
-    class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationIntensityPlots"
-    )
-
-    columns: Union[
-        Dict[Union[str, ColumnName], Union[dict, Column]], List[Union[dict, Column]]
-    ] = empty_dict()
-
-
 # Enumerations
 
 
@@ -551,24 +525,6 @@ slots.field_illumination_image = Slot(
     model_uri=DEFAULT_.field_illumination_image,
     domain=None,
     range=Union[dict, ImageAsNumpy],
-)
-
-slots.bit_depth = Slot(
-    uri=DEFAULT_.bit_depth,
-    name="bit_depth",
-    curie=DEFAULT_.curie("bit_depth"),
-    model_uri=DEFAULT_.bit_depth,
-    domain=None,
-    range=Optional[int],
-)
-
-slots.saturation_threshold = Slot(
-    uri=DEFAULT_.saturation_threshold,
-    name="saturation_threshold",
-    curie=DEFAULT_.curie("saturation_threshold"),
-    model_uri=DEFAULT_.saturation_threshold,
-    domain=None,
-    range=float,
 )
 
 slots.center_threshold = Slot(
@@ -955,7 +911,7 @@ slots.fieldIlluminationOutput__intensity_plots = Slot(
     curie=DEFAULT_.curie("intensity_plots"),
     model_uri=DEFAULT_.fieldIlluminationOutput__intensity_plots,
     domain=None,
-    range=Optional[Union[dict, FieldIlluminationIntensityPlots]],
+    range=Optional[Union[dict, TableAsDict]],
 )
 
 slots.fieldIlluminationOutput__intensity_map = Slot(

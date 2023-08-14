@@ -35,6 +35,7 @@ classes:
           slot_conditions:
             output:
               required: true
+
   FieldIlluminationInput:
     is_a: MetricsInput
     slots:
@@ -45,20 +46,26 @@ classes:
       - corner_fraction
       - sigma
       - intensity_map_size
+    slot_usage:
+      saturation_threshold:
+        required: true
+
   FieldIlluminationOutput:
     is_a: MetricsOutput
     attributes:
       key_values:
         range: FieldIlluminationKeyValues
         description: >-
-          Output: table containing the Key measurements for the field illumination analysis
+          Key-Value pairs containing the Key measurements for the field illumination analysis
         multivalued: false
       intensity_plots:
-        range: FieldIlluminationIntensityPlots
+        range: TableAsDict
+        description: >-
+          Intensity plots for the field illumination analysis in the different directions
       intensity_map:
         range: Image5D
         description: >-
-          Output: intensity map provided as a numpy array with 5D matching the order of the input image
+          Intensity map of the field illumination
         multivalued: false
       profile_rois:
         range: ROI
@@ -105,11 +112,6 @@ classes:
       - decile_8
       - decile_9
 
-  FieldIlluminationIntensityPlots:
-    is_a: TableAsDict
-    description: >-
-      Intensity plots for the field illumination analysis in the different directions
-  
 
 slots:
   field_illumination_image:
@@ -119,24 +121,6 @@ slots:
       multiple channels, the T and Z dimensions are expected to be 1.
     required: true
     multivalued: false
-  bit_depth:
-    range: integer
-    description: >-
-      Input parameter: detector bit depth
-    required: false
-    multivalued: false
-    minimum_value: 1
-    maximum_value: 64
-  saturation_threshold:
-    range: float
-    description: >-
-      Input parameter: tolerated saturation threshold. If the amount of saturated pixels is above this threshold,
-      the image is considered as saturated and the analysis is not performed.
-    required: true
-    multivalued: false
-    ifabsent: float(0.01)
-    minimum_value: 0.0
-    maximum_value: 1.0
   center_threshold:
     range: float
     description: >-

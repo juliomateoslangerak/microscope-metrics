@@ -512,6 +512,25 @@ slots:
     range: string
     description: A description of an entity
     multivalued: false
+  bit_depth:
+    range: integer
+    description: >-
+      Detector bit depth
+    multivalued: false
+    minimum_value: 1
+    maximum_value: 64
+  saturation_threshold:
+    range: float
+    description: >-
+      Tolerated saturation threshold. If the amount of saturated pixels is above this threshold, 
+      the image is considered as saturated and the analysis is not performed.
+    multivalued: false
+    ifabsent: float(0.01)
+    minimum_value: 0.0
+    maximum_value: 1.0
+
+
+
 
 
 enums:

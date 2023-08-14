@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-14T15:46:49
+# Generation date: 2023-08-14T16:59:29
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -1116,7 +1116,7 @@ class TableAsPandasDF(Table):
 
 
 @dataclass
-class TableInlined(Table):
+class TableAsDict(Table):
     """
     A table inlined in a metrics dataset
     """
@@ -1124,12 +1124,12 @@ class TableInlined(Table):
     _inherited_slots: ClassVar[List[str]] = []
 
     class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/TableInlined"
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/TableAsDict"
     )
     class_class_curie: ClassVar[str] = None
-    class_name: ClassVar[str] = "TableInlined"
+    class_name: ClassVar[str] = "TableAsDict"
     class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/TableInlined"
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/TableAsDict"
     )
 
     columns: Union[
@@ -1223,6 +1223,24 @@ slots.description = Slot(
     model_uri=DEFAULT_.description,
     domain=None,
     range=Optional[str],
+)
+
+slots.bit_depth = Slot(
+    uri=DEFAULT_.bit_depth,
+    name="bit_depth",
+    curie=DEFAULT_.curie("bit_depth"),
+    model_uri=DEFAULT_.bit_depth,
+    domain=None,
+    range=Optional[int],
+)
+
+slots.saturation_threshold = Slot(
+    uri=DEFAULT_.saturation_threshold,
+    name="saturation_threshold",
+    curie=DEFAULT_.curie("saturation_threshold"),
+    model_uri=DEFAULT_.saturation_threshold,
+    domain=None,
+    range=Optional[float],
 )
 
 slots.sample__type = Slot(
@@ -1846,11 +1864,11 @@ slots.tableAsPandasDF__df = Slot(
     range=Union[dict, MetaObject],
 )
 
-slots.tableInlined__columns = Slot(
+slots.tableAsDict__columns = Slot(
     uri=DEFAULT_.columns,
-    name="tableInlined__columns",
+    name="tableAsDict__columns",
     curie=DEFAULT_.curie("columns"),
-    model_uri=DEFAULT_.tableInlined__columns,
+    model_uri=DEFAULT_.tableAsDict__columns,
     domain=None,
     range=Union[Dict[Union[str, ColumnName], Union[dict, Column]], List[Union[dict, Column]]],
 )
