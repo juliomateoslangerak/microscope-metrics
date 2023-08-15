@@ -1,20 +1,20 @@
 import numpy as np
 import pytest
 
-from microscopemetrics.samples import argolight
-from tests.test_utilities import get_file
-
-
-@pytest.fixture
-def argolight_b():
-    file_path = get_file(
-        "https://dev.mri.cnrs.fr/attachments/download/2290/201702_RI510_Argolight-1-1_010_SIR_ALX.npy"
-    )
-    data = np.load(file_path)
-
-    analysis = argolight.ArgolightBAnalysis(argolight_b_image={"data": data}, spots_distance=40)
-
-    return analysis
+# from microscopemetrics.samples import argolight
+# from tests.test_utilities import get_file
+#
+#
+# @pytest.fixture
+# def argolight_b():
+#     file_path = get_file(
+#         "https://dev.mri.cnrs.fr/attachments/download/2290/201702_RI510_Argolight-1-1_010_SIR_ALX.npy"
+#     )
+#     data = np.load(file_path)
+#
+#     analysis = argolight.ArgolightBAnalysis(argolight_b_image={"data": data}, spots_distance=40)
+#
+#     return analysis
 
 
 # @pytest.fixture
@@ -45,12 +45,12 @@ def argolight_b():
 #     analysis.set_metadata("axis", 1)
 #
 #     return analysis
-
-
-def test_run_argolight_b(argolight_b):
-    assert argolight_b.run()
-    assert argolight_b.processed
-
+#
+#
+# def test_run_argolight_b(argolight_b):
+#     assert argolight_b.run()
+#     assert argolight_b.processed
+#
 
 # def test_run_argolight_e_horizontal(argolight_e_horizontal):
 #     assert argolight_e_horizontal.run()

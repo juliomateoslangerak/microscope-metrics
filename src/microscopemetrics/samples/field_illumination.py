@@ -102,24 +102,17 @@ def _image_line_profile(image: ndarray, profile_size: int):
             (image.shape[1] // 2, image.shape[0]),
         ),
     }
-    output = pd.DataFrame()
+    output = []
     for profile_name, (start, end) in profile_coordinates.items():
         profiles = np.zeros((image.shape[2], 255))
         for c in range(image.shape[2]):
             profiles[c, :] = _channel_line_profile(
                 np.squeeze(image[:, :, c]), start, end, profile_size
             )
-        output = pd.concat(
-            [
-                output,
-                pd.DataFrame(
-                    profiles.T,
-                    columns=[f"ch_{c}_{profile_name}" for c in range(image.shape[2])],
-                ),
-            ],
-            axis=1,
-        )
-
+        output = output + [
+            schema.Column(name=f"ch_{c}_{profile_name}", values=profiles[c].tolist())
+            for c in range(image.shape[2])
+        ]
     return output
 
 
@@ -174,24 +167,24 @@ def _channel_corner_properties(channel, corner_fraction=0.1):
     cr_x = int((channel.shape[1] - cfp) / 2)
 
     return {
-        "top-left_intensity_mean": np.mean(channel[0:cfp, 0:cfp]),
-        "top-left_intensity_ratio": np.mean(channel[0:cfp, 0:cfp]) / max_intensity,
-        "top-center_intensity_mean": np.mean(channel[cr_x:-cr_x, 0:cfp]),
-        "top-center_intensity_ratio": np.mean(channel[cr_x:-cr_x, 0:cfp]) / max_intensity,
-        "top-right_intensity_mean": np.mean(channel[-cfp:-1, 0:cfp]),
-        "top-right_intensity_ratio": np.mean(channel[-cfp:-1, 0:cfp]) / max_intensity,
-        "middle-left_intensity_mean": np.mean(channel[0:cfp, cr_y:-cr_y]),
-        "middle-left_intensity_ratio": np.mean(channel[0:cfp, cr_y:-cr_y]) / max_intensity,
-        "middle-center_intensity_mean": np.mean(channel[cr_x:-cr_x, cr_y:-cr_y]),
-        "middle-center_intensity_ratio": np.mean(channel[cr_x:-cr_x, cr_y:-cr_y]) / max_intensity,
-        "middle-right_intensity_mean": np.mean(channel[-cfp:-1, cr_y:-cr_y]),
-        "middle-right_intensity_ratio": np.mean(channel[-cfp:-1, cr_y:-cr_y]) / max_intensity,
-        "bottom-left_intensity_mean": np.mean(channel[0:cfp, -cfp:-1]),
-        "bottom-left_intensity_ratio": np.mean(channel[0:cfp, -cfp:-1]) / max_intensity,
-        "bottom-center_intensity_mean": np.mean(channel[cr_x:-cr_x, -cfp:-1]),
-        "bottom-center_intensity_ratio": np.mean(channel[cr_x:-cr_x, -cfp:-1]) / max_intensity,
-        "bottom-right_intensity_mean": np.mean(channel[-cfp:-1, -cfp:-1]),
-        "bottom-right_intensity_ratio": np.mean(channel[-cfp:-1, -cfp:-1]) / max_intensity,
+        "top_left_intensity_mean": np.mean(channel[0:cfp, 0:cfp]),
+        "top_left_intensity_ratio": np.mean(channel[0:cfp, 0:cfp]) / max_intensity,
+        "top_center_intensity_mean": np.mean(channel[cr_x:-cr_x, 0:cfp]),
+        "top_center_intensity_ratio": np.mean(channel[cr_x:-cr_x, 0:cfp]) / max_intensity,
+        "top_right_intensity_mean": np.mean(channel[-cfp:-1, 0:cfp]),
+        "top_right_intensity_ratio": np.mean(channel[-cfp:-1, 0:cfp]) / max_intensity,
+        "middle_left_intensity_mean": np.mean(channel[0:cfp, cr_y:-cr_y]),
+        "middle_left_intensity_ratio": np.mean(channel[0:cfp, cr_y:-cr_y]) / max_intensity,
+        "middle_center_intensity_mean": np.mean(channel[cr_x:-cr_x, cr_y:-cr_y]),
+        "middle_center_intensity_ratio": np.mean(channel[cr_x:-cr_x, cr_y:-cr_y]) / max_intensity,
+        "middle_right_intensity_mean": np.mean(channel[-cfp:-1, cr_y:-cr_y]),
+        "middle_right_intensity_ratio": np.mean(channel[-cfp:-1, cr_y:-cr_y]) / max_intensity,
+        "bottom_left_intensity_mean": np.mean(channel[0:cfp, -cfp:-1]),
+        "bottom_left_intensity_ratio": np.mean(channel[0:cfp, -cfp:-1]) / max_intensity,
+        "bottom_center_intensity_mean": np.mean(channel[cr_x:-cr_x, -cfp:-1]),
+        "bottom_center_intensity_ratio": np.mean(channel[cr_x:-cr_x, -cfp:-1]) / max_intensity,
+        "bottom_right_intensity_mean": np.mean(channel[-cfp:-1, -cfp:-1]),
+        "bottom_right_intensity_ratio": np.mean(channel[-cfp:-1, -cfp:-1]) / max_intensity,
     }
 
 
@@ -214,7 +207,7 @@ def _image_properties(
     image: ndarray, corner_fraction: float, sigma: float, center_threshold: float
 ):
     """
-    given an image in a 3d ndarray format (cxy), this function return intensities for the corner and central regions
+    given an image in a 3d ndarray format (yxc), this function return intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
     Parameters
     ----------
@@ -222,11 +215,12 @@ def _image_properties(
         image on a 2d np.ndarray in yxc format.
     Returns
     -------
-    profiles_statistics : pd.DataFrame
-        pd.DataFrame showing the intensity values of the different regions and
-        their ratio over the maximum intensity value of the array. One row per channel.
+    profiles_statistics : dict
+        Dictionary showing the intensity values of the different regions and
+        their ratio over the maximum intensity value of the array.
+        Dictionary values will be lists in case of multiple channels.
     """
-    properties = None
+    properties = []
     for c in range(image.shape[2]):
         channel_properties = {"channel": c}
         channel_properties.update(
@@ -234,16 +228,12 @@ def _image_properties(
         )
         channel_properties.update(_channel_corner_properties(image[:, :, c], corner_fraction))
         channel_properties.update(_channel_area_deciles(image[:, :, c]))
-        if c == 0:
-            properties = pd.DataFrame(channel_properties, index=[c])
+        if image.shape[2] == 1:
+            return channel_properties
         else:
-            properties = pd.concat(
-                [
-                    properties,
-                    pd.DataFrame(channel_properties, index=[c]),
-                ],
-            )
+            properties.append(channel_properties)
 
+    properties = {k: [i[k] for i in properties] for k in properties[0]}
     return properties
 
 
@@ -255,7 +245,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
 
         # Check image shape
         logger.info("Checking image shape...")
-        image = self.image.data
+        image = self.input.field_illumination_image.data
         if len(image.shape) != 5:
             logger.error("Image must be 5D")
             return False
@@ -272,8 +262,8 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
         for c in range(image.shape[2]):
             if is_saturated(
                 channel=image[:, :, c],
-                threshold=self.saturation_threshold,
-                detector_bit_depth=self.bit_depth,
+                threshold=self.input.saturation_threshold,
+                detector_bit_depth=self.input.bit_depth,
             ):
                 logger.error(f"Channel {c} is saturated")
                 saturated_channels.append(c)
@@ -281,24 +271,24 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             logger.error(f"Channels {saturated_channels} are saturated")
             return False
 
-        self.regions_properties_table = schema.TableAsPandasDF(
-            df=_image_properties(
+        self.output.key_values = schema.FieldIlluminationKeyValues(
+            **_image_properties(
                 image=image,
-                corner_fraction=self.corner_fraction,
-                sigma=self.sigma,
-                center_threshold=self.center_threshold,
+                corner_fraction=self.input.corner_fraction,
+                sigma=self.input.sigma,
+                center_threshold=self.input.center_threshold,
             )
         )
 
-        self.intensity_map = numpy_to_inlined_image(
-            array=_image_intensity_map(image=image, map_size=self.intensity_map_size),
-            name=f"{self.image.name}_intensity_map",
-            description=f"Intensity map of {self.image.uri}",
+        self.output.intensity_map = numpy_to_inlined_image(
+            array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
+            name=f"{self.input.field_illumination_image.name}_intensity_map",
+            description=f"Intensity map of {self.input.field_illumination_image.uri}",
             uri=None,
         )
 
-        self.intensity_plot_data = schema.TableAsPandasDF(
-            df=_image_line_profile(image, profile_size=255)
+        self.output.intensity_plots = schema.TableInlined(
+            columns=_image_line_profile(image, profile_size=255)
         )
 
         self.processing_date = datetime.today()

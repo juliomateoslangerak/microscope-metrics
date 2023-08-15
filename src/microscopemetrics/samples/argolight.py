@@ -129,7 +129,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             properties_kv[f"mad_mean_intensity_ch{ch:02d}"] = (
                 (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean()).abs().mean()
             )
-            properties_kv[f"min-max_intensity_ratio_ch{ch:02d}"] = (
+            properties_kv[f"min_max_intensity_ratio_ch{ch:02d}"] = (
                 properties_kv[f"min_intensity_ch{ch:02d}"]
                 / properties_kv[f"max_intensity_ch{ch:02d}"]
             )
@@ -488,7 +488,13 @@ def _compute_resolution(
     prominence: float,
     do_angle_refinement: bool = False,
 ) -> Tuple[
-    List[ndarray], List[int64], List[ndarray], List[ndarray], List[float64], List[List[int]], str
+    List[ndarray],
+    List[int64],
+    List[ndarray],
+    List[ndarray],
+    List[float64],
+    List[List[int]],
+    str,
 ]:
     profiles = list()
     z_planes = []
