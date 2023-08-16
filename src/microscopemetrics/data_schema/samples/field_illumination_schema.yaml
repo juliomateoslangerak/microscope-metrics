@@ -58,11 +58,10 @@ classes:
         description: >-
           Key-Value pairs containing the Key measurements for the field illumination analysis
         multivalued: false
-      intensity_profiles:
-        range: IntensityProfilesTable
+      intensity_plots:
+        range: TableAsDict
         description: >-
           Intensity plots for the field illumination analysis in the different directions
-        multivalued: false
       intensity_map:
         range: Image5D
         description: >-
@@ -73,20 +72,6 @@ classes:
         description: >-
           Output: ROIs used to compute the intensity profile
         multivalued: false
-
-  IntensityProfilesTable:
-    is_a: TableAsDict
-    description: A table containing the intensity plots across the different axes of the input image
-    attributes:
-      columns:
-        range: IntensityProfile
-
-  IntensityProfile:
-    is_a: Column
-    attributes:
-      values:
-        range: float
-
 
   FieldIlluminationKeyValues:
     is_a: KeyValues

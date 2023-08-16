@@ -8,7 +8,6 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 import microscopemetrics.data_schema.samples.field_illumination_schema as schema
-# from microscopemetrics.data_schema.core_schema import Column
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_inlined_image
 from microscopemetrics.utilities.utilities import is_saturated
 
@@ -288,7 +287,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             uri=None,
         )
 
-        self.output.intensity_profiles = schema.IntensityProfilesTable(
+        self.output.intensity_plots = schema.TableAsDict(
             columns=_image_line_profile(image, profile_size=255)
         )
 
