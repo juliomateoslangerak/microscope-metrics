@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import Dict, Tuple
 
 import numpy as np
-import pandas as pd
 import scipy
 from numpy import float64, ndarray
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 import microscopemetrics.data_schema.samples.field_illumination_schema as schema
+# from microscopemetrics.data_schema.core_schema import Column
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_inlined_image
 from microscopemetrics.utilities.utilities import is_saturated
 
@@ -110,9 +110,10 @@ def _image_line_profile(image: ndarray, profile_size: int):
                 np.squeeze(image[:, :, c]), start, end, profile_size
             )
         output = output + [
-            schema.Column(name=f"ch_{c}_{profile_name}", values=profiles[c].tolist())
+            {f"ch_{c}_{profile_name}": {"values": profiles[c].tolist()}}
             for c in range(image.shape[2])
         ]
+        breakpoint()
     return output
 
 
@@ -287,11 +288,11 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             uri=None,
         )
 
-        self.output.intensity_plots = schema.TableInlined(
+        self.output.intensity_profiles = schema.IntensityProfilesTable(
             columns=_image_line_profile(image, profile_size=255)
         )
 
-        self.processing_date = datetime.today()
+        self.processing_date = datetime.now()
         self.processed = True
 
         return True

@@ -35,7 +35,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
 
         # Check image shape
         logger.info("Checking image shape...")
-        image = self.argolight_b_image.data
+        image = self.input.argolight_b_image.data
         if len(image.shape) != 5:
             logger.error("Image must be 5D")
             return False
@@ -46,8 +46,8 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
         for c in range(image.shape[-1]):
             if is_saturated(
                 channel=image[:, :, :, :, c],
-                threshold=self.saturation_threshold,
-                detector_bit_depth=self.bit_depth,
+                threshold=self.input.saturation_threshold,
+                detector_bit_depth=self.input.bit_depth,
             ):
                 logger.error(f"Channel {c} is saturated")
                 saturated_channels.append(c)
@@ -56,31 +56,31 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             return False
 
         # Calculating the distance between spots in pixels with a security margin
-        min_distance = round(self.spots_distance * 0.3)
+        min_distance = round(self.input.spots_distance * 0.3)
 
         # Calculating the maximum tolerated distance in microns for the same spot in a different channels
-        max_distance = self.spots_distance * 0.4
+        max_distance = self.input.spots_distance * 0.4
 
         labels = segment_image(
             image=image,
             min_distance=min_distance,
-            sigma=(self.sigma_z, self.sigma_y, self.sigma_x),
+            sigma=(self.input.sigma_z, self.input.sigma_y, self.input.sigma_x),
             method="local_max",
-            low_corr_factors=self.lower_threshold_correction_factors,
-            high_corr_factors=self.upper_threshold_correction_factors,
+            low_corr_factors=self.input.lower_threshold_correction_factors,
+            high_corr_factors=self.input.upper_threshold_correction_factors,
         )
 
-        self.spots_labels_image = schema.ImageAsNumpy(
+        self.output.spots_labels_image = schema.ImageAsNumpy(
             data=labels,
-            name=f"{self.argolight_b_image.name}_spots_labels",
-            description=f"Spots labels of {self.argolight_b_image.uri}",
+            name=f"{self.input.argolight_b_image.name}_spots_labels",
+            description=f"Spots labels of {self.input.argolight_b_image.uri}",
             uri=None,
         )
 
         spots_properties, spots_positions = compute_spots_properties(
             image=image,
             labels=labels,
-            remove_center_cross=self.remove_center_cross,
+            remove_center_cross=self.input.remove_center_cross,
         )
 
         distances_df = compute_distances_matrix(
@@ -178,29 +178,25 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
                 (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean().item()
             )
 
-        self.intensity_measurements = core_schema.KeyValues(
-            keys=[k for k in properties_kv.keys()],
-            values=[v for v in properties_kv.values()],
+        self.output.intensity_measurements = schema.ArgolightBIntensityKeyValues(
+            **properties_kv
         )
 
-        self.distance_measurements = core_schema.KeyValues(
-            keys=[k for k in distances_kv.keys()],
-            values=[v for v in distances_kv.values()],
+        self.output.distance_measurements = schema.ArgolightBIntensityKeyValues(
+            **distances_kv
         )
 
-        self.spots_properties = schema.TableAsPandasDF(
-            name="spots_properties",
-            description="This table contains data describing the intensity measurements of the spots",
-            df=properties_df,
+        self.output.spots_properties = schema.TableAsDict(
+            columns=[core_schema.Column(name=k, values=v)
+                     for k, v in properties_df.to_dict(orient="list").items()]
         )
 
-        self.spots_distances = schema.TableAsPandasDF(
-            name="spots_distances",
-            description="This table contains data describing the distance measurements between the spots in the different channels",
-            df=distances_df,
+        self.output.spots_distances = schema.TableAsDict(
+            columns=[core_schema.Column(name=k, values=v)
+                     for k, v in distances_df.to_dict(orient="list").items()]
         )
 
-        self.spots_centroids = spots_centroids
+        self.output.spots_centroids = spots_centroids
         breakpoint()
 
         self.processing_date = datetime.today()
