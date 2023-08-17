@@ -58,10 +58,10 @@ classes:
         description: >-
           Key-Value pairs containing the Key measurements for the field illumination analysis
         multivalued: false
-      intensity_plots:
+      intensity_profiles:
         range: TableAsDict
         description: >-
-          Intensity plots for the field illumination analysis in the different directions
+          Intensity profiles for the field illumination analysis in the different directions
       intensity_map:
         range: Image5D
         description: >-
@@ -121,6 +121,7 @@ slots:
       multiple channels, the T and Z dimensions are expected to be 1.
     required: true
     multivalued: false
+    inlined: true
   center_threshold:
     range: float
     description: >-

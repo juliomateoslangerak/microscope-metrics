@@ -1,5 +1,5 @@
 # Auto generated from argolight_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-16T12:24:12
+# Generation date: 2023-08-17T12:00:12
 # Schema: microscopemetrics_samples_argolight_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
@@ -44,13 +44,13 @@ from ..core_schema import (
     ROI,
     ExperimenterOrcid,
     ImageAsNumpy,
+    ImageAsNumpyUrl,
     KeyValues,
     MetricsDataset,
     MetricsInput,
     MetricsOutput,
     SampleType,
     TableAsDict,
-    TableAsPandasDF,
 )
 
 metamodel_version = "1.7.0"
@@ -125,49 +125,18 @@ class ArgolightEDataset(MetricsDataset):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEDataset"
     )
 
-    argolight_e_image: Union[dict, ImageAsNumpy] = None
-    axis: int = None
+    input: Union[dict, "ArgolightEInput"] = None
     processed: Union[bool, Bool] = False
-    saturation_threshold: float = 0.01
-    bit_depth: Optional[int] = None
-    measured_band: Optional[float] = 0.4
-    peaks_rois: Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]] = empty_list()
-    key_measurements: Optional[Union[dict, KeyValues]] = None
-    intensity_profiles: Optional[Union[dict, TableAsPandasDF]] = None
+    output: Optional[Union[dict, "ArgolightEOutput"]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.argolight_e_image):
-            self.MissingRequiredField("argolight_e_image")
-        if not isinstance(self.argolight_e_image, ImageAsNumpy):
-            self.argolight_e_image = ImageAsNumpy(**as_dict(self.argolight_e_image))
+        if self._is_empty(self.input):
+            self.MissingRequiredField("input")
+        if not isinstance(self.input, ArgolightEInput):
+            self.input = ArgolightEInput(**as_dict(self.input))
 
-        if self._is_empty(self.saturation_threshold):
-            self.MissingRequiredField("saturation_threshold")
-        if not isinstance(self.saturation_threshold, float):
-            self.saturation_threshold = float(self.saturation_threshold)
-
-        if self._is_empty(self.axis):
-            self.MissingRequiredField("axis")
-        if not isinstance(self.axis, int):
-            self.axis = int(self.axis)
-
-        if self.bit_depth is not None and not isinstance(self.bit_depth, int):
-            self.bit_depth = int(self.bit_depth)
-
-        if self.measured_band is not None and not isinstance(self.measured_band, float):
-            self.measured_band = float(self.measured_band)
-
-        self._normalize_inlined_as_dict(
-            slot_name="peaks_rois", slot_type=ROI, key_name="image", keyed=False
-        )
-
-        if self.key_measurements is not None and not isinstance(self.key_measurements, KeyValues):
-            self.key_measurements = KeyValues()
-
-        if self.intensity_profiles is not None and not isinstance(
-            self.intensity_profiles, TableAsPandasDF
-        ):
-            self.intensity_profiles = TableAsPandasDF(**as_dict(self.intensity_profiles))
+        if self.output is not None and not isinstance(self.output, ArgolightEOutput):
+            self.output = ArgolightEOutput(**as_dict(self.output))
 
         super().__post_init__(**kwargs)
 
@@ -257,6 +226,58 @@ class ArgolightBInput(MetricsInput):
 
 
 @dataclass
+class ArgolightEInput(MetricsInput):
+    _inherited_slots: ClassVar[List[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEInput"
+    )
+    class_class_curie: ClassVar[str] = None
+    class_name: ClassVar[str] = "ArgolightEInput"
+    class_model_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEInput"
+    )
+
+    argolight_e_image: Union[dict, ImageAsNumpy] = None
+    axis: int = None
+    saturation_threshold: float = 0.01
+    measured_band: float = 0.4
+    prominence_threshold: float = 0.264
+    bit_depth: Optional[int] = None
+
+    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
+        if self._is_empty(self.argolight_e_image):
+            self.MissingRequiredField("argolight_e_image")
+        if not isinstance(self.argolight_e_image, ImageAsNumpy):
+            self.argolight_e_image = ImageAsNumpy(**as_dict(self.argolight_e_image))
+
+        if self._is_empty(self.saturation_threshold):
+            self.MissingRequiredField("saturation_threshold")
+        if not isinstance(self.saturation_threshold, float):
+            self.saturation_threshold = float(self.saturation_threshold)
+
+        if self._is_empty(self.axis):
+            self.MissingRequiredField("axis")
+        if not isinstance(self.axis, int):
+            self.axis = int(self.axis)
+
+        if self._is_empty(self.measured_band):
+            self.MissingRequiredField("measured_band")
+        if not isinstance(self.measured_band, float):
+            self.measured_band = float(self.measured_band)
+
+        if self._is_empty(self.prominence_threshold):
+            self.MissingRequiredField("prominence_threshold")
+        if not isinstance(self.prominence_threshold, float):
+            self.prominence_threshold = float(self.prominence_threshold)
+
+        if self.bit_depth is not None and not isinstance(self.bit_depth, int):
+            self.bit_depth = int(self.bit_depth)
+
+        super().__post_init__(**kwargs)
+
+
+@dataclass
 class ArgolightBOutput(MetricsOutput):
     _inherited_slots: ClassVar[List[str]] = []
 
@@ -269,7 +290,7 @@ class ArgolightBOutput(MetricsOutput):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightBOutput"
     )
 
-    spots_labels_image: Optional[Union[dict, ImageAsNumpy]] = None
+    spots_labels_image: Optional[Union[str, ImageAsNumpyUrl]] = None
     spots_centroids: Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]] = empty_list()
     intensity_measurements: Optional[Union[dict, "ArgolightBIntensityKeyValues"]] = None
     distance_measurements: Optional[Union[dict, "ArgolightBDistanceKeyValues"]] = None
@@ -278,13 +299,17 @@ class ArgolightBOutput(MetricsOutput):
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self.spots_labels_image is not None and not isinstance(
-            self.spots_labels_image, ImageAsNumpy
+            self.spots_labels_image, ImageAsNumpyUrl
         ):
-            self.spots_labels_image = ImageAsNumpy(**as_dict(self.spots_labels_image))
+            self.spots_labels_image = ImageAsNumpyUrl(self.spots_labels_image)
 
-        self._normalize_inlined_as_dict(
-            slot_name="spots_centroids", slot_type=ROI, key_name="image", keyed=False
-        )
+        if not isinstance(self.spots_centroids, list):
+            self.spots_centroids = (
+                [self.spots_centroids] if self.spots_centroids is not None else []
+            )
+        self.spots_centroids = [
+            v if isinstance(v, ROI) else ROI(**as_dict(v)) for v in self.spots_centroids
+        ]
 
         if self.intensity_measurements is not None and not isinstance(
             self.intensity_measurements, ArgolightBIntensityKeyValues
@@ -305,6 +330,41 @@ class ArgolightBOutput(MetricsOutput):
 
         if self.spots_distances is not None and not isinstance(self.spots_distances, TableAsDict):
             self.spots_distances = TableAsDict(**as_dict(self.spots_distances))
+
+        super().__post_init__(**kwargs)
+
+
+@dataclass
+class ArgolightEOutput(MetricsOutput):
+    _inherited_slots: ClassVar[List[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEOutput"
+    )
+    class_class_curie: ClassVar[str] = None
+    class_name: ClassVar[str] = "ArgolightEOutput"
+    class_model_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEOutput"
+    )
+
+    peaks_rois: Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]] = empty_list()
+    key_measurements: Optional[Union[dict, "ArgolightEKeyValues"]] = None
+    intensity_profiles: Optional[Union[dict, TableAsDict]] = None
+
+    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
+        if not isinstance(self.peaks_rois, list):
+            self.peaks_rois = [self.peaks_rois] if self.peaks_rois is not None else []
+        self.peaks_rois = [v if isinstance(v, ROI) else ROI(**as_dict(v)) for v in self.peaks_rois]
+
+        if self.key_measurements is not None and not isinstance(
+            self.key_measurements, ArgolightEKeyValues
+        ):
+            self.key_measurements = ArgolightEKeyValues(**as_dict(self.key_measurements))
+
+        if self.intensity_profiles is not None and not isinstance(
+            self.intensity_profiles, TableAsDict
+        ):
+            self.intensity_profiles = TableAsDict(**as_dict(self.intensity_profiles))
 
         super().__post_init__(**kwargs)
 
@@ -474,6 +534,89 @@ class ArgolightBDistanceKeyValues(KeyValues):
         super().__post_init__(**kwargs)
 
 
+@dataclass
+class ArgolightEKeyValues(KeyValues):
+    _inherited_slots: ClassVar[List[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEKeyValues"
+    )
+    class_class_curie: ClassVar[str] = None
+    class_name: ClassVar[str] = "ArgolightEKeyValues"
+    class_model_uri: ClassVar[URIRef] = URIRef(
+        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightEKeyValues"
+    )
+
+    channel: Optional[Union[int, List[int]]] = empty_list()
+    focus_slice: Optional[Union[int, List[int]]] = empty_list()
+    rayleigh_resolution: Optional[Union[float, List[float]]] = empty_list()
+    peak_position_A: Optional[Union[float, List[float]]] = empty_list()
+    peak_position_B: Optional[Union[float, List[float]]] = empty_list()
+    peak_height_A: Optional[Union[float, List[float]]] = empty_list()
+    peak_height_B: Optional[Union[float, List[float]]] = empty_list()
+    peak_prominence_A: Optional[Union[float, List[float]]] = empty_list()
+    peak_prominence_B: Optional[Union[float, List[float]]] = empty_list()
+
+    def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
+        if not isinstance(self.channel, list):
+            self.channel = [self.channel] if self.channel is not None else []
+        self.channel = [v if isinstance(v, int) else int(v) for v in self.channel]
+
+        if not isinstance(self.focus_slice, list):
+            self.focus_slice = [self.focus_slice] if self.focus_slice is not None else []
+        self.focus_slice = [v if isinstance(v, int) else int(v) for v in self.focus_slice]
+
+        if not isinstance(self.rayleigh_resolution, list):
+            self.rayleigh_resolution = (
+                [self.rayleigh_resolution] if self.rayleigh_resolution is not None else []
+            )
+        self.rayleigh_resolution = [
+            v if isinstance(v, float) else float(v) for v in self.rayleigh_resolution
+        ]
+
+        if not isinstance(self.peak_position_A, list):
+            self.peak_position_A = (
+                [self.peak_position_A] if self.peak_position_A is not None else []
+            )
+        self.peak_position_A = [
+            v if isinstance(v, float) else float(v) for v in self.peak_position_A
+        ]
+
+        if not isinstance(self.peak_position_B, list):
+            self.peak_position_B = (
+                [self.peak_position_B] if self.peak_position_B is not None else []
+            )
+        self.peak_position_B = [
+            v if isinstance(v, float) else float(v) for v in self.peak_position_B
+        ]
+
+        if not isinstance(self.peak_height_A, list):
+            self.peak_height_A = [self.peak_height_A] if self.peak_height_A is not None else []
+        self.peak_height_A = [v if isinstance(v, float) else float(v) for v in self.peak_height_A]
+
+        if not isinstance(self.peak_height_B, list):
+            self.peak_height_B = [self.peak_height_B] if self.peak_height_B is not None else []
+        self.peak_height_B = [v if isinstance(v, float) else float(v) for v in self.peak_height_B]
+
+        if not isinstance(self.peak_prominence_A, list):
+            self.peak_prominence_A = (
+                [self.peak_prominence_A] if self.peak_prominence_A is not None else []
+            )
+        self.peak_prominence_A = [
+            v if isinstance(v, float) else float(v) for v in self.peak_prominence_A
+        ]
+
+        if not isinstance(self.peak_prominence_B, list):
+            self.peak_prominence_B = (
+                [self.peak_prominence_B] if self.peak_prominence_B is not None else []
+            )
+        self.peak_prominence_B = [
+            v if isinstance(v, float) else float(v) for v in self.peak_prominence_B
+        ]
+
+        super().__post_init__(**kwargs)
+
+
 # Enumerations
 
 
@@ -481,6 +624,15 @@ class ArgolightBDistanceKeyValues(KeyValues):
 class slots:
     pass
 
+
+slots.channel = Slot(
+    uri=DEFAULT_.channel,
+    name="channel",
+    curie=DEFAULT_.curie("channel"),
+    model_uri=DEFAULT_.channel,
+    domain=None,
+    range=Optional[Union[int, List[int]]],
+)
 
 slots.argolight_b_image = Slot(
     uri=DEFAULT_.argolight_b_image,
@@ -552,15 +704,6 @@ slots.remove_center_cross = Slot(
     model_uri=DEFAULT_.remove_center_cross,
     domain=None,
     range=Optional[Union[bool, Bool]],
-)
-
-slots.channel = Slot(
-    uri=DEFAULT_.channel,
-    name="channel",
-    curie=DEFAULT_.curie("channel"),
-    model_uri=DEFAULT_.channel,
-    domain=None,
-    range=Optional[Union[int, List[int]]],
 )
 
 slots.nr_of_spots = Slot(
@@ -767,34 +910,88 @@ slots.measured_band = Slot(
     curie=DEFAULT_.curie("measured_band"),
     model_uri=DEFAULT_.measured_band,
     domain=None,
-    range=Optional[float],
+    range=float,
 )
 
-slots.peaks_rois = Slot(
-    uri=DEFAULT_.peaks_rois,
-    name="peaks_rois",
-    curie=DEFAULT_.curie("peaks_rois"),
-    model_uri=DEFAULT_.peaks_rois,
+slots.prominence_threshold = Slot(
+    uri=DEFAULT_.prominence_threshold,
+    name="prominence_threshold",
+    curie=DEFAULT_.curie("prominence_threshold"),
+    model_uri=DEFAULT_.prominence_threshold,
     domain=None,
-    range=Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]],
+    range=float,
 )
 
-slots.key_measurements = Slot(
-    uri=DEFAULT_.key_measurements,
-    name="key_measurements",
-    curie=DEFAULT_.curie("key_measurements"),
-    model_uri=DEFAULT_.key_measurements,
+slots.focus_slice = Slot(
+    uri=DEFAULT_.focus_slice,
+    name="focus_slice",
+    curie=DEFAULT_.curie("focus_slice"),
+    model_uri=DEFAULT_.focus_slice,
     domain=None,
-    range=Optional[Union[dict, KeyValues]],
+    range=Optional[Union[int, List[int]]],
 )
 
-slots.intensity_profiles = Slot(
-    uri=DEFAULT_.intensity_profiles,
-    name="intensity_profiles",
-    curie=DEFAULT_.curie("intensity_profiles"),
-    model_uri=DEFAULT_.intensity_profiles,
+slots.rayleigh_resolution = Slot(
+    uri=DEFAULT_.rayleigh_resolution,
+    name="rayleigh_resolution",
+    curie=DEFAULT_.curie("rayleigh_resolution"),
+    model_uri=DEFAULT_.rayleigh_resolution,
     domain=None,
-    range=Optional[Union[dict, TableAsPandasDF]],
+    range=Optional[Union[float, List[float]]],
+)
+
+slots.peak_position_A = Slot(
+    uri=DEFAULT_.peak_position_A,
+    name="peak_position_A",
+    curie=DEFAULT_.curie("peak_position_A"),
+    model_uri=DEFAULT_.peak_position_A,
+    domain=None,
+    range=Optional[Union[float, List[float]]],
+)
+
+slots.peak_position_B = Slot(
+    uri=DEFAULT_.peak_position_B,
+    name="peak_position_B",
+    curie=DEFAULT_.curie("peak_position_B"),
+    model_uri=DEFAULT_.peak_position_B,
+    domain=None,
+    range=Optional[Union[float, List[float]]],
+)
+
+slots.peak_height_A = Slot(
+    uri=DEFAULT_.peak_height_A,
+    name="peak_height_A",
+    curie=DEFAULT_.curie("peak_height_A"),
+    model_uri=DEFAULT_.peak_height_A,
+    domain=None,
+    range=Optional[Union[float, List[float]]],
+)
+
+slots.peak_height_B = Slot(
+    uri=DEFAULT_.peak_height_B,
+    name="peak_height_B",
+    curie=DEFAULT_.curie("peak_height_B"),
+    model_uri=DEFAULT_.peak_height_B,
+    domain=None,
+    range=Optional[Union[float, List[float]]],
+)
+
+slots.peak_prominence_A = Slot(
+    uri=DEFAULT_.peak_prominence_A,
+    name="peak_prominence_A",
+    curie=DEFAULT_.curie("peak_prominence_A"),
+    model_uri=DEFAULT_.peak_prominence_A,
+    domain=None,
+    range=Optional[Union[float, List[float]]],
+)
+
+slots.peak_prominence_B = Slot(
+    uri=DEFAULT_.peak_prominence_B,
+    name="peak_prominence_B",
+    curie=DEFAULT_.curie("peak_prominence_B"),
+    model_uri=DEFAULT_.peak_prominence_B,
+    domain=None,
+    range=Optional[Union[float, List[float]]],
 )
 
 slots.argolightBDataset__input = Slot(
@@ -821,7 +1018,7 @@ slots.argolightBOutput__spots_labels_image = Slot(
     curie=DEFAULT_.curie("spots_labels_image"),
     model_uri=DEFAULT_.argolightBOutput__spots_labels_image,
     domain=None,
-    range=Optional[Union[dict, ImageAsNumpy]],
+    range=Optional[Union[str, ImageAsNumpyUrl]],
 )
 
 slots.argolightBOutput__spots_centroids = Slot(
@@ -865,6 +1062,51 @@ slots.argolightBOutput__spots_distances = Slot(
     name="argolightBOutput__spots_distances",
     curie=DEFAULT_.curie("spots_distances"),
     model_uri=DEFAULT_.argolightBOutput__spots_distances,
+    domain=None,
+    range=Optional[Union[dict, TableAsDict]],
+)
+
+slots.argolightEDataset__input = Slot(
+    uri=DEFAULT_.input,
+    name="argolightEDataset__input",
+    curie=DEFAULT_.curie("input"),
+    model_uri=DEFAULT_.argolightEDataset__input,
+    domain=None,
+    range=Union[dict, ArgolightEInput],
+)
+
+slots.argolightEDataset__output = Slot(
+    uri=DEFAULT_.output,
+    name="argolightEDataset__output",
+    curie=DEFAULT_.curie("output"),
+    model_uri=DEFAULT_.argolightEDataset__output,
+    domain=None,
+    range=Optional[Union[dict, ArgolightEOutput]],
+)
+
+slots.argolightEOutput__peaks_rois = Slot(
+    uri=DEFAULT_.peaks_rois,
+    name="argolightEOutput__peaks_rois",
+    curie=DEFAULT_.curie("peaks_rois"),
+    model_uri=DEFAULT_.argolightEOutput__peaks_rois,
+    domain=None,
+    range=Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]],
+)
+
+slots.argolightEOutput__key_measurements = Slot(
+    uri=DEFAULT_.key_measurements,
+    name="argolightEOutput__key_measurements",
+    curie=DEFAULT_.curie("key_measurements"),
+    model_uri=DEFAULT_.argolightEOutput__key_measurements,
+    domain=None,
+    range=Optional[Union[dict, ArgolightEKeyValues]],
+)
+
+slots.argolightEOutput__intensity_profiles = Slot(
+    uri=DEFAULT_.intensity_profiles,
+    name="argolightEOutput__intensity_profiles",
+    curie=DEFAULT_.curie("intensity_profiles"),
+    model_uri=DEFAULT_.argolightEOutput__intensity_profiles,
     domain=None,
     range=Optional[Union[dict, TableAsDict]],
 )

@@ -39,6 +39,7 @@ classes:
         range: Protocol
         required: true
         multivalued: false
+        inlined: false
 
   Protocol:
     is_a: NamedObject
@@ -51,7 +52,9 @@ classes:
         multivalued: true
         inlined: false
       url:
+        range: string
         required: true
+        identifier: true
 
   Experimenter:
     description: The person that performed the experiment or developed the protocol
@@ -63,7 +66,6 @@ classes:
       orcid:
         range: string
         description: The ORCID of the experimenter
-        recommended: true
         identifier: true
 
   MetricsDataset:
@@ -112,7 +114,7 @@ classes:
     description: A base object for all microscope-metrics images
     abstract: true
     slots:
-      - uri
+      - url
 
   ImageAsNumpy:
     is_a: Image
@@ -264,7 +266,7 @@ classes:
         multivalued: false
       image:
         range: Image
-        required: true
+        required: false
         multivalued: true
         inlined: false
       shapes:
@@ -317,15 +319,19 @@ classes:
       x1:
         range: float
         multivalued: false
+        required: true
       y1:
         range: float
         multivalued: false
+        required: true
       x2:
         range: float
         multivalued: false
-      x3:
+        required: true
+      y2:
         range: float
         multivalued: false
+        required: true
 
   Rectangle:
     is_a: Shape
@@ -334,15 +340,19 @@ classes:
       x:
         range: float
         multivalued: false
+        required: true
       y:
         range: float
         multivalued: false
+        required: true
       w:
         range: float
         multivalued: false
+        required: true
       h:
         range: float
         multivalued: false
+        required: true
 
   Ellipse:
     is_a: Shape
@@ -351,15 +361,19 @@ classes:
       x:
         range: float
         multivalued: false
+        required: true
       y:
         range: float
         multivalued: false
+        required: true
       x_rad:
         range: float
         multivalued: false
+        required: true
       y_rad:
         range: float
         multivalued: false
+        required: true
 
   Polygon:
     is_a: Shape
@@ -373,6 +387,7 @@ classes:
       is_open:
         range: boolean
         multivalued: false
+        required: true
         ifabsent: false
 
   Vertex:
@@ -493,9 +508,10 @@ classes:
 
 
 slots:
-  uri:
-    range: uri
-    description: An URI
+  url:
+    range: string
+    identifier: true
+    description: An URL
     multivalued: false
   id:
     range: string

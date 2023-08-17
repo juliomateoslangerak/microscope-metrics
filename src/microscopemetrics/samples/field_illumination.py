@@ -112,7 +112,7 @@ def _image_line_profile(image: ndarray, profile_size: int):
             {f"ch_{c}_{profile_name}": {"values": profiles[c].tolist()}}
             for c in range(image.shape[2])
         ]
-        breakpoint()
+
     return output
 
 
@@ -283,15 +283,15 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
         self.output.intensity_map = numpy_to_inlined_image(
             array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
             name=f"{self.input.field_illumination_image.name}_intensity_map",
-            description=f"Intensity map of {self.input.field_illumination_image.uri}",
-            uri=None,
+            description=f"Intensity map of {self.input.field_illumination_image.name}",
+            url=self.input.field_illumination_image.url,
         )
 
-        self.output.intensity_plots = schema.TableAsDict(
+        self.output.intensity_profiles = schema.TableAsDict(
             columns=_image_line_profile(image, profile_size=255)
         )
 
-        self.processing_date = datetime.now()
+        self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.processed = True
 
         return True

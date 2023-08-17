@@ -92,8 +92,6 @@ classes:
         required: false
         multivalued: false
 
-
-
   ArgolightBIntensityKeyValues:
     is_a: KeyValues
     slots:
@@ -130,21 +128,75 @@ classes:
       It contains resolution data on the axis indicated:
       - axis 1 = Y resolution = lines along X axis
       - axis 2 = X resolution = lines along Y axis
+    attributes:
+      input:
+        range: ArgolightEInput
+        required: true
+        multivalued: false
+      output:
+        range: ArgolightEOutput
+        required: false
+        multivalued: false
+    rules:
+      - preconditions:
+          slot_conditions:
+            processed:
+              equals_number: 1
+        postconditions:
+          slot_conditions:
+            output:
+              required: true
+  ArgolightEInput:
+    is_a: MetricsInput
     slots:
       - argolight_e_image
       - bit_depth
       - saturation_threshold
       - axis
       - measured_band
-      - peaks_rois
-      - key_measurements
-      - intensity_profiles
+      - prominence_threshold
     slot_usage:
       saturation_threshold:
         required: true
+  ArgolightEOutput:
+    is_a: MetricsOutput
+    attributes:
+      peaks_rois:
+        range: ROI
+        description: >-
+          ROIs of the peaks found in the argolight images
+        multivalued: true
+      key_measurements:
+        range: ArgolightEKeyValues
+        description: >-
+          Key Measurements on Argolight E images
+        multivalued: false
+      intensity_profiles:
+        range: TableAsDict
+        description: >-
+          Intensity profiles of the argolight lines provided as tables. One table per channel
+        multivalued: false
+
+  ArgolightEKeyValues:
+    is_a: KeyValues
+    slots:
+      - channel
+      - focus_slice
+      - rayleigh_resolution
+      - peak_position_A
+      - peak_position_B
+      - peak_height_A
+      - peak_height_B
+      - peak_prominence_A
+      - peak_prominence_B
 
 
 slots:
+  channel:
+    range: integer
+    description: >-
+      The channel number to which the measurements apply
+    multivalued: true
   # Argolight B inputs
   argolight_b_image:
     range: ImageAsNumpy
@@ -152,6 +204,7 @@ slots:
       Input parameter: image of the argolight b pattern provided as a 5D numpy array in the order TZYXC
     required: true
     multivalued: false
+    inlined: true
   spots_distance:
     range: float
     description: >-
@@ -208,11 +261,6 @@ slots:
     ifabsent: false
   # Argolight B outputs
   # Intensity related slots
-  channel:
-    range: integer
-    description: >-
-      The channel number to which the measurements apply
-    multivalued: true
   nr_of_spots:
     range: integer
     description: >-
@@ -318,13 +366,14 @@ slots:
   argolight_e_image:
     range: ImageAsNumpy
     description: >-
-      Input parameter: image of the argolight e pattern provided as a 5D numpy array in the order TZYXC
+      Image of the argolight e pattern provided as a 5D numpy array in the order TZYXC
     required: true
     multivalued: false
+    inlined: true
   axis:
     range: integer
     description: >-
-      Input parameter: axis along which resolution is being measured. 1=Y, 2=X
+      Axis along which resolution is being measured. 1=Y, 2=X
     required: true
     multivalued: false
     minimum_value: 1
@@ -332,28 +381,62 @@ slots:
   measured_band:
     range: float
     description: >-
-      Input parameter: Fraction of the image across which intensity profiles are measured
-    required: false
+      Fraction of the image across which intensity profiles are measured
+    required: true
     multivalued: false
     minimum_value: 0.1
     maximum_value: 1.0
     ifabsent: float(0.4)
+  prominence_threshold:
+    range: float
+    description: >-
+      Peak prominence used as a threshold to distinguish two peaks. 
+      Defaults to the value defined by the Rayleigh criteria
+    required: true
+    multivalued: false
+    minimum_value: 0.1
+    maximum_value: 0.99
+    ifabsent: float(0.264)
+
   # Argolight E outputs
-  peaks_rois:
-    range: ROI
+  focus_slice:
+    range: integer
     description: >-
-      Output parameter: ROIs of the peaks found in the argolight images
-    required: false
+      Z position at which focus has been measured
     multivalued: true
-  key_measurements:
-    range: KeyValues
+    minimum_value: 0
+  rayleigh_resolution:
+    range: float
     description: >-
-      Output parameter: Key measurements on Argolight lines
-    required: false
-    multivalued: false
-  intensity_profiles:
-    range: TableAsPandasDF
+      Rayleigh resolution measured
+    multivalued: true
+  peak_position_A:
+    range: float
     description: >-
-      Output parameter: Intensity profiles of the argolight lines provided as table
-    required: false
-    multivalued: false
+      Position of first peak in the intensity profiles
+    multivalued: true
+  peak_position_B:
+    range: float
+    description: >-
+      Position of second peak in the intensity profiles
+    multivalued: true
+  peak_height_A:
+    range: float
+    description: >-
+      Height of first peak in the intensity profiles
+    multivalued: true
+  peak_height_B:
+    range: float
+    description: >-
+      Height of second peak in the intensity profiles
+    multivalued: true
+  peak_prominence_A:
+    range: float
+    description: >-
+      Prominence of first peak in the intensity profiles
+    multivalued: true
+  peak_prominence_B:
+    range: float
+    description: >-
+      Prominence of second peak in the intensity profiles
+    multivalued: true
