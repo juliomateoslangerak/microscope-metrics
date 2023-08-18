@@ -1,5 +1,5 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-18T11:33:04
+# Generation date: 2023-08-18T13:11:53
 # Schema: microscopemetrics_samples_field_illumination_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
@@ -43,9 +43,9 @@ from rdflib import Namespace, URIRef
 from ..core_schema import (
     ROI,
     ExperimenterOrcid,
-    Image5DUrl,
+    Image5DImageUrl,
     ImageAsNumpy,
-    ImageAsNumpyUrl,
+    ImageAsNumpyImageUrl,
     KeyValues,
     MetricsDataset,
     MetricsInput,
@@ -179,7 +179,7 @@ class FieldIlluminationOutput(MetricsOutput):
 
     key_values: Optional[Union[dict, "FieldIlluminationKeyValues"]] = None
     intensity_profiles: Optional[Union[dict, TableAsDict]] = None
-    intensity_map: Optional[Union[str, Image5DUrl]] = None
+    intensity_map: Optional[Union[str, Image5DImageUrl]] = None
     profile_rois: Optional[Union[dict, ROI]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -193,8 +193,8 @@ class FieldIlluminationOutput(MetricsOutput):
         ):
             self.intensity_profiles = TableAsDict(**as_dict(self.intensity_profiles))
 
-        if self.intensity_map is not None and not isinstance(self.intensity_map, Image5DUrl):
-            self.intensity_map = Image5DUrl(self.intensity_map)
+        if self.intensity_map is not None and not isinstance(self.intensity_map, Image5DImageUrl):
+            self.intensity_map = Image5DImageUrl(self.intensity_map)
 
         if self.profile_rois is not None and not isinstance(self.profile_rois, ROI):
             self.profile_rois = ROI(**as_dict(self.profile_rois))
@@ -923,7 +923,7 @@ slots.fieldIlluminationOutput__intensity_map = Slot(
     curie=DEFAULT_.curie("intensity_map"),
     model_uri=DEFAULT_.fieldIlluminationOutput__intensity_map,
     domain=None,
-    range=Optional[Union[str, Image5DUrl]],
+    range=Optional[Union[str, Image5DImageUrl]],
 )
 
 slots.fieldIlluminationOutput__profile_rois = Slot(

@@ -65,11 +65,12 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             high_corr_factors=self.input.upper_threshold_correction_factors,
         )
 
-        self.output.spots_labels_image = schema.ImageAsNumpy(
+        self.output.spots_labels_image = schema.ImageAsNumpy(  # TODO: this should be a mask
             data=labels,
             name=f"{self.input.argolight_b_image.name}_spots_labels",
-            description=f"Spots labels of {self.input.argolight_b_image.url}",
-            url=self.input.argolight_b_image.url,
+            description=f"Spots labels of {self.input.argolight_b_image.image_url}",
+            image_url=self.input.argolight_b_image.image_url,
+            source_image_url=self.input.argolight_b_image.image_url,
         )
 
         spots_properties, spots_positions = compute_spots_properties(
@@ -297,7 +298,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
                 core_schema.ROI(
                     label=f"ch_{ch:03d}_peaks",
                     shapes=shapes,
-                    image=self.input.argolight_e_image.url,
+                    image=self.input.argolight_e_image.image_url,
                 )
             )
         self.output.peaks_rois = rois

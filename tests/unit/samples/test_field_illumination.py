@@ -19,7 +19,7 @@ def field_illumination_analysis():
             "field_illumination_image": {
                 "data": data,
                 "name": "image_name",
-                "url": image_url,
+                "image_url": image_url,
             }
         },
         output={},

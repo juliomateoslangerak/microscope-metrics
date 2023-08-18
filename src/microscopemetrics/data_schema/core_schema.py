@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-18T11:32:46
+# Generation date: 2023-08-18T13:11:39
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -69,27 +69,27 @@ class ExperimenterOrcid(extended_str):
     pass
 
 
-class ImageUrl(extended_str):
+class ImageImageUrl(extended_str):
     pass
 
 
-class ImageAsNumpyUrl(ImageUrl):
+class ImageAsNumpyImageUrl(ImageImageUrl):
     pass
 
 
-class ImageInlineUrl(ImageUrl):
+class ImageInlineImageUrl(ImageImageUrl):
     pass
 
 
-class ImageMaskUrl(ImageInlineUrl):
+class ImageMaskImageUrl(ImageInlineImageUrl):
     pass
 
 
-class Image2DUrl(ImageInlineUrl):
+class Image2DImageUrl(ImageInlineImageUrl):
     pass
 
 
-class Image5DUrl(ImageInlineUrl):
+class Image5DImageUrl(ImageInlineImageUrl):
     pass
 
 
@@ -367,13 +367,20 @@ class Image(MetricsObject):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Image"
     )
 
-    url: Union[str, ImageUrl] = None
+    image_url: Union[str, ImageImageUrl] = None
+    source_image_url: Optional[Union[str, List[str]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.url):
-            self.MissingRequiredField("url")
-        if not isinstance(self.url, ImageUrl):
-            self.url = ImageUrl(self.url)
+        if self._is_empty(self.image_url):
+            self.MissingRequiredField("image_url")
+        if not isinstance(self.image_url, ImageImageUrl):
+            self.image_url = ImageImageUrl(self.image_url)
+
+        if not isinstance(self.source_image_url, list):
+            self.source_image_url = (
+                [self.source_image_url] if self.source_image_url is not None else []
+            )
+        self.source_image_url = [v if isinstance(v, str) else str(v) for v in self.source_image_url]
 
         super().__post_init__(**kwargs)
 
@@ -395,14 +402,14 @@ class ImageAsNumpy(Image):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/ImageAsNumpy"
     )
 
-    url: Union[str, ImageAsNumpyUrl] = None
+    image_url: Union[str, ImageAsNumpyImageUrl] = None
     data: Optional[Union[dict, MetaObject]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.url):
-            self.MissingRequiredField("url")
-        if not isinstance(self.url, ImageAsNumpyUrl):
-            self.url = ImageAsNumpyUrl(self.url)
+        if self._is_empty(self.image_url):
+            self.MissingRequiredField("image_url")
+        if not isinstance(self.image_url, ImageAsNumpyImageUrl):
+            self.image_url = ImageAsNumpyImageUrl(self.image_url)
 
         super().__post_init__(**kwargs)
 
@@ -424,7 +431,7 @@ class ImageInline(Image):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/ImageInline"
     )
 
-    url: Union[str, ImageInlineUrl] = None
+    image_url: Union[str, ImageInlineImageUrl] = None
 
 
 @dataclass
@@ -444,16 +451,16 @@ class ImageMask(ImageInline):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/ImageMask"
     )
 
-    url: Union[str, ImageMaskUrl] = None
+    image_url: Union[str, ImageMaskImageUrl] = None
     y: Union[dict, "PixelSeries"] = None
     x: Union[dict, "PixelSeries"] = None
     data: Union[Union[bool, Bool], List[Union[bool, Bool]]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.url):
-            self.MissingRequiredField("url")
-        if not isinstance(self.url, ImageMaskUrl):
-            self.url = ImageMaskUrl(self.url)
+        if self._is_empty(self.image_url):
+            self.MissingRequiredField("image_url")
+        if not isinstance(self.image_url, ImageMaskImageUrl):
+            self.image_url = ImageMaskImageUrl(self.image_url)
 
         if self._is_empty(self.y):
             self.MissingRequiredField("y")
@@ -491,16 +498,16 @@ class Image2D(ImageInline):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Image2D"
     )
 
-    url: Union[str, Image2DUrl] = None
+    image_url: Union[str, Image2DImageUrl] = None
     y: Union[dict, "PixelSeries"] = None
     x: Union[dict, "PixelSeries"] = None
     data: Union[float, List[float]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.url):
-            self.MissingRequiredField("url")
-        if not isinstance(self.url, Image2DUrl):
-            self.url = Image2DUrl(self.url)
+        if self._is_empty(self.image_url):
+            self.MissingRequiredField("image_url")
+        if not isinstance(self.image_url, Image2DImageUrl):
+            self.image_url = Image2DImageUrl(self.image_url)
 
         if self._is_empty(self.y):
             self.MissingRequiredField("y")
@@ -538,7 +545,7 @@ class Image5D(ImageInline):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Image5D"
     )
 
-    url: Union[str, Image5DUrl] = None
+    image_url: Union[str, Image5DImageUrl] = None
     t: Union[dict, "TimeSeries"] = None
     z: Union[dict, "PixelSeries"] = None
     y: Union[dict, "PixelSeries"] = None
@@ -547,10 +554,10 @@ class Image5D(ImageInline):
     data: Union[float, List[float]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.url):
-            self.MissingRequiredField("url")
-        if not isinstance(self.url, Image5DUrl):
-            self.url = Image5DUrl(self.url)
+        if self._is_empty(self.image_url):
+            self.MissingRequiredField("image_url")
+        if not isinstance(self.image_url, Image5DImageUrl):
+            self.image_url = Image5DImageUrl(self.image_url)
 
         if self._is_empty(self.t):
             self.MissingRequiredField("t")
@@ -691,7 +698,9 @@ class ROI(YAMLRoot):
     )
 
     label: Optional[str] = None
-    image: Optional[Union[Union[str, ImageUrl], List[Union[str, ImageUrl]]]] = empty_list()
+    image: Optional[
+        Union[Union[str, ImageImageUrl], List[Union[str, ImageImageUrl]]]
+    ] = empty_list()
     shapes: Optional[Union[Union[dict, "Shape"], List[Union[dict, "Shape"]]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -700,7 +709,7 @@ class ROI(YAMLRoot):
 
         if not isinstance(self.image, list):
             self.image = [self.image] if self.image is not None else []
-        self.image = [v if isinstance(v, ImageUrl) else ImageUrl(v) for v in self.image]
+        self.image = [v if isinstance(v, ImageImageUrl) else ImageImageUrl(v) for v in self.image]
 
         if not isinstance(self.shapes, list):
             self.shapes = [self.shapes] if self.shapes is not None else []
@@ -1019,7 +1028,7 @@ class Mask(Shape):
 
     y: int = 0
     x: int = 0
-    mask: Optional[Union[str, ImageMaskUrl]] = None
+    mask: Optional[Union[str, ImageMaskImageUrl]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.y):
@@ -1032,8 +1041,8 @@ class Mask(Shape):
         if not isinstance(self.x, int):
             self.x = int(self.x)
 
-        if self.mask is not None and not isinstance(self.mask, ImageMaskUrl):
-            self.mask = ImageMaskUrl(self.mask)
+        if self.mask is not None and not isinstance(self.mask, ImageMaskImageUrl):
+            self.mask = ImageMaskImageUrl(self.mask)
 
         super().__post_init__(**kwargs)
 
@@ -1276,13 +1285,22 @@ class slots:
     pass
 
 
-slots.url = Slot(
-    uri=DEFAULT_.url,
-    name="url",
-    curie=DEFAULT_.curie("url"),
-    model_uri=DEFAULT_.url,
+slots.image_url = Slot(
+    uri=DEFAULT_.image_url,
+    name="image_url",
+    curie=DEFAULT_.curie("image_url"),
+    model_uri=DEFAULT_.image_url,
     domain=None,
     range=URIRef,
+)
+
+slots.source_image_url = Slot(
+    uri=DEFAULT_.source_image_url,
+    name="source_image_url",
+    curie=DEFAULT_.curie("source_image_url"),
+    model_uri=DEFAULT_.source_image_url,
+    domain=None,
+    range=Optional[Union[str, List[str]]],
 )
 
 slots.id = Slot(
@@ -1606,7 +1624,7 @@ slots.rOI__image = Slot(
     curie=DEFAULT_.curie("image"),
     model_uri=DEFAULT_.rOI__image,
     domain=None,
-    range=Optional[Union[Union[str, ImageUrl], List[Union[str, ImageUrl]]]],
+    range=Optional[Union[Union[str, ImageImageUrl], List[Union[str, ImageImageUrl]]]],
 )
 
 slots.rOI__shapes = Slot(
@@ -1867,7 +1885,7 @@ slots.mask__mask = Slot(
     curie=DEFAULT_.curie("mask"),
     model_uri=DEFAULT_.mask__mask,
     domain=None,
-    range=Optional[Union[str, ImageMaskUrl]],
+    range=Optional[Union[str, ImageMaskImageUrl]],
 )
 
 slots.color__R = Slot(

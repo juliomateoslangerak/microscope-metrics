@@ -74,7 +74,8 @@ def image_as_numpy_2d_fixture(numpy_2d_ndarray_fixture):
     return core_schema.ImageAsNumpy(
         name="ImageAsNumpy001",
         description="A test image as numpy",
-        url="https://example.com/image001",
+        image_url="https://example.com/image001",
+        source_image_url="https://example.com/source_image002",
         data=numpy_2d_ndarray_fixture,
     )
 
@@ -84,7 +85,8 @@ def image_as_numpy_5d_fixture(numpy_5d_ndarray_fixture):
     return core_schema.ImageAsNumpy(
         name="ImageAsNumpy001",
         description="A test image as numpy",
-        url="https://example.com/image001",
+        image_url="https://example.com/image001",
+        source_image_url="https://example.com/source_image002",
         data=numpy_5d_ndarray_fixture,
     )
 
@@ -95,7 +97,8 @@ def image_mask_fixture(numpy_2d_mask_ndarray_fixture):
         array=numpy_2d_mask_ndarray_fixture,
         name="ImageMask001",
         description="A test image mask",
-        url="https://example.com/image001",
+        image_url="https://example.com/image001",
+        source_image_url="https://example.com/source_image002",
     )
 
 
@@ -105,7 +108,8 @@ def image_2d_fixture(numpy_2d_ndarray_fixture):
         array=numpy_2d_ndarray_fixture,
         name="Image2D001",
         description="A test image 2D",
-        url="https://example.com/image001",
+        image_url="https://example.com/image001",
+        source_image_url="https://example.com/source_image002",
     )
 
 
@@ -115,7 +119,8 @@ def image_5d_fixture(numpy_5d_ndarray_fixture):
         array=numpy_5d_ndarray_fixture,
         name="Image5D001",
         description="A test image 5D",
-        url="https://example.com/image001",
+        image_url="https://example.com/image001",
+        source_image_url="https://example.com/source_image002",
     )
 
 
@@ -307,13 +312,15 @@ def test_image_as_numpy_creation(image_as_numpy_2d_fixture, image_as_numpy_5d_fi
     image_as_numpy_2d = core_schema.ImageAsNumpy(
         name=image_as_numpy_2d_fixture.name,
         description=image_as_numpy_2d_fixture.description,
-        url=image_as_numpy_2d_fixture.url,
+        image_url=image_as_numpy_2d_fixture.image_url,
+        source_image_url=image_as_numpy_2d_fixture.source_image_url,
         data=image_as_numpy_2d_fixture.data,
     )
     image_as_numpy_5d = core_schema.ImageAsNumpy(
         name=image_as_numpy_5d_fixture.name,
         description=image_as_numpy_5d_fixture.description,
-        url=image_as_numpy_5d_fixture.url,
+        image_url=image_as_numpy_5d_fixture.image_url,
+        source_image_url=image_as_numpy_5d_fixture.source_image_url,
         data=image_as_numpy_5d_fixture.data,
     )
 
@@ -329,18 +336,21 @@ def test_image_as_numpy_attributes_required():
         image_as_numpy = core_schema.ImageAsNumpy(
             name="image_as_numpy",
             description="A test image as numpy",
-            url="https://example.com/image_as_numpy001",
+            image_url="https://example.com/image_as_numpy001",
+            source_image_url="https://example.com/image002",
         )
 
 
 def test_image_as_numpy_attribute_types(image_as_numpy_2d_fixture, image_as_numpy_5d_fixture):
     assert isinstance(image_as_numpy_2d_fixture.name, str)
     assert isinstance(image_as_numpy_2d_fixture.description, str)
-    assert isinstance(image_as_numpy_2d_fixture.url, str)
+    assert isinstance(image_as_numpy_2d_fixture.image_url, str)
+    assert isinstance(image_as_numpy_2d_fixture.source_image_url, list)
     assert isinstance(image_as_numpy_2d_fixture.data, np.ndarray)
     assert isinstance(image_as_numpy_5d_fixture.name, str)
     assert isinstance(image_as_numpy_5d_fixture.description, str)
-    assert isinstance(image_as_numpy_5d_fixture.url, str)
+    assert isinstance(image_as_numpy_5d_fixture.image_url, str)
+    assert isinstance(image_as_numpy_5d_fixture.source_image_url, list)
     assert isinstance(image_as_numpy_5d_fixture.data, np.ndarray)
 
 
@@ -351,7 +361,8 @@ def test_image_as_numpy_attribute_values(image_as_numpy_2d_fixture, image_as_num
         image_as_numpy = core_schema.ImageAsNumpy(
             name="image_as_numpy",
             description="A test image as numpy",
-            url="https://example.com/image_as_numpy001",
+            image_url="https://example.com/image_as_numpy001",
+            source_image_url="https://example.com/image002",
             data="Unknown",
         )
 
@@ -375,7 +386,8 @@ def test_image_mask_creation(image_mask_fixture):
     image_mask = core_schema.ImageMask(
         name=image_mask_fixture.name,
         description=image_mask_fixture.description,
-        url=image_mask_fixture.url,
+        image_url=image_mask_fixture.image_url,
+        source_image_url=image_mask_fixture.source_image_url,
         data=image_mask_fixture.data,
         y=image_mask_fixture.y,
         x=image_mask_fixture.x,
@@ -389,7 +401,8 @@ def test_image_mask_attributes_required(image_mask_fixture):
         image_mask = core_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
+            image_url=image_mask_fixture.image_url,
+            source_image_url=image_mask_fixture.source_image_url,
             y=image_mask_fixture.y,
             x=image_mask_fixture.x,
         )
@@ -397,7 +410,8 @@ def test_image_mask_attributes_required(image_mask_fixture):
         image_mask = core_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
+            image_url=image_mask_fixture.image_url,
+            source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
             x=image_mask_fixture.x,
         )
@@ -405,7 +419,8 @@ def test_image_mask_attributes_required(image_mask_fixture):
         image_mask = core_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
+            image_url=image_mask_fixture.image_url,
+            source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
             y=image_mask_fixture.y,
         )
@@ -414,7 +429,8 @@ def test_image_mask_attributes_required(image_mask_fixture):
 def test_image_mask_attribute_types(image_mask_fixture):
     assert isinstance(image_mask_fixture.name, str)
     assert isinstance(image_mask_fixture.description, str)
-    assert isinstance(image_mask_fixture.url, str)
+    assert isinstance(image_mask_fixture.image_url, str)
+    assert isinstance(image_mask_fixture.source_image_url, list)
     assert isinstance(image_mask_fixture.data, list)
     assert isinstance(image_mask_fixture.y, core_schema.PixelSeries)
     assert isinstance(image_mask_fixture.x, core_schema.PixelSeries)
@@ -425,7 +441,8 @@ def test_image_mask_attribute_values(image_mask_fixture):
         image_mask = core_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
+            image_url=image_mask_fixture.image_url,
+            source_image_url=image_mask_fixture.source_image_url,
             data="Unknown",
             y=image_mask_fixture.y,
             x=image_mask_fixture.x,
@@ -435,7 +452,8 @@ def test_image_mask_attribute_values(image_mask_fixture):
         image_mask = core_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
+            image_url=image_mask_fixture.image_url,
+            source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
             y=[2, 3],
             x=image_mask_fixture.x,
@@ -445,7 +463,8 @@ def test_image_mask_attribute_values(image_mask_fixture):
         image_mask = core_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
+            image_url=image_mask_fixture.image_url,
+            source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
             y=image_mask_fixture.y,
             x="wrong type",
@@ -465,7 +484,8 @@ def test_image_2d_creation(image_2d_fixture):
     image_2d = core_schema.Image2D(
         name=image_2d_fixture.name,
         description=image_2d_fixture.description,
-        url=image_2d_fixture.url,
+        image_url=image_2d_fixture.image_url,
+        source_image_url=image_2d_fixture.source_image_url,
         data=image_2d_fixture.data,
         y=image_2d_fixture.y,
         x=image_2d_fixture.x,
@@ -480,7 +500,8 @@ def test_image_2d_attributes_required(image_2d_fixture):
         image_2d = core_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
-            url=image_2d_fixture.url,
+            image_url=image_2d_fixture.image_url,
+            source_image_url=image_2d_fixture.source_image_url,
             y=image_2d_fixture.y,
             x=image_2d_fixture.x,
         )
@@ -489,7 +510,8 @@ def test_image_2d_attributes_required(image_2d_fixture):
         image_2d = core_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
-            url=image_2d_fixture.url,
+            image_url=image_2d_fixture.image_url,
+            source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
             x=image_2d_fixture.x,
         )
@@ -498,7 +520,8 @@ def test_image_2d_attributes_required(image_2d_fixture):
         image_2d = core_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
-            url=image_2d_fixture.url,
+            image_url=image_2d_fixture.image_url,
+            source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
             y=image_2d_fixture.y,
         )
@@ -507,7 +530,8 @@ def test_image_2d_attributes_required(image_2d_fixture):
 def test_image_2d_attribute_types(image_2d_fixture):
     assert isinstance(image_2d_fixture.name, str)
     assert isinstance(image_2d_fixture.description, str)
-    assert isinstance(image_2d_fixture.url, str)
+    assert isinstance(image_2d_fixture.image_url, str)
+    assert isinstance(image_2d_fixture.source_image_url, list)
     assert isinstance(image_2d_fixture.data, list)
     assert isinstance(image_2d_fixture.y, core_schema.PixelSeries)
     assert isinstance(image_2d_fixture.x, core_schema.PixelSeries)
@@ -518,7 +542,8 @@ def test_image_2d_attribute_values(image_2d_fixture):
         image_2d = core_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
-            url=image_2d_fixture.url,
+            image_url=image_2d_fixture.image_url,
+            source_image_url=image_2d_fixture.source_image_url,
             data="Unknown",
             y=image_2d_fixture.y,
             x=image_2d_fixture.x,
@@ -528,7 +553,8 @@ def test_image_2d_attribute_values(image_2d_fixture):
         image_2d = core_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
-            url=image_2d_fixture.url,
+            image_url=image_2d_fixture.image_url,
+            source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
             y=[2, 3],
             x=image_2d_fixture.x,
@@ -538,7 +564,8 @@ def test_image_2d_attribute_values(image_2d_fixture):
         image_2d = core_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
-            url=image_2d_fixture.url,
+            image_url=image_2d_fixture.image_url,
+            source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
             y=image_2d_fixture.y,
             x="wrong type",
@@ -558,7 +585,8 @@ def test_image_5d_creation(image_5d_fixture):
     image_5d = core_schema.Image5D(
         name=image_5d_fixture.name,
         description=image_5d_fixture.description,
-        url=image_5d_fixture.url,
+        image_url=image_5d_fixture.image_url,
+        source_image_url=image_5d_fixture.source_image_url,
         data=image_5d_fixture.data,
         t=image_5d_fixture.t,
         z=image_5d_fixture.z,
@@ -576,7 +604,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
             y=image_5d_fixture.y,
@@ -588,7 +617,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             z=image_5d_fixture.z,
             y=image_5d_fixture.y,
@@ -600,7 +630,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             y=image_5d_fixture.y,
@@ -612,7 +643,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
@@ -624,7 +656,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
@@ -636,7 +669,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
@@ -648,7 +682,8 @@ def test_image_5d_attributes_required(image_5d_fixture):
 def test_image_5d_attribute_types(image_5d_fixture):
     assert isinstance(image_5d_fixture.name, str)
     assert isinstance(image_5d_fixture.description, str)
-    assert isinstance(image_5d_fixture.url, str)
+    assert isinstance(image_5d_fixture.image_url, str)
+    assert isinstance(image_5d_fixture.source_image_url, list)
     assert isinstance(image_5d_fixture.data, list)
     assert isinstance(image_5d_fixture.t, core_schema.TimeSeries)
     assert isinstance(image_5d_fixture.z, core_schema.PixelSeries)
@@ -662,7 +697,8 @@ def test_image_5d_attribute_values(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data="Unknown",
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
@@ -675,7 +711,8 @@ def test_image_5d_attribute_values(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=[2, 3],
             z=image_5d_fixture.z,
@@ -688,7 +725,8 @@ def test_image_5d_attribute_values(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=[2, 3],
@@ -701,7 +739,8 @@ def test_image_5d_attribute_values(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
@@ -714,7 +753,8 @@ def test_image_5d_attribute_values(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,
@@ -727,7 +767,8 @@ def test_image_5d_attribute_values(image_5d_fixture):
         image_5d = core_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
-            url=image_5d_fixture.url,
+            image_url=image_5d_fixture.image_url,
+            source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
             t=image_5d_fixture.t,
             z=image_5d_fixture.z,

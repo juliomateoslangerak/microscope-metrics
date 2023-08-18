@@ -15,7 +15,11 @@ def argolight_b():
         name="an analysis",
         description="a description",
         input={
-            "argolight_b_image": {"data": data, "name": "image_name", "url": image_url},
+            "argolight_b_image": {
+                "data": data,
+                "name": "image_name",
+                "image_url": image_url,
+            },
             "spots_distance": 40,
         },
         output={},
@@ -34,7 +38,11 @@ def argolight_e_horizontal():
         name="an analysis",
         description="a description",
         input={
-            "argolight_e_image": {"data": data, "name": "image_name", "url": image_url},
+            "argolight_e_image": {
+                "data": data,
+                "name": "image_name",
+                "image_url": image_url,
+            },
             "axis": 2,
         },
         output={},
@@ -52,7 +60,11 @@ def argolight_e_vertical():
         name="an analysis",
         description="a description",
         input={
-            "argolight_e_image": {"data": data, "name": "image_name", "url": image_url},
+            "argolight_e_image": {
+                "data": data,
+                "name": "image_name",
+                "image_url": image_url,
+            },
             "axis": 1,
         },
         output={},

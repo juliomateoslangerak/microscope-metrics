@@ -2,6 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
+from typing import List, Union
 
 import numpy as np
 
@@ -37,7 +38,8 @@ def numpy_to_inlined_mask(
     array: np.ndarray,
     name: str = None,
     description: str = None,
-    url: str = None,
+    image_url: str = None,
+    source_image_url: Union[str, List[str]] = None,
 ) -> core_schema.ImageMask:
     """Converts a bool numpy array to an inlined mask"""
     if array.ndim != 2:
@@ -47,7 +49,8 @@ def numpy_to_inlined_mask(
     return core_schema.ImageMask(
         name=name,
         description=description,
-        url=url,
+        image_url=image_url,
+        source_image_url=source_image_url,
         data=array.flatten().tolist(),
         y=core_schema.PixelSeries(values=array.shape[0]),
         x=core_schema.PixelSeries(values=array.shape[1]),
@@ -55,14 +58,19 @@ def numpy_to_inlined_mask(
 
 
 def numpy_to_inlined_image(
-    array: np.ndarray, name: str = None, description: str = None, url: str = None
+    array: np.ndarray,
+    name: str = None,
+    description: str = None,
+    image_url: str = None,
+    source_image_url: Union[str, List[str]] = None,
 ) -> core_schema.ImageInline:
     """Converts a numpy array to an inlined image"""
     if array.ndim == 5:
         return core_schema.Image5D(
             name=name,
             description=description,
-            url=url,
+            image_url=image_url,
+            source_image_url=source_image_url,
             data=array.flatten().tolist(),
             t=core_schema.TimeSeries(values=array.shape[0]),
             z=core_schema.PixelSeries(values=array.shape[1]),
@@ -74,7 +82,8 @@ def numpy_to_inlined_image(
         return core_schema.Image2D(
             name=name,
             description=description,
-            url=url,
+            image_url=image_url,
+            source_image_url=source_image_url,
             data=array.flatten().tolist(),
             y=core_schema.PixelSeries(values=array.shape[0]),
             x=core_schema.PixelSeries(values=array.shape[1]),

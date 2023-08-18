@@ -114,7 +114,8 @@ classes:
     description: A base object for all microscope-metrics images
     abstract: true
     slots:
-      - url
+      - image_url
+      - source_image_url
 
   ImageAsNumpy:
     is_a: Image
@@ -510,11 +511,17 @@ classes:
 
 
 slots:
-  url:
+  image_url:
     range: string
     identifier: true
-    description: An URL
+
+    description: An URL linking to the image
     multivalued: false
+  source_image_url:
+    range: string
+    description: A list of URLs linking to the images that were used as a source
+    required: false
+    multivalued: true
   id:
     range: string
     description: The unique identifier for an entity

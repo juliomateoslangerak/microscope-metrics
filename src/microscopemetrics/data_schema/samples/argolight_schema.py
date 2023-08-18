@@ -1,5 +1,5 @@
 # Auto generated from argolight_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-18T11:32:57
+# Generation date: 2023-08-18T13:11:47
 # Schema: microscopemetrics_samples_argolight_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
@@ -44,7 +44,7 @@ from ..core_schema import (
     ROI,
     ExperimenterOrcid,
     ImageAsNumpy,
-    ImageAsNumpyUrl,
+    ImageAsNumpyImageUrl,
     KeyValues,
     MetricsDataset,
     MetricsInput,
@@ -290,7 +290,7 @@ class ArgolightBOutput(MetricsOutput):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/ArgolightBOutput"
     )
 
-    spots_labels_image: Optional[Union[str, ImageAsNumpyUrl]] = None
+    spots_labels_image: Optional[Union[str, ImageAsNumpyImageUrl]] = None
     spots_centroids: Optional[Union[Union[dict, ROI], List[Union[dict, ROI]]]] = empty_list()
     intensity_measurements: Optional[Union[dict, "ArgolightBIntensityKeyValues"]] = None
     distance_measurements: Optional[Union[dict, "ArgolightBDistanceKeyValues"]] = None
@@ -299,9 +299,9 @@ class ArgolightBOutput(MetricsOutput):
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self.spots_labels_image is not None and not isinstance(
-            self.spots_labels_image, ImageAsNumpyUrl
+            self.spots_labels_image, ImageAsNumpyImageUrl
         ):
-            self.spots_labels_image = ImageAsNumpyUrl(self.spots_labels_image)
+            self.spots_labels_image = ImageAsNumpyImageUrl(self.spots_labels_image)
 
         if not isinstance(self.spots_centroids, list):
             self.spots_centroids = (
@@ -1018,7 +1018,7 @@ slots.argolightBOutput__spots_labels_image = Slot(
     curie=DEFAULT_.curie("spots_labels_image"),
     model_uri=DEFAULT_.argolightBOutput__spots_labels_image,
     domain=None,
-    range=Optional[Union[str, ImageAsNumpyUrl]],
+    range=Optional[Union[str, ImageAsNumpyImageUrl]],
 )
 
 slots.argolightBOutput__spots_centroids = Slot(

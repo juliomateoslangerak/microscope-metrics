@@ -284,7 +284,8 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
             name=f"{self.input.field_illumination_image.name}_intensity_map",
             description=f"Intensity map of {self.input.field_illumination_image.name}",
-            url=self.input.field_illumination_image.url,
+            image_url=self.input.field_illumination_image.image_url,
+            source_image_url=self.input.field_illumination_image.source_image_url,
         )
 
         self.output.intensity_profiles = schema.TableAsDict(
