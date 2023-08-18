@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-17T12:00:01
+# Generation date: 2023-08-18T11:32:46
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -448,8 +448,6 @@ class ImageMask(ImageInline):
     y: Union[dict, "PixelSeries"] = None
     x: Union[dict, "PixelSeries"] = None
     data: Union[Union[bool, Bool], List[Union[bool, Bool]]] = None
-    y_position: Optional[int] = 0
-    x_position: Optional[int] = 0
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.url):
@@ -472,12 +470,6 @@ class ImageMask(ImageInline):
         if not isinstance(self.data, list):
             self.data = [self.data] if self.data is not None else []
         self.data = [v if isinstance(v, Bool) else Bool(v) for v in self.data]
-
-        if self.y_position is not None and not isinstance(self.y_position, int):
-            self.y_position = int(self.y_position)
-
-        if self.x_position is not None and not isinstance(self.x_position, int):
-            self.x_position = int(self.x_position)
 
         super().__post_init__(**kwargs)
 
@@ -1025,9 +1017,21 @@ class Mask(Shape):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Mask"
     )
 
+    y: int = 0
+    x: int = 0
     mask: Optional[Union[str, ImageMaskUrl]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
+        if self._is_empty(self.y):
+            self.MissingRequiredField("y")
+        if not isinstance(self.y, int):
+            self.y = int(self.y)
+
+        if self._is_empty(self.x):
+            self.MissingRequiredField("x")
+        if not isinstance(self.x, int):
+            self.x = int(self.x)
+
         if self.mask is not None and not isinstance(self.mask, ImageMaskUrl):
             self.mask = ImageMaskUrl(self.mask)
 
@@ -1452,24 +1456,6 @@ slots.imageAsNumpy__data = Slot(
     range=Optional[Union[dict, MetaObject]],
 )
 
-slots.imageMask__y_position = Slot(
-    uri=DEFAULT_.y_position,
-    name="imageMask__y_position",
-    curie=DEFAULT_.curie("y_position"),
-    model_uri=DEFAULT_.imageMask__y_position,
-    domain=None,
-    range=Optional[int],
-)
-
-slots.imageMask__x_position = Slot(
-    uri=DEFAULT_.x_position,
-    name="imageMask__x_position",
-    curie=DEFAULT_.curie("x_position"),
-    model_uri=DEFAULT_.imageMask__x_position,
-    domain=None,
-    range=Optional[int],
-)
-
 slots.imageMask__y = Slot(
     uri=DEFAULT_.y,
     name="imageMask__y",
@@ -1855,6 +1841,24 @@ slots.vertex__y = Slot(
     model_uri=DEFAULT_.vertex__y,
     domain=None,
     range=float,
+)
+
+slots.mask__y = Slot(
+    uri=DEFAULT_.y,
+    name="mask__y",
+    curie=DEFAULT_.curie("y"),
+    model_uri=DEFAULT_.mask__y,
+    domain=None,
+    range=int,
+)
+
+slots.mask__x = Slot(
+    uri=DEFAULT_.x,
+    name="mask__x",
+    curie=DEFAULT_.curie("x"),
+    model_uri=DEFAULT_.mask__x,
+    domain=None,
+    range=int,
 )
 
 slots.mask__mask = Slot(

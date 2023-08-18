@@ -35,8 +35,6 @@ logger = logging.getLogger(__name__)
 
 def numpy_to_inlined_mask(
     array: np.ndarray,
-    y_position: int = None,
-    x_position: int = None,
     name: str = None,
     description: str = None,
     url: str = None,
@@ -53,8 +51,6 @@ def numpy_to_inlined_mask(
         data=array.flatten().tolist(),
         y=core_schema.PixelSeries(values=array.shape[0]),
         x=core_schema.PixelSeries(values=array.shape[1]),
-        y_position=y_position,
-        x_position=x_position,
     )
 
 

@@ -132,12 +132,6 @@ classes:
     is_a: ImageInline
     description: A base object for all microscope-metrics masks
     attributes:
-      y_position:
-        range: integer
-        ifabsent: int(0)
-      x_position:
-        range: integer
-        ifabsent: int(0)
       y:
         range: PixelSeries
         implements:
@@ -406,6 +400,14 @@ classes:
     is_a: Shape
     description: A mask as defined by a boolean image
     attributes:
+      y:
+        range: integer
+        required: true
+        ifabsent: int(0)
+      x:
+        range: integer
+        required: true
+        ifabsent: int(0)
       mask:
         range: ImageMask
         multivalued: false

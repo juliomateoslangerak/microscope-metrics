@@ -93,8 +93,6 @@ def image_as_numpy_5d_fixture(numpy_5d_ndarray_fixture):
 def image_mask_fixture(numpy_2d_mask_ndarray_fixture):
     return numpy_to_inlined_mask(
         array=numpy_2d_mask_ndarray_fixture,
-        y_position=1,
-        x_position=1,
         name="ImageMask001",
         description="A test image mask",
         url="https://example.com/image001",
@@ -379,8 +377,6 @@ def test_image_mask_creation(image_mask_fixture):
         description=image_mask_fixture.description,
         url=image_mask_fixture.url,
         data=image_mask_fixture.data,
-        y_position=image_mask_fixture.y_position,
-        x_position=image_mask_fixture.x_position,
         y=image_mask_fixture.y,
         x=image_mask_fixture.x,
     )
@@ -394,8 +390,6 @@ def test_image_mask_attributes_required(image_mask_fixture):
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             url=image_mask_fixture.url,
-            y_position=image_mask_fixture.y_position,
-            x_position=image_mask_fixture.x_position,
             y=image_mask_fixture.y,
             x=image_mask_fixture.x,
         )
@@ -405,8 +399,6 @@ def test_image_mask_attributes_required(image_mask_fixture):
             description=image_mask_fixture.description,
             url=image_mask_fixture.url,
             data=image_mask_fixture.data,
-            y_position=image_mask_fixture.y_position,
-            x_position=image_mask_fixture.x_position,
             x=image_mask_fixture.x,
         )
     with pytest.raises(ValueError):
@@ -415,8 +407,6 @@ def test_image_mask_attributes_required(image_mask_fixture):
             description=image_mask_fixture.description,
             url=image_mask_fixture.url,
             data=image_mask_fixture.data,
-            y_position=image_mask_fixture.y_position,
-            x_position=image_mask_fixture.x_position,
             y=image_mask_fixture.y,
         )
 
@@ -426,8 +416,6 @@ def test_image_mask_attribute_types(image_mask_fixture):
     assert isinstance(image_mask_fixture.description, str)
     assert isinstance(image_mask_fixture.url, str)
     assert isinstance(image_mask_fixture.data, list)
-    assert isinstance(image_mask_fixture.y_position, int)
-    assert isinstance(image_mask_fixture.x_position, int)
     assert isinstance(image_mask_fixture.y, core_schema.PixelSeries)
     assert isinstance(image_mask_fixture.x, core_schema.PixelSeries)
 
@@ -439,32 +427,6 @@ def test_image_mask_attribute_values(image_mask_fixture):
             description=image_mask_fixture.description,
             url=image_mask_fixture.url,
             data="Unknown",
-            y_position=image_mask_fixture.y_position,
-            x_position=image_mask_fixture.x_position,
-            y=image_mask_fixture.y,
-            x=image_mask_fixture.x,
-        )
-    with pytest.raises(ValueError):
-        # Y position must be an integer
-        image_mask = core_schema.ImageMask(
-            name=image_mask_fixture.name,
-            description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
-            data=image_mask_fixture.data,
-            y_position="Unknown",
-            x_position=image_mask_fixture.x_position,
-            y=image_mask_fixture.y,
-            x=image_mask_fixture.x,
-        )
-    with pytest.raises(ValueError):
-        # X position must be a positive integer
-        image_mask = core_schema.ImageMask(
-            name=image_mask_fixture.name,
-            description=image_mask_fixture.description,
-            url=image_mask_fixture.url,
-            data=image_mask_fixture.data,
-            y_position=image_mask_fixture.y_position,
-            x_position="Unknown",
             y=image_mask_fixture.y,
             x=image_mask_fixture.x,
         )
@@ -475,8 +437,6 @@ def test_image_mask_attribute_values(image_mask_fixture):
             description=image_mask_fixture.description,
             url=image_mask_fixture.url,
             data=image_mask_fixture.data,
-            y_position=image_mask_fixture.y_position,
-            x_position=image_mask_fixture.x_position,
             y=[2, 3],
             x=image_mask_fixture.x,
         )
@@ -487,8 +447,6 @@ def test_image_mask_attribute_values(image_mask_fixture):
             description=image_mask_fixture.description,
             url=image_mask_fixture.url,
             data=image_mask_fixture.data,
-            y_position=image_mask_fixture.y_position,
-            x_position=image_mask_fixture.x_position,
             y=image_mask_fixture.y,
             x="wrong type",
         )
