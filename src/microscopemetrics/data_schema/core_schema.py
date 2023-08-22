@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-22T12:28:58
+# Generation date: 2023-08-22T14:55:13
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -1064,26 +1064,26 @@ class Color(YAMLRoot):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Color"
     )
 
-    R: int = None
-    G: int = None
-    B: int = None
+    r: int = None
+    g: int = None
+    b: int = None
     alpha: Optional[int] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self._is_empty(self.R):
-            self.MissingRequiredField("R")
-        if not isinstance(self.R, int):
-            self.R = int(self.R)
+        if self._is_empty(self.r):
+            self.MissingRequiredField("r")
+        if not isinstance(self.r, int):
+            self.r = int(self.r)
 
-        if self._is_empty(self.G):
-            self.MissingRequiredField("G")
-        if not isinstance(self.G, int):
-            self.G = int(self.G)
+        if self._is_empty(self.g):
+            self.MissingRequiredField("g")
+        if not isinstance(self.g, int):
+            self.g = int(self.g)
 
-        if self._is_empty(self.B):
-            self.MissingRequiredField("B")
-        if not isinstance(self.B, int):
-            self.B = int(self.B)
+        if self._is_empty(self.b):
+            self.MissingRequiredField("b")
+        if not isinstance(self.b, int):
+            self.b = int(self.b)
 
         if self.alpha is not None and not isinstance(self.alpha, int):
             self.alpha = int(self.alpha)
@@ -1888,29 +1888,29 @@ slots.mask__mask = Slot(
     range=Optional[Union[dict, ImageMask]],
 )
 
-slots.color__R = Slot(
-    uri=DEFAULT_.R,
-    name="color__R",
-    curie=DEFAULT_.curie("R"),
-    model_uri=DEFAULT_.color__R,
+slots.color__r = Slot(
+    uri=DEFAULT_.r,
+    name="color__r",
+    curie=DEFAULT_.curie("r"),
+    model_uri=DEFAULT_.color__r,
     domain=None,
     range=int,
 )
 
-slots.color__G = Slot(
-    uri=DEFAULT_.G,
-    name="color__G",
-    curie=DEFAULT_.curie("G"),
-    model_uri=DEFAULT_.color__G,
+slots.color__g = Slot(
+    uri=DEFAULT_.g,
+    name="color__g",
+    curie=DEFAULT_.curie("g"),
+    model_uri=DEFAULT_.color__g,
     domain=None,
     range=int,
 )
 
-slots.color__B = Slot(
-    uri=DEFAULT_.B,
-    name="color__B",
-    curie=DEFAULT_.curie("B"),
-    model_uri=DEFAULT_.color__B,
+slots.color__b = Slot(
+    uri=DEFAULT_.b,
+    name="color__b",
+    curie=DEFAULT_.curie("b"),
+    model_uri=DEFAULT_.color__b,
     domain=None,
     range=int,
 )

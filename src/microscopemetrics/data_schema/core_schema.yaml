@@ -417,19 +417,19 @@ classes:
   Color:
     description: A color as defined by RGB values and an optional alpha value
     attributes:
-      R:
+      r:
         range: integer
         required: true
         multivalued: false
         minimum_value: 0
         maximum_value: 255
-      G:
+      g:
         range: integer
         required: true
         multivalued: false
         minimum_value: 0
         maximum_value: 255
-      B:
+      b:
         range: integer
         required: true
         multivalued: false
