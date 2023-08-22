@@ -44,11 +44,13 @@ def numpy_to_inlined_mask(
     """Converts a bool numpy array to an inlined mask"""
     if array.ndim != 2:
         raise ValueError("Input array should be 2D")
-    if array.dtype != bool:
+    if array.dtype != bool and array.dtype == np.uint8:
         try:
-            array = array.astype(bool, casting="safe")
+            array = array.astype(bool)
         except ValueError:
-            raise ValueError("Input array should be of type bool")
+            raise ValueError("Input array could not be casted to type bool")
+    if array.dtype != bool:
+        raise ValueError("Input array should be of type bool")
 
     return core_schema.ImageMask(
         name=name,
