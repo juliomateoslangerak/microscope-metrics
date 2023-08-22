@@ -1,5 +1,5 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-22T16:12:56
+# Generation date: 2023-08-22T17:33:58
 # Schema: microscopemetrics_samples_field_illumination_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml

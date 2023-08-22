@@ -1,5 +1,5 @@
 # Auto generated from argolight_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-22T16:13:02
+# Generation date: 2023-08-22T17:34:01
 # Schema: microscopemetrics_samples_argolight_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml

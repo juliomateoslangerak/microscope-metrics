@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-22T16:12:47
+# Generation date: 2023-08-22T17:33:52
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -1073,7 +1073,7 @@ class Color(YAMLRoot):
     r: int = 128
     g: int = 128
     b: int = 128
-    alpha: Optional[int] = 0
+    alpha: Optional[int] = 255
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.r):

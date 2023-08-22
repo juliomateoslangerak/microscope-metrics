@@ -448,7 +448,7 @@ classes:
       alpha:
         range: integer
         required: false
-        ifabsent: int(0)
+        ifabsent: int(255)
         multivalued: false
         minimum_value: 0
         maximum_value: 255
