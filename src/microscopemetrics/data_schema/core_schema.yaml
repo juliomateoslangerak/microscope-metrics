@@ -259,6 +259,10 @@ classes:
         range: string
         required: false
         multivalued: false
+      description:
+        range: string
+        required: false
+        multivalued: false
       image:
         range: Image
         required: false

@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-22T15:46:41
+# Generation date: 2023-08-22T16:12:47
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -698,6 +698,7 @@ class ROI(YAMLRoot):
     )
 
     label: Optional[str] = None
+    description: Optional[str] = None
     image: Optional[
         Union[Union[str, ImageImageUrl], List[Union[str, ImageImageUrl]]]
     ] = empty_list()
@@ -706,6 +707,9 @@ class ROI(YAMLRoot):
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self.label is not None and not isinstance(self.label, str):
             self.label = str(self.label)
+
+        if self.description is not None and not isinstance(self.description, str):
+            self.description = str(self.description)
 
         if not isinstance(self.image, list):
             self.image = [self.image] if self.image is not None else []
@@ -1616,6 +1620,15 @@ slots.rOI__label = Slot(
     name="rOI__label",
     curie=DEFAULT_.curie("label"),
     model_uri=DEFAULT_.rOI__label,
+    domain=None,
+    range=Optional[str],
+)
+
+slots.rOI__description = Slot(
+    uri=DEFAULT_.description,
+    name="rOI__description",
+    curie=DEFAULT_.curie("description"),
+    model_uri=DEFAULT_.rOI__description,
     domain=None,
     range=Optional[str],
 )
