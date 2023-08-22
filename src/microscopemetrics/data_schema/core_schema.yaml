@@ -293,6 +293,7 @@ classes:
       stroke_width:
         range: integer
         required: false
+        ifabsent: int(1)
 
   Point:
     is_a: Shape
@@ -420,18 +421,21 @@ classes:
       r:
         range: integer
         required: true
+        ifabsent: int(128)
         multivalued: false
         minimum_value: 0
         maximum_value: 255
       g:
         range: integer
         required: true
+        ifabsent: int(128)
         multivalued: false
         minimum_value: 0
         maximum_value: 255
       b:
         range: integer
         required: true
+        ifabsent: int(128)
         multivalued: false
         minimum_value: 0
         maximum_value: 255
