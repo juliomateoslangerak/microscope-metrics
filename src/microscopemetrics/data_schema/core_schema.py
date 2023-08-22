@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-22T15:19:35
+# Generation date: 2023-08-22T15:46:41
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -963,9 +963,11 @@ class Polygon(Shape):
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.vertexes):
             self.MissingRequiredField("vertexes")
-        self._normalize_inlined_as_dict(
-            slot_name="vertexes", slot_type=Vertex, key_name="x", keyed=False
-        )
+        if not isinstance(self.vertexes, list):
+            self.vertexes = [self.vertexes] if self.vertexes is not None else []
+        self.vertexes = [
+            v if isinstance(v, Vertex) else Vertex(**as_dict(v)) for v in self.vertexes
+        ]
 
         if self._is_empty(self.is_open):
             self.MissingRequiredField("is_open")

@@ -380,6 +380,8 @@ classes:
         range: Vertex
         multivalued: true
         required: true
+        inlined: true
+        inlined_as_list: true
       is_open:
         range: boolean
         multivalued: false
