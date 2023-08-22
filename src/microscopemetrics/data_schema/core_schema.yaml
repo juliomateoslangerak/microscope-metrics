@@ -412,6 +412,7 @@ classes:
       mask:
         range: ImageMask
         multivalued: false
+        inlined: true
 
   Color:
     description: A color as defined by RGB values and an optional alpha value
@@ -514,7 +515,6 @@ slots:
   image_url:
     range: string
     identifier: true
-
     description: An URL linking to the image
     multivalued: false
   source_image_url:

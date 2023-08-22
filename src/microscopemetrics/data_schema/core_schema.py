@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-18T13:11:39
+# Generation date: 2023-08-22T12:28:58
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -1028,7 +1028,7 @@ class Mask(Shape):
 
     y: int = 0
     x: int = 0
-    mask: Optional[Union[str, ImageMaskImageUrl]] = None
+    mask: Optional[Union[dict, ImageMask]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.y):
@@ -1041,8 +1041,8 @@ class Mask(Shape):
         if not isinstance(self.x, int):
             self.x = int(self.x)
 
-        if self.mask is not None and not isinstance(self.mask, ImageMaskImageUrl):
-            self.mask = ImageMaskImageUrl(self.mask)
+        if self.mask is not None and not isinstance(self.mask, ImageMask):
+            self.mask = ImageMask(**as_dict(self.mask))
 
         super().__post_init__(**kwargs)
 
@@ -1885,7 +1885,7 @@ slots.mask__mask = Slot(
     curie=DEFAULT_.curie("mask"),
     model_uri=DEFAULT_.mask__mask,
     domain=None,
-    range=Optional[Union[str, ImageMaskImageUrl]],
+    range=Optional[Union[dict, ImageMask]],
 )
 
 slots.color__R = Slot(
