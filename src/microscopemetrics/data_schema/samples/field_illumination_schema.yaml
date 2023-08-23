@@ -135,8 +135,6 @@ slots:
     range: float
     description: >-
       Input parameter: the proportion of the image to be considered as corner or center
-    annotations:
-      review: A very useful class that is well defined
     required: true
     multivalued: false
     ifabsent: float(0.1)
