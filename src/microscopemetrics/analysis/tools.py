@@ -1,6 +1,7 @@
 """These are some possibly useful code snippets"""
 import logging
 from itertools import permutations
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -25,14 +26,12 @@ def _segment_channel(
     low_corr_factor,
     high_corr_factor,
 ):
-    """Segment a channel (3D numpy array)"""
+    """Segment a channel (3D numpy array ZYX)"""
     if threshold is None:
         threshold = threshold_otsu(channel)
 
     if sigma is not None:
-        channel = gaussian(
-            image=channel, sigma=sigma, preserve_range=True, channel_axis=None
-        )
+        channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
 
     if method == "hysteresis":  # We may try here hysteresis threshold
         thresholded = apply_hysteresis_threshold(
@@ -61,40 +60,39 @@ def _segment_channel(
 
 
 def segment_image(
-    image,
-    min_distance,
-    threshold=None,
+    image: np.ndarray,
+    min_distance: float,
+    threshold: float = None,
     sigma=None,
-    method="local_max",
-    low_corr_factors=None,
-    high_corr_factors=None,
+    method: str = "local_max",
+    low_corr_factors: List[float] = None,
+    high_corr_factors: List[float] = None,
 ):
     """Segment an image and return a labels object.
-    Image must be provided as zctxy numpy array
+    Image must be provided as TZYXC numpy array
     """
     module_logger.info("Image being segmented...")
 
-    if low_corr_factors is None:
-        low_corr_factors = [0.95] * image.shape[1]
+    if low_corr_factors is None or (
+        isinstance(low_corr_factors, list) and len(low_corr_factors) == 0
+    ):
+        low_corr_factors = [0.95] * image.shape[4]
         module_logger.warning("No low correction factor specified. Using defaults")
-    if high_corr_factors is None:
-        high_corr_factors = [1.05] * image.shape[1]
+    if high_corr_factors is None or (
+        isinstance(high_corr_factors, list) and len(high_corr_factors) == 0
+    ):
+        high_corr_factors = [1.05] * image.shape[4]
         module_logger.warning("No high correction factor specified. Using defaults")
 
-    if (
-        len(high_corr_factors) != image.shape[1]
-        or len(low_corr_factors) != image.shape[1]
-    ):
-        raise Exception(
-            "The number of correction factors does not match the number of channels."
-        )
+    if len(high_corr_factors) != image.shape[4] or len(low_corr_factors) != image.shape[4]:
+        raise Exception("The number of correction factors does not match the number of channels.")
 
     # We create an empty array to store the output
     labels_image = np.zeros(image.shape, dtype=np.uint16)
-    for c in range(image.shape[1]):
-        for t in range(image.shape[2]):
-            labels_image[:, c, t, ...] = _segment_channel(
-                image[:, c, t, ...],
+    for c in range(image.shape[4]):
+        for t in range(image.shape[0]):
+            labels_image[t, :, :, :, c] = _segment_channel(
+                image[t, :, :, :, c],
                 min_distance=min_distance,
                 method=method,
                 threshold=threshold,
@@ -145,15 +143,16 @@ def _compute_channel_spots_properties(
 
 
 def compute_spots_properties(image, labels, remove_center_cross=False, pixel_size=None):
-    """Computes a number of properties for the PSF-like spots found on an image provided they are segmented"""
+    """Computes a number of properties for the PSF-like spots found on an image provided they are segmented.
+    Image must be provided as a TZYXC 5d numpy array"""
     properties = []
     positions = []
 
-    for c in range(image.shape[1]):
-        for t in range(image.shape[2]):
+    for c in range(image.shape[4]):
+        for t in range(image.shape[0]):
             pr, pos = _compute_channel_spots_properties(
-                channel=image[:, c, t, ...],
-                label_channel=labels[:, c, t, ...],
+                channel=image[t, :, :, :, c],
+                label_channel=labels[t, :, :, :, c],
                 remove_center_cross=remove_center_cross,
                 pixel_size=pixel_size,
             )
@@ -234,9 +233,7 @@ def _channel_fft_2d(channel):
 
 def fft_2d(image):
     # Create an empty array to contain the transform
-    fft = np.zeros(
-        shape=(image.shape[1], image.shape[2], image.shape[3] // 2 + 1), dtype="float64"
-    )
+    fft = np.zeros(shape=(image.shape[1], image.shape[2], image.shape[3] // 2 + 1), dtype="float64")
     for c in range(image.shape[2]):
         fft[c, :, :] = _channel_fft_2d(image[..., c, :, :])
 

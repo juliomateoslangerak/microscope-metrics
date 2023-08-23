@@ -46,7 +46,7 @@ def _fit_airy(profile, guess=None):
 
 
 @register_image_analysis
-class PSFBeadsAnalysis(Analysis):
+class PSFBeadsAnalysis(AnalysisMixin):
     """This class handles a PSF beads sample"""
 
     def __init__(self, config=None):
