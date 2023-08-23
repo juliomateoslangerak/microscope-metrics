@@ -11,24 +11,25 @@ The procedure to follow is, in short:
     - define a 'run' method that will implement the logic of your analysis
     - if desired, define a 'plot' method returning a plot showing the results of the analysis
 """
-import numpy as np
-
-# import the sample functionality
-from microscopemetrics.samples import *
+from math import atan2
 
 # import the types that you may be using
 from typing import Tuple
 
+import numpy as np
+
 # import anything you will need for your analysis
 from pandas import DataFrame
-from skimage.transform import probabilistic_hough_line
-from scipy.spatial import distance
-from math import atan2
 from pydantic.color import Color
+from scipy.spatial import distance
+from skimage.transform import probabilistic_hough_line
+
+# import the sample functionality
+from microscopemetrics.samples import *
 
 
 class DetectLinesAnalysis(
-    Analysis
+    AnalysisMixin
 ):  # Subclass Analysis for each analysis you want to implement for a given sample
     """Write a good documentation:
     This analysis detects lines in a 2D image through a progressive probabilistic hough transform."""
@@ -67,10 +68,8 @@ class DetectLinesAnalysis(
         )  # it will use None as default
 
     # You must define a run method taking no parameters. This method will run the analysis
-    def run(self):
-        logger.info(
-            "Validating requirements..."
-        )  # You may use the logger function to log info
+    def _run(self):
+        logger.info("Validating requirements...")  # You may use the logger function to log info
 
         # It is a good practice to verify all the requirements before running the analysis
         # This will verify that all the non optional requirements are provided
@@ -79,9 +78,7 @@ class DetectLinesAnalysis(
             logger.error(
                 f"The following metadata requirements ara not met: {self.list_unmet_requirements()}"
             )
-            return (
-                False  # The run method should return False upon unsuccessful execution
-            )
+            return False  # The run method should return False upon unsuccessful execution
 
         logger.info("Finding lines...")
 
@@ -89,9 +86,7 @@ class DetectLinesAnalysis(
 
         # If you remember, we did not provide a default value for the line_length. This does not make much sense
         # but for the sake of demonstration. You can access the metadata as properties of the analysis (self) input
-        if (
-            not self.input.line_length.value
-        ):  # We check if the value of the line_length is None
+        if not self.input.line_length.value:  # We check if the value of the line_length is None
             self.input.line_length.value = 50  # and if it is, we give it a value
 
         lines = probabilistic_hough_line(
@@ -108,9 +103,7 @@ class DetectLinesAnalysis(
 
         # We may add some rois to the output
         shapes = [
-            model.Line(
-                x1=x1, y1=y1, x2=x2, y2=y2, stroke_color=Color("red")
-            )  # With some color
+            model.Line(x1=x1, y1=y1, x2=x2, y2=y2, stroke_color=Color("red"))  # With some color
             for (x1, y1), (x2, y2) in lines
         ]
         self.output.append(
@@ -131,9 +124,7 @@ class DetectLinesAnalysis(
         lines_df["length"] = lines_df.apply(
             lambda l: distance.euclidean([l.x_1, l.y_1], [l.x_2, l.y_2]), axis=1
         )
-        lines_df["angle"] = lines_df.apply(
-            lambda l: atan2(l.x_1 - l.x_2, l.y_1 - l.y_2), axis=1
-        )
+        lines_df["angle"] = lines_df.apply(lambda l: atan2(l.x_1 - l.x_2, l.y_1 - l.y_2), axis=1)
 
         # We append the dataframe into the output
         self.output.append(

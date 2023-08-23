@@ -1,0 +1,346 @@
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+name: microscopemetrics_samples_field_illumination_schema
+prefixes:
+#  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
+#imports:
+#  - metrics:types
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+  - ../core_schema  # TODO: change to metrics:core_schema
+
+default_range: string
+
+
+classes:
+  FieldIlluminationDataset:
+    is_a: MetricsDataset
+    description: >-
+      A field illumination dataset
+    attributes:
+      input:
+        range: FieldIlluminationInput
+        required: true
+        multivalued: false
+      output:
+        range: FieldIlluminationOutput
+        required: false
+        multivalued: false
+    rules:
+      - preconditions:
+          slot_conditions:
+            processed:
+              equals_number: 1
+        postconditions:
+          slot_conditions:
+            output:
+              required: true
+
+  FieldIlluminationInput:
+    is_a: MetricsInput
+    slots:
+      - field_illumination_image
+      - bit_depth
+      - saturation_threshold
+      - center_threshold
+      - corner_fraction
+      - sigma
+      - intensity_map_size
+    slot_usage:
+      saturation_threshold:
+        required: true
+
+  FieldIlluminationOutput:
+    is_a: MetricsOutput
+    attributes:
+      key_values:
+        range: FieldIlluminationKeyValues
+        description: >-
+          Key-Value pairs containing the Key measurements for the field illumination analysis
+        multivalued: false
+      intensity_profiles:
+        range: TableAsDict
+        description: >-
+          Intensity profiles for the field illumination analysis in the different directions
+      intensity_map:
+        range: Image5D
+        description: >-
+          Intensity map of the field illumination
+        multivalued: false
+      profile_rois:
+        range: ROI
+        description: >-
+          Output: ROIs used to compute the intensity profile
+        multivalued: false
+
+  FieldIlluminationKeyValues:
+    is_a: KeyValues
+    slots:
+      - channel
+      - nb_pixels
+      - center_of_mass_x
+      - center_of_mass_y
+      - max_intensity
+      - max_intensity_pos_x
+      - max_intensity_pos_y
+      - top_left_intensity_mean
+      - top_left_intensity_ratio
+      - top_center_intensity_mean
+      - top_center_intensity_ratio
+      - top_right_intensity_mean
+      - top_right_intensity_ratio
+      - middle_left_intensity_mean
+      - middle_left_intensity_ratio
+      - middle_center_intensity_mean
+      - middle_center_intensity_ratio
+      - middle_right_intensity_mean
+      - middle_right_intensity_ratio
+      - bottom_left_intensity_mean
+      - bottom_left_intensity_ratio
+      - bottom_center_intensity_mean
+      - bottom_center_intensity_ratio
+      - bottom_right_intensity_mean
+      - bottom_right_intensity_ratio
+      - decile_0
+      - decile_1
+      - decile_2
+      - decile_3
+      - decile_4
+      - decile_5
+      - decile_6
+      - decile_7
+      - decile_8
+      - decile_9
+
+
+slots:
+  field_illumination_image:
+    range: ImageAsNumpy
+    description: >-
+      Input parameter: homogeneity image provided as a numpy array in the order. While the analysis accepts
+      multiple channels, the T and Z dimensions are expected to be 1.
+    required: true
+    multivalued: false
+    inlined: true
+  center_threshold:
+    range: float
+    description: >-
+      Input parameter: relative threshold for what is going to be considered as the intensity center of the image
+    required: true
+    multivalued: false
+    ifabsent: float(0.9)
+    minimum_value: 0.0
+    maximum_value: 1.0
+  corner_fraction:
+    range: float
+    description: >-
+      Input parameter: the proportion of the image to be considered as corner or center
+    required: true
+    multivalued: false
+    ifabsent: float(0.1)
+    minimum_value: 0.01
+    maximum_value: 0.49
+  sigma:
+    range: float
+    description: >-
+      Input parameter: the sigma for the smoothing gaussian filter to be applied prior to analysis
+    required: true
+    multivalued: false
+    ifabsent: float(2.0)
+    minimum_value: 0.0
+    maximum_value: 100.0
+  intensity_map_size:
+    range: integer
+    description: >-
+      Input parameter: the size of the output intensity map in pixels
+    required: true
+    multivalued: false
+    ifabsent: int(64)
+    minimum_value: 5
+    maximum_value: 512
+
+  channel:
+    range: integer
+    description: >-
+      The channel number to which the measurements apply
+    multivalued: true
+  nb_pixels:
+    range: integer
+    description: >-
+      The area occupied by the center of illumination region. In pixels
+    multivalued: true
+  center_of_mass_x:
+    range: float
+    description: >-
+      The x coordinate of the center of mass of the center of illumination region. In pixels
+    multivalued: true
+  center_of_mass_y:
+    range: float
+    description: >-
+      The y coordinate of the center of mass of the center of illumination region. In pixels
+    multivalued: true
+  max_intensity:
+    range: float
+    description: >-
+      The maximum intensity of the center of illumination
+    multivalued: true
+  max_intensity_pos_x:
+    range: float
+    description: >-
+      The x coordinate of the maximum intensity of the center of illumination. In pixels
+    multivalued: true
+  max_intensity_pos_y:
+    range: float
+    description: >-
+      The y coordinate of the maximum intensity of the center of illumination. In pixels
+    multivalued: true
+  top_left_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the top-left corner of the image
+    multivalued: true
+  top_left_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the top-left corner of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  top_center_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the top-center of the image
+    multivalued: true
+  top_center_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the top-center of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  top_right_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the top-right corner of the image
+    multivalued: true
+  top_right_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the top-right corner of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  middle_left_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the middle-left of the image
+    multivalued: true
+  middle_left_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the middle-left of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  middle_center_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the middle-center of the image
+    multivalued: true
+  middle_center_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the middle-center of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  middle_right_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the middle-right of the image
+    multivalued: true
+  middle_right_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the middle-right of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  bottom_left_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the bottom-left of the image
+    multivalued: true
+  bottom_left_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the bottom-left of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  bottom_center_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the bottom-center of the image
+    multivalued: true
+  bottom_center_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the bottom-center of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  bottom_right_intensity_mean:
+    range: float
+    description: >-
+      The mean intensity of the bottom-right of the image
+    multivalued: true
+  bottom_right_intensity_ratio:
+    range: float
+    description: >-
+      The mean intensity of the bottom-right of the image 
+      divided by the maximum intensity of the center of illumination
+    multivalued: true
+  decile_0:
+    range: float
+    description: >-
+      The 0th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_1:
+    range: float
+    description: >-
+      The 1st decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_2:
+    range: float
+    description: >-
+      The 2nd decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_3:
+    range: float
+    description: >-
+      The 3rd decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_4:
+    range: float
+    description: >-
+      The 4th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_5:
+    range: float
+    description: >-
+      The 5th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_6:
+    range: float
+    description: >-
+      The 6th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_7:
+    range: float
+    description: >-
+      The 7th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_8:
+    range: float
+    description: >-
+      The 8th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+  decile_9:
+    range: float
+    description: >-
+      The 9th decile of the intensity distribution of the maximum intensity
+    multivalued: true
+

@@ -1,0 +1,442 @@
+id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+name: microscopemetrics_samples_argolight_schema
+prefixes:
+#  metrics: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/model/
+#imports:
+#  - metrics:types
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+  - ../core_schema  # TODO: change to metrics:core_schema
+
+default_range: string
+
+
+classes:
+  ArgolightBDataset:
+    is_a: MetricsDataset
+    description: >-
+      An Argolight sample pattern B dataset
+    attributes:
+      input:
+        range: ArgolightBInput
+        required: true
+        multivalued: false
+      output:
+        range: ArgolightBOutput
+        required: false
+        multivalued: false
+    rules:
+      - preconditions:
+          slot_conditions:
+            processed:
+              equals_number: 1
+        postconditions:
+          slot_conditions:
+            output:
+              required: true
+  ArgolightBInput:
+    is_a: MetricsInput
+    slots:
+      - argolight_b_image
+      - bit_depth
+      - saturation_threshold
+      - spots_distance
+      - sigma_z
+      - sigma_y
+      - sigma_x
+      - lower_threshold_correction_factors
+      - upper_threshold_correction_factors
+      - remove_center_cross
+    slot_usage:
+      saturation_threshold:
+        required: true
+  ArgolightBOutput:
+    is_a: MetricsOutput
+    attributes:
+      spots_labels_image:
+        range: ImageAsNumpy
+        description: >-
+          Labels image of the argolight segmented spots provided as a 5D numpy array in the order TZYXC.
+          Image intensities correspond to roi labels
+        required: false
+        multivalued: false
+      spots_centroids:
+        range: ROI
+        description: >-
+          Centroids of the argolight spots provided as a list of ROIs, one per channel
+        required: false
+        multivalued: true
+      intensity_measurements:
+        range: ArgolightBIntensityKeyValues
+        description: >-
+          Key Intensity Measurements on Argolight spots
+        required: false
+        multivalued: false
+      distance_measurements:
+        range: ArgolightBDistanceKeyValues
+        description: >-
+          Key Distance Measurements on Argolight spots
+        required: false
+        multivalued: false
+      spots_properties:
+        range: TableAsDict
+        description: >-
+          Table of properties of the argolight spots
+        required: false
+        multivalued: false
+      spots_distances:
+        range: TableAsDict
+        description: >-
+          Table of distances between argolight spots
+        required: false
+        multivalued: false
+
+  ArgolightBIntensityKeyValues:
+    is_a: KeyValues
+    slots:
+      - channel
+      - nr_of_spots
+      - max_intensity
+      - max_intensity_roi
+      - min_intensity
+      - min_intensity_roi
+      - mean_intensity
+      - median_intensity
+      - std_mean_intensity
+      - mad_mean_intensity
+      - min_max_intensity_ratio
+
+  ArgolightBDistanceKeyValues:
+    is_a: KeyValues
+    slots:
+      - channel_A
+      - channel_B
+      - mean_3d_dist
+      - median_3d_dist
+      - std_3d_dist
+      - mad_3d_dist
+      - mean_z_dist
+      - median_z_dist
+      - std_z_dist
+      - mad_z_dist
+
+  ArgolightEDataset:
+    is_a: MetricsDataset
+    description: |-
+      An Argolight sample pattern E dataset.
+      It contains resolution data on the axis indicated:
+      - axis 1 = Y resolution = lines along X axis
+      - axis 2 = X resolution = lines along Y axis
+    attributes:
+      input:
+        range: ArgolightEInput
+        required: true
+        multivalued: false
+      output:
+        range: ArgolightEOutput
+        required: false
+        multivalued: false
+    rules:
+      - preconditions:
+          slot_conditions:
+            processed:
+              equals_number: 1
+        postconditions:
+          slot_conditions:
+            output:
+              required: true
+  ArgolightEInput:
+    is_a: MetricsInput
+    slots:
+      - argolight_e_image
+      - bit_depth
+      - saturation_threshold
+      - axis
+      - measured_band
+      - prominence_threshold
+    slot_usage:
+      saturation_threshold:
+        required: true
+  ArgolightEOutput:
+    is_a: MetricsOutput
+    attributes:
+      peaks_rois:
+        range: ROI
+        description: >-
+          ROIs of the peaks found in the argolight images
+        multivalued: true
+      key_measurements:
+        range: ArgolightEKeyValues
+        description: >-
+          Key Measurements on Argolight E images
+        multivalued: false
+      intensity_profiles:
+        range: TableAsDict
+        description: >-
+          Intensity profiles of the argolight lines provided as tables. One table per channel
+        multivalued: false
+
+  ArgolightEKeyValues:
+    is_a: KeyValues
+    slots:
+      - channel
+      - focus_slice
+      - rayleigh_resolution
+      - peak_position_A
+      - peak_position_B
+      - peak_height_A
+      - peak_height_B
+      - peak_prominence_A
+      - peak_prominence_B
+
+
+slots:
+  channel:
+    range: integer
+    description: >-
+      The channel number to which the measurements apply
+    multivalued: true
+  # Argolight B inputs
+  argolight_b_image:
+    range: ImageAsNumpy
+    description: >-
+      Input parameter: image of the argolight b pattern provided as a 5D numpy array in the order TZYXC
+    required: true
+    multivalued: false
+    inlined: true
+  spots_distance:
+    range: float
+    description: >-
+      Input parameter: distance between argolight spots
+    required: true
+    multivalued: false
+  sigma_z:
+    range: float
+    description: >-
+      Input parameter: smoothing factor for objects detection in the Z axis
+    required: true
+    multivalued: false
+    minimum_value: 0.0
+    maximum_value: 5.0
+    ifabsent: float(1.0)
+  sigma_y:
+    range: float
+    description: >-
+      Input parameter: smoothing factor for objects detection in the Y axis
+    required: true
+    multivalued: false
+    minimum_value: 0.0
+    maximum_value: 10.0
+    ifabsent: float(3.0)
+  sigma_x:
+    range: float
+    description: >-
+      Input parameter: smoothing factor for objects detection in the X axis
+    required: true
+    multivalued: false
+    minimum_value: 0.0
+    maximum_value: 10.0
+    ifabsent: float(3.0)
+  lower_threshold_correction_factors:
+    range: float
+    description: >-
+      Input parameter: correction factor for the lower thresholds. 
+      Must be a tuple with len = nr of channels or a float if all equal
+    required: false
+    multivalued: true
+  upper_threshold_correction_factors:
+    range: float
+    description: >-
+      Input parameter: correction factor for the upper thresholds.
+      Must be a tuple with len = nr of channels or a float if all equal
+    required: false
+    multivalued: true
+  remove_center_cross:
+    range: boolean
+    description: >-
+      Input parameter: remove the center cross found in some Argolight patterns
+    required: false
+    multivalued: false
+    ifabsent: false
+  # Argolight B outputs
+  # Intensity related slots
+  nr_of_spots:
+    range: integer
+    description: >-
+      Number of argolight spots detected for each channel
+    multivalued: true
+  max_intensity:
+    range: float
+    description: >-
+      Integrated intensity of the most intense spot for each channel
+    multivalued: true
+  max_intensity_roi:
+    range: integer
+    description: >-
+      ROI number of the most intense spot for each channel
+    multivalued: true
+  min_intensity:
+    range: float
+    description: >-
+      Integrated intensity of the least intense spot for each channel
+    multivalued: true
+  min_intensity_roi:
+    range: integer
+    description: >-
+      ROI number of the least intense spot for each channel
+    multivalued: true
+  mean_intensity:
+    range: float
+    description: >-
+      Mean of all spots integrated intensity for each channel
+    multivalued: true
+  median_intensity:
+    range: float
+    description: >-
+      Median of all spots integrated intensity for each channel
+    multivalued: true
+  std_mean_intensity:
+    range: float
+    description: >-
+      Standard deviation of all spots integrated intensity for each channel
+    multivalued: true
+  mad_mean_intensity:
+    range: float
+    description: >-
+      Median absolute deviation of all spots integrated intensity for each channel
+    multivalued: true
+  min_max_intensity_ratio:
+    range: float
+    description: >-
+      Ratio between the integrated intensities between the most intense and the least intense spots for each channel
+    multivalued: true
+
+  # Distance related slots
+  channel_A:
+    is_a: channel
+    description: >-
+      The first channel number to which the measurements apply
+  channel_B:
+    is_a: channel
+    description: >-
+      The second channel number to which the measurements apply
+  mean_3d_dist:
+    range: float
+    description: >-
+      Mean of the 3D distances between spots for each permutation of channel A and B
+    multivalued: true
+  median_3d_dist:
+    range: float
+    description: >-
+      Median of the 3D distances between spots for each permutation of channel A and B
+    multivalued: true
+  std_3d_dist:
+    range: float
+    description: >-
+      Standard deviation of the 3D distances between spots for each permutation of channel A and B
+    multivalued: true
+  mad_3d_dist:
+    range: float
+    description: >-
+      Median absolute deviation of the 3D distances between spots for each permutation of channel A and B
+    multivalued: true
+  mean_z_dist:
+    range: float
+    description: >-
+      Mean of the Z distances between spots for each permutation of channel A and B
+    multivalued: true
+  median_z_dist:
+    range: float
+    description: >-
+      Median of the Z distances between spots for each permutation of channel A and B
+    multivalued: true
+  std_z_dist:
+    range: float
+    description: >-
+      Standard deviation of the Z distances between spots for each permutation of channel A and B
+    multivalued: true
+  mad_z_dist:
+    range: float
+    description: >-
+      Median absolute deviation of the Z distances between spots for each permutation of channel A and B
+    multivalued: true
+
+  # Argolight E inputs
+  argolight_e_image:
+    range: ImageAsNumpy
+    description: >-
+      Image of the argolight e pattern provided as a 5D numpy array in the order TZYXC
+    required: true
+    multivalued: false
+    inlined: true
+  axis:
+    range: integer
+    description: >-
+      Axis along which resolution is being measured. 1=Y, 2=X
+    required: true
+    multivalued: false
+    minimum_value: 1
+    maximum_value: 2
+  measured_band:
+    range: float
+    description: >-
+      Fraction of the image across which intensity profiles are measured
+    required: true
+    multivalued: false
+    minimum_value: 0.1
+    maximum_value: 1.0
+    ifabsent: float(0.4)
+  prominence_threshold:
+    range: float
+    description: >-
+      Peak prominence used as a threshold to distinguish two peaks. 
+      Defaults to the value defined by the Rayleigh criteria
+    required: true
+    multivalued: false
+    minimum_value: 0.1
+    maximum_value: 0.99
+    ifabsent: float(0.264)
+
+  # Argolight E outputs
+  focus_slice:
+    range: integer
+    description: >-
+      Z position at which focus has been measured
+    multivalued: true
+    minimum_value: 0
+  rayleigh_resolution:
+    range: float
+    description: >-
+      Rayleigh resolution measured
+    multivalued: true
+  peak_position_A:
+    range: float
+    description: >-
+      Position of first peak in the intensity profiles
+    multivalued: true
+  peak_position_B:
+    range: float
+    description: >-
+      Position of second peak in the intensity profiles
+    multivalued: true
+  peak_height_A:
+    range: float
+    description: >-
+      Height of first peak in the intensity profiles
+    multivalued: true
+  peak_height_B:
+    range: float
+    description: >-
+      Height of second peak in the intensity profiles
+    multivalued: true
+  peak_prominence_A:
+    range: float
+    description: >-
+      Prominence of first peak in the intensity profiles
+    multivalued: true
+  peak_prominence_B:
+    range: float
+    description: >-
+      Prominence of second peak in the intensity profiles
+    multivalued: true

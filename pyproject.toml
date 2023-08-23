@@ -24,7 +24,6 @@ python = ">=3.8 <=3.11"
 scikit-image = "^0.19.3"
 scipy = "^1.5.4"
 pandas = "^1.1.5"
-pydantic = "^1.7.3"
 matplotlib = "^3.7.1"
 
 [tool.poetry.group.test.dependencies]
@@ -33,9 +32,12 @@ pytest-cov = "^4.0.0"
 tox = "^3.26.0"
 
 [tool.poetry.group.dev.dependencies]
+linkml = "^1.5.0"
+linkml-runtime = "^1.5.0"
 blacked = "^0.1.0-alpha.4"
 poetry = "^1.2.2"
 jupyter = "^1.0.0"
+isort = "^5.12.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
