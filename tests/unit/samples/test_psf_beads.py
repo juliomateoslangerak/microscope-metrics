@@ -8,7 +8,7 @@
 # @pytest.fixture()
 # def psf_beads_analysis():
 #     file_path = get_file(
-#         "https://dev.mri.cnrs.fr/attachments/download/2295/psf_beads_EM-488_MAG-40.npy"
+#         "https://dev.mri.cnrs.fr/attachments/download/3072/psf_beads_EM-488_MAG-40.npy"
 #     )
 #     data = np.load(file_path)
 #

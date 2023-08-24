@@ -7,7 +7,7 @@ from tests.test_utilities import get_file
 
 @pytest.fixture
 def argolight_b():
-    image_url = "https://dev.mri.cnrs.fr/attachments/download/2290/201702_RI510_Argolight-1-1_010_SIR_ALX.npy"
+    image_url = "https://dev.mri.cnrs.fr/attachments/download/3075/201702_RI510_Argolight-1-1_010_SIR_ALX.npy"
     file_path = get_file(image_url)
     data = np.load(file_path)
 
@@ -30,7 +30,7 @@ def argolight_b():
 
 @pytest.fixture
 def argolight_e_horizontal():
-    image_url = "https://dev.mri.cnrs.fr/attachments/download/2292/201702_RI510_Argolight-1-1_004_SIR_ALX.npy"
+    image_url = "https://dev.mri.cnrs.fr/attachments/download/3073/201702_RI510_Argolight-1-1_004_SIR_ALX.npy"
     file_path = get_file(image_url)
     data = np.load(file_path)
 
@@ -52,7 +52,7 @@ def argolight_e_horizontal():
 
 @pytest.fixture
 def argolight_e_vertical():
-    image_url = "https://dev.mri.cnrs.fr/attachments/download/2291/201702_RI510_Argolight-1-1_005_SIR_ALX.npy"
+    image_url = "https://dev.mri.cnrs.fr/attachments/download/3074/201702_RI510_Argolight-1-1_005_SIR_ALX.npy"
     file_path = get_file(image_url)
     data = np.load(file_path)
 
