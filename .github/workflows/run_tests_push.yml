@@ -1,0 +1,45 @@
+name: Run Tests on push
+on: 
+  push:
+    branches: [ main ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      - name: Install project
+        run: poetry install --no-interaction
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest tests/
+          coverage report
+
+#      - name: Test with pytest and generate coverage report/badge
+#        run: |
+#          pip install coverage coverage-badge
+#          coverage run -m pytest tests/
+#          coverage report -i
+#          coverage-badge -f -o coverage.svg
+#      - name: Commit badge
+#        run: |
+#          git config --global user.name 'Erick Ratamero'
+#          git config --global user.email 'erickmartins@users.noreply.github.com'
+#          git add coverage.svg
+#          git commit --allow-empty -am "Automated updating coverage badge"
+#          git push
+
