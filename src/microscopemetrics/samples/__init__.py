@@ -109,7 +109,7 @@ def dict_to_inlined_table(
     return core_schema.TableAsDict(
         name=name,
         description=description,
-        columns=[dict(zip(dictionary, row)) for row in zip(*dictionary.values())],
+        columns=[{"name": k, "values": dictionary[k]} for k in dictionary.keys()],
     )
 
 
