@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "microscopemetrics"
-version = "0.1.0"
+version = "0.2.0"
 description = "A package providing analysis routines to measure the performance of micrsocopes used in biomedical research"
 authors = [
     "Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>",
