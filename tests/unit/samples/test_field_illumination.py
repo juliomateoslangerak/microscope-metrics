@@ -9,7 +9,7 @@ from tests.test_utilities import get_file
 
 @pytest.fixture
 def field_illumination_analysis():
-    image_url = "https://dev.mri.cnrs.fr/attachments/download/2926/chroma.npy"
+    image_url = "https://dev.mri.cnrs.fr/attachments/download/3071/chroma.npy"
     file_path = get_file(image_url)
     data = np.load(file_path)
     analysis = field_illumination.FieldIlluminationAnalysis(
