@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Union
+from typing import List, Union, Dict
 
 import numpy as np
 
@@ -101,7 +101,7 @@ def numpy_to_inlined_image(
 
 
 def dict_to_inlined_table(
-    dictionary: dict[str, list],
+    dictionary: Dict[str, list],
     name: str = None,
     description: str = None,
 ) -> core_schema.Table:

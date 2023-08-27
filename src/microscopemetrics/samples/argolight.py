@@ -313,7 +313,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
         return True
 
 
-def _profile_to_columns(profile: ndarray, channel: int) -> list[dict[str, dict[str, list[float]]]]:
+def _profile_to_columns(profile: ndarray, channel: int) -> List[Dict[str, Dict[str, List[float]]]]:
     table = [{f"raw_profile_ch{channel:02d}": {"values": [v.item() for v in profile[0, :]]}}]
 
     for p in range(1, profile.shape[0]):
