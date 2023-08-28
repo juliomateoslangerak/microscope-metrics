@@ -1,5 +1,5 @@
-# Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.9.0
-# Generation date: 2023-08-23T16:23:29
+# Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.0.1
+# Generation date: 2023-08-28T14:39:52
 # Schema: microscopemetrics_samples_field_illumination_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
@@ -42,6 +42,7 @@ from rdflib import Namespace, URIRef
 
 from ..core_schema import (
     ROI,
+    Comment,
     ExperimenterOrcid,
     Image5DImageUrl,
     ImageAsNumpy,
@@ -61,11 +62,8 @@ version = None
 dataclasses._init_fn = dataclasses_init_fn_with_kwargs
 
 # Namespaces
-LINKML = CurieNamespace("linkml", "https://w3id.org/linkml/")
-DEFAULT_ = CurieNamespace(
-    "",
-    "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/",
-)
+LINKML = CurieNamespace('linkml', 'https://w3id.org/linkml/')
+DEFAULT_ = CurieNamespace('', 'https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/')
 
 
 # Types
@@ -73,22 +71,18 @@ DEFAULT_ = CurieNamespace(
 # Class references
 
 
+
 @dataclass
 class FieldIlluminationDataset(MetricsDataset):
     """
     A field illumination dataset
     """
-
     _inherited_slots: ClassVar[List[str]] = []
 
-    class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationDataset"
-    )
+    class_class_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationDataset")
     class_class_curie: ClassVar[str] = None
     class_name: ClassVar[str] = "FieldIlluminationDataset"
-    class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationDataset"
-    )
+    class_model_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationDataset")
 
     input: Union[dict, "FieldIlluminationInput"] = None
     processed: Union[bool, Bool] = False
@@ -110,14 +104,10 @@ class FieldIlluminationDataset(MetricsDataset):
 class FieldIlluminationInput(MetricsInput):
     _inherited_slots: ClassVar[List[str]] = []
 
-    class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationInput"
-    )
+    class_class_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationInput")
     class_class_curie: ClassVar[str] = None
     class_name: ClassVar[str] = "FieldIlluminationInput"
-    class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationInput"
-    )
+    class_model_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationInput")
 
     field_illumination_image: Union[dict, ImageAsNumpy] = None
     saturation_threshold: float = 0.01
@@ -168,14 +158,10 @@ class FieldIlluminationInput(MetricsInput):
 class FieldIlluminationOutput(MetricsOutput):
     _inherited_slots: ClassVar[List[str]] = []
 
-    class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationOutput"
-    )
+    class_class_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationOutput")
     class_class_curie: ClassVar[str] = None
     class_name: ClassVar[str] = "FieldIlluminationOutput"
-    class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationOutput"
-    )
+    class_model_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationOutput")
 
     key_values: Optional[Union[dict, "FieldIlluminationKeyValues"]] = None
     intensity_profiles: Optional[Union[dict, TableAsDict]] = None
@@ -183,14 +169,10 @@ class FieldIlluminationOutput(MetricsOutput):
     profile_rois: Optional[Union[dict, ROI]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self.key_values is not None and not isinstance(
-            self.key_values, FieldIlluminationKeyValues
-        ):
+        if self.key_values is not None and not isinstance(self.key_values, FieldIlluminationKeyValues):
             self.key_values = FieldIlluminationKeyValues(**as_dict(self.key_values))
 
-        if self.intensity_profiles is not None and not isinstance(
-            self.intensity_profiles, TableAsDict
-        ):
+        if self.intensity_profiles is not None and not isinstance(self.intensity_profiles, TableAsDict):
             self.intensity_profiles = TableAsDict(**as_dict(self.intensity_profiles))
 
         if self.intensity_map is not None and not isinstance(self.intensity_map, Image5DImageUrl):
@@ -206,14 +188,10 @@ class FieldIlluminationOutput(MetricsOutput):
 class FieldIlluminationKeyValues(KeyValues):
     _inherited_slots: ClassVar[List[str]] = []
 
-    class_class_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValues"
-    )
+    class_class_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValues")
     class_class_curie: ClassVar[str] = None
     class_name: ClassVar[str] = "FieldIlluminationKeyValues"
-    class_model_uri: ClassVar[URIRef] = URIRef(
-        "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValues"
-    )
+    class_model_uri: ClassVar[URIRef] = URIRef("https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/FieldIlluminationKeyValues")
 
     channel: Optional[Union[int, List[int]]] = empty_list()
     nb_pixels: Optional[Union[int, List[int]]] = empty_list()
@@ -261,214 +239,96 @@ class FieldIlluminationKeyValues(KeyValues):
         self.nb_pixels = [v if isinstance(v, int) else int(v) for v in self.nb_pixels]
 
         if not isinstance(self.center_of_mass_x, list):
-            self.center_of_mass_x = (
-                [self.center_of_mass_x] if self.center_of_mass_x is not None else []
-            )
-        self.center_of_mass_x = [
-            v if isinstance(v, float) else float(v) for v in self.center_of_mass_x
-        ]
+            self.center_of_mass_x = [self.center_of_mass_x] if self.center_of_mass_x is not None else []
+        self.center_of_mass_x = [v if isinstance(v, float) else float(v) for v in self.center_of_mass_x]
 
         if not isinstance(self.center_of_mass_y, list):
-            self.center_of_mass_y = (
-                [self.center_of_mass_y] if self.center_of_mass_y is not None else []
-            )
-        self.center_of_mass_y = [
-            v if isinstance(v, float) else float(v) for v in self.center_of_mass_y
-        ]
+            self.center_of_mass_y = [self.center_of_mass_y] if self.center_of_mass_y is not None else []
+        self.center_of_mass_y = [v if isinstance(v, float) else float(v) for v in self.center_of_mass_y]
 
         if not isinstance(self.max_intensity, list):
             self.max_intensity = [self.max_intensity] if self.max_intensity is not None else []
         self.max_intensity = [v if isinstance(v, float) else float(v) for v in self.max_intensity]
 
         if not isinstance(self.max_intensity_pos_x, list):
-            self.max_intensity_pos_x = (
-                [self.max_intensity_pos_x] if self.max_intensity_pos_x is not None else []
-            )
-        self.max_intensity_pos_x = [
-            v if isinstance(v, float) else float(v) for v in self.max_intensity_pos_x
-        ]
+            self.max_intensity_pos_x = [self.max_intensity_pos_x] if self.max_intensity_pos_x is not None else []
+        self.max_intensity_pos_x = [v if isinstance(v, float) else float(v) for v in self.max_intensity_pos_x]
 
         if not isinstance(self.max_intensity_pos_y, list):
-            self.max_intensity_pos_y = (
-                [self.max_intensity_pos_y] if self.max_intensity_pos_y is not None else []
-            )
-        self.max_intensity_pos_y = [
-            v if isinstance(v, float) else float(v) for v in self.max_intensity_pos_y
-        ]
+            self.max_intensity_pos_y = [self.max_intensity_pos_y] if self.max_intensity_pos_y is not None else []
+        self.max_intensity_pos_y = [v if isinstance(v, float) else float(v) for v in self.max_intensity_pos_y]
 
         if not isinstance(self.top_left_intensity_mean, list):
-            self.top_left_intensity_mean = (
-                [self.top_left_intensity_mean] if self.top_left_intensity_mean is not None else []
-            )
-        self.top_left_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.top_left_intensity_mean
-        ]
+            self.top_left_intensity_mean = [self.top_left_intensity_mean] if self.top_left_intensity_mean is not None else []
+        self.top_left_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.top_left_intensity_mean]
 
         if not isinstance(self.top_left_intensity_ratio, list):
-            self.top_left_intensity_ratio = (
-                [self.top_left_intensity_ratio] if self.top_left_intensity_ratio is not None else []
-            )
-        self.top_left_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.top_left_intensity_ratio
-        ]
+            self.top_left_intensity_ratio = [self.top_left_intensity_ratio] if self.top_left_intensity_ratio is not None else []
+        self.top_left_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.top_left_intensity_ratio]
 
         if not isinstance(self.top_center_intensity_mean, list):
-            self.top_center_intensity_mean = (
-                [self.top_center_intensity_mean]
-                if self.top_center_intensity_mean is not None
-                else []
-            )
-        self.top_center_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.top_center_intensity_mean
-        ]
+            self.top_center_intensity_mean = [self.top_center_intensity_mean] if self.top_center_intensity_mean is not None else []
+        self.top_center_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.top_center_intensity_mean]
 
         if not isinstance(self.top_center_intensity_ratio, list):
-            self.top_center_intensity_ratio = (
-                [self.top_center_intensity_ratio]
-                if self.top_center_intensity_ratio is not None
-                else []
-            )
-        self.top_center_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.top_center_intensity_ratio
-        ]
+            self.top_center_intensity_ratio = [self.top_center_intensity_ratio] if self.top_center_intensity_ratio is not None else []
+        self.top_center_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.top_center_intensity_ratio]
 
         if not isinstance(self.top_right_intensity_mean, list):
-            self.top_right_intensity_mean = (
-                [self.top_right_intensity_mean] if self.top_right_intensity_mean is not None else []
-            )
-        self.top_right_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.top_right_intensity_mean
-        ]
+            self.top_right_intensity_mean = [self.top_right_intensity_mean] if self.top_right_intensity_mean is not None else []
+        self.top_right_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.top_right_intensity_mean]
 
         if not isinstance(self.top_right_intensity_ratio, list):
-            self.top_right_intensity_ratio = (
-                [self.top_right_intensity_ratio]
-                if self.top_right_intensity_ratio is not None
-                else []
-            )
-        self.top_right_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.top_right_intensity_ratio
-        ]
+            self.top_right_intensity_ratio = [self.top_right_intensity_ratio] if self.top_right_intensity_ratio is not None else []
+        self.top_right_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.top_right_intensity_ratio]
 
         if not isinstance(self.middle_left_intensity_mean, list):
-            self.middle_left_intensity_mean = (
-                [self.middle_left_intensity_mean]
-                if self.middle_left_intensity_mean is not None
-                else []
-            )
-        self.middle_left_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.middle_left_intensity_mean
-        ]
+            self.middle_left_intensity_mean = [self.middle_left_intensity_mean] if self.middle_left_intensity_mean is not None else []
+        self.middle_left_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.middle_left_intensity_mean]
 
         if not isinstance(self.middle_left_intensity_ratio, list):
-            self.middle_left_intensity_ratio = (
-                [self.middle_left_intensity_ratio]
-                if self.middle_left_intensity_ratio is not None
-                else []
-            )
-        self.middle_left_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.middle_left_intensity_ratio
-        ]
+            self.middle_left_intensity_ratio = [self.middle_left_intensity_ratio] if self.middle_left_intensity_ratio is not None else []
+        self.middle_left_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.middle_left_intensity_ratio]
 
         if not isinstance(self.middle_center_intensity_mean, list):
-            self.middle_center_intensity_mean = (
-                [self.middle_center_intensity_mean]
-                if self.middle_center_intensity_mean is not None
-                else []
-            )
-        self.middle_center_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.middle_center_intensity_mean
-        ]
+            self.middle_center_intensity_mean = [self.middle_center_intensity_mean] if self.middle_center_intensity_mean is not None else []
+        self.middle_center_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.middle_center_intensity_mean]
 
         if not isinstance(self.middle_center_intensity_ratio, list):
-            self.middle_center_intensity_ratio = (
-                [self.middle_center_intensity_ratio]
-                if self.middle_center_intensity_ratio is not None
-                else []
-            )
-        self.middle_center_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.middle_center_intensity_ratio
-        ]
+            self.middle_center_intensity_ratio = [self.middle_center_intensity_ratio] if self.middle_center_intensity_ratio is not None else []
+        self.middle_center_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.middle_center_intensity_ratio]
 
         if not isinstance(self.middle_right_intensity_mean, list):
-            self.middle_right_intensity_mean = (
-                [self.middle_right_intensity_mean]
-                if self.middle_right_intensity_mean is not None
-                else []
-            )
-        self.middle_right_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.middle_right_intensity_mean
-        ]
+            self.middle_right_intensity_mean = [self.middle_right_intensity_mean] if self.middle_right_intensity_mean is not None else []
+        self.middle_right_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.middle_right_intensity_mean]
 
         if not isinstance(self.middle_right_intensity_ratio, list):
-            self.middle_right_intensity_ratio = (
-                [self.middle_right_intensity_ratio]
-                if self.middle_right_intensity_ratio is not None
-                else []
-            )
-        self.middle_right_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.middle_right_intensity_ratio
-        ]
+            self.middle_right_intensity_ratio = [self.middle_right_intensity_ratio] if self.middle_right_intensity_ratio is not None else []
+        self.middle_right_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.middle_right_intensity_ratio]
 
         if not isinstance(self.bottom_left_intensity_mean, list):
-            self.bottom_left_intensity_mean = (
-                [self.bottom_left_intensity_mean]
-                if self.bottom_left_intensity_mean is not None
-                else []
-            )
-        self.bottom_left_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.bottom_left_intensity_mean
-        ]
+            self.bottom_left_intensity_mean = [self.bottom_left_intensity_mean] if self.bottom_left_intensity_mean is not None else []
+        self.bottom_left_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.bottom_left_intensity_mean]
 
         if not isinstance(self.bottom_left_intensity_ratio, list):
-            self.bottom_left_intensity_ratio = (
-                [self.bottom_left_intensity_ratio]
-                if self.bottom_left_intensity_ratio is not None
-                else []
-            )
-        self.bottom_left_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.bottom_left_intensity_ratio
-        ]
+            self.bottom_left_intensity_ratio = [self.bottom_left_intensity_ratio] if self.bottom_left_intensity_ratio is not None else []
+        self.bottom_left_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.bottom_left_intensity_ratio]
 
         if not isinstance(self.bottom_center_intensity_mean, list):
-            self.bottom_center_intensity_mean = (
-                [self.bottom_center_intensity_mean]
-                if self.bottom_center_intensity_mean is not None
-                else []
-            )
-        self.bottom_center_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.bottom_center_intensity_mean
-        ]
+            self.bottom_center_intensity_mean = [self.bottom_center_intensity_mean] if self.bottom_center_intensity_mean is not None else []
+        self.bottom_center_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.bottom_center_intensity_mean]
 
         if not isinstance(self.bottom_center_intensity_ratio, list):
-            self.bottom_center_intensity_ratio = (
-                [self.bottom_center_intensity_ratio]
-                if self.bottom_center_intensity_ratio is not None
-                else []
-            )
-        self.bottom_center_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.bottom_center_intensity_ratio
-        ]
+            self.bottom_center_intensity_ratio = [self.bottom_center_intensity_ratio] if self.bottom_center_intensity_ratio is not None else []
+        self.bottom_center_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.bottom_center_intensity_ratio]
 
         if not isinstance(self.bottom_right_intensity_mean, list):
-            self.bottom_right_intensity_mean = (
-                [self.bottom_right_intensity_mean]
-                if self.bottom_right_intensity_mean is not None
-                else []
-            )
-        self.bottom_right_intensity_mean = [
-            v if isinstance(v, float) else float(v) for v in self.bottom_right_intensity_mean
-        ]
+            self.bottom_right_intensity_mean = [self.bottom_right_intensity_mean] if self.bottom_right_intensity_mean is not None else []
+        self.bottom_right_intensity_mean = [v if isinstance(v, float) else float(v) for v in self.bottom_right_intensity_mean]
 
         if not isinstance(self.bottom_right_intensity_ratio, list):
-            self.bottom_right_intensity_ratio = (
-                [self.bottom_right_intensity_ratio]
-                if self.bottom_right_intensity_ratio is not None
-                else []
-            )
-        self.bottom_right_intensity_ratio = [
-            v if isinstance(v, float) else float(v) for v in self.bottom_right_intensity_ratio
-        ]
+            self.bottom_right_intensity_ratio = [self.bottom_right_intensity_ratio] if self.bottom_right_intensity_ratio is not None else []
+        self.bottom_right_intensity_ratio = [v if isinstance(v, float) else float(v) for v in self.bottom_right_intensity_ratio]
 
         if not isinstance(self.decile_0, list):
             self.decile_0 = [self.decile_0] if self.decile_0 is not None else []
@@ -520,417 +380,140 @@ class FieldIlluminationKeyValues(KeyValues):
 class slots:
     pass
 
+slots.field_illumination_image = Slot(uri=DEFAULT_.field_illumination_image, name="field_illumination_image", curie=DEFAULT_.curie('field_illumination_image'),
+                   model_uri=DEFAULT_.field_illumination_image, domain=None, range=Union[dict, ImageAsNumpy])
 
-slots.field_illumination_image = Slot(
-    uri=DEFAULT_.field_illumination_image,
-    name="field_illumination_image",
-    curie=DEFAULT_.curie("field_illumination_image"),
-    model_uri=DEFAULT_.field_illumination_image,
-    domain=None,
-    range=Union[dict, ImageAsNumpy],
-)
+slots.center_threshold = Slot(uri=DEFAULT_.center_threshold, name="center_threshold", curie=DEFAULT_.curie('center_threshold'),
+                   model_uri=DEFAULT_.center_threshold, domain=None, range=float)
 
-slots.center_threshold = Slot(
-    uri=DEFAULT_.center_threshold,
-    name="center_threshold",
-    curie=DEFAULT_.curie("center_threshold"),
-    model_uri=DEFAULT_.center_threshold,
-    domain=None,
-    range=float,
-)
+slots.corner_fraction = Slot(uri=DEFAULT_.corner_fraction, name="corner_fraction", curie=DEFAULT_.curie('corner_fraction'),
+                   model_uri=DEFAULT_.corner_fraction, domain=None, range=float)
 
-slots.corner_fraction = Slot(
-    uri=DEFAULT_.corner_fraction,
-    name="corner_fraction",
-    curie=DEFAULT_.curie("corner_fraction"),
-    model_uri=DEFAULT_.corner_fraction,
-    domain=None,
-    range=float,
-)
+slots.sigma = Slot(uri=DEFAULT_.sigma, name="sigma", curie=DEFAULT_.curie('sigma'),
+                   model_uri=DEFAULT_.sigma, domain=None, range=float)
 
-slots.sigma = Slot(
-    uri=DEFAULT_.sigma,
-    name="sigma",
-    curie=DEFAULT_.curie("sigma"),
-    model_uri=DEFAULT_.sigma,
-    domain=None,
-    range=float,
-)
+slots.intensity_map_size = Slot(uri=DEFAULT_.intensity_map_size, name="intensity_map_size", curie=DEFAULT_.curie('intensity_map_size'),
+                   model_uri=DEFAULT_.intensity_map_size, domain=None, range=int)
 
-slots.intensity_map_size = Slot(
-    uri=DEFAULT_.intensity_map_size,
-    name="intensity_map_size",
-    curie=DEFAULT_.curie("intensity_map_size"),
-    model_uri=DEFAULT_.intensity_map_size,
-    domain=None,
-    range=int,
-)
+slots.channel = Slot(uri=DEFAULT_.channel, name="channel", curie=DEFAULT_.curie('channel'),
+                   model_uri=DEFAULT_.channel, domain=None, range=Optional[Union[int, List[int]]])
 
-slots.channel = Slot(
-    uri=DEFAULT_.channel,
-    name="channel",
-    curie=DEFAULT_.curie("channel"),
-    model_uri=DEFAULT_.channel,
-    domain=None,
-    range=Optional[Union[int, List[int]]],
-)
+slots.nb_pixels = Slot(uri=DEFAULT_.nb_pixels, name="nb_pixels", curie=DEFAULT_.curie('nb_pixels'),
+                   model_uri=DEFAULT_.nb_pixels, domain=None, range=Optional[Union[int, List[int]]])
 
-slots.nb_pixels = Slot(
-    uri=DEFAULT_.nb_pixels,
-    name="nb_pixels",
-    curie=DEFAULT_.curie("nb_pixels"),
-    model_uri=DEFAULT_.nb_pixels,
-    domain=None,
-    range=Optional[Union[int, List[int]]],
-)
+slots.center_of_mass_x = Slot(uri=DEFAULT_.center_of_mass_x, name="center_of_mass_x", curie=DEFAULT_.curie('center_of_mass_x'),
+                   model_uri=DEFAULT_.center_of_mass_x, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.center_of_mass_x = Slot(
-    uri=DEFAULT_.center_of_mass_x,
-    name="center_of_mass_x",
-    curie=DEFAULT_.curie("center_of_mass_x"),
-    model_uri=DEFAULT_.center_of_mass_x,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.center_of_mass_y = Slot(uri=DEFAULT_.center_of_mass_y, name="center_of_mass_y", curie=DEFAULT_.curie('center_of_mass_y'),
+                   model_uri=DEFAULT_.center_of_mass_y, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.center_of_mass_y = Slot(
-    uri=DEFAULT_.center_of_mass_y,
-    name="center_of_mass_y",
-    curie=DEFAULT_.curie("center_of_mass_y"),
-    model_uri=DEFAULT_.center_of_mass_y,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.max_intensity = Slot(uri=DEFAULT_.max_intensity, name="max_intensity", curie=DEFAULT_.curie('max_intensity'),
+                   model_uri=DEFAULT_.max_intensity, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.max_intensity = Slot(
-    uri=DEFAULT_.max_intensity,
-    name="max_intensity",
-    curie=DEFAULT_.curie("max_intensity"),
-    model_uri=DEFAULT_.max_intensity,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.max_intensity_pos_x = Slot(uri=DEFAULT_.max_intensity_pos_x, name="max_intensity_pos_x", curie=DEFAULT_.curie('max_intensity_pos_x'),
+                   model_uri=DEFAULT_.max_intensity_pos_x, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.max_intensity_pos_x = Slot(
-    uri=DEFAULT_.max_intensity_pos_x,
-    name="max_intensity_pos_x",
-    curie=DEFAULT_.curie("max_intensity_pos_x"),
-    model_uri=DEFAULT_.max_intensity_pos_x,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.max_intensity_pos_y = Slot(uri=DEFAULT_.max_intensity_pos_y, name="max_intensity_pos_y", curie=DEFAULT_.curie('max_intensity_pos_y'),
+                   model_uri=DEFAULT_.max_intensity_pos_y, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.max_intensity_pos_y = Slot(
-    uri=DEFAULT_.max_intensity_pos_y,
-    name="max_intensity_pos_y",
-    curie=DEFAULT_.curie("max_intensity_pos_y"),
-    model_uri=DEFAULT_.max_intensity_pos_y,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.top_left_intensity_mean = Slot(uri=DEFAULT_.top_left_intensity_mean, name="top_left_intensity_mean", curie=DEFAULT_.curie('top_left_intensity_mean'),
+                   model_uri=DEFAULT_.top_left_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.top_left_intensity_mean = Slot(
-    uri=DEFAULT_.top_left_intensity_mean,
-    name="top_left_intensity_mean",
-    curie=DEFAULT_.curie("top_left_intensity_mean"),
-    model_uri=DEFAULT_.top_left_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.top_left_intensity_ratio = Slot(uri=DEFAULT_.top_left_intensity_ratio, name="top_left_intensity_ratio", curie=DEFAULT_.curie('top_left_intensity_ratio'),
+                   model_uri=DEFAULT_.top_left_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.top_left_intensity_ratio = Slot(
-    uri=DEFAULT_.top_left_intensity_ratio,
-    name="top_left_intensity_ratio",
-    curie=DEFAULT_.curie("top_left_intensity_ratio"),
-    model_uri=DEFAULT_.top_left_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.top_center_intensity_mean = Slot(uri=DEFAULT_.top_center_intensity_mean, name="top_center_intensity_mean", curie=DEFAULT_.curie('top_center_intensity_mean'),
+                   model_uri=DEFAULT_.top_center_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.top_center_intensity_mean = Slot(
-    uri=DEFAULT_.top_center_intensity_mean,
-    name="top_center_intensity_mean",
-    curie=DEFAULT_.curie("top_center_intensity_mean"),
-    model_uri=DEFAULT_.top_center_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.top_center_intensity_ratio = Slot(uri=DEFAULT_.top_center_intensity_ratio, name="top_center_intensity_ratio", curie=DEFAULT_.curie('top_center_intensity_ratio'),
+                   model_uri=DEFAULT_.top_center_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.top_center_intensity_ratio = Slot(
-    uri=DEFAULT_.top_center_intensity_ratio,
-    name="top_center_intensity_ratio",
-    curie=DEFAULT_.curie("top_center_intensity_ratio"),
-    model_uri=DEFAULT_.top_center_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.top_right_intensity_mean = Slot(uri=DEFAULT_.top_right_intensity_mean, name="top_right_intensity_mean", curie=DEFAULT_.curie('top_right_intensity_mean'),
+                   model_uri=DEFAULT_.top_right_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.top_right_intensity_mean = Slot(
-    uri=DEFAULT_.top_right_intensity_mean,
-    name="top_right_intensity_mean",
-    curie=DEFAULT_.curie("top_right_intensity_mean"),
-    model_uri=DEFAULT_.top_right_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.top_right_intensity_ratio = Slot(uri=DEFAULT_.top_right_intensity_ratio, name="top_right_intensity_ratio", curie=DEFAULT_.curie('top_right_intensity_ratio'),
+                   model_uri=DEFAULT_.top_right_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.top_right_intensity_ratio = Slot(
-    uri=DEFAULT_.top_right_intensity_ratio,
-    name="top_right_intensity_ratio",
-    curie=DEFAULT_.curie("top_right_intensity_ratio"),
-    model_uri=DEFAULT_.top_right_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.middle_left_intensity_mean = Slot(uri=DEFAULT_.middle_left_intensity_mean, name="middle_left_intensity_mean", curie=DEFAULT_.curie('middle_left_intensity_mean'),
+                   model_uri=DEFAULT_.middle_left_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.middle_left_intensity_mean = Slot(
-    uri=DEFAULT_.middle_left_intensity_mean,
-    name="middle_left_intensity_mean",
-    curie=DEFAULT_.curie("middle_left_intensity_mean"),
-    model_uri=DEFAULT_.middle_left_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.middle_left_intensity_ratio = Slot(uri=DEFAULT_.middle_left_intensity_ratio, name="middle_left_intensity_ratio", curie=DEFAULT_.curie('middle_left_intensity_ratio'),
+                   model_uri=DEFAULT_.middle_left_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.middle_left_intensity_ratio = Slot(
-    uri=DEFAULT_.middle_left_intensity_ratio,
-    name="middle_left_intensity_ratio",
-    curie=DEFAULT_.curie("middle_left_intensity_ratio"),
-    model_uri=DEFAULT_.middle_left_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.middle_center_intensity_mean = Slot(uri=DEFAULT_.middle_center_intensity_mean, name="middle_center_intensity_mean", curie=DEFAULT_.curie('middle_center_intensity_mean'),
+                   model_uri=DEFAULT_.middle_center_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.middle_center_intensity_mean = Slot(
-    uri=DEFAULT_.middle_center_intensity_mean,
-    name="middle_center_intensity_mean",
-    curie=DEFAULT_.curie("middle_center_intensity_mean"),
-    model_uri=DEFAULT_.middle_center_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.middle_center_intensity_ratio = Slot(uri=DEFAULT_.middle_center_intensity_ratio, name="middle_center_intensity_ratio", curie=DEFAULT_.curie('middle_center_intensity_ratio'),
+                   model_uri=DEFAULT_.middle_center_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.middle_center_intensity_ratio = Slot(
-    uri=DEFAULT_.middle_center_intensity_ratio,
-    name="middle_center_intensity_ratio",
-    curie=DEFAULT_.curie("middle_center_intensity_ratio"),
-    model_uri=DEFAULT_.middle_center_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.middle_right_intensity_mean = Slot(uri=DEFAULT_.middle_right_intensity_mean, name="middle_right_intensity_mean", curie=DEFAULT_.curie('middle_right_intensity_mean'),
+                   model_uri=DEFAULT_.middle_right_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.middle_right_intensity_mean = Slot(
-    uri=DEFAULT_.middle_right_intensity_mean,
-    name="middle_right_intensity_mean",
-    curie=DEFAULT_.curie("middle_right_intensity_mean"),
-    model_uri=DEFAULT_.middle_right_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.middle_right_intensity_ratio = Slot(uri=DEFAULT_.middle_right_intensity_ratio, name="middle_right_intensity_ratio", curie=DEFAULT_.curie('middle_right_intensity_ratio'),
+                   model_uri=DEFAULT_.middle_right_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.middle_right_intensity_ratio = Slot(
-    uri=DEFAULT_.middle_right_intensity_ratio,
-    name="middle_right_intensity_ratio",
-    curie=DEFAULT_.curie("middle_right_intensity_ratio"),
-    model_uri=DEFAULT_.middle_right_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.bottom_left_intensity_mean = Slot(uri=DEFAULT_.bottom_left_intensity_mean, name="bottom_left_intensity_mean", curie=DEFAULT_.curie('bottom_left_intensity_mean'),
+                   model_uri=DEFAULT_.bottom_left_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.bottom_left_intensity_mean = Slot(
-    uri=DEFAULT_.bottom_left_intensity_mean,
-    name="bottom_left_intensity_mean",
-    curie=DEFAULT_.curie("bottom_left_intensity_mean"),
-    model_uri=DEFAULT_.bottom_left_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.bottom_left_intensity_ratio = Slot(uri=DEFAULT_.bottom_left_intensity_ratio, name="bottom_left_intensity_ratio", curie=DEFAULT_.curie('bottom_left_intensity_ratio'),
+                   model_uri=DEFAULT_.bottom_left_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.bottom_left_intensity_ratio = Slot(
-    uri=DEFAULT_.bottom_left_intensity_ratio,
-    name="bottom_left_intensity_ratio",
-    curie=DEFAULT_.curie("bottom_left_intensity_ratio"),
-    model_uri=DEFAULT_.bottom_left_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.bottom_center_intensity_mean = Slot(uri=DEFAULT_.bottom_center_intensity_mean, name="bottom_center_intensity_mean", curie=DEFAULT_.curie('bottom_center_intensity_mean'),
+                   model_uri=DEFAULT_.bottom_center_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.bottom_center_intensity_mean = Slot(
-    uri=DEFAULT_.bottom_center_intensity_mean,
-    name="bottom_center_intensity_mean",
-    curie=DEFAULT_.curie("bottom_center_intensity_mean"),
-    model_uri=DEFAULT_.bottom_center_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.bottom_center_intensity_ratio = Slot(uri=DEFAULT_.bottom_center_intensity_ratio, name="bottom_center_intensity_ratio", curie=DEFAULT_.curie('bottom_center_intensity_ratio'),
+                   model_uri=DEFAULT_.bottom_center_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.bottom_center_intensity_ratio = Slot(
-    uri=DEFAULT_.bottom_center_intensity_ratio,
-    name="bottom_center_intensity_ratio",
-    curie=DEFAULT_.curie("bottom_center_intensity_ratio"),
-    model_uri=DEFAULT_.bottom_center_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.bottom_right_intensity_mean = Slot(uri=DEFAULT_.bottom_right_intensity_mean, name="bottom_right_intensity_mean", curie=DEFAULT_.curie('bottom_right_intensity_mean'),
+                   model_uri=DEFAULT_.bottom_right_intensity_mean, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.bottom_right_intensity_mean = Slot(
-    uri=DEFAULT_.bottom_right_intensity_mean,
-    name="bottom_right_intensity_mean",
-    curie=DEFAULT_.curie("bottom_right_intensity_mean"),
-    model_uri=DEFAULT_.bottom_right_intensity_mean,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.bottom_right_intensity_ratio = Slot(uri=DEFAULT_.bottom_right_intensity_ratio, name="bottom_right_intensity_ratio", curie=DEFAULT_.curie('bottom_right_intensity_ratio'),
+                   model_uri=DEFAULT_.bottom_right_intensity_ratio, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.bottom_right_intensity_ratio = Slot(
-    uri=DEFAULT_.bottom_right_intensity_ratio,
-    name="bottom_right_intensity_ratio",
-    curie=DEFAULT_.curie("bottom_right_intensity_ratio"),
-    model_uri=DEFAULT_.bottom_right_intensity_ratio,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_0 = Slot(uri=DEFAULT_.decile_0, name="decile_0", curie=DEFAULT_.curie('decile_0'),
+                   model_uri=DEFAULT_.decile_0, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_0 = Slot(
-    uri=DEFAULT_.decile_0,
-    name="decile_0",
-    curie=DEFAULT_.curie("decile_0"),
-    model_uri=DEFAULT_.decile_0,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_1 = Slot(uri=DEFAULT_.decile_1, name="decile_1", curie=DEFAULT_.curie('decile_1'),
+                   model_uri=DEFAULT_.decile_1, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_1 = Slot(
-    uri=DEFAULT_.decile_1,
-    name="decile_1",
-    curie=DEFAULT_.curie("decile_1"),
-    model_uri=DEFAULT_.decile_1,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_2 = Slot(uri=DEFAULT_.decile_2, name="decile_2", curie=DEFAULT_.curie('decile_2'),
+                   model_uri=DEFAULT_.decile_2, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_2 = Slot(
-    uri=DEFAULT_.decile_2,
-    name="decile_2",
-    curie=DEFAULT_.curie("decile_2"),
-    model_uri=DEFAULT_.decile_2,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_3 = Slot(uri=DEFAULT_.decile_3, name="decile_3", curie=DEFAULT_.curie('decile_3'),
+                   model_uri=DEFAULT_.decile_3, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_3 = Slot(
-    uri=DEFAULT_.decile_3,
-    name="decile_3",
-    curie=DEFAULT_.curie("decile_3"),
-    model_uri=DEFAULT_.decile_3,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_4 = Slot(uri=DEFAULT_.decile_4, name="decile_4", curie=DEFAULT_.curie('decile_4'),
+                   model_uri=DEFAULT_.decile_4, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_4 = Slot(
-    uri=DEFAULT_.decile_4,
-    name="decile_4",
-    curie=DEFAULT_.curie("decile_4"),
-    model_uri=DEFAULT_.decile_4,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_5 = Slot(uri=DEFAULT_.decile_5, name="decile_5", curie=DEFAULT_.curie('decile_5'),
+                   model_uri=DEFAULT_.decile_5, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_5 = Slot(
-    uri=DEFAULT_.decile_5,
-    name="decile_5",
-    curie=DEFAULT_.curie("decile_5"),
-    model_uri=DEFAULT_.decile_5,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_6 = Slot(uri=DEFAULT_.decile_6, name="decile_6", curie=DEFAULT_.curie('decile_6'),
+                   model_uri=DEFAULT_.decile_6, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_6 = Slot(
-    uri=DEFAULT_.decile_6,
-    name="decile_6",
-    curie=DEFAULT_.curie("decile_6"),
-    model_uri=DEFAULT_.decile_6,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_7 = Slot(uri=DEFAULT_.decile_7, name="decile_7", curie=DEFAULT_.curie('decile_7'),
+                   model_uri=DEFAULT_.decile_7, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_7 = Slot(
-    uri=DEFAULT_.decile_7,
-    name="decile_7",
-    curie=DEFAULT_.curie("decile_7"),
-    model_uri=DEFAULT_.decile_7,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_8 = Slot(uri=DEFAULT_.decile_8, name="decile_8", curie=DEFAULT_.curie('decile_8'),
+                   model_uri=DEFAULT_.decile_8, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_8 = Slot(
-    uri=DEFAULT_.decile_8,
-    name="decile_8",
-    curie=DEFAULT_.curie("decile_8"),
-    model_uri=DEFAULT_.decile_8,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.decile_9 = Slot(uri=DEFAULT_.decile_9, name="decile_9", curie=DEFAULT_.curie('decile_9'),
+                   model_uri=DEFAULT_.decile_9, domain=None, range=Optional[Union[float, List[float]]])
 
-slots.decile_9 = Slot(
-    uri=DEFAULT_.decile_9,
-    name="decile_9",
-    curie=DEFAULT_.curie("decile_9"),
-    model_uri=DEFAULT_.decile_9,
-    domain=None,
-    range=Optional[Union[float, List[float]]],
-)
+slots.fieldIlluminationDataset__input = Slot(uri=DEFAULT_.input, name="fieldIlluminationDataset__input", curie=DEFAULT_.curie('input'),
+                   model_uri=DEFAULT_.fieldIlluminationDataset__input, domain=None, range=Union[dict, FieldIlluminationInput])
 
-slots.fieldIlluminationDataset__input = Slot(
-    uri=DEFAULT_.input,
-    name="fieldIlluminationDataset__input",
-    curie=DEFAULT_.curie("input"),
-    model_uri=DEFAULT_.fieldIlluminationDataset__input,
-    domain=None,
-    range=Union[dict, FieldIlluminationInput],
-)
+slots.fieldIlluminationDataset__output = Slot(uri=DEFAULT_.output, name="fieldIlluminationDataset__output", curie=DEFAULT_.curie('output'),
+                   model_uri=DEFAULT_.fieldIlluminationDataset__output, domain=None, range=Optional[Union[dict, FieldIlluminationOutput]])
 
-slots.fieldIlluminationDataset__output = Slot(
-    uri=DEFAULT_.output,
-    name="fieldIlluminationDataset__output",
-    curie=DEFAULT_.curie("output"),
-    model_uri=DEFAULT_.fieldIlluminationDataset__output,
-    domain=None,
-    range=Optional[Union[dict, FieldIlluminationOutput]],
-)
+slots.fieldIlluminationOutput__key_values = Slot(uri=DEFAULT_.key_values, name="fieldIlluminationOutput__key_values", curie=DEFAULT_.curie('key_values'),
+                   model_uri=DEFAULT_.fieldIlluminationOutput__key_values, domain=None, range=Optional[Union[dict, FieldIlluminationKeyValues]])
 
-slots.fieldIlluminationOutput__key_values = Slot(
-    uri=DEFAULT_.key_values,
-    name="fieldIlluminationOutput__key_values",
-    curie=DEFAULT_.curie("key_values"),
-    model_uri=DEFAULT_.fieldIlluminationOutput__key_values,
-    domain=None,
-    range=Optional[Union[dict, FieldIlluminationKeyValues]],
-)
+slots.fieldIlluminationOutput__intensity_profiles = Slot(uri=DEFAULT_.intensity_profiles, name="fieldIlluminationOutput__intensity_profiles", curie=DEFAULT_.curie('intensity_profiles'),
+                   model_uri=DEFAULT_.fieldIlluminationOutput__intensity_profiles, domain=None, range=Optional[Union[dict, TableAsDict]])
 
-slots.fieldIlluminationOutput__intensity_profiles = Slot(
-    uri=DEFAULT_.intensity_profiles,
-    name="fieldIlluminationOutput__intensity_profiles",
-    curie=DEFAULT_.curie("intensity_profiles"),
-    model_uri=DEFAULT_.fieldIlluminationOutput__intensity_profiles,
-    domain=None,
-    range=Optional[Union[dict, TableAsDict]],
-)
+slots.fieldIlluminationOutput__intensity_map = Slot(uri=DEFAULT_.intensity_map, name="fieldIlluminationOutput__intensity_map", curie=DEFAULT_.curie('intensity_map'),
+                   model_uri=DEFAULT_.fieldIlluminationOutput__intensity_map, domain=None, range=Optional[Union[str, Image5DImageUrl]])
 
-slots.fieldIlluminationOutput__intensity_map = Slot(
-    uri=DEFAULT_.intensity_map,
-    name="fieldIlluminationOutput__intensity_map",
-    curie=DEFAULT_.curie("intensity_map"),
-    model_uri=DEFAULT_.fieldIlluminationOutput__intensity_map,
-    domain=None,
-    range=Optional[Union[str, Image5DImageUrl]],
-)
-
-slots.fieldIlluminationOutput__profile_rois = Slot(
-    uri=DEFAULT_.profile_rois,
-    name="fieldIlluminationOutput__profile_rois",
-    curie=DEFAULT_.curie("profile_rois"),
-    model_uri=DEFAULT_.fieldIlluminationOutput__profile_rois,
-    domain=None,
-    range=Optional[Union[dict, ROI]],
-)
+slots.fieldIlluminationOutput__profile_rois = Slot(uri=DEFAULT_.profile_rois, name="fieldIlluminationOutput__profile_rois", curie=DEFAULT_.curie('profile_rois'),
+                   model_uri=DEFAULT_.fieldIlluminationOutput__profile_rois, domain=None, range=Optional[Union[dict, ROI]])
