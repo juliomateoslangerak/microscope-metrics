@@ -292,6 +292,8 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             columns=_image_line_profile(image, profile_size=255)
         )
 
+        # TODO: add the profile ROIs to the output
+
         self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.processed = True
 

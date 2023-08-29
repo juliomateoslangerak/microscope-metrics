@@ -138,16 +138,19 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             ]
 
             spots_centroids.append(
-                schema.roi(
+                schema.Roi(
                     label=f"Centroids_ch{ch:03d}",
-                    image=self.input.argolight_b_image,
+                    image=self.input.argolight_b_image.image_url,
                     shapes=channel_shapes,
                 )
             )
         properties_kv = {k: [i[k] for i in properties_kv] for k in properties_kv[0]}
         properties_df = pd.concat(properties_ls)
 
-        for a, b in product(distances_df.channel_a.unique(), distances_df.channel_b.unique()):
+        for a, b in product(
+            distances_df.channel_a.explode().unique(),
+            distances_df.channel_b.explode().unique(),
+        ):
             temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
             a = int(a)
             b = int(b)
@@ -155,22 +158,18 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             pr_distances_kv = {}
             pr_distances_kv["channel_A"] = a
             pr_distances_kv["channel_B"] = b
-            pr_distances_kv["mean_3d_dist"] = temp_df.dist_3d.mean().item()
-            pr_distances_kv["median_3d_dist"] = temp_df.dist_3d.median().item()
-            pr_distances_kv["std_3d_dist"] = temp_df.dist_3d.std().item()
-            pr_distances_kv["mad_3d_dist"] = (
-                (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean().item()
-            )
-            pr_distances_kv["mean_z_dist"] = temp_df.z_dist.mean().item()
-            pr_distances_kv["median_z_dist"] = temp_df.z_dist.median().item()
-            pr_distances_kv["std_z_dist"] = temp_df.z_dist.std().item()
-            pr_distances_kv["mad_z_dist"] = (
-                (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean().item()
-            )
+            pr_distances_kv["mean_3d_dist"] = temp_df.dist_3d.mean()
+            pr_distances_kv["median_3d_dist"] = temp_df.dist_3d.median()
+            pr_distances_kv["std_3d_dist"] = temp_df.dist_3d.std()
+            pr_distances_kv["mad_3d_dist"] = (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean()
+            pr_distances_kv["mean_z_dist"] = temp_df.z_dist.mean()
+            pr_distances_kv["median_z_dist"] = temp_df.z_dist.median()
+            pr_distances_kv["std_z_dist"] = temp_df.z_dist.std()
+            pr_distances_kv["mad_z_dist"] = (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean()
 
             distances_kv.append(pr_distances_kv)
 
-        distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv}
+        distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
 
         self.output.intensity_measurements = schema.ArgolightBIntensityKeyValues(**properties_kv)
 
@@ -295,7 +294,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
                     )
                 )
             rois.append(
-                core_schema.roi(
+                core_schema.Roi(
                     label=f"ch_{ch:03d}_peaks",
                     shapes=shapes,
                     image=self.input.argolight_e_image.image_url,
