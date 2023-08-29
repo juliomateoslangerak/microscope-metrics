@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class ImageAsNumpy
@@ -181,7 +182,7 @@ attributes:
     owner: ImageAsNumpy
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

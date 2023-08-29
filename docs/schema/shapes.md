@@ -13,7 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ROI](ROI.md) | A ROI |  no  |
+[Roi](Roi.md) | A ROI |  no  |
 
 
 
@@ -56,9 +56,9 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 rank: 1000
 multivalued: true
 alias: shapes
-owner: ROI
+owner: roi
 domain_of:
-- ROI
+- roi
 range: Shape
 
 ```

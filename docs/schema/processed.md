@@ -1,5 +1,10 @@
 # Slot: processed
 
+
+_Has the dataset been processed by microscope-metrics_
+
+
+
 URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/:processed](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/:processed)
 
 
@@ -52,6 +57,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: processed
+description: Has the dataset been processed by microscope-metrics
 from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
 rank: 1000
 multivalued: false

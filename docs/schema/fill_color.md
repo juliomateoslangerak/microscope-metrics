@@ -1,5 +1,10 @@
 # Slot: fill_color
 
+
+_The fill color of the shape_
+
+
+
 URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/:fill_color](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/:fill_color)
 
 
@@ -56,6 +61,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: fill_color
+description: The fill color of the shape
 from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
 rank: 1000
 alias: fill_color

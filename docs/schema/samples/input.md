@@ -1,6 +1,6 @@
 # Slot: input
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:input](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:input)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:input](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:input)
 
 
 
@@ -13,8 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ArgolightBDataset](ArgolightBDataset.md) | An Argolight sample pattern B dataset |  no  |
-[ArgolightEDataset](ArgolightEDataset.md) | An Argolight sample pattern E dataset |  no  |
+[FieldIlluminationDataset](FieldIlluminationDataset.md) | A field illumination dataset |  no  |
 
 
 
@@ -24,7 +23,9 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 ## Properties
 
-* Range: [String](String.md)
+* Range: [FieldIlluminationInput](FieldIlluminationInput.md)
+
+* Required: True
 
 
 
@@ -38,17 +39,28 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+### Schema Source
+
+
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+
+
+
 
 ## LinkML Source
 
 <details>
 ```yaml
 name: input
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+rank: 1000
+multivalued: false
 alias: input
+owner: FieldIlluminationDataset
 domain_of:
-- ArgolightBDataset
-- ArgolightEDataset
-range: string
+- FieldIlluminationDataset
+range: FieldIlluminationInput
+required: true
 
 ```
 </details>

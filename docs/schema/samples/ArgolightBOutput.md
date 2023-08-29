@@ -22,7 +22,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
         
       ArgolightBOutput : spots_centroids
         
-          ArgolightBOutput --|> ROI : spots_centroids
+          ArgolightBOutput --|> roi : spots_centroids
         
       ArgolightBOutput : spots_distances
         
@@ -54,7 +54,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
 | [spots_labels_image](spots_labels_image.md) | 0..1 <br/> [ImageAsNumpy](ImageAsNumpy.md) | Labels image of the argolight segmented spots provided as a 5D numpy array in... | direct |
-| [spots_centroids](spots_centroids.md) | 0..* <br/> [ROI](ROI.md) | Centroids of the argolight spots provided as a list of ROIs, one per channel | direct |
+| [spots_centroids](spots_centroids.md) | 0..* <br/> [Roi](Roi.md) | Centroids of the argolight spots provided as a list of ROIs, one per channel | direct |
 | [intensity_measurements](intensity_measurements.md) | 0..1 <br/> [ArgolightBIntensityKeyValues](ArgolightBIntensityKeyValues.md) | Key Intensity Measurements on Argolight spots | direct |
 | [distance_measurements](distance_measurements.md) | 0..1 <br/> [ArgolightBDistanceKeyValues](ArgolightBDistanceKeyValues.md) | Key Distance Measurements on Argolight spots | direct |
 | [spots_properties](spots_properties.md) | 0..1 <br/> [TableAsDict](TableAsDict.md) | Table of properties of the argolight spots | direct |
@@ -118,7 +118,7 @@ attributes:
   spots_labels_image:
     name: spots_labels_image
     description: Labels image of the argolight segmented spots provided as a 5D numpy
-      array in the order TZYXC. Image intensities correspond to roi labels
+      array in the order TZYXC. Image intensities correspond to ROI labels
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
@@ -131,7 +131,7 @@ attributes:
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: true
-    range: ROI
+    range: roi
     required: false
   intensity_measurements:
     name: intensity_measurements
@@ -180,7 +180,7 @@ attributes:
   spots_labels_image:
     name: spots_labels_image
     description: Labels image of the argolight segmented spots provided as a 5D numpy
-      array in the order TZYXC. Image intensities correspond to roi labels
+      array in the order TZYXC. Image intensities correspond to ROI labels
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
@@ -201,7 +201,7 @@ attributes:
     owner: ArgolightBOutput
     domain_of:
     - ArgolightBOutput
-    range: ROI
+    range: roi
     required: false
   intensity_measurements:
     name: intensity_measurements

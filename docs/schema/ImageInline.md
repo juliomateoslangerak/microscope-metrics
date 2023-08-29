@@ -13,6 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class ImageInline
@@ -173,7 +174,7 @@ attributes:
     owner: ImageInline
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

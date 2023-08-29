@@ -22,7 +22,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
         
       ArgolightEOutput : peaks_rois
         
-          ArgolightEOutput --|> ROI : peaks_rois
+          ArgolightEOutput --|> roi : peaks_rois
         
       
 ```
@@ -41,7 +41,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [peaks_rois](peaks_rois.md) | 0..* <br/> [ROI](ROI.md) | ROIs of the peaks found in the argolight images | direct |
+| [peaks_rois](peaks_rois.md) | 0..* <br/> [Roi](Roi.md) | ROIs of the peaks found in the argolight images | direct |
 | [key_measurements](key_measurements.md) | 0..1 <br/> [ArgolightEKeyValues](ArgolightEKeyValues.md) | Key Measurements on Argolight E images | direct |
 | [intensity_profiles](intensity_profiles.md) | 0..1 <br/> [TableAsDict](TableAsDict.md) | Intensity profiles of the argolight lines provided as tables | direct |
 
@@ -106,7 +106,7 @@ attributes:
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: true
-    range: ROI
+    range: roi
   key_measurements:
     name: key_measurements
     description: Key Measurements on Argolight E images
@@ -144,7 +144,7 @@ attributes:
     owner: ArgolightEOutput
     domain_of:
     - ArgolightEOutput
-    range: ROI
+    range: roi
   key_measurements:
     name: key_measurements
     description: Key Measurements on Argolight E images

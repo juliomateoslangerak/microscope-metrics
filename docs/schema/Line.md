@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Line
@@ -59,17 +60,17 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [x1](x1.md) | 1..1 <br/> [Float](Float.md) |  | direct |
-| [y1](y1.md) | 1..1 <br/> [Float](Float.md) |  | direct |
-| [x2](x2.md) | 1..1 <br/> [Float](Float.md) |  | direct |
-| [y2](y2.md) | 1..1 <br/> [Float](Float.md) |  | direct |
-| [label](label.md) | 0..1 <br/> [String](String.md) |  | [Shape](Shape.md) |
-| [z](z.md) | 0..1 <br/> [Float](Float.md) |  | [Shape](Shape.md) |
-| [c](c.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
-| [t](t.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
-| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) |  | [Shape](Shape.md) |
-| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) |  | [Shape](Shape.md) |
-| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
+| [x1](x1.md) | 1..1 <br/> [Float](Float.md) | The x coordinate of the first point of the line | direct |
+| [y1](y1.md) | 1..1 <br/> [Float](Float.md) | The y coordinate of the first point of the line | direct |
+| [x2](x2.md) | 1..1 <br/> [Float](Float.md) | The x coordinate of the second point of the line | direct |
+| [y2](y2.md) | 1..1 <br/> [Float](Float.md) | The y coordinate of the second point of the line | direct |
+| [label](label.md) | 0..1 <br/> [String](String.md) | The label of the shape | [Shape](Shape.md) |
+| [z](z.md) | 0..1 <br/> [Float](Float.md) | The z coordinate of the shape | [Shape](Shape.md) |
+| [c](c.md) | 0..1 <br/> [Integer](Integer.md) | The c coordinate of the shape | [Shape](Shape.md) |
+| [t](t.md) | 0..1 <br/> [Integer](Integer.md) | The t coordinate of the shape | [Shape](Shape.md) |
+| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) | The fill color of the shape | [Shape](Shape.md) |
+| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) | The stroke color of the shape | [Shape](Shape.md) |
+| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) | The stroke width of the shape | [Shape](Shape.md) |
 
 
 
@@ -122,6 +123,7 @@ is_a: Shape
 attributes:
   x1:
     name: x1
+    description: The x coordinate of the first point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -129,6 +131,7 @@ attributes:
     required: true
   y1:
     name: y1
+    description: The y coordinate of the first point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -136,6 +139,7 @@ attributes:
     required: true
   x2:
     name: x2
+    description: The x coordinate of the second point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -143,6 +147,7 @@ attributes:
     required: true
   y2:
     name: y2
+    description: The y coordinate of the second point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -163,6 +168,7 @@ is_a: Shape
 attributes:
   x1:
     name: x1
+    description: The x coordinate of the first point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -174,6 +180,7 @@ attributes:
     required: true
   y1:
     name: y1
+    description: The y coordinate of the first point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -185,6 +192,7 @@ attributes:
     required: true
   x2:
     name: x2
+    description: The x coordinate of the second point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -196,6 +204,7 @@ attributes:
     required: true
   y2:
     name: y2
+    description: The y coordinate of the second point of the line
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -207,16 +216,18 @@ attributes:
     required: true
   label:
     name: label
+    description: The label of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: label
     owner: Line
     domain_of:
-    - ROI
+    - roi
     - Shape
     range: string
     required: false
   z:
     name: z
+    description: The z coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: z
     owner: Line
@@ -227,6 +238,7 @@ attributes:
     required: false
   c:
     name: c
+    description: The c coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: c
     owner: Line
@@ -237,6 +249,7 @@ attributes:
     required: false
   t:
     name: t
+    description: The t coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: t
     owner: Line
@@ -247,6 +260,7 @@ attributes:
     required: false
   fill_color:
     name: fill_color
+    description: The fill color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: fill_color
@@ -257,6 +271,7 @@ attributes:
     required: false
   stroke_color:
     name: stroke_color
+    description: The stroke color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: stroke_color
@@ -267,6 +282,7 @@ attributes:
     required: false
   stroke_width:
     name: stroke_width
+    description: The stroke width of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     ifabsent: int(1)

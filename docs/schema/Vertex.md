@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Vertex
@@ -31,8 +32,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [x](x.md) | 1..1 <br/> [Float](Float.md) |  | direct |
-| [y](y.md) | 1..1 <br/> [Float](Float.md) |  | direct |
+| [x](x.md) | 1..1 <br/> [Float](Float.md) | The x coordinate of the vertex | direct |
+| [y](y.md) | 1..1 <br/> [Float](Float.md) | The y coordinate of the vertex | direct |
 
 
 
@@ -91,12 +92,14 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   x:
     name: x
+    description: The x coordinate of the vertex
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     range: float
     required: true
   y:
     name: y
+    description: The y coordinate of the vertex
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     range: float
@@ -115,6 +118,7 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   x:
     name: x
+    description: The x coordinate of the vertex
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     alias: x
@@ -132,6 +136,7 @@ attributes:
     required: true
   y:
     name: y
+    description: The y coordinate of the vertex
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     alias: y

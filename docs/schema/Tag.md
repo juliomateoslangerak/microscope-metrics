@@ -13,6 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Tag
@@ -35,9 +36,9 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [id](id.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [text](text.md) | 1..1 <br/> [String](String.md) |  | direct |
-| [description](description.md) | 0..1 <br/> [String](String.md) |  | direct |
+| [id](id.md) | 1..1 <br/> [Integer](Integer.md) | The id of the tag | direct |
+| [text](text.md) | 1..1 <br/> [String](String.md) | The text of the tag | direct |
+| [description](description.md) | 0..1 <br/> [String](String.md) | The description of the tag | direct |
 
 
 
@@ -90,6 +91,7 @@ abstract: true
 attributes:
   id:
     name: id
+    description: The id of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     identifier: true
@@ -97,6 +99,7 @@ attributes:
     required: true
   text:
     name: text
+    description: The text of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -104,6 +107,7 @@ attributes:
     required: true
   description:
     name: description
+    description: The description of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     range: string
@@ -123,6 +127,7 @@ abstract: true
 attributes:
   id:
     name: id
+    description: The id of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     identifier: true
@@ -134,6 +139,7 @@ attributes:
     required: true
   text:
     name: text
+    description: The text of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -146,13 +152,14 @@ attributes:
     required: true
   description:
     name: description
+    description: The description of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     alias: description
     owner: Tag
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
     required: false

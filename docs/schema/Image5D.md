@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Image5D
@@ -330,7 +331,7 @@ attributes:
     owner: Image5D
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

@@ -36,7 +36,7 @@ Name: microscopemetrics_core_schema
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Protocol](Protocol.md) | Set of instructions for preparing and imaging a sample |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Sample](Sample.md) | A sample is a standard physical object that is imaged by a microscope |
 | [PixelSeries](PixelSeries.md) | A series whose values represent pixels or voxels or a single integer defining the shape of the dimension |
-| [ROI](ROI.md) | A ROI. Collection of shapes and an image to which they are applied |
+| [Roi](Roi.md) | A ROI. Collection of shapes and an image to which they are applied |
 | [Shape](Shape.md) | A shape |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Ellipse](Ellipse.md) | An ellipse as defined by x, y coordinates and x and y radii |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Line](Line.md) | A line as defined by x1, y1, x2, y2 coordinates |
@@ -54,55 +54,56 @@ Name: microscopemetrics_core_schema
 
 | Slot | Description |
 | --- | --- |
-| [acquisition_date](acquisition_date.md) |  |
-| [alpha](alpha.md) |  |
-| [authors](authors.md) |  |
-| [b](b.md) |  |
+| [acquisition_date](acquisition_date.md) | The date of the acquisition |
+| [alpha](alpha.md) | The alpha value of the color (optional) |
+| [authors](authors.md) | The authors of the protocol |
+| [b](b.md) | The blue value of the color |
 | [bit_depth](bit_depth.md) | Detector bit depth |
 | [c](c.md) |  |
-| [columns](columns.md) |  |
+| [columns](columns.md) | A list of the columns of the table |
+| [comment](comment.md) | A human readable comment about the dataset |
 | [data](data.md) |  |
 | [description](description.md) | A description of an entity |
-| [df](df.md) |  |
-| [experimenter](experimenter.md) |  |
-| [fill_color](fill_color.md) |  |
-| [g](g.md) |  |
-| [h](h.md) |  |
+| [df](df.md) | A Pandas DataFrame object |
+| [experimenter](experimenter.md) | The experimenter that performed the imaging experiment |
+| [fill_color](fill_color.md) | The fill color of the shape |
+| [g](g.md) | The green value of the color |
+| [h](h.md) | The height of the rectangle |
 | [id](id.md) | The unique identifier for an entity |
-| [image](image.md) |  |
+| [image](image.md) | The image to which the ROI is applied |
 | [image_url](image_url.md) | An URL linking to the image |
-| [is_open](is_open.md) |  |
-| [label](label.md) |  |
-| [mask](mask.md) |  |
+| [is_open](is_open.md) | Is the polygon open |
+| [label](label.md) | The label of the ROI |
+| [mask](mask.md) | The mask image |
 | [name](name.md) | The name of an entity |
 | [orcid](orcid.md) | The ORCID of the experimenter |
-| [processed](processed.md) |  |
-| [processing_date](processing_date.md) |  |
-| [processing_log](processing_log.md) |  |
-| [protocol](protocol.md) |  |
-| [r](r.md) |  |
-| [sample](sample.md) |  |
+| [processed](processed.md) | Has the dataset been processed by microscope-metrics |
+| [processing_date](processing_date.md) | The date of the processing by microscope-metrics |
+| [processing_log](processing_log.md) | The log of the processing by microscope-metrics |
+| [protocol](protocol.md) | The protocol used to prepare the sample |
+| [r](r.md) | The red value of the color |
+| [sample](sample.md) | The sample that was imaged |
 | [saturation_threshold](saturation_threshold.md) | Tolerated saturation threshold |
 | [shapes](shapes.md) |  |
 | [source_image_url](source_image_url.md) | A list of URLs linking to the images that were used as a source |
-| [stroke_color](stroke_color.md) |  |
-| [stroke_width](stroke_width.md) |  |
+| [stroke_color](stroke_color.md) | The stroke color of the shape |
+| [stroke_width](stroke_width.md) | The stroke width of the shape |
 | [t](t.md) |  |
-| [text](text.md) |  |
-| [type](type.md) |  |
-| [url](url.md) |  |
+| [text](text.md) | The text of the tag |
+| [type](type.md) | The type of the sample |
+| [url](url.md) | The URL where the protocol can be found |
 | [values](values.md) |  |
-| [version](version.md) |  |
-| [vertexes](vertexes.md) |  |
-| [w](w.md) |  |
+| [version](version.md) | The version of the protocol |
+| [vertexes](vertexes.md) | A list of vertexes defining the polygon |
+| [w](w.md) | The width of the rectangle |
 | [x](x.md) |  |
-| [x1](x1.md) |  |
-| [x2](x2.md) |  |
-| [x_rad](x_rad.md) |  |
+| [x1](x1.md) | The x coordinate of the first point of the line |
+| [x2](x2.md) | The x coordinate of the second point of the line |
+| [x_rad](x_rad.md) | The x radius of the ellipse |
 | [y](y.md) |  |
-| [y1](y1.md) |  |
-| [y2](y2.md) |  |
-| [y_rad](y_rad.md) |  |
+| [y1](y1.md) | The y coordinate of the first point of the line |
+| [y2](y2.md) | The y coordinate of the second point of the line |
+| [y_rad](y_rad.md) | The y radius of the ellipse |
 | [z](z.md) |  |
 
 

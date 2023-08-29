@@ -13,6 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Image
@@ -64,7 +65,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | used by | used in | type | used |
 | ---  | --- | --- | --- |
-| [ROI](ROI.md) | [image](image.md) | range | [Image](Image.md) |
+| [Roi](Roi.md) | [image](image.md) | range | [Image](Image.md) |
 
 
 
@@ -178,7 +179,7 @@ attributes:
     owner: Image
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

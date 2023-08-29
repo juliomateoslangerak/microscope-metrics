@@ -28,7 +28,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 ## Properties
 
-* Range: [ROI](ROI.md)
+* Range: [Roi](Roi.md)
 
 * Multivalued: True
 
@@ -65,7 +65,7 @@ alias: peaks_rois
 owner: ArgolightEOutput
 domain_of:
 - ArgolightEOutput
-range: ROI
+range: roi
 
 ```
 </details>

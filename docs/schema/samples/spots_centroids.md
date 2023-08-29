@@ -28,7 +28,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 ## Properties
 
-* Range: [ROI](ROI.md)
+* Range: [Roi](Roi.md)
 
 * Multivalued: True
 
@@ -66,7 +66,7 @@ alias: spots_centroids
 owner: ArgolightBOutput
 domain_of:
 - ArgolightBOutput
-range: ROI
+range: roi
 required: false
 
 ```

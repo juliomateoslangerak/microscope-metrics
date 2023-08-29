@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Image2D
@@ -252,7 +253,7 @@ attributes:
     owner: Image2D
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

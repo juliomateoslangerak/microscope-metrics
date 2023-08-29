@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Color
@@ -35,10 +36,10 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [r](r.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [g](g.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [b](b.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [alpha](alpha.md) | 0..1 <br/> [Integer](Integer.md) |  | direct |
+| [r](r.md) | 1..1 <br/> [Integer](Integer.md) | The red value of the color | direct |
+| [g](g.md) | 1..1 <br/> [Integer](Integer.md) | The green value of the color | direct |
+| [b](b.md) | 1..1 <br/> [Integer](Integer.md) | The blue value of the color | direct |
+| [alpha](alpha.md) | 0..1 <br/> [Integer](Integer.md) | The alpha value of the color (optional) | direct |
 
 
 
@@ -110,6 +111,7 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   r:
     name: r
+    description: The red value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -120,6 +122,7 @@ attributes:
     maximum_value: 255
   g:
     name: g
+    description: The green value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -130,6 +133,7 @@ attributes:
     maximum_value: 255
   b:
     name: b
+    description: The blue value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -140,6 +144,7 @@ attributes:
     maximum_value: 255
   alpha:
     name: alpha
+    description: The alpha value of the color (optional)
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -162,6 +167,7 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   r:
     name: r
+    description: The red value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -176,6 +182,7 @@ attributes:
     maximum_value: 255
   g:
     name: g
+    description: The green value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -190,6 +197,7 @@ attributes:
     maximum_value: 255
   b:
     name: b
+    description: The blue value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -204,6 +212,7 @@ attributes:
     maximum_value: 255
   alpha:
     name: alpha
+    description: The alpha value of the color (optional)
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false

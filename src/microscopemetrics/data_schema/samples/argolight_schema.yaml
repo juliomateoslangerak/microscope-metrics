@@ -20,10 +20,14 @@ classes:
     attributes:
       input:
         range: ArgolightBInput
+        description: >-
+          An input element for the analysis
         required: true
         multivalued: false
       output:
         range: ArgolightBOutput
+        description: >-
+          An output element from the analysis
         required: false
         multivalued: false
     rules:
@@ -58,11 +62,11 @@ classes:
         range: ImageAsNumpy
         description: >-
           Labels image of the argolight segmented spots provided as a 5D numpy array in the order TZYXC.
-          Image intensities correspond to roi labels
+          Image intensities correspond to ROI labels
         required: false
         multivalued: false
       spots_centroids:
-        range: ROI
+        range: roi
         description: >-
           Centroids of the argolight spots provided as a list of ROIs, one per channel
         required: false
@@ -131,10 +135,14 @@ classes:
     attributes:
       input:
         range: ArgolightEInput
+        description: >-
+          An input element for the analysis
         required: true
         multivalued: false
       output:
         range: ArgolightEOutput
+        description: >-
+          An output element from the analysis
         required: false
         multivalued: false
     rules:
@@ -162,7 +170,7 @@ classes:
     is_a: MetricsOutput
     attributes:
       peaks_rois:
-        range: ROI
+        range: roi
         description: >-
           ROIs of the peaks found in the argolight images
         multivalued: true

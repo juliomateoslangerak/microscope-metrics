@@ -5,7 +5,7 @@ _A description of an entity_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:description](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:description)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:description](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:description)
 
 
 
@@ -19,8 +19,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
 [NamedObject](NamedObject.md) | An object with a name and a description |  no  |
-[ArgolightBDataset](ArgolightBDataset.md) | An Argolight sample pattern B dataset |  no  |
-[ArgolightEDataset](ArgolightEDataset.md) | An Argolight sample pattern E dataset |  no  |
+[FieldIlluminationDataset](FieldIlluminationDataset.md) | A field illumination dataset |  no  |
 [MetricsObject](MetricsObject.md) | A base object for all microscope-metrics objects |  no  |
 [Sample](Sample.md) | A sample is a standard physical object that is imaged by a microscope |  no  |
 [Protocol](Protocol.md) | Set of instructions for preparing and imaging a sample |  no  |
@@ -31,7 +30,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 [ImageMask](ImageMask.md) | A base object for all microscope-metrics masks |  no  |
 [Image2D](Image2D.md) | A 2D image in YX order |  no  |
 [Image5D](Image5D.md) | A 5D image in TZYXC order |  no  |
-[ROI](ROI.md) | A ROI |  no  |
+[Roi](Roi.md) | A ROI |  no  |
 [Tag](Tag.md) | A tag |  no  |
 [Table](Table.md) | A table |  no  |
 [TableAsPandasDF](TableAsPandasDF.md) | A table as a Pandas DataFrame |  no  |
@@ -62,7 +61,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 
 
 
@@ -73,13 +72,13 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: description
 description: A description of an entity
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 rank: 1000
 multivalued: false
 alias: description
 domain_of:
 - NamedObject
-- ROI
+- roi
 - Tag
 range: string
 

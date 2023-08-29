@@ -29,7 +29,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 [ImageMask](ImageMask.md) | A base object for all microscope-metrics masks |  no  |
 [Image2D](Image2D.md) | A 2D image in YX order |  no  |
 [Image5D](Image5D.md) | A 5D image in TZYXC order |  no  |
-[ROI](ROI.md) | A ROI |  no  |
+[Roi](Roi.md) | A ROI |  no  |
 [Tag](Tag.md) | A tag |  no  |
 [Table](Table.md) | A table |  no  |
 [TableAsPandasDF](TableAsPandasDF.md) | A table as a Pandas DataFrame |  no  |
@@ -77,7 +77,7 @@ multivalued: false
 alias: description
 domain_of:
 - NamedObject
-- ROI
+- roi
 - Tag
 range: string
 

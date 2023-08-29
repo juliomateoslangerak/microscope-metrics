@@ -13,6 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class MetricsObject
@@ -136,7 +137,7 @@ attributes:
     owner: MetricsObject
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

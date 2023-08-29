@@ -263,19 +263,22 @@ classes:
         unit:
           ucum_code: s
 
-  ROI: # TODO: make this lower case
+  roi:
     description: A ROI. Collection of shapes and an image to which they are applied
     attributes:
       label:
         range: string
+        description: The label of the ROI
         required: false
         multivalued: false
       description:
         range: string
+        description: A description of the ROI
         required: false
         multivalued: false
       image:
         range: Image
+        description: The image to which the ROI is applied
         required: false
         multivalued: true
         inlined: false
@@ -289,24 +292,31 @@ classes:
     attributes:
       label:
         range: string
+        description: The label of the shape
         required: false
       z:
         range: float
+        description: The z coordinate of the shape
         required: false
       c:
         range: integer
+        description: The c coordinate of the shape
         required: false
       t:
         range: integer
+        description: The t coordinate of the shape
         required: false
       fill_color:
         range: Color
+        description: The fill color of the shape
         required: false
       stroke_color:
         range: Color
+        description: The stroke color of the shape
         required: false
       stroke_width:
         range: integer
+        description: The stroke width of the shape
         required: false
         ifabsent: int(1)
 
@@ -316,10 +326,12 @@ classes:
     attributes:
       y:
         range: float
+        description: The y coordinate of the point
         multivalued: false
         required: true
       x:
         range: float
+        description: The x coordinate of the point
         multivalued: false
         required: true
 
@@ -329,18 +341,22 @@ classes:
     attributes:
       x1:
         range: float
+        description: The x coordinate of the first point of the line
         multivalued: false
         required: true
       y1:
         range: float
+        description: The y coordinate of the first point of the line
         multivalued: false
         required: true
       x2:
         range: float
+        description: The x coordinate of the second point of the line
         multivalued: false
         required: true
       y2:
         range: float
+        description: The y coordinate of the second point of the line
         multivalued: false
         required: true
 
@@ -350,18 +366,22 @@ classes:
     attributes:
       x:
         range: float
+        description: The x coordinate of the top left corner of the rectangle
         multivalued: false
         required: true
       y:
         range: float
+        description: The y coordinate of the top left corner of the rectangle
         multivalued: false
         required: true
       w:
         range: float
+        description: The width of the rectangle
         multivalued: false
         required: true
       h:
         range: float
+        description: The height of the rectangle
         multivalued: false
         required: true
 
@@ -371,18 +391,22 @@ classes:
     attributes:
       x:
         range: float
+        description: The x coordinate of the bounding box of the ellipse
         multivalued: false
         required: true
       y:
         range: float
+        description: The y coordinate of the bounding box of the ellipse
         multivalued: false
         required: true
       x_rad:
         range: float
+        description: The x radius of the ellipse
         multivalued: false
         required: true
       y_rad:
         range: float
+        description: The y radius of the ellipse
         multivalued: false
         required: true
 
@@ -393,12 +417,14 @@ classes:
     attributes:
       vertexes:
         range: Vertex
+        description: A list of vertexes defining the polygon
         multivalued: true
         required: true
         inlined: true
         inlined_as_list: true
       is_open:
         range: boolean
+        description: Is the polygon open. By default, it is closed (false)
         multivalued: false
         required: true
         ifabsent: false
@@ -408,10 +434,12 @@ classes:
     attributes:
       x:
         range: float
+        description: The x coordinate of the vertex
         multivalued: false
         required: true
       y:
         range: float
+        description: The y coordinate of the vertex
         multivalued: false
         required: true
 
@@ -421,14 +449,17 @@ classes:
     attributes:
       y:
         range: integer
+        description: The y coordinate of the top left corner of the mask
         required: true
         ifabsent: int(0)
       x:
         range: integer
+        description: The x coordinate of the top left corner of the mask
         required: true
         ifabsent: int(0)
       mask:
         range: ImageMask
+        description: The mask image
         multivalued: false
         inlined: true
 
@@ -437,6 +468,7 @@ classes:
     attributes:
       r:
         range: integer
+        description: The red value of the color
         required: true
         ifabsent: int(128)
         multivalued: false
@@ -444,6 +476,7 @@ classes:
         maximum_value: 255
       g:
         range: integer
+        description: The green value of the color
         required: true
         ifabsent: int(128)
         multivalued: false
@@ -451,6 +484,7 @@ classes:
         maximum_value: 255
       b:
         range: integer
+        description: The blue value of the color
         required: true
         ifabsent: int(128)
         multivalued: false
@@ -458,6 +492,7 @@ classes:
         maximum_value: 255
       alpha:
         range: integer
+        description: The alpha value of the color (optional)
         required: false
         ifabsent: int(255)
         multivalued: false
@@ -474,15 +509,18 @@ classes:
     attributes:
       id:
         range: integer
+        description: The id of the tag
         identifier: true
         required: true
         multivalued: false
       text:
         range: string
+        description: The text of the tag
         required: true
         multivalued: false
       description:
         range: string
+        description: The description of the tag
         required: false
         multivalued: false
 
@@ -491,6 +529,7 @@ classes:
     attributes:
       text:
         range: string
+        description: The text of the comment
         required: true
         multivalued: false
 
@@ -505,6 +544,7 @@ classes:
     attributes:
       df:
         range: MetaObject
+        description: A Pandas DataFrame object
         required: true
         multivalued: false
 
@@ -515,6 +555,7 @@ classes:
     attributes:
       columns:
         range: Column
+        description: A list of the columns of the table
         required: true
         multivalued: true
         inlined: true
@@ -525,10 +566,12 @@ classes:
     attributes:
       name:
         range: string
+        description: The name of the column
         required: true
         identifier: true
       values:
         range: string
+        description: The values of the column
         required: true
         multivalued: true
 

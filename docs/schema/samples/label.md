@@ -1,6 +1,6 @@
 # Slot: label
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:label](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:label)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:label](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:label)
 
 
 
@@ -13,7 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ROI](ROI.md) | A ROI |  no  |
+[Roi](Roi.md) | A ROI |  no  |
 [Shape](Shape.md) | A shape |  no  |
 [Point](Point.md) | A point as defined by x and y coordinates |  no  |
 [Line](Line.md) | A line as defined by x1, y1, x2, y2 coordinates |  no  |
@@ -52,7 +52,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 name: label
 alias: label
 domain_of:
-- ROI
+- roi
 - Shape
 range: string
 

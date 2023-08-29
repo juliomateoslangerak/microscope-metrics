@@ -5,17 +5,11 @@ _The channel number to which the measurements apply_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:channel](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:channel)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:channel](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:channel)
 
 
 
-
-## Inheritance
-
-* **channel**
-    * [channel_A](channel_A.md)
-    * [channel_B](channel_B.md)
-
+<!-- no inheritance hierarchy -->
 
 
 
@@ -24,8 +18,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ArgolightBIntensityKeyValues](ArgolightBIntensityKeyValues.md) |  |  no  |
-[ArgolightEKeyValues](ArgolightEKeyValues.md) |  |  no  |
+[FieldIlluminationKeyValues](FieldIlluminationKeyValues.md) |  |  no  |
 
 
 
@@ -54,7 +47,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 
 
 
@@ -65,13 +58,12 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: channel
 description: The channel number to which the measurements apply
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 rank: 1000
 multivalued: true
 alias: channel
 domain_of:
-- ArgolightBIntensityKeyValues
-- ArgolightEKeyValues
+- FieldIlluminationKeyValues
 range: integer
 
 ```

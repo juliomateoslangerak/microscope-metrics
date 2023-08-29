@@ -26,7 +26,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
         
       FieldIlluminationOutput : profile_rois
         
-          FieldIlluminationOutput --|> ROI : profile_rois
+          FieldIlluminationOutput --|> roi : profile_rois
         
       
 ```
@@ -48,7 +48,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 | [key_values](key_values.md) | 0..1 <br/> [FieldIlluminationKeyValues](FieldIlluminationKeyValues.md) | Key-Value pairs containing the Key measurements for the field illumination an... | direct |
 | [intensity_profiles](intensity_profiles.md) | 0..1 <br/> [TableAsDict](TableAsDict.md) | Intensity profiles for the field illumination analysis in the different direc... | direct |
 | [intensity_map](intensity_map.md) | 0..1 <br/> [Image5D](Image5D.md) | Intensity map of the field illumination | direct |
-| [profile_rois](profile_rois.md) | 0..1 <br/> [ROI](ROI.md) | Output: ROIs used to compute the intensity profile | direct |
+| [profile_rois](profile_rois.md) | 0..1 <br/> [Roi](Roi.md) | Output: ROIs used to compute the intensity profile | direct |
 
 
 
@@ -133,7 +133,7 @@ attributes:
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
     rank: 1000
     multivalued: false
-    range: ROI
+    range: roi
 
 ```
 </details>
@@ -190,7 +190,7 @@ attributes:
     owner: FieldIlluminationOutput
     domain_of:
     - FieldIlluminationOutput
-    range: ROI
+    range: roi
 
 ```
 </details>

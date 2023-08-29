@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Comment
@@ -29,10 +30,17 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [text](text.md) | 1..1 <br/> [String](String.md) |  | direct |
+| [text](text.md) | 1..1 <br/> [String](String.md) | The text of the comment | direct |
 
 
 
+
+
+## Usages
+
+| used by | used in | type | used |
+| ---  | --- | --- | --- |
+| [MetricsDataset](MetricsDataset.md) | [comment](comment.md) | range | [Comment](Comment.md) |
 
 
 
@@ -81,6 +89,7 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   text:
     name: text
+    description: The text of the comment
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     range: string
@@ -99,6 +108,7 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   text:
     name: text
+    description: The text of the comment
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     alias: text

@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Column
@@ -31,8 +32,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [name](name.md) | 1..1 <br/> [String](String.md) |  | direct |
-| [values](values.md) | 1..* <br/> [String](String.md) |  | direct |
+| [name](name.md) | 1..1 <br/> [String](String.md) | The name of the column | direct |
+| [values](values.md) | 1..* <br/> [String](String.md) | The values of the column | direct |
 
 
 
@@ -91,12 +92,14 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   name:
     name: name
+    description: The name of the column
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     identifier: true
     range: string
     required: true
   values:
     name: values
+    description: The values of the column
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: true
     range: string
@@ -115,6 +118,7 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 attributes:
   name:
     name: name
+    description: The name of the column
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     identifier: true
     alias: name
@@ -127,6 +131,7 @@ attributes:
     required: true
   values:
     name: values
+    description: The values of the column
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: true
     alias: values

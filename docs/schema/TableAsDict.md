@@ -13,6 +13,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class TableAsDict
@@ -45,7 +46,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [columns](columns.md) | 1..* <br/> [Column](Column.md) |  | direct |
+| [columns](columns.md) | 1..* <br/> [Column](Column.md) | A list of the columns of the table | direct |
 | [name](name.md) | 0..1 <br/> [String](String.md) | The name of an entity | [NamedObject](NamedObject.md) |
 | [description](description.md) | 0..1 <br/> [String](String.md) | A description of an entity | [NamedObject](NamedObject.md) |
 
@@ -101,6 +102,7 @@ abstract: true
 attributes:
   columns:
     name: columns
+    description: A list of the columns of the table
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: true
@@ -124,6 +126,7 @@ abstract: true
 attributes:
   columns:
     name: columns
+    description: A list of the columns of the table
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: true
@@ -159,7 +162,7 @@ attributes:
     owner: TableAsDict
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

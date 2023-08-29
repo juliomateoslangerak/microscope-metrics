@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class ImageMask
@@ -257,7 +258,7 @@ attributes:
     owner: ImageMask
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

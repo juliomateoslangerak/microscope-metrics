@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class TableAsPandasDF
@@ -43,7 +44,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [df](df.md) | 1..1 <br/> [MetaObject](MetaObject.md) |  | direct |
+| [df](df.md) | 1..1 <br/> [MetaObject](MetaObject.md) | A Pandas DataFrame object | direct |
 | [name](name.md) | 0..1 <br/> [String](String.md) | The name of an entity | [NamedObject](NamedObject.md) |
 | [description](description.md) | 0..1 <br/> [String](String.md) | A description of an entity | [NamedObject](NamedObject.md) |
 
@@ -98,6 +99,7 @@ is_a: Table
 attributes:
   df:
     name: df
+    description: A Pandas DataFrame object
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -118,6 +120,7 @@ is_a: Table
 attributes:
   df:
     name: df
+    description: A Pandas DataFrame object
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -151,7 +154,7 @@ attributes:
     owner: TableAsPandasDF
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 

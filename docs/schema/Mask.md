@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Mask
@@ -59,16 +60,16 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [y](y.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [x](x.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [mask](mask.md) | 0..1 <br/> [ImageMask](ImageMask.md) |  | direct |
-| [label](label.md) | 0..1 <br/> [String](String.md) |  | [Shape](Shape.md) |
-| [z](z.md) | 0..1 <br/> [Float](Float.md) |  | [Shape](Shape.md) |
-| [c](c.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
-| [t](t.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
-| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) |  | [Shape](Shape.md) |
-| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) |  | [Shape](Shape.md) |
-| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
+| [y](y.md) | 1..1 <br/> [Integer](Integer.md) | The y coordinate of the top left corner of the mask | direct |
+| [x](x.md) | 1..1 <br/> [Integer](Integer.md) | The x coordinate of the top left corner of the mask | direct |
+| [mask](mask.md) | 0..1 <br/> [ImageMask](ImageMask.md) | The mask image | direct |
+| [label](label.md) | 0..1 <br/> [String](String.md) | The label of the shape | [Shape](Shape.md) |
+| [z](z.md) | 0..1 <br/> [Float](Float.md) | The z coordinate of the shape | [Shape](Shape.md) |
+| [c](c.md) | 0..1 <br/> [Integer](Integer.md) | The c coordinate of the shape | [Shape](Shape.md) |
+| [t](t.md) | 0..1 <br/> [Integer](Integer.md) | The t coordinate of the shape | [Shape](Shape.md) |
+| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) | The fill color of the shape | [Shape](Shape.md) |
+| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) | The stroke color of the shape | [Shape](Shape.md) |
+| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) | The stroke width of the shape | [Shape](Shape.md) |
 
 
 
@@ -121,18 +122,21 @@ is_a: Shape
 attributes:
   y:
     name: y
+    description: The y coordinate of the top left corner of the mask
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     ifabsent: int(0)
     range: integer
     required: true
   x:
     name: x
+    description: The x coordinate of the top left corner of the mask
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     ifabsent: int(0)
     range: integer
     required: true
   mask:
     name: mask
+    description: The mask image
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -153,6 +157,7 @@ is_a: Shape
 attributes:
   y:
     name: y
+    description: The y coordinate of the top left corner of the mask
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     ifabsent: int(0)
     alias: y
@@ -170,6 +175,7 @@ attributes:
     required: true
   x:
     name: x
+    description: The x coordinate of the top left corner of the mask
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     ifabsent: int(0)
     alias: x
@@ -187,6 +193,7 @@ attributes:
     required: true
   mask:
     name: mask
+    description: The mask image
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -198,16 +205,18 @@ attributes:
     inlined: true
   label:
     name: label
+    description: The label of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: label
     owner: Mask
     domain_of:
-    - ROI
+    - roi
     - Shape
     range: string
     required: false
   z:
     name: z
+    description: The z coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: z
     owner: Mask
@@ -218,6 +227,7 @@ attributes:
     required: false
   c:
     name: c
+    description: The c coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: c
     owner: Mask
@@ -228,6 +238,7 @@ attributes:
     required: false
   t:
     name: t
+    description: The t coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: t
     owner: Mask
@@ -238,6 +249,7 @@ attributes:
     required: false
   fill_color:
     name: fill_color
+    description: The fill color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: fill_color
@@ -248,6 +260,7 @@ attributes:
     required: false
   stroke_color:
     name: stroke_color
+    description: The stroke color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: stroke_color
@@ -258,6 +271,7 @@ attributes:
     required: false
   stroke_width:
     name: stroke_width
+    description: The stroke width of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     ifabsent: int(1)

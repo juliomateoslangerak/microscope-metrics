@@ -11,6 +11,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 
 
+
 ```mermaid
  classDiagram
     class Sample
@@ -43,8 +44,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [type](type.md) | 1..1 <br/> [String](String.md) |  | direct |
-| [protocol](protocol.md) | 1..1 <br/> [Protocol](Protocol.md) |  | direct |
+| [type](type.md) | 1..1 <br/> [String](String.md) | The type of the sample | direct |
+| [protocol](protocol.md) | 1..1 <br/> [Protocol](Protocol.md) | The protocol used to prepare the sample | direct |
 | [name](name.md) | 0..1 <br/> [String](String.md) | The name of an entity | [NamedObject](NamedObject.md) |
 | [description](description.md) | 0..1 <br/> [String](String.md) | A description of an entity | [NamedObject](NamedObject.md) |
 
@@ -106,6 +107,7 @@ is_a: NamedObject
 attributes:
   type:
     name: type
+    description: The type of the sample
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     identifier: true
@@ -113,6 +115,7 @@ attributes:
     required: true
   protocol:
     name: protocol
+    description: The protocol used to prepare the sample
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -134,6 +137,7 @@ is_a: NamedObject
 attributes:
   type:
     name: type
+    description: The type of the sample
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     identifier: true
@@ -145,6 +149,7 @@ attributes:
     required: true
   protocol:
     name: protocol
+    description: The protocol used to prepare the sample
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -179,7 +184,7 @@ attributes:
     owner: Sample
     domain_of:
     - NamedObject
-    - ROI
+    - roi
     - Tag
     range: string
 
