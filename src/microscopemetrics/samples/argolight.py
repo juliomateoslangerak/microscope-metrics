@@ -170,7 +170,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
 
             distances_kv.append(pr_distances_kv)
 
-        distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
+        distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv}
 
         self.output.intensity_measurements = schema.ArgolightBIntensityKeyValues(**properties_kv)
 
