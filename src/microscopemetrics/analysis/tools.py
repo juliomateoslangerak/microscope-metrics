@@ -14,7 +14,7 @@ from skimage.morphology import ball, closing, cube, octahedron, square
 from skimage.segmentation import clear_border
 
 # Creating logging services
-module_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def _segment_channel(
@@ -71,18 +71,18 @@ def segment_image(
     """Segment an image and return a labels object.
     Image must be provided as TZYXC numpy array
     """
-    module_logger.info("Image being segmented...")
+    logger.info("Image being segmented...")
 
     if low_corr_factors is None or (
         isinstance(low_corr_factors, list) and len(low_corr_factors) == 0
     ):
         low_corr_factors = [0.95] * image.shape[4]
-        module_logger.warning("No low correction factor specified. Using defaults")
+        logger.warning("No low correction factor specified. Using defaults")
     if high_corr_factors is None or (
         isinstance(high_corr_factors, list) and len(high_corr_factors) == 0
     ):
         high_corr_factors = [1.05] * image.shape[4]
-        module_logger.warning("No high correction factor specified. Using defaults")
+        logger.warning("No high correction factor specified. Using defaults")
 
     if len(high_corr_factors) != image.shape[4] or len(low_corr_factors) != image.shape[4]:
         raise Exception("The number of correction factors does not match the number of channels.")
@@ -164,7 +164,7 @@ def compute_spots_properties(image, labels, remove_center_cross=False, pixel_siz
 
 def compute_distances_matrix(positions, max_distance, pixel_size=None):
     """Calculates Mutual Closest Neighbour distances between all channels and returns the values as"""
-    module_logger.info("Computing distances between spots")
+    logger.info("Computing distances between spots")
 
     if len(positions) < 2:
         raise Exception("Not enough dimensions to do a distance measurement")
@@ -173,7 +173,7 @@ def compute_distances_matrix(positions, max_distance, pixel_size=None):
 
     if not pixel_size:  # TODO: make sure the units are corrected if no pixel size
         pixel_size = np.array((1, 1, 1))
-        module_logger.warning("No pixel size specified. Using the unit")
+        logger.warning("No pixel size specified. Using the unit")
     else:
         pixel_size = np.array(pixel_size)
 

@@ -263,7 +263,7 @@ classes:
         unit:
           ucum_code: s
 
-  ROI:
+  ROI: # TODO: make this lower case
     description: A ROI. Collection of shapes and an image to which they are applied
     attributes:
       label:
