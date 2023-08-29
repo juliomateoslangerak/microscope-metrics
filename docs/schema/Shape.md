@@ -194,7 +194,7 @@ attributes:
     alias: label
     owner: Shape
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false

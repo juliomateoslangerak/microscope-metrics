@@ -5,7 +5,7 @@ _Detector bit depth_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:bit_depth](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:bit_depth)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:bit_depth](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:bit_depth)
 
 
 
@@ -18,7 +18,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[FieldIlluminationInput](FieldIlluminationInput.md) |  |  no  |
+[ArgolightBInput](ArgolightBInput.md) |  |  no  |
+[ArgolightEInput](ArgolightEInput.md) |  |  no  |
 
 
 
@@ -49,7 +50,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -60,12 +61,13 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: bit_depth
 description: Detector bit depth
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 multivalued: false
 alias: bit_depth
 domain_of:
-- FieldIlluminationInput
+- ArgolightBInput
+- ArgolightEInput
 range: integer
 minimum_value: 1
 maximum_value: 64

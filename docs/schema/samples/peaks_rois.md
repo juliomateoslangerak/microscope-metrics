@@ -65,7 +65,7 @@ alias: peaks_rois
 owner: ArgolightEOutput
 domain_of:
 - ArgolightEOutput
-range: roi
+range: Roi
 
 ```
 </details>

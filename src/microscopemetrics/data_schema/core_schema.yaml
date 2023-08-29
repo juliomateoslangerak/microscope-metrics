@@ -263,7 +263,7 @@ classes:
         unit:
           ucum_code: s
 
-  roi:
+  Roi:
     description: A ROI. Collection of shapes and an image to which they are applied
     attributes:
       label:

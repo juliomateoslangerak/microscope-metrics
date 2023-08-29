@@ -1,6 +1,11 @@
 # Slot: is_open
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:is_open](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:is_open)
+
+_Is the polygon open. By default, it is closed (false)_
+
+
+
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:is_open](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:is_open)
 
 
 
@@ -42,7 +47,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -52,7 +57,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: is_open
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+description: Is the polygon open. By default, it is closed (false)
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 multivalued: false
 ifabsent: 'False'

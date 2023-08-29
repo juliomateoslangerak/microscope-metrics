@@ -1,6 +1,11 @@
 # Slot: stroke_color
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:stroke_color](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:stroke_color)
+
+_The stroke color of the shape_
+
+
+
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:stroke_color](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:stroke_color)
 
 
 
@@ -46,7 +51,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -56,7 +61,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: stroke_color
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+description: The stroke color of the shape
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 alias: stroke_color
 owner: Shape

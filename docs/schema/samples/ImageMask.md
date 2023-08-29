@@ -7,7 +7,7 @@ _A base object for all microscope-metrics masks_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:ImageMask](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:ImageMask)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:ImageMask](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:ImageMask)
 
 
 
@@ -89,7 +89,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -99,8 +99,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:ImageMask |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:ImageMask |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:ImageMask |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:ImageMask |
 
 
 
@@ -116,7 +116,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: ImageMask
 description: A base object for all microscope-metrics masks
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: ImageInline
 attributes:
   y:
@@ -153,7 +153,7 @@ attributes:
 ```yaml
 name: ImageMask
 description: A base object for all microscope-metrics masks
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: ImageInline
 attributes:
   y:
@@ -212,7 +212,7 @@ attributes:
   image_url:
     name: image_url
     description: An URL linking to the image
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     identifier: true
@@ -225,7 +225,7 @@ attributes:
   source_image_url:
     name: source_image_url
     description: A list of URLs linking to the images that were used as a source
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: true
     alias: source_image_url
@@ -237,7 +237,7 @@ attributes:
   name:
     name: name
     description: The name of an entity
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     alias: name
@@ -251,14 +251,14 @@ attributes:
   description:
     name: description
     description: A description of an entity
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     alias: description
     owner: ImageMask
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

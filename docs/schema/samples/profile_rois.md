@@ -63,7 +63,7 @@ alias: profile_rois
 owner: FieldIlluminationOutput
 domain_of:
 - FieldIlluminationOutput
-range: roi
+range: Roi
 
 ```
 </details>

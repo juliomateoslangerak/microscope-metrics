@@ -185,7 +185,7 @@ attributes:
     alias: label
     owner: Point
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false

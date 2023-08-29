@@ -221,7 +221,7 @@ attributes:
     alias: label
     owner: Line
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false

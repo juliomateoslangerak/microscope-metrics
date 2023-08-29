@@ -7,7 +7,7 @@ _A color as defined by RGB values and an optional alpha value_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Color](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Color)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Color](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Color)
 
 
 
@@ -36,10 +36,10 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [r](r.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [g](g.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [b](b.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [alpha](alpha.md) | 0..1 <br/> [Integer](Integer.md) |  | direct |
+| [r](r.md) | 1..1 <br/> [Integer](Integer.md) | The red value of the color | direct |
+| [g](g.md) | 1..1 <br/> [Integer](Integer.md) | The green value of the color | direct |
+| [b](b.md) | 1..1 <br/> [Integer](Integer.md) | The blue value of the color | direct |
+| [alpha](alpha.md) | 0..1 <br/> [Integer](Integer.md) | The alpha value of the color (optional) | direct |
 
 
 
@@ -80,7 +80,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -90,8 +90,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Color |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Color |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Color |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Color |
 
 
 
@@ -107,10 +107,11 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: Color
 description: A color as defined by RGB values and an optional alpha value
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 attributes:
   r:
     name: r
+    description: The red value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -121,6 +122,7 @@ attributes:
     maximum_value: 255
   g:
     name: g
+    description: The green value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -131,6 +133,7 @@ attributes:
     maximum_value: 255
   b:
     name: b
+    description: The blue value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -141,6 +144,7 @@ attributes:
     maximum_value: 255
   alpha:
     name: alpha
+    description: The alpha value of the color (optional)
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -159,10 +163,11 @@ attributes:
 ```yaml
 name: Color
 description: A color as defined by RGB values and an optional alpha value
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 attributes:
   r:
     name: r
+    description: The red value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -177,6 +182,7 @@ attributes:
     maximum_value: 255
   g:
     name: g
+    description: The green value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -191,6 +197,7 @@ attributes:
     maximum_value: 255
   b:
     name: b
+    description: The blue value of the color
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -205,6 +212,7 @@ attributes:
     maximum_value: 255
   alpha:
     name: alpha
+    description: The alpha value of the color (optional)
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false

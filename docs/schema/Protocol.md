@@ -203,7 +203,7 @@ attributes:
     owner: Protocol
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

@@ -7,7 +7,7 @@ _A polygon as defined by a series of vertexes and a boolean to indicate if close
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Polygon](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Polygon)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Polygon](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Polygon)
 
 
 
@@ -58,15 +58,15 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [vertexes](vertexes.md) | 1..* <br/> [Vertex](Vertex.md) |  | direct |
-| [is_open](is_open.md) | 1..1 <br/> [Boolean](Boolean.md) |  | direct |
-| [label](label.md) | 0..1 <br/> [String](String.md) |  | [Shape](Shape.md) |
-| [z](z.md) | 0..1 <br/> [Float](Float.md) |  | [Shape](Shape.md) |
-| [c](c.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
-| [t](t.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
-| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) |  | [Shape](Shape.md) |
-| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) |  | [Shape](Shape.md) |
-| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) |  | [Shape](Shape.md) |
+| [vertexes](vertexes.md) | 1..* <br/> [Vertex](Vertex.md) | A list of vertexes defining the polygon | direct |
+| [is_open](is_open.md) | 1..1 <br/> [Boolean](Boolean.md) | Is the polygon open | direct |
+| [label](label.md) | 0..1 <br/> [String](String.md) | The label of the shape | [Shape](Shape.md) |
+| [z](z.md) | 0..1 <br/> [Float](Float.md) | The z coordinate of the shape | [Shape](Shape.md) |
+| [c](c.md) | 0..1 <br/> [Integer](Integer.md) | The c coordinate of the shape | [Shape](Shape.md) |
+| [t](t.md) | 0..1 <br/> [Integer](Integer.md) | The t coordinate of the shape | [Shape](Shape.md) |
+| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) | The fill color of the shape | [Shape](Shape.md) |
+| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) | The stroke color of the shape | [Shape](Shape.md) |
+| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) | The stroke width of the shape | [Shape](Shape.md) |
 
 
 
@@ -87,7 +87,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -97,8 +97,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Polygon |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Polygon |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Polygon |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Polygon |
 
 
 
@@ -115,11 +115,12 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 name: Polygon
 description: A polygon as defined by a series of vertexes and a boolean to indicate
   if closed or not
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: Shape
 attributes:
   vertexes:
     name: vertexes
+    description: A list of vertexes defining the polygon
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: true
@@ -129,6 +130,7 @@ attributes:
     inlined_as_list: true
   is_open:
     name: is_open
+    description: Is the polygon open. By default, it is closed (false)
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -146,11 +148,12 @@ attributes:
 name: Polygon
 description: A polygon as defined by a series of vertexes and a boolean to indicate
   if closed or not
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: Shape
 attributes:
   vertexes:
     name: vertexes
+    description: A list of vertexes defining the polygon
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: true
@@ -164,6 +167,7 @@ attributes:
     inlined_as_list: true
   is_open:
     name: is_open
+    description: Is the polygon open. By default, it is closed (false)
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -176,16 +180,18 @@ attributes:
     required: true
   label:
     name: label
+    description: The label of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: label
     owner: Polygon
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false
   z:
     name: z
+    description: The z coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: z
     owner: Polygon
@@ -196,6 +202,7 @@ attributes:
     required: false
   c:
     name: c
+    description: The c coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: c
     owner: Polygon
@@ -206,6 +213,7 @@ attributes:
     required: false
   t:
     name: t
+    description: The t coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: t
     owner: Polygon
@@ -216,6 +224,7 @@ attributes:
     required: false
   fill_color:
     name: fill_color
+    description: The fill color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: fill_color
@@ -226,6 +235,7 @@ attributes:
     required: false
   stroke_color:
     name: stroke_color
+    description: The stroke color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: stroke_color
@@ -236,6 +246,7 @@ attributes:
     required: false
   stroke_width:
     name: stroke_width
+    description: The stroke width of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     ifabsent: int(1)

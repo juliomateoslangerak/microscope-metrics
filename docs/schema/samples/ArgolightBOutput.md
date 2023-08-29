@@ -22,7 +22,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
         
       ArgolightBOutput : spots_centroids
         
-          ArgolightBOutput --|> roi : spots_centroids
+          ArgolightBOutput --|> Roi : spots_centroids
         
       ArgolightBOutput : spots_distances
         
@@ -131,7 +131,7 @@ attributes:
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: true
-    range: roi
+    range: Roi
     required: false
   intensity_measurements:
     name: intensity_measurements
@@ -201,7 +201,7 @@ attributes:
     owner: ArgolightBOutput
     domain_of:
     - ArgolightBOutput
-    range: roi
+    range: Roi
     required: false
   intensity_measurements:
     name: intensity_measurements

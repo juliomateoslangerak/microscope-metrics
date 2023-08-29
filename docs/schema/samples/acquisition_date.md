@@ -5,7 +5,7 @@ _The date of the acquisition_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:acquisition_date](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:acquisition_date)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:acquisition_date](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:acquisition_date)
 
 
 
@@ -18,7 +18,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[FieldIlluminationDataset](FieldIlluminationDataset.md) | A field illumination dataset |  no  |
+[ArgolightBDataset](ArgolightBDataset.md) | An Argolight sample pattern B dataset |  no  |
+[ArgolightEDataset](ArgolightEDataset.md) | An Argolight sample pattern E dataset |  no  |
 [MetricsDataset](MetricsDataset.md) | A base object on which microscope-metrics runs the analysis |  no  |
 
 
@@ -46,7 +47,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -57,7 +58,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: acquisition_date
 description: The date of the acquisition
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 multivalued: false
 alias: acquisition_date

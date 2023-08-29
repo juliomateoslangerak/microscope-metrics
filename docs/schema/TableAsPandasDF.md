@@ -154,7 +154,7 @@ attributes:
     owner: TableAsPandasDF
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

@@ -184,7 +184,7 @@ attributes:
     owner: Sample
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

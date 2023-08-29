@@ -159,7 +159,7 @@ attributes:
     owner: Tag
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
     required: false

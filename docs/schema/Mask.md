@@ -210,7 +210,7 @@ attributes:
     alias: label
     owner: Mask
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false

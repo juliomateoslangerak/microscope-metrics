@@ -26,7 +26,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
         
       FieldIlluminationOutput : profile_rois
         
-          FieldIlluminationOutput --|> roi : profile_rois
+          FieldIlluminationOutput --|> Roi : profile_rois
         
       
 ```
@@ -133,7 +133,7 @@ attributes:
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
     rank: 1000
     multivalued: false
-    range: roi
+    range: Roi
 
 ```
 </details>
@@ -190,7 +190,7 @@ attributes:
     owner: FieldIlluminationOutput
     domain_of:
     - FieldIlluminationOutput
-    range: roi
+    range: Roi
 
 ```
 </details>

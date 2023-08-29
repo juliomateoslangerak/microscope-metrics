@@ -253,7 +253,7 @@ attributes:
     owner: Image2D
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

@@ -9,7 +9,7 @@ _A table inlined in a metrics dataset_
 * __NOTE__: this is an abstract class and should not be instantiated directly
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:TableAsDict](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:TableAsDict)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:TableAsDict](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:TableAsDict)
 
 
 
@@ -46,7 +46,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [columns](columns.md) | 1..* <br/> [Column](Column.md) |  | direct |
+| [columns](columns.md) | 1..* <br/> [Column](Column.md) | A list of the columns of the table | direct |
 | [name](name.md) | 0..1 <br/> [String](String.md) | The name of an entity | [NamedObject](NamedObject.md) |
 | [description](description.md) | 0..1 <br/> [String](String.md) | A description of an entity | [NamedObject](NamedObject.md) |
 
@@ -58,7 +58,9 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | used by | used in | type | used |
 | ---  | --- | --- | --- |
-| [FieldIlluminationOutput](FieldIlluminationOutput.md) | [intensity_profiles](intensity_profiles.md) | range | [TableAsDict](TableAsDict.md) |
+| [ArgolightBOutput](ArgolightBOutput.md) | [spots_properties](spots_properties.md) | range | [TableAsDict](TableAsDict.md) |
+| [ArgolightBOutput](ArgolightBOutput.md) | [spots_distances](spots_distances.md) | range | [TableAsDict](TableAsDict.md) |
+| [ArgolightEOutput](ArgolightEOutput.md) | [intensity_profiles](intensity_profiles.md) | range | [TableAsDict](TableAsDict.md) |
 
 
 
@@ -76,7 +78,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -86,8 +88,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:TableAsDict |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:TableAsDict |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:TableAsDict |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:TableAsDict |
 
 
 
@@ -103,12 +105,13 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: TableAsDict
 description: A table inlined in a metrics dataset
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: Table
 abstract: true
 attributes:
   columns:
     name: columns
+    description: A list of the columns of the table
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: true
@@ -126,12 +129,13 @@ attributes:
 ```yaml
 name: TableAsDict
 description: A table inlined in a metrics dataset
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: Table
 abstract: true
 attributes:
   columns:
     name: columns
+    description: A list of the columns of the table
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: true
@@ -146,7 +150,7 @@ attributes:
   name:
     name: name
     description: The name of an entity
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     alias: name
@@ -160,14 +164,14 @@ attributes:
   description:
     name: description
     description: A description of an entity
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     alias: description
     owner: TableAsDict
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

@@ -231,7 +231,7 @@ attributes:
     alias: label
     owner: Rectangle
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false

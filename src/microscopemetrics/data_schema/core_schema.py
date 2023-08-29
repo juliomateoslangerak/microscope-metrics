@@ -1,5 +1,5 @@
 # Auto generated from core_schema.yaml by pythongen.py version: 0.0.1
-# Generation date: 2023-08-29T16:37:57
+# Generation date: 2023-08-29T16:50:11
 # Schema: microscopemetrics_core_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
@@ -697,7 +697,7 @@ class Roi(YAMLRoot):
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Roi"
     )
     class_class_curie: ClassVar[str] = None
-    class_name: ClassVar[str] = "roi"
+    class_name: ClassVar[str] = "Roi"
     class_model_uri: ClassVar[URIRef] = URIRef(
         "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml/Roi"
     )

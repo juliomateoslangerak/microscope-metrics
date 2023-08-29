@@ -56,9 +56,9 @@ from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics
 rank: 1000
 multivalued: true
 alias: shapes
-owner: roi
+owner: Roi
 domain_of:
-- roi
+- Roi
 range: Shape
 
 ```

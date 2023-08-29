@@ -331,7 +331,7 @@ attributes:
     owner: Image5D
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

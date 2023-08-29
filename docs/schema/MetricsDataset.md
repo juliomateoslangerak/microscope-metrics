@@ -289,7 +289,7 @@ attributes:
     owner: MetricsDataset
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 tree_root: true

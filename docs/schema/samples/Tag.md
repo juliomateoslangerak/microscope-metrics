@@ -9,7 +9,7 @@ _A tag_
 * __NOTE__: this is an abstract class and should not be instantiated directly
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Tag](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Tag)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Tag](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Tag)
 
 
 
@@ -36,9 +36,9 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [id](id.md) | 1..1 <br/> [Integer](Integer.md) |  | direct |
-| [text](text.md) | 1..1 <br/> [String](String.md) |  | direct |
-| [description](description.md) | 0..1 <br/> [String](String.md) |  | direct |
+| [id](id.md) | 1..1 <br/> [Integer](Integer.md) | The id of the tag | direct |
+| [text](text.md) | 1..1 <br/> [String](String.md) | The text of the tag | direct |
+| [description](description.md) | 0..1 <br/> [String](String.md) | The description of the tag | direct |
 
 
 
@@ -59,7 +59,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -69,8 +69,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Tag |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Tag |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Tag |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Tag |
 
 
 
@@ -86,11 +86,12 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: Tag
 description: A tag
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 abstract: true
 attributes:
   id:
     name: id
+    description: The id of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     identifier: true
@@ -98,6 +99,7 @@ attributes:
     required: true
   text:
     name: text
+    description: The text of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -105,6 +107,7 @@ attributes:
     required: true
   description:
     name: description
+    description: The description of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     range: string
@@ -119,11 +122,12 @@ attributes:
 ```yaml
 name: Tag
 description: A tag
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 abstract: true
 attributes:
   id:
     name: id
+    description: The id of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     identifier: true
@@ -135,6 +139,7 @@ attributes:
     required: true
   text:
     name: text
+    description: The text of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     multivalued: false
@@ -147,13 +152,14 @@ attributes:
     required: true
   description:
     name: description
+    description: The description of the tag
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     multivalued: false
     alias: description
     owner: Tag
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
     required: false

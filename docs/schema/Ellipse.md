@@ -231,7 +231,7 @@ attributes:
     alias: label
     owner: Ellipse
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false

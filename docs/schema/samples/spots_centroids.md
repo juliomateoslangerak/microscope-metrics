@@ -66,7 +66,7 @@ alias: spots_centroids
 owner: ArgolightBOutput
 domain_of:
 - ArgolightBOutput
-range: roi
+range: Roi
 required: false
 
 ```

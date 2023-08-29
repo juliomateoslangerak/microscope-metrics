@@ -293,7 +293,7 @@ attributes:
     owner: FieldIlluminationDataset
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 rules:

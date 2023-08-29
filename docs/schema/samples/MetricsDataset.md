@@ -7,7 +7,7 @@ _A base object on which microscope-metrics runs the analysis_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:MetricsDataset](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:MetricsDataset)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:MetricsDataset](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:MetricsDataset)
 
 
 
@@ -18,7 +18,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
       NamedObject <|-- MetricsDataset
       
 
-      MetricsDataset <|-- FieldIlluminationDataset
+      MetricsDataset <|-- ArgolightBDataset
+      MetricsDataset <|-- ArgolightEDataset
       
       
       MetricsDataset : acquisition_date
@@ -55,7 +56,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ## Inheritance
 * [NamedObject](NamedObject.md)
     * **MetricsDataset**
-        * [FieldIlluminationDataset](FieldIlluminationDataset.md)
+        * [ArgolightBDataset](ArgolightBDataset.md)
+        * [ArgolightEDataset](ArgolightEDataset.md)
 
 
 
@@ -92,7 +94,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -102,8 +104,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:MetricsDataset |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:MetricsDataset |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:MetricsDataset |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:MetricsDataset |
 
 
 
@@ -119,7 +121,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: MetricsDataset
 description: A base object on which microscope-metrics runs the analysis
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: NamedObject
 attributes:
   sample:
@@ -186,7 +188,7 @@ tree_root: true
 ```yaml
 name: MetricsDataset
 description: A base object on which microscope-metrics runs the analysis
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 is_a: NamedObject
 attributes:
   sample:
@@ -273,7 +275,7 @@ attributes:
   name:
     name: name
     description: The name of an entity
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     alias: name
@@ -287,14 +289,14 @@ attributes:
   description:
     name: description
     description: A description of an entity
-    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
     rank: 1000
     multivalued: false
     alias: description
     owner: MetricsDataset
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 tree_root: true

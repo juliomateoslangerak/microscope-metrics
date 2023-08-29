@@ -52,7 +52,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 name: label
 alias: label
 domain_of:
-- roi
+- Roi
 - Shape
 range: string
 

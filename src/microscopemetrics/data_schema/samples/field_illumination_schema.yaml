@@ -68,7 +68,7 @@ classes:
           Intensity map of the field illumination
         multivalued: false
       profile_rois:
-        range: roi
+        range: Roi
         description: >-
           Output: ROIs used to compute the intensity profile
         multivalued: false

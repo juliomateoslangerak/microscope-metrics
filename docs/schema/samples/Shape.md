@@ -9,7 +9,7 @@ _A shape_
 * __NOTE__: this is an abstract class and should not be instantiated directly
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Shape](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Shape)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Shape](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Shape)
 
 
 
@@ -64,13 +64,13 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Cardinality and Range | Description | Inheritance |
 | ---  | --- | --- | --- |
-| [label](label.md) | 0..1 <br/> [String](String.md) |  | direct |
-| [z](z.md) | 0..1 <br/> [Float](Float.md) |  | direct |
-| [c](c.md) | 0..1 <br/> [Integer](Integer.md) |  | direct |
-| [t](t.md) | 0..1 <br/> [Integer](Integer.md) |  | direct |
-| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) |  | direct |
-| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) |  | direct |
-| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) |  | direct |
+| [label](label.md) | 0..1 <br/> [String](String.md) | The label of the shape | direct |
+| [z](z.md) | 0..1 <br/> [Float](Float.md) | The z coordinate of the shape | direct |
+| [c](c.md) | 0..1 <br/> [Integer](Integer.md) | The c coordinate of the shape | direct |
+| [t](t.md) | 0..1 <br/> [Integer](Integer.md) | The t coordinate of the shape | direct |
+| [fill_color](fill_color.md) | 0..1 <br/> [Color](Color.md) | The fill color of the shape | direct |
+| [stroke_color](stroke_color.md) | 0..1 <br/> [Color](Color.md) | The stroke color of the shape | direct |
+| [stroke_width](stroke_width.md) | 0..1 <br/> [Integer](Integer.md) | The stroke width of the shape | direct |
 
 
 
@@ -98,7 +98,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -108,8 +108,8 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Mapping Type | Mapped Value |
 | ---  | ---  |
-| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Shape |
-| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:Shape |
+| self | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Shape |
+| native | https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:Shape |
 
 
 
@@ -125,43 +125,50 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: Shape
 description: A shape
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 abstract: true
 attributes:
   label:
     name: label
+    description: The label of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     range: string
     required: false
   z:
     name: z
+    description: The z coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     range: float
     required: false
   c:
     name: c
+    description: The c coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     range: integer
     required: false
   t:
     name: t
+    description: The t coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     range: integer
     required: false
   fill_color:
     name: fill_color
+    description: The fill color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     range: Color
     required: false
   stroke_color:
     name: stroke_color
+    description: The stroke color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     range: Color
     required: false
   stroke_width:
     name: stroke_width
+    description: The stroke width of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     ifabsent: int(1)
@@ -177,21 +184,23 @@ attributes:
 ```yaml
 name: Shape
 description: A shape
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 abstract: true
 attributes:
   label:
     name: label
+    description: The label of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: label
     owner: Shape
     domain_of:
-    - roi
+    - Roi
     - Shape
     range: string
     required: false
   z:
     name: z
+    description: The z coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: z
     owner: Shape
@@ -202,6 +211,7 @@ attributes:
     required: false
   c:
     name: c
+    description: The c coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: c
     owner: Shape
@@ -212,6 +222,7 @@ attributes:
     required: false
   t:
     name: t
+    description: The t coordinate of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     alias: t
     owner: Shape
@@ -222,6 +233,7 @@ attributes:
     required: false
   fill_color:
     name: fill_color
+    description: The fill color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: fill_color
@@ -232,6 +244,7 @@ attributes:
     required: false
   stroke_color:
     name: stroke_color
+    description: The stroke color of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     alias: stroke_color
@@ -242,6 +255,7 @@ attributes:
     required: false
   stroke_width:
     name: stroke_width
+    description: The stroke width of the shape
     from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/core_schema.yaml
     rank: 1000
     ifabsent: int(1)

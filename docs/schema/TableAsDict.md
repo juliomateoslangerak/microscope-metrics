@@ -162,7 +162,7 @@ attributes:
     owner: TableAsDict
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 

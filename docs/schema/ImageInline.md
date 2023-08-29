@@ -174,7 +174,7 @@ attributes:
     owner: ImageInline
     domain_of:
     - NamedObject
-    - roi
+    - Roi
     - Tag
     range: string
 
