@@ -12,6 +12,10 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
     class FieldIlluminationOutput
       MetricsOutput <|-- FieldIlluminationOutput
       
+      FieldIlluminationOutput : center_of_illumination
+        
+          FieldIlluminationOutput --|> Roi : center_of_illumination
+        
       FieldIlluminationOutput : corner_rois
         
           FieldIlluminationOutput --|> Roi : corner_rois
@@ -54,6 +58,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 | [intensity_map](intensity_map.md) | 0..1 <br/> [Image5D](Image5D.md) | Intensity map of the field illumination | direct |
 | [profile_rois](profile_rois.md) | 0..1 <br/> [Roi](Roi.md) | ROIs used to compute the intensity profiles | direct |
 | [corner_rois](corner_rois.md) | 0..1 <br/> [Roi](Roi.md) | ROIs used to compute the corner intensities | direct |
+| [center_of_illumination](center_of_illumination.md) | 0..1 <br/> [Roi](Roi.md) | Point ROIs marking the center of illumination | direct |
 
 
 
@@ -146,6 +151,13 @@ attributes:
     rank: 1000
     multivalued: false
     range: Roi
+  center_of_illumination:
+    name: center_of_illumination
+    description: Point ROIs marking the center of illumination
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    rank: 1000
+    multivalued: false
+    range: Roi
 
 ```
 </details>
@@ -210,6 +222,17 @@ attributes:
     rank: 1000
     multivalued: false
     alias: corner_rois
+    owner: FieldIlluminationOutput
+    domain_of:
+    - FieldIlluminationOutput
+    range: Roi
+  center_of_illumination:
+    name: center_of_illumination
+    description: Point ROIs marking the center of illumination
+    from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+    rank: 1000
+    multivalued: false
+    alias: center_of_illumination
     owner: FieldIlluminationOutput
     domain_of:
     - FieldIlluminationOutput

@@ -1,11 +1,11 @@
 # Slot: intensity_profiles
 
 
-_Intensity profiles of the argolight lines provided as tables. One table per channel_
+_Intensity profiles for the field illumination analysis in the different directions_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:intensity_profiles](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:intensity_profiles)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:intensity_profiles](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:intensity_profiles)
 
 
 
@@ -18,7 +18,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ArgolightEOutput](ArgolightEOutput.md) |  |  no  |
+[FieldIlluminationOutput](FieldIlluminationOutput.md) |  |  no  |
 
 
 
@@ -45,7 +45,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 
 
 
@@ -55,15 +55,14 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: intensity_profiles
-description: Intensity profiles of the argolight lines provided as tables. One table
-  per channel
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+description: Intensity profiles for the field illumination analysis in the different
+  directions
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 rank: 1000
-multivalued: false
 alias: intensity_profiles
-owner: ArgolightEOutput
+owner: FieldIlluminationOutput
 domain_of:
-- ArgolightEOutput
+- FieldIlluminationOutput
 range: TableAsDict
 
 ```

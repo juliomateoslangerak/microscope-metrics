@@ -5,7 +5,7 @@ _Tolerated saturation threshold. If the amount of saturated pixels is above this
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:saturation_threshold](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:saturation_threshold)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:saturation_threshold](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:saturation_threshold)
 
 
 
@@ -18,8 +18,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ArgolightBInput](ArgolightBInput.md) |  |  yes  |
-[ArgolightEInput](ArgolightEInput.md) |  |  yes  |
+[FieldIlluminationInput](FieldIlluminationInput.md) |  |  yes  |
 
 
 
@@ -50,7 +49,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 
 
 
@@ -63,14 +62,13 @@ name: saturation_threshold
 description: Tolerated saturation threshold. If the amount of saturated pixels is
   above this threshold,  the image is considered as saturated and the analysis is
   not performed.
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 rank: 1000
 multivalued: false
 ifabsent: float(0.01)
 alias: saturation_threshold
 domain_of:
-- ArgolightBInput
-- ArgolightEInput
+- FieldIlluminationInput
 range: float
 minimum_value: 0
 maximum_value: 1

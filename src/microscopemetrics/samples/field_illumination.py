@@ -415,6 +415,22 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             shapes=_corner_shapes(image, self.input.corner_fraction),
         )
 
+        self.output.center_of_illumination = core_schema.Roi(
+            label="Center of illumination",
+            description="Point ROI marking the center of illumination",
+            image=self.input.field_illumination_image.image_url,
+            shapes=[
+                core_schema.Point(
+                    label=f"ch{c}_center",
+                    y=self.output.key_values.center_of_mass_y[c],
+                    x=self.output.key_values.center_of_mass_x[c],
+                    c=c,
+                    stroke_color={"r": 0, "g": 255, "b": 0, "alpha": 200},
+                )
+                for c in range(image.shape[2])
+            ],
+        )
+
         self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.processed = True
 

@@ -77,6 +77,11 @@ classes:
         description: >-
           ROIs used to compute the corner intensities
         multivalued: false
+      center_of_illumination:
+        range: Roi
+        description: >-
+          Point ROIs marking the center of illumination
+        multivalued: false
 
   FieldIlluminationKeyValues:
     is_a: KeyValues
