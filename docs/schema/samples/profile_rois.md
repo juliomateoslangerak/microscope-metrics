@@ -1,7 +1,7 @@
 # Slot: profile_rois
 
 
-_Output: ROIs used to compute the intensity profile_
+_ROIs used to compute the intensity profiles_
 
 
 
@@ -55,7 +55,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: profile_rois
-description: 'Output: ROIs used to compute the intensity profile'
+description: ROIs used to compute the intensity profiles
 from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
 rank: 1000
 multivalued: false

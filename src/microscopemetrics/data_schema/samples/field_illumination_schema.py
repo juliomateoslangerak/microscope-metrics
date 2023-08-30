@@ -1,5 +1,5 @@
 # Auto generated from field_illumination_schema.yaml by pythongen.py version: 0.0.1
-# Generation date: 2023-08-29T16:50:42
+# Generation date: 2023-08-30T16:53:11
 # Schema: microscopemetrics_samples_field_illumination_schema
 #
 # id: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
@@ -182,6 +182,7 @@ class FieldIlluminationOutput(MetricsOutput):
     intensity_profiles: Optional[Union[dict, TableAsDict]] = None
     intensity_map: Optional[Union[str, Image5DImageUrl]] = None
     profile_rois: Optional[Union[dict, Roi]] = None
+    corner_rois: Optional[Union[dict, Roi]] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self.key_values is not None and not isinstance(
@@ -199,6 +200,9 @@ class FieldIlluminationOutput(MetricsOutput):
 
         if self.profile_rois is not None and not isinstance(self.profile_rois, Roi):
             self.profile_rois = Roi(**as_dict(self.profile_rois))
+
+        if self.corner_rois is not None and not isinstance(self.corner_rois, Roi):
+            self.corner_rois = Roi(**as_dict(self.corner_rois))
 
         super().__post_init__(**kwargs)
 
@@ -932,6 +936,15 @@ slots.fieldIlluminationOutput__profile_rois = Slot(
     name="fieldIlluminationOutput__profile_rois",
     curie=DEFAULT_.curie("profile_rois"),
     model_uri=DEFAULT_.fieldIlluminationOutput__profile_rois,
+    domain=None,
+    range=Optional[Union[dict, Roi]],
+)
+
+slots.fieldIlluminationOutput__corner_rois = Slot(
+    uri=DEFAULT_.corner_rois,
+    name="fieldIlluminationOutput__corner_rois",
+    curie=DEFAULT_.curie("corner_rois"),
+    model_uri=DEFAULT_.fieldIlluminationOutput__corner_rois,
     domain=None,
     range=Optional[Union[dict, Roi]],
 )

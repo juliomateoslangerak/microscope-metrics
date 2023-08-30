@@ -3,28 +3,28 @@ from typing import Dict, Tuple
 
 import numpy as np
 import scipy
-from numpy import float64, ndarray
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 import microscopemetrics.data_schema.samples.field_illumination_schema as schema
+from microscopemetrics.data_schema import core_schema
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_inlined_image
 from microscopemetrics.utilities.utilities import is_saturated
 
 
-def _channel_intensity_map(channel, map_size: int):
+def _channel_intensity_map(channel: np.ndarray, map_size: int):
     """
     Compute the intensity map of a channel
     Parameters
     ----------
     channel : np.array.
-        image on a 2d ndarray format.
+        image on a 2d np.ndarray format.
     map_size : int
         size of the intensity map.
     Returns
     -------
-    intensity_map : ndarray
-        2d ndarray representing the intensity map of the chosen channel.
+    intensity_map : np.ndarray
+        2d np.ndarray representing the intensity map of the chosen channel.
     """
     channel = channel / channel.max()
     return scipy.ndimage.zoom(channel, map_size / channel.shape[0])
@@ -35,14 +35,14 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
     Compute the intensity map of an image
     Parameters
     ----------
-    image : ndarray.
-        image on a 3d ndarray format yxc.
+    image : np.ndarray.
+        image on a 3d np.ndarray format yxc.
     map_size : int
         size of the intensity map.
     Returns
     -------
-    intensity_map : ndarray
-        3d ndarray representing the intensity map of the chosen image.
+    intensity_map : np.ndarray
+        3d np.ndarray representing the intensity map of the chosen image.
     """
     output = np.zeros((map_size, map_size, image.shape[2]))
     for c in range(image.shape[2]):
@@ -53,41 +53,41 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
 
 
 def _channel_line_profile(
-    channel: ndarray, start: Tuple[int, int], end: Tuple[int, int], profile_size: int
-) -> ndarray:
+    channel: np.ndarray, start: Tuple[int, int], end: Tuple[int, int], profile_size: int
+) -> np.ndarray:
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation
     Parameters
     ----------
     channel : np.array.
-        image on a 2d ndarray format.
+        image on a 2d np.ndarray format.
     start : (int, int)
         coordinates of the starting pixel
     end : (int, int)
         coordinates of the ending pixel
     Returns
     -------
-    line_pixel_values : ndarray
-        1d ndarray representing the values of the chosen line of pixels.
+    line_pixel_values : np.ndarray
+        1d np.ndarray representing the values of the chosen line of pixels.
     """
     x, y = np.linspace(start[0], end[0], profile_size), np.linspace(start[1], end[1], profile_size)
 
     return scipy.ndimage.map_coordinates(channel, np.vstack((x, y)))
 
 
-def _image_line_profile(image: ndarray, profile_size: int):
+def _image_line_profile(image: np.ndarray, profile_size: int):
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1
     Parameters
     ----------
-    image : ndarray.
-        image on a 3d ndarray format yxc.
+    image : np.ndarray.
+        image on a 3d np.ndarray format yxc.
     profile_size : int
         size of the intensity profile.
     Returns
     -------
-    line_pixel_values : ndarray
-        2d ndarray representing the values of the chosen line of pixels for each channel.
+    line_pixel_values : np.ndarray
+        2d np.ndarray representing the values of the chosen line of pixels for each channel.
     """
     profile_coordinates = {
         "leftTop_to_rightBottom": ((0, 0), (image.shape[1], image.shape[0])),
@@ -116,7 +116,116 @@ def _image_line_profile(image: ndarray, profile_size: int):
     return output
 
 
-def _segment_channel(channel, threshold: float, sigma: float):
+def _line_profile_shapes(image: np.ndarray):
+    return [
+        core_schema.Line(
+            label="leftTop_to_rightBottom",
+            x1=0,
+            y1=0,
+            x2=image.shape[1],
+            y2=image.shape[0],
+            stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+        ),
+        core_schema.Line(
+            label="leftBottom_to_rightTop",
+            x1=0,
+            y1=image.shape[0],
+            x2=image.shape[1],
+            y2=0,
+            stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+        ),
+        core_schema.Line(
+            label="center_horizontal",
+            x1=0,
+            y1=image.shape[0] // 2,
+            x2=image.shape[1],
+            y2=image.shape[0] // 2,
+            stroke_color={"r": 0, "g": 0, "b": 255, "alpha": 200},
+        ),
+        core_schema.Line(
+            label="center_vertical",
+            x1=image.shape[1] // 2,
+            y1=0,
+            x2=image.shape[1] // 2,
+            y2=image.shape[0],
+            stroke_color={"r": 0, "g": 0, "b": 255, "alpha": 200},
+        ),
+    ]
+
+
+def _corner_shapes(image: np.ndarray, corner_fraction: float):
+    cfp = int(corner_fraction * (image.shape[0] + image.shape[1]) / 2)
+    cr_y = int((image.shape[0] - cfp) / 2)
+    cr_x = int((image.shape[1] - cfp) / 2)
+
+    return [
+        core_schema.Rectangle(
+            label="top_left",
+            x=0,
+            y=0,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="top_center",
+            x=cr_x,
+            y=0,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="top_right",
+            x=image.shape[1] - cfp,
+            y=0,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="middle_left",
+            x=0,
+            y=cr_y,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="middle_center",
+            x=cr_x,
+            y=cr_y,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="middle_right",
+            x=image.shape[1] - cfp,
+            y=cr_y,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="bottom_left",
+            x=0,
+            y=image.shape[0] - cfp,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="bottom_center",
+            x=cr_x,
+            y=image.shape[0] - cfp,
+            w=cfp,
+            h=cfp,
+        ),
+        core_schema.Rectangle(
+            label="bottom_right",
+            x=image.shape[1] - cfp,
+            y=image.shape[0] - cfp,
+            w=cfp,
+            h=cfp,
+        ),
+    ]
+
+
+def _segment_channel(channel: np.ndarray, threshold: float, sigma: float):
     if sigma is not None:
         channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
 
@@ -125,13 +234,13 @@ def _segment_channel(channel, threshold: float, sigma: float):
 
 
 def _channel_max_intensity_properties(
-    channel: np.array, sigma: float, center_threshold: float
+    channel: np.ndarray, sigma: float, center_threshold: float
 ) -> dict:
     """Computes the center of mass and the max intensity of the maximum intensity region of an image.
     Parameters
     ----------
     channel : np.array.
-        2d ndarray.
+        2d np.ndarray.
     Returns
     -------
     center_of_mass: dict
@@ -157,7 +266,7 @@ def _channel_max_intensity_properties(
     }
 
 
-def _channel_corner_properties(channel, corner_fraction=0.1):
+def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> dict:
     max_intensity = np.max(channel)
 
     # Calculate the corner fraction in pixels (cfp) of the image size
@@ -188,12 +297,12 @@ def _channel_corner_properties(channel, corner_fraction=0.1):
     }
 
 
-def _channel_area_deciles(channel: ndarray) -> dict:
+def _channel_area_deciles(channel: np.ndarray) -> dict:
     """Computes the intensity deciles of an image.
     Parameters
     ----------
     channel : np.array.
-        2d ndarray.
+        2d np.ndarray.
     Returns
     -------
     deciles: dict
@@ -204,14 +313,14 @@ def _channel_area_deciles(channel: ndarray) -> dict:
 
 
 def _image_properties(
-    image: ndarray, corner_fraction: float, sigma: float, center_threshold: float
+    image: np.ndarray, corner_fraction: float, sigma: float, center_threshold: float
 ):
     """
-    given an image in a 3d ndarray format (yxc), this function return intensities for the corner and central regions
+    given an image in a 3d np.ndarray format (yxc), this function return intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
     Parameters
     ----------
-    image : ndarray
+    image : np.ndarray
         image on a 2d np.ndarray in yxc format.
     Returns
     -------
@@ -292,7 +401,19 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             columns=_image_line_profile(image, profile_size=255)
         )
 
-        # TODO: add the profile ROIs to the output
+        self.output.profile_rois = core_schema.Roi(
+            label="Profile ROIs",
+            description="ROIs used to compute the intensity profiles",
+            image=self.input.field_illumination_image.image_url,
+            shapes=_line_profile_shapes(image),
+        )
+
+        self.output.corner_rois = core_schema.Roi(
+            label="Corner ROIs",
+            description="ROIs used to compute the corner intensities",
+            image=self.input.field_illumination_image.image_url,
+            shapes=_corner_shapes(image, self.input.corner_fraction),
+        )
 
         self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.processed = True

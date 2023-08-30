@@ -70,7 +70,12 @@ classes:
       profile_rois:
         range: Roi
         description: >-
-          Output: ROIs used to compute the intensity profile
+          ROIs used to compute the intensity profiles
+        multivalued: false
+      corner_rois:
+        range: Roi
+        description: >-
+          ROIs used to compute the corner intensities
         multivalued: false
 
   FieldIlluminationKeyValues:
