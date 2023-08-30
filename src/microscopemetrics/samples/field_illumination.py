@@ -258,11 +258,11 @@ def _channel_max_intensity_properties(
 
     return {
         "nb_pixels": image_properties[0].area,
-        "center_of_mass_x": image_properties[0].centroid_weighted[0],
-        "center_of_mass_y": image_properties[0].centroid_weighted[1],
+        "center_of_mass_y": image_properties[0].centroid_weighted[0],
+        "center_of_mass_x": image_properties[0].centroid_weighted[1],
         "max_intensity": max_intensity,
-        "max_intensity_pos_x": max_intensity_indexes[0],
-        "max_intensity_pos_y": max_intensity_indexes[1],
+        "max_intensity_pos_y": max_intensity_indexes[0],
+        "max_intensity_pos_x": max_intensity_indexes[1],
     }
 
 
