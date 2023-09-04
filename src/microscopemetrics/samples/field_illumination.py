@@ -117,6 +117,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
 
 
 def _line_profile_shapes(image: np.ndarray):
+    stroke_color = {"r": 0, "g": 0, "b": 255, "alpha": 200}
     return [
         core_schema.Line(
             label="leftTop_to_rightBottom",
@@ -124,7 +125,7 @@ def _line_profile_shapes(image: np.ndarray):
             y1=0,
             x2=image.shape[1],
             y2=image.shape[0],
-            stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+            stroke_color=stroke_color,
         ),
         core_schema.Line(
             label="leftBottom_to_rightTop",
@@ -132,7 +133,7 @@ def _line_profile_shapes(image: np.ndarray):
             y1=image.shape[0],
             x2=image.shape[1],
             y2=0,
-            stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+            stroke_color=stroke_color,
         ),
         core_schema.Line(
             label="center_horizontal",
@@ -140,7 +141,7 @@ def _line_profile_shapes(image: np.ndarray):
             y1=image.shape[0] // 2,
             x2=image.shape[1],
             y2=image.shape[0] // 2,
-            stroke_color={"r": 0, "g": 0, "b": 255, "alpha": 200},
+            stroke_color=stroke_color,
         ),
         core_schema.Line(
             label="center_vertical",
@@ -148,79 +149,36 @@ def _line_profile_shapes(image: np.ndarray):
             y1=0,
             x2=image.shape[1] // 2,
             y2=image.shape[0],
-            stroke_color={"r": 0, "g": 0, "b": 255, "alpha": 200},
+            stroke_color=stroke_color,
         ),
     ]
+
+
+def _c_shape(label, x, y, size, s_col):
+    return core_schema.Rectangle(label=label, x=x, y=y, w=size, h=size, stroke_color=s_col)
 
 
 def _corner_shapes(image: np.ndarray, corner_fraction: float):
     cfp = int(corner_fraction * (image.shape[0] + image.shape[1]) / 2)
     cr_y = int((image.shape[0] - cfp) / 2)
     cr_x = int((image.shape[1] - cfp) / 2)
+    stroke_color = {"r": 0, "g": 255, "b": 0, "alpha": 200}
 
     return [
-        core_schema.Rectangle(
-            label="top_left",
-            x=0,
-            y=0,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="top_center",
-            x=cr_x,
-            y=0,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="top_right",
-            x=image.shape[1] - cfp,
-            y=0,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="middle_left",
-            x=0,
-            y=cr_y,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="middle_center",
-            x=cr_x,
-            y=cr_y,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="middle_right",
-            x=image.shape[1] - cfp,
-            y=cr_y,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="bottom_left",
-            x=0,
-            y=image.shape[0] - cfp,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="bottom_center",
-            x=cr_x,
-            y=image.shape[0] - cfp,
-            w=cfp,
-            h=cfp,
-        ),
-        core_schema.Rectangle(
-            label="bottom_right",
+        _c_shape("top_left", x=0, y=0, size=cfp, s_col=stroke_color),
+        _c_shape("top_center", x=cr_x, y=0, size=cfp, s_col=stroke_color),
+        _c_shape("top_right", x=image.shape[1] - cfp, y=0, size=cfp, s_col=stroke_color),
+        _c_shape("middle_left", x=0, y=cr_y, size=cfp, s_col=stroke_color),
+        _c_shape("middle_center", x=cr_x, y=cr_y, size=cfp, s_col=stroke_color),
+        _c_shape("middle_right", x=image.shape[1] - cfp, y=cr_y, size=cfp, s_col=stroke_color),
+        _c_shape("bottom_left", x=0, y=image.shape[0] - cfp, size=cfp, s_col=stroke_color),
+        _c_shape("bottom_center", x=cr_x, y=image.shape[0] - cfp, size=cfp, s_col=stroke_color),
+        _c_shape(
+            "bottom_right",
             x=image.shape[1] - cfp,
             y=image.shape[0] - cfp,
-            w=cfp,
-            h=cfp,
+            size=cfp,
+            s_col=stroke_color,
         ),
     ]
 
@@ -425,7 +383,9 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
                     y=self.output.key_values.center_of_mass_y[c],
                     x=self.output.key_values.center_of_mass_x[c],
                     c=c,
-                    stroke_color={"r": 0, "g": 255, "b": 0, "alpha": 200},
+                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    stroke_width=5,
                 )
                 for c in range(image.shape[2])
             ],
