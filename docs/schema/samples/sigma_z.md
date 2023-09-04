@@ -1,7 +1,7 @@
 # Slot: sigma_z
 
 
-_Input parameter: smoothing factor for objects detection in the Z axis_
+_When provided, gaussian smoothing sigma to be applied to the image in the Z axis prior to bead detection. Does not apply to resolution measurements_
 
 
 
@@ -18,7 +18,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ArgolightBInput](ArgolightBInput.md) |  |  no  |
+[PSFBeadsInput](PSFBeadsInput.md) |  |  no  |
 
 
 
@@ -29,12 +29,6 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ## Properties
 
 * Range: [Float](Float.md)
-
-* Required: True
-
-* Minimum Value: 0
-
-* Maximum Value: 5
 
 
 
@@ -61,18 +55,15 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: sigma_z
-description: 'Input parameter: smoothing factor for objects detection in the Z axis'
+description: When provided, gaussian smoothing sigma to be applied to the image in
+  the Z axis prior to bead detection. Does not apply to resolution measurements
 from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
-multivalued: false
-ifabsent: float(1.0)
 alias: sigma_z
 domain_of:
-- ArgolightBInput
+- PSFBeadsInput
 range: float
-required: true
-minimum_value: 0
-maximum_value: 5
+required: false
 
 ```
 </details>

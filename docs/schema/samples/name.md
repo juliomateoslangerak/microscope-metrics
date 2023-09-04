@@ -5,7 +5,7 @@ _The name of an entity_
 
 
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:name](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:name)
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:name](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:name)
 
 
 
@@ -19,7 +19,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
 [NamedObject](NamedObject.md) | An object with a name and a description |  no  |
-[FieldIlluminationDataset](FieldIlluminationDataset.md) | A field illumination dataset |  no  |
+[PSFBeadsDataset](PSFBeadsDataset.md) | A dataset of PSF beads dataset |  no  |
 [MetricsObject](MetricsObject.md) | A base object for all microscope-metrics objects |  no  |
 [Sample](Sample.md) | A sample is a standard physical object that is imaged by a microscope |  no  |
 [Protocol](Protocol.md) | Set of instructions for preparing and imaging a sample |  no  |
@@ -61,7 +61,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -72,7 +72,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ```yaml
 name: name
 description: The name of an entity
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 multivalued: false
 alias: name

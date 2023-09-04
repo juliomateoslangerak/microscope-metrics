@@ -1,10 +1,10 @@
-# microscopemetrics_samples_field_illumination_schema
+# microscopemetrics_samples_argolight_schema
 
 
 
-URI: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+URI: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
-Name: microscopemetrics_samples_field_illumination_schema
+Name: microscopemetrics_samples_argolight_schema
 
 
 
@@ -18,15 +18,16 @@ Name: microscopemetrics_samples_field_illumination_schema
 | [Comment](Comment.md) | A comment |
 | [Experimenter](Experimenter.md) | The person that performed the experiment or developed the protocol |
 | [KeyValues](KeyValues.md) | A collection of key-value pairs |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FieldIlluminationKeyValues](FieldIlluminationKeyValues.md) | None |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[PSFBeadsKeyMeasurements](PSFBeadsKeyMeasurements.md) | None |
 | [MetaObject](MetaObject.md) | None |
 | [MetricsInput](MetricsInput.md) | An abstract class for analysis inputs |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FieldIlluminationInput](FieldIlluminationInput.md) | None |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[PSFBeadsInput](PSFBeadsInput.md) | None |
 | [MetricsOutput](MetricsOutput.md) | An abstract class for analysis outputs |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FieldIlluminationOutput](FieldIlluminationOutput.md) | None |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[PSFBeadsOutput](PSFBeadsOutput.md) | None |
 | [NamedObject](NamedObject.md) | An object with a name and a description |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[MetricsDataset](MetricsDataset.md) | A base object on which microscope-metrics runs the analysis |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FieldIlluminationDataset](FieldIlluminationDataset.md) | A field illumination dataset |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[PSFBeadsDataset](PSFBeadsDataset.md) | A dataset of PSF beads dataset
+ |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[MetricsObject](MetricsObject.md) | A base object for all microscope-metrics objects |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Image](Image.md) | A base object for all microscope-metrics images |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ImageAsNumpy](ImageAsNumpy.md) | An image as a numpy array in TZYXC order |
@@ -62,86 +63,78 @@ Name: microscopemetrics_samples_field_illumination_schema
 | [alpha](alpha.md) | The alpha value of the color (optional) |
 | [authors](authors.md) | The authors of the protocol |
 | [b](b.md) | The blue value of the color |
+| [bead_centroids](bead_centroids.md) | The centroids of the beads |
+| [bead_crops](bead_crops.md) | The crops of the beads provided as a 5D numpy array in the order TZYXC |
 | [bit_depth](bit_depth.md) | Detector bit depth |
-| [bottom_center_intensity_mean](bottom_center_intensity_mean.md) | The mean intensity of the bottom-center of the image |
-| [bottom_center_intensity_ratio](bottom_center_intensity_ratio.md) | The mean intensity of the bottom-center of the image  divided by the maximum ... |
-| [bottom_left_intensity_mean](bottom_left_intensity_mean.md) | The mean intensity of the bottom-left of the image |
-| [bottom_left_intensity_ratio](bottom_left_intensity_ratio.md) | The mean intensity of the bottom-left of the image  divided by the maximum in... |
-| [bottom_right_intensity_mean](bottom_right_intensity_mean.md) | The mean intensity of the bottom-right of the image |
-| [bottom_right_intensity_ratio](bottom_right_intensity_ratio.md) | The mean intensity of the bottom-right of the image  divided by the maximum i... |
 | [c](c.md) |  |
-| [center_of_illumination](center_of_illumination.md) | Point ROIs marking the center of illumination |
-| [center_of_mass_x](center_of_mass_x.md) | The x coordinate of the center of mass of the center of illumination region |
-| [center_of_mass_y](center_of_mass_y.md) | The y coordinate of the center of mass of the center of illumination region |
-| [center_threshold](center_threshold.md) | Input parameter: relative threshold for what is going to be considered as the... |
-| [channel](channel.md) | The channel number to which the measurements apply |
+| [cluster_bead_centroids](cluster_bead_centroids.md) | The centroids of the beads detected but discarded as being too intense and po... |
 | [columns](columns.md) | A list of the columns of the table |
 | [comment](comment.md) | A human readable comment about the dataset |
-| [corner_fraction](corner_fraction.md) | Input parameter: the proportion of the image to be considered as corner or ce... |
-| [corner_rois](corner_rois.md) | ROIs used to compute the corner intensities |
 | [data](data.md) |  |
-| [decile_0](decile_0.md) | The 0th decile of the intensity distribution of the maximum intensity |
-| [decile_1](decile_1.md) | The 1st decile of the intensity distribution of the maximum intensity |
-| [decile_2](decile_2.md) | The 2nd decile of the intensity distribution of the maximum intensity |
-| [decile_3](decile_3.md) | The 3rd decile of the intensity distribution of the maximum intensity |
-| [decile_4](decile_4.md) | The 4th decile of the intensity distribution of the maximum intensity |
-| [decile_5](decile_5.md) | The 5th decile of the intensity distribution of the maximum intensity |
-| [decile_6](decile_6.md) | The 6th decile of the intensity distribution of the maximum intensity |
-| [decile_7](decile_7.md) | The 7th decile of the intensity distribution of the maximum intensity |
-| [decile_8](decile_8.md) | The 8th decile of the intensity distribution of the maximum intensity |
-| [decile_9](decile_9.md) | The 9th decile of the intensity distribution of the maximum intensity |
 | [description](description.md) | A description of an entity |
 | [df](df.md) | A Pandas DataFrame object |
+| [edge_bead_centroids](edge_bead_centroids.md) | The centroids of the beads detected but discarded as too close to the edge of... |
 | [experimenter](experimenter.md) | The experimenter that performed the imaging experiment |
-| [field_illumination_image](field_illumination_image.md) | Input parameter: homogeneity image provided as a numpy array in the order |
 | [fill_color](fill_color.md) | The fill color of the shape |
 | [g](g.md) | The green value of the color |
 | [h](h.md) | The height of the rectangle |
 | [id](id.md) | The unique identifier for an entity |
 | [image](image.md) | The image to which the ROI is applied |
 | [image_url](image_url.md) | An URL linking to the image |
-| [input](input.md) |  |
-| [intensity_map](intensity_map.md) | Intensity map of the field illumination |
-| [intensity_map_size](intensity_map_size.md) | Input parameter: the size of the output intensity map in pixels |
-| [intensity_profiles](intensity_profiles.md) | Intensity profiles for the field illumination analysis in the different direc... |
+| [input](input.md) | An input element for the PSF beads analysis |
 | [is_open](is_open.md) | Is the polygon open |
-| [key_values](key_values.md) | Key-Value pairs containing the Key measurements for the field illumination an... |
+| [key_measurements](key_measurements.md) | The key measurements of the PSF beads analysis |
 | [label](label.md) | The label of the ROI |
 | [mask](mask.md) | The mask image |
-| [max_intensity](max_intensity.md) | The maximum intensity of the center of illumination |
-| [max_intensity_pos_x](max_intensity_pos_x.md) | The x coordinate of the maximum intensity of the center of illumination |
-| [max_intensity_pos_y](max_intensity_pos_y.md) | The y coordinate of the maximum intensity of the center of illumination |
-| [middle_center_intensity_mean](middle_center_intensity_mean.md) | The mean intensity of the middle-center of the image |
-| [middle_center_intensity_ratio](middle_center_intensity_ratio.md) | The mean intensity of the middle-center of the image  divided by the maximum ... |
-| [middle_left_intensity_mean](middle_left_intensity_mean.md) | The mean intensity of the middle-left of the image |
-| [middle_left_intensity_ratio](middle_left_intensity_ratio.md) | The mean intensity of the middle-left of the image  divided by the maximum in... |
-| [middle_right_intensity_mean](middle_right_intensity_mean.md) | The mean intensity of the middle-right of the image |
-| [middle_right_intensity_ratio](middle_right_intensity_ratio.md) | The mean intensity of the middle-right of the image  divided by the maximum i... |
+| [min_lateral_distance_factor](min_lateral_distance_factor.md) | Minimal distance that has to separate laterally the beads represented as the ... |
 | [name](name.md) | The name of an entity |
-| [nb_pixels](nb_pixels.md) | The area occupied by the center of illumination region |
+| [nr_of_beads_analyzed](nr_of_beads_analyzed.md) | Number of beads analyzed per channel |
+| [nr_of_beads_discarded](nr_of_beads_discarded.md) | Sum of the beads discarded per channel for either being too close to the edge... |
 | [orcid](orcid.md) | The ORCID of the experimenter |
-| [output](output.md) |  |
+| [output](output.md) | An output element for the PSF beads analysis |
+| [pixel_size_x](pixel_size_x.md) | Physical size of the voxel in the X axis |
+| [pixel_size_y](pixel_size_y.md) | Physical size of the voxel in the Y axis |
+| [pixel_size_z](pixel_size_z.md) | Physical size of the voxel in the Z axis |
 | [processed](processed.md) | Has the dataset been processed by microscope-metrics |
 | [processing_date](processing_date.md) | The date of the processing by microscope-metrics |
 | [processing_log](processing_log.md) | The log of the processing by microscope-metrics |
-| [profile_rois](profile_rois.md) | ROIs used to compute the intensity profiles |
 | [protocol](protocol.md) | The protocol used to prepare the sample |
+| [psf_beads_image](psf_beads_image.md) | The image containing the beads provided as a 5D numpy array in the order TZYX... |
+| [psf_properties](psf_properties.md) | Properties associated with the analysis of the beads |
+| [psf_x_profiles](psf_x_profiles.md) | The intensity profiles along the x axis of the beads |
+| [psf_y_profiles](psf_y_profiles.md) | The intensity profiles along the y axis of the beads |
+| [psf_z_profiles](psf_z_profiles.md) | The intensity profiles along the z axis of the beads |
 | [r](r.md) | The red value of the color |
+| [resolution_mean_fwhm_x_microns](resolution_mean_fwhm_x_microns.md) | Mean FWHM in the X axis in microns |
+| [resolution_mean_fwhm_x_pixels](resolution_mean_fwhm_x_pixels.md) | Mean FWHM in the X axis in pixels |
+| [resolution_mean_fwhm_y_microns](resolution_mean_fwhm_y_microns.md) | Mean FWHM in the Y axis in microns |
+| [resolution_mean_fwhm_y_pixels](resolution_mean_fwhm_y_pixels.md) | Mean FWHM in the Y axis in pixels |
+| [resolution_mean_fwhm_z_microns](resolution_mean_fwhm_z_microns.md) | Mean FWHM in the Z axis in microns |
+| [resolution_mean_fwhm_z_pixels](resolution_mean_fwhm_z_pixels.md) | Mean FWHM in the Z axis in pixels |
+| [resolution_median_fwhm_x_microns](resolution_median_fwhm_x_microns.md) | Median FWHM in the X axis in microns |
+| [resolution_median_fwhm_x_pixels](resolution_median_fwhm_x_pixels.md) | Median FWHM in the X axis in pixels |
+| [resolution_median_fwhm_y_microns](resolution_median_fwhm_y_microns.md) | Median FWHM in the Y axis in microns |
+| [resolution_median_fwhm_y_pixels](resolution_median_fwhm_y_pixels.md) | Median FWHM in the Y axis in pixels |
+| [resolution_median_fwhm_z_microns](resolution_median_fwhm_z_microns.md) | Median FWHM in the Z axis in microns |
+| [resolution_median_fwhm_z_pixels](resolution_median_fwhm_z_pixels.md) | Median FWHM in the Z axis in pixels |
+| [resolution_stdev_fwhm_x_microns](resolution_stdev_fwhm_x_microns.md) | Standard deviation of the FWHM in the X axis in microns |
+| [resolution_stdev_fwhm_x_pixels](resolution_stdev_fwhm_x_pixels.md) | Standard deviation of the FWHM in the X axis in pixels |
+| [resolution_stdev_fwhm_y_microns](resolution_stdev_fwhm_y_microns.md) | Standard deviation of the FWHM in the Y axis in microns |
+| [resolution_stdev_fwhm_y_pixels](resolution_stdev_fwhm_y_pixels.md) | Standard deviation of the FWHM in the Y axis in pixels |
+| [resolution_stdev_fwhm_z_microns](resolution_stdev_fwhm_z_microns.md) | Standard deviation of the FWHM in the Z axis in microns |
+| [resolution_stdev_fwhm_z_pixels](resolution_stdev_fwhm_z_pixels.md) | Standard deviation of the FWHM in the Z axis in pixels |
 | [sample](sample.md) | The sample that was imaged |
 | [saturation_threshold](saturation_threshold.md) | Tolerated saturation threshold |
+| [self_proximity_bead_centroids](self_proximity_bead_centroids.md) | The centroids of the beads detected but discarded as too close to another bea... |
 | [shapes](shapes.md) |  |
-| [sigma](sigma.md) | Input parameter: the sigma for the smoothing gaussian filter to be applied pr... |
+| [sigma_x](sigma_x.md) | When provided, gaussian smoothing sigma to be applied to the image in the X a... |
+| [sigma_y](sigma_y.md) | When provided, gaussian smoothing sigma to be applied to the image in teh Y a... |
+| [sigma_z](sigma_z.md) | When provided, gaussian smoothing sigma to be applied to the image in the Z a... |
 | [source_image_url](source_image_url.md) | A list of URLs linking to the images that were used as a source |
 | [stroke_color](stroke_color.md) | The stroke color of the shape |
 | [stroke_width](stroke_width.md) | The stroke width of the shape |
 | [t](t.md) |  |
 | [text](text.md) | The text of the tag |
-| [top_center_intensity_mean](top_center_intensity_mean.md) | The mean intensity of the top-center of the image |
-| [top_center_intensity_ratio](top_center_intensity_ratio.md) | The mean intensity of the top-center of the image  divided by the maximum int... |
-| [top_left_intensity_mean](top_left_intensity_mean.md) | The mean intensity of the top-left corner of the image |
-| [top_left_intensity_ratio](top_left_intensity_ratio.md) | The mean intensity of the top-left corner of the image  divided by the maximu... |
-| [top_right_intensity_mean](top_right_intensity_mean.md) | The mean intensity of the top-right corner of the image |
-| [top_right_intensity_ratio](top_right_intensity_ratio.md) | The mean intensity of the top-right corner of the image  divided by the maxim... |
 | [type](type.md) | The type of the sample |
 | [url](url.md) | The URL where the protocol can be found |
 | [values](values.md) |  |

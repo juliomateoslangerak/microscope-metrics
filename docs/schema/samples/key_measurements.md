@@ -1,7 +1,7 @@
 # Slot: key_measurements
 
 
-_Key Measurements on Argolight E images_
+_The key measurements of the PSF beads analysis._
 
 
 
@@ -18,7 +18,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[ArgolightEOutput](ArgolightEOutput.md) |  |  no  |
+[PSFBeadsOutput](PSFBeadsOutput.md) |  |  no  |
 
 
 
@@ -28,7 +28,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 ## Properties
 
-* Range: [ArgolightEKeyValues](ArgolightEKeyValues.md)
+* Range: [PSFBeadsKeyMeasurements](PSFBeadsKeyMeasurements.md)
 
 
 
@@ -55,15 +55,15 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: key_measurements
-description: Key Measurements on Argolight E images
+description: The key measurements of the PSF beads analysis.
 from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 multivalued: false
 alias: key_measurements
-owner: ArgolightEOutput
+owner: PSFBeadsOutput
 domain_of:
-- ArgolightEOutput
-range: ArgolightEKeyValues
+- PSFBeadsOutput
+range: PSFBeadsKeyMeasurements
 
 ```
 </details>

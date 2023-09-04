@@ -1,6 +1,13 @@
 # Slot: input
 
-URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:input](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml/:input)
+
+_An input element for the PSF beads analysis_
+
+__
+
+
+
+URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:input](https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml/:input)
 
 
 
@@ -13,7 +20,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 | Name | Description | Modifies Slot |
 | --- | --- | --- |
-[FieldIlluminationDataset](FieldIlluminationDataset.md) | A field illumination dataset |  no  |
+[PSFBeadsDataset](PSFBeadsDataset.md) | A dataset of PSF beads dataset |  no  |
 
 
 
@@ -23,7 +30,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 
 ## Properties
 
-* Range: [FieldIlluminationInput](FieldIlluminationInput.md)
+* Range: [PSFBeadsInput](PSFBeadsInput.md)
 
 * Required: True
 
@@ -42,7 +49,7 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 ### Schema Source
 
 
-* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+* from schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 
 
 
@@ -52,14 +59,17 @@ URI: [https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/m
 <details>
 ```yaml
 name: input
-from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/field_illumination_schema.yaml
+description: 'An input element for the PSF beads analysis
+
+  '
+from_schema: https://github.com/MontpellierRessourcesImagerie/microscope-metrics/blob/main/src/microscopemetrics/data_schema/samples/argolight_schema.yaml
 rank: 1000
 multivalued: false
 alias: input
-owner: FieldIlluminationDataset
+owner: PSFBeadsDataset
 domain_of:
-- FieldIlluminationDataset
-range: FieldIlluminationInput
+- PSFBeadsDataset
+range: PSFBeadsInput
 required: true
 
 ```
