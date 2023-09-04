@@ -39,6 +39,7 @@ classes:
           slot_conditions:
             output:
               required: true
+
   ArgolightBInput:
     is_a: MetricsInput
     slots:
@@ -55,6 +56,7 @@ classes:
     slot_usage:
       saturation_threshold:
         required: true
+
   ArgolightBOutput:
     is_a: MetricsOutput
     attributes:
@@ -209,20 +211,20 @@ slots:
   argolight_b_image:
     range: ImageAsNumpy
     description: >-
-      Input parameter: image of the argolight b pattern provided as a 5D numpy array in the order TZYXC
+      Image of the argolight b pattern provided as a 5D numpy array in the order TZYXC
     required: true
     multivalued: false
     inlined: true
   spots_distance:
     range: float
     description: >-
-      Input parameter: distance between argolight spots
+      Distance between argolight spots
     required: true
     multivalued: false
   sigma_z:
     range: float
     description: >-
-      Input parameter: smoothing factor for objects detection in the Z axis
+      Smoothing factor for objects detection in the Z axis
     required: true
     multivalued: false
     minimum_value: 0.0
@@ -231,7 +233,7 @@ slots:
   sigma_y:
     range: float
     description: >-
-      Input parameter: smoothing factor for objects detection in the Y axis
+      Smoothing factor for objects detection in the Y axis
     required: true
     multivalued: false
     minimum_value: 0.0
@@ -240,7 +242,7 @@ slots:
   sigma_x:
     range: float
     description: >-
-      Input parameter: smoothing factor for objects detection in the X axis
+      Smoothing factor for objects detection in the X axis
     required: true
     multivalued: false
     minimum_value: 0.0
@@ -249,21 +251,21 @@ slots:
   lower_threshold_correction_factors:
     range: float
     description: >-
-      Input parameter: correction factor for the lower thresholds. 
+      Correction factor for the lower thresholds. 
       Must be a tuple with len = nr of channels or a float if all equal
     required: false
     multivalued: true
   upper_threshold_correction_factors:
     range: float
     description: >-
-      Input parameter: correction factor for the upper thresholds.
+      Correction factor for the upper thresholds.
       Must be a tuple with len = nr of channels or a float if all equal
     required: false
     multivalued: true
   remove_center_cross:
     range: boolean
     description: >-
-      Input parameter: remove the center cross found in some Argolight patterns
+      Remove the center cross found in some Argolight patterns
     required: false
     multivalued: false
     ifabsent: false
