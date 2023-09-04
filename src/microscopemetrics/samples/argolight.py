@@ -287,7 +287,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
 
                 shapes.append(
                     core_schema.Line(
-                        label=f"Ch_{ch:02}_resolution_{resolution_values[ch]:.2f}",
+                        label=f"ch{ch:02}_resolution_{resolution_values[ch]:.2f}",
                         x1=x1_pos,
                         y1=y1_pos,
                         x2=x2_pos,
@@ -298,7 +298,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
                 )
             rois.append(
                 core_schema.Roi(
-                    label=f"ch_{ch:02}_peaks",
+                    label=f"ch{ch:02}_peaks",
                     shapes=shapes,
                     image=self.input.argolight_e_image.image_url,
                 )

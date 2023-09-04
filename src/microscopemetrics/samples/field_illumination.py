@@ -109,7 +109,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
                 np.squeeze(image[:, :, c]), start, end, profile_size
             )
         output = output + [
-            {f"ch_{c:02}_{profile_name}": {"values": profiles[c].tolist()}}
+            {f"ch{c:02}_{profile_name}": {"values": profiles[c].tolist()}}
             for c in range(image.shape[2])
         ]
 
