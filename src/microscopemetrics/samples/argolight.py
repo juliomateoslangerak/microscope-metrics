@@ -139,7 +139,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
 
             spots_centroids.append(
                 schema.Roi(
-                    label=f"Centroids_ch{ch:03d}",
+                    label=f"Centroids_ch{ch:02}",
                     image=self.input.argolight_b_image.image_url,
                     shapes=channel_shapes,
                 )
@@ -155,17 +155,18 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             a = int(a)
             b = int(b)
 
-            pr_distances_kv = {}
-            pr_distances_kv["channel_A"] = a
-            pr_distances_kv["channel_B"] = b
-            pr_distances_kv["mean_3d_dist"] = temp_df.dist_3d.mean()
-            pr_distances_kv["median_3d_dist"] = temp_df.dist_3d.median()
-            pr_distances_kv["std_3d_dist"] = temp_df.dist_3d.std()
-            pr_distances_kv["mad_3d_dist"] = (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean()
-            pr_distances_kv["mean_z_dist"] = temp_df.z_dist.mean()
-            pr_distances_kv["median_z_dist"] = temp_df.z_dist.median()
-            pr_distances_kv["std_z_dist"] = temp_df.z_dist.std()
-            pr_distances_kv["mad_z_dist"] = (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean()
+            pr_distances_kv = {
+                "channel_A": a,
+                "channel_B": b,
+                "mean_3d_dist": temp_df.dist_3d.mean(),
+                "median_3d_dist": temp_df.dist_3d.median(),
+                "std_3d_dist": temp_df.dist_3d.std(),
+                "mad_3d_dist": (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean(),
+                "mean_z_dist": temp_df.z_dist.mean(),
+                "median_z_dist": temp_df.z_dist.median(),
+                "std_z_dist": temp_df.z_dist.std(),
+                "mad_z_dist": (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean(),
+            }
 
             distances_kv.append(pr_distances_kv)
 
@@ -176,17 +177,19 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
         self.output.distance_measurements = schema.ArgolightBDistanceKeyValues(**distances_kv)
 
         self.output.spots_properties = schema.TableAsDict(
+            name="spots_properties",
             columns=[
                 core_schema.Column(name=k, values=v)
                 for k, v in properties_df.to_dict(orient="list").items()
-            ]
+            ],
         )
 
         self.output.spots_distances = schema.TableAsDict(
+            name="spots_distances",
             columns=[
                 core_schema.Column(name=k, values=v)
                 for k, v in distances_df.to_dict(orient="list").items()
-            ]
+            ],
         )
 
         self.output.spots_centroids = spots_centroids
@@ -284,7 +287,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
 
                 shapes.append(
                     core_schema.Line(
-                        label=f"Ch_{ch}_resolution_{resolution_values[ch]:.2f}",
+                        label=f"Ch_{ch:02}_resolution_{resolution_values[ch]:.2f}",
                         x1=x1_pos,
                         y1=y1_pos,
                         x2=x2_pos,
@@ -295,7 +298,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
                 )
             rois.append(
                 core_schema.Roi(
-                    label=f"ch_{ch:03d}_peaks",
+                    label=f"ch_{ch:02}_peaks",
                     shapes=shapes,
                     image=self.input.argolight_e_image.image_url,
                 )
@@ -304,7 +307,10 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
 
         self.output.key_measurements = schema.ArgolightEKeyValues(**key_values)
 
-        self.output.intensity_profiles = [schema.TableAsDict(columns=t) for t in out_tables]
+        self.output.intensity_profiles = [
+            schema.TableAsDict(name=f"intensity_profiles_ch{c:02}", columns=out_tables[c])
+            for c in range(len(out_tables))
+        ]
 
         self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.processed = True
@@ -313,12 +319,12 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
 
 
 def _profile_to_columns(profile: ndarray, channel: int) -> List[Dict[str, Dict[str, List[float]]]]:
-    table = [{f"raw_profile_ch{channel:02d}": {"values": [v.item() for v in profile[0, :]]}}]
+    table = [{f"raw_profile_ch{channel:02}": {"values": [v.item() for v in profile[0, :]]}}]
 
     for p in range(1, profile.shape[0]):
         table.append(
             {
-                f"fitted_profile_ch{channel:03d}_peak{p:03d}": {
+                f"fitted_profile_ch{channel:02}_peak{p:03d}": {
                     "values": [v.item() for v in profile[p, :]]
                 }
             }

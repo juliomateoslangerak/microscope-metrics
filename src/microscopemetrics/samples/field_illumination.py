@@ -109,7 +109,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
                 np.squeeze(image[:, :, c]), start, end, profile_size
             )
         output = output + [
-            {f"ch_{c}_{profile_name}": {"values": profiles[c].tolist()}}
+            {f"ch_{c:02}_{profile_name}": {"values": profiles[c].tolist()}}
             for c in range(image.shape[2])
         ]
 
@@ -356,7 +356,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
         )
 
         self.output.intensity_profiles = schema.TableAsDict(
-            columns=_image_line_profile(image, profile_size=255)
+            name="intensity_profiles", columns=_image_line_profile(image, profile_size=255)
         )
 
         self.output.profile_rois = core_schema.Roi(
@@ -379,7 +379,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             image=self.input.field_illumination_image.image_url,
             shapes=[
                 core_schema.Point(
-                    label=f"ch{c}_center",
+                    label=f"ch{c:02}_center",
                     y=self.output.key_values.center_of_mass_y[c],
                     x=self.output.key_values.center_of_mass_x[c],
                     c=c,
