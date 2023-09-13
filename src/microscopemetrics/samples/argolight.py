@@ -216,7 +216,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
         pass  # TODO: implement
 
         image = self.input.argolight_e_image.data
-        image = np.squeeze(image[0])  # if there is a time dimension, take the first one
+        image = image[0]  # if there is a time dimension, take the first one
         axis = self.input.axis
         measured_band = self.input.measured_band
 
@@ -273,13 +273,13 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
             for peak in (pos_a, pos_b):
                 # Measurements are taken at center of pixel so we add .5 pixel to peak positions
                 if axis == 1:  # Y resolution -> horizontal rois
-                    axis_len = image.shape[-1]
+                    axis_len = image.shape[2]
                     x1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
                     y1_pos = peak + 0.5
                     x2_pos = (axis_len / 2) + (axis_len * measured_band / 2)
                     y2_pos = peak + 0.5
                 elif axis == 2:  # X resolution -> vertical rois
-                    axis_len = image.shape[-2]
+                    axis_len = image.shape[1]
                     y1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
                     x1_pos = peak + 0.5
                     y2_pos = (axis_len / 2) + (axis_len * measured_band / 2)
