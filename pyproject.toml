@@ -14,7 +14,7 @@ documentation = "https://github.com/MontpellierRessourcesImagerie/microscope-met
 keywords = ["microscopy", "metrology"]
 
 [tool.pytest.ini_options]
-addopts = "--cov"
+#addopts = "--cov"
 testpaths = [
     "tests"
 ]
@@ -29,7 +29,7 @@ microscopemetrics-schema = {git = "https://github.com/MontpellierRessourcesImage
 
 [tool.poetry.group.test.dependencies]
 pytest = "^6.2.0"
-pytest-cov = "^4.0.0"
+#pytest-cov = "^4.0.0"
 tox = "^3.26.0"
 
 [tool.poetry.group.dev.dependencies]
