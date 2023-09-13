@@ -6,8 +6,7 @@ import scipy
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
-import microscopemetrics.data_schema.samples.field_illumination_schema as schema
-from microscopemetrics.data_schema import core_schema
+import microscopemetrics_schema.datamodel as mm_schema
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_inlined_image
 from microscopemetrics.utilities.utilities import is_saturated
 
@@ -119,7 +118,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
 def _line_profile_shapes(image: np.ndarray):
     stroke_color = {"r": 0, "g": 0, "b": 255, "alpha": 200}
     return [
-        core_schema.Line(
+        mm_schema.Line(
             label="leftTop_to_rightBottom",
             x1=0,
             y1=0,
@@ -127,7 +126,7 @@ def _line_profile_shapes(image: np.ndarray):
             y2=image.shape[0],
             stroke_color=stroke_color,
         ),
-        core_schema.Line(
+        mm_schema.Line(
             label="leftBottom_to_rightTop",
             x1=0,
             y1=image.shape[0],
@@ -135,7 +134,7 @@ def _line_profile_shapes(image: np.ndarray):
             y2=0,
             stroke_color=stroke_color,
         ),
-        core_schema.Line(
+        mm_schema.Line(
             label="center_horizontal",
             x1=0,
             y1=image.shape[0] // 2,
@@ -143,7 +142,7 @@ def _line_profile_shapes(image: np.ndarray):
             y2=image.shape[0] // 2,
             stroke_color=stroke_color,
         ),
-        core_schema.Line(
+        mm_schema.Line(
             label="center_vertical",
             x1=image.shape[1] // 2,
             y1=0,
@@ -155,7 +154,7 @@ def _line_profile_shapes(image: np.ndarray):
 
 
 def _c_shape(label, x, y, size, s_col):
-    return core_schema.Rectangle(label=label, x=x, y=y, w=size, h=size, stroke_color=s_col)
+    return mm_schema.Rectangle(label=label, x=x, y=y, w=size, h=size, stroke_color=s_col)
 
 
 def _corner_shapes(image: np.ndarray, corner_fraction: float):
@@ -304,7 +303,7 @@ def _image_properties(
     return properties
 
 
-class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
+class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixin):
     """This analysis creates a report on field illumination homogeneity based on input images"""
 
     def run(self) -> bool:
@@ -338,7 +337,7 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             logger.error(f"Channels {saturated_channels} are saturated")
             return False
 
-        self.output.key_values = schema.FieldIlluminationKeyValues(
+        self.output.key_values = mm_schema.FieldIlluminationKeyValues(
             **_image_properties(
                 image=image,
                 corner_fraction=self.input.corner_fraction,
@@ -355,30 +354,30 @@ class FieldIlluminationAnalysis(schema.FieldIlluminationDataset, AnalysisMixin):
             source_image_url=self.input.field_illumination_image.source_image_url,
         )
 
-        self.output.intensity_profiles = schema.TableAsDict(
+        self.output.intensity_profiles = mm_schema.TableAsDict(
             name="intensity_profiles", columns=_image_line_profile(image, profile_size=255)
         )
 
-        self.output.profile_rois = core_schema.Roi(
+        self.output.profile_rois = mm_schema.Roi(
             label="Profile ROIs",
             description="ROIs used to compute the intensity profiles",
             image=self.input.field_illumination_image.image_url,
             shapes=_line_profile_shapes(image),
         )
 
-        self.output.corner_rois = core_schema.Roi(
+        self.output.corner_rois = mm_schema.Roi(
             label="Corner ROIs",
             description="ROIs used to compute the corner intensities",
             image=self.input.field_illumination_image.image_url,
             shapes=_corner_shapes(image, self.input.corner_fraction),
         )
 
-        self.output.center_of_illumination = core_schema.Roi(
+        self.output.center_of_illumination = mm_schema.Roi(
             label="Center of illumination",
             description="Point ROI marking the center of illumination",
             image=self.input.field_illumination_image.image_url,
             shapes=[
-                core_schema.Point(
+                mm_schema.Point(
                     label=f"ch{c:02}_center",
                     y=self.output.key_values.center_of_mass_y[c],
                     x=self.output.key_values.center_of_mass_x[c],

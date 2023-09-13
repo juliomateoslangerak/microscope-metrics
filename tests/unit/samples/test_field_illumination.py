@@ -1,8 +1,6 @@
 import numpy as np
 import pytest
-from linkml_runtime.dumpers import YAMLDumper
 
-from microscopemetrics.data_schema import core_schema
 from microscopemetrics.samples import field_illumination
 from tests.test_utilities import get_file
 

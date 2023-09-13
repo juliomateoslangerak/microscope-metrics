@@ -11,18 +11,17 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
 
-import microscopemetrics.data_schema.samples.argolight_schema as schema
+import microscopemetrics_schema.datamodel as mm_schema
 from microscopemetrics.analysis.tools import (
     compute_distances_matrix,
     compute_spots_properties,
     segment_image,
 )
-from microscopemetrics.data_schema import core_schema
 from microscopemetrics.samples import AnalysisMixin, logger
 from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
 
 
-class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
+class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
     """This class handles the analysis of the Argolight sample pattern B"""
 
     def run(self) -> bool:
@@ -65,7 +64,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             high_corr_factors=self.input.upper_threshold_correction_factors,
         )
 
-        self.output.spots_labels_image = schema.ImageAsNumpy(  # TODO: this should be a mask
+        self.output.spots_labels_image = mm_schema.ImageAsNumpy(  # TODO: this should be a mask
             data=labels,
             name=f"{self.input.argolight_b_image.name}_spots_labels",
             description=f"Spots labels of {self.input.argolight_b_image.image_url}",
@@ -126,7 +125,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             properties_kv.append(ch_properties_kv)
 
             channel_shapes = [
-                core_schema.Point(
+                mm_schema.Point(
                     x=p["weighted_centroid"][2].item(),
                     y=p["weighted_centroid"][1].item(),
                     z=p["weighted_centroid"][0].item(),
@@ -138,7 +137,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
             ]
 
             spots_centroids.append(
-                schema.Roi(
+                mm_schema.Roi(
                     label=f"Centroids_ch{ch:02}",
                     image=self.input.argolight_b_image.image_url,
                     shapes=channel_shapes,
@@ -172,22 +171,22 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
 
         distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
 
-        self.output.intensity_measurements = schema.ArgolightBIntensityKeyValues(**properties_kv)
+        self.output.intensity_measurements = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
 
-        self.output.distance_measurements = schema.ArgolightBDistanceKeyValues(**distances_kv)
+        self.output.distance_measurements = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
 
-        self.output.spots_properties = schema.TableAsDict(
+        self.output.spots_properties = mm_schema.TableAsDict(
             name="spots_properties",
             columns=[
-                core_schema.Column(name=k, values=v)
+                mm_schema.Column(name=k, values=v)
                 for k, v in properties_df.to_dict(orient="list").items()
             ],
         )
 
-        self.output.spots_distances = schema.TableAsDict(
+        self.output.spots_distances = mm_schema.TableAsDict(
             name="spots_distances",
             columns=[
-                core_schema.Column(name=k, values=v)
+                mm_schema.Column(name=k, values=v)
                 for k, v in distances_df.to_dict(orient="list").items()
             ],
         )
@@ -200,7 +199,7 @@ class ArgolightBAnalysis(schema.ArgolightBDataset, AnalysisMixin):
         return True
 
 
-class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
+class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
     """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
 
     def run(self) -> bool:
@@ -286,7 +285,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
                     x2_pos = peak + 0.5
 
                 shapes.append(
-                    core_schema.Line(
+                    mm_schema.Line(
                         label=f"ch{ch:02}_resolution_{resolution_values[ch]:.2f}",
                         x1=x1_pos,
                         y1=y1_pos,
@@ -297,7 +296,7 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
                     )
                 )
             rois.append(
-                core_schema.Roi(
+                mm_schema.Roi(
                     label=f"ch{ch:02}_peaks",
                     shapes=shapes,
                     image=self.input.argolight_e_image.image_url,
@@ -305,10 +304,10 @@ class ArgolightEAnalysis(schema.ArgolightEDataset, AnalysisMixin):
             )
         self.output.peaks_rois = rois
 
-        self.output.key_measurements = schema.ArgolightEKeyValues(**key_values)
+        self.output.key_measurements = mm_schema.ArgolightEKeyValues(**key_values)
 
         self.output.intensity_profiles = [
-            schema.TableAsDict(name=f"intensity_profiles_ch{c:02}", columns=out_tables[c])
+            mm_schema.TableAsDict(name=f"intensity_profiles_ch{c:02}", columns=out_tables[c])
             for c in range(len(out_tables))
         ]
 

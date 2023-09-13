@@ -5,23 +5,23 @@ import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-from microscopemetrics.data_schema import core_schema
+import microscopemetrics_schema.datamodel as mm_schema
 from microscopemetrics.samples import numpy_to_inlined_image, numpy_to_inlined_mask
 
 
 @pytest.fixture
 def experimenter_1_fixture():
-    return core_schema.Experimenter(name="name_experimenter_1", orcid="0000-0000-0000-0001")
+    return mm_schema.Experimenter(name="name_experimenter_1", orcid="0000-0000-0000-0001")
 
 
 @pytest.fixture
 def experimenter_2_fixture():
-    return core_schema.Experimenter(name="name_experimenter_2", orcid="0000-0000-0000-0002")
+    return mm_schema.Experimenter(name="name_experimenter_2", orcid="0000-0000-0000-0002")
 
 
 @pytest.fixture
 def protocol_fixture(experimenter_1_fixture, experimenter_2_fixture):
-    return core_schema.Protocol(
+    return mm_schema.Protocol(
         name="Protocol001",
         description="A test protocol",
         version="1.0.0",
@@ -32,7 +32,7 @@ def protocol_fixture(experimenter_1_fixture, experimenter_2_fixture):
 
 @pytest.fixture
 def sample_fixture(protocol_fixture):
-    return core_schema.Sample(
+    return mm_schema.Sample(
         name="Sample001",
         description="A test sample",
         type="FieldIllumination",
@@ -42,7 +42,7 @@ def sample_fixture(protocol_fixture):
 
 @pytest.fixture
 def metrics_dataset_fixture(sample_fixture, experimenter_1_fixture):
-    return core_schema.MetricsDataset(
+    return mm_schema.MetricsDataset(
         name="MetricsDataset001",
         description="A test metrics dataset",
         sample=sample_fixture.type,
@@ -71,7 +71,7 @@ def numpy_5d_ndarray_fixture():
 
 @pytest.fixture
 def image_as_numpy_2d_fixture(numpy_2d_ndarray_fixture):
-    return core_schema.ImageAsNumpy(
+    return mm_schema.ImageAsNumpy(
         name="ImageAsNumpy001",
         description="A test image as numpy",
         image_url="https://example.com/image001",
@@ -82,7 +82,7 @@ def image_as_numpy_2d_fixture(numpy_2d_ndarray_fixture):
 
 @pytest.fixture
 def image_as_numpy_5d_fixture(numpy_5d_ndarray_fixture):
-    return core_schema.ImageAsNumpy(
+    return mm_schema.ImageAsNumpy(
         name="ImageAsNumpy001",
         description="A test image as numpy",
         image_url="https://example.com/image001",
@@ -125,7 +125,7 @@ def image_5d_fixture(numpy_5d_ndarray_fixture):
 
 
 def test_experimenter_creation(experimenter_1_fixture):
-    experimenter = core_schema.Experimenter(
+    experimenter = mm_schema.Experimenter(
         name=experimenter_1_fixture.name, orcid=experimenter_1_fixture.orcid
     )
 
@@ -134,7 +134,7 @@ def test_experimenter_creation(experimenter_1_fixture):
 
 def test_experimenter_attributes_required():
     with pytest.raises(ValueError):
-        experimenter = core_schema.Experimenter(orcid="0000-0000-0000-0001")
+        experimenter = mm_schema.Experimenter(orcid="0000-0000-0000-0001")
 
 
 def test_experimenter_attribute_types(experimenter_1_fixture):
@@ -151,13 +151,13 @@ def test_experimenter_validity(experimenter_1_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(experimenter_1_fixture)
-    loaded_experimenter = loader.loads(yaml_string, target_class=core_schema.Experimenter)
+    loaded_experimenter = loader.loads(yaml_string, target_class=mm_schema.Experimenter)
 
     assert experimenter_1_fixture == loaded_experimenter
 
 
 def test_protocol_creation(protocol_fixture):
-    protocol = core_schema.Protocol(
+    protocol = mm_schema.Protocol(
         name=protocol_fixture.name,
         description=protocol_fixture.description,
         version=protocol_fixture.version,
@@ -170,13 +170,13 @@ def test_protocol_creation(protocol_fixture):
 
 def test_protocol_attributes_required():
     with pytest.raises(ValueError):
-        protocol = core_schema.Protocol(
+        protocol = mm_schema.Protocol(
             name="protocol",
             description="A test protocol",
             url="https://example.com/protocol001",
         )
     with pytest.raises(ValueError):
-        protocol = core_schema.Protocol(
+        protocol = mm_schema.Protocol(
             name="protocol", description="A test protocol", version="1.0.0"
         )
 
@@ -197,7 +197,7 @@ def test_protocol_attribute_values(protocol_fixture):
     not_a_string = NotAString()
 
     with pytest.raises(TypeError):
-        protocol = core_schema.Protocol(
+        protocol = mm_schema.Protocol(
             name="protocol",
             description="A test protocol",
             url="https://example.com/protocol001",
@@ -209,13 +209,13 @@ def test_protocol_validity(protocol_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(protocol_fixture)
-    loaded_protocol = loader.loads(yaml_string, target_class=core_schema.Protocol)
+    loaded_protocol = loader.loads(yaml_string, target_class=mm_schema.Protocol)
 
     assert protocol_fixture == loaded_protocol
 
 
 def test_sample_creation(sample_fixture):
-    sample = core_schema.Sample(
+    sample = mm_schema.Sample(
         name=sample_fixture.name,
         description=sample_fixture.description,
         type=sample_fixture.type,
@@ -227,35 +227,35 @@ def test_sample_creation(sample_fixture):
 
 def test_sample_attributes_required(protocol_fixture):
     with pytest.raises(ValueError):
-        sample = core_schema.Sample(description="A test sample", protocol=protocol_fixture.url)
+        sample = mm_schema.Sample(description="A test sample", protocol=protocol_fixture.url)
     with pytest.raises(ValueError):
-        sample = core_schema.Sample(description="A test sample", type="FieldIllumination")
+        sample = mm_schema.Sample(description="A test sample", type="FieldIllumination")
 
 
 def test_sample_attribute_types(sample_fixture):
     assert isinstance(sample_fixture.name, str)
     assert isinstance(sample_fixture.description, str)
     assert isinstance(sample_fixture.type, str)
-    assert isinstance(sample_fixture.protocol, core_schema.ProtocolUrl)
+    assert isinstance(sample_fixture.protocol, mm_schema.ProtocolUrl)
 
 
 def test_sample_attribute_values(sample_fixture):
     with pytest.raises(ValueError):
         # Type is restricted to a number of permissible values
-        sample = core_schema.Sample(description="A test sample", type="UnknownType")
+        sample = mm_schema.Sample(description="A test sample", type="UnknownType")
 
 
 def test_sample_validity(sample_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(sample_fixture)
-    loaded_sample = loader.loads(yaml_string, core_schema.Sample)
+    loaded_sample = loader.loads(yaml_string, mm_schema.Sample)
 
     assert sample_fixture == loaded_sample
 
 
 def test_metrics_dataset_creation(metrics_dataset_fixture):
-    metrics_dataset = core_schema.MetricsDataset(
+    metrics_dataset = mm_schema.MetricsDataset(
         name=metrics_dataset_fixture.name,
         description=metrics_dataset_fixture.description,
         sample=metrics_dataset_fixture.sample,
@@ -289,7 +289,7 @@ def test_metrics_dataset_attribute_types(metrics_dataset_fixture):
 def test_metrics_dataset_attribute_values(metrics_dataset_fixture):
     with pytest.raises(ValueError):
         # Processed is restricted to a number of permissible values
-        metrics_dataset = core_schema.MetricsDataset(
+        metrics_dataset = mm_schema.MetricsDataset(
             name="metrics_dataset",
             description="A test metrics dataset",
             sample="sample",
@@ -303,20 +303,20 @@ def test_metrics_dataset_validity(metrics_dataset_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(metrics_dataset_fixture)
-    loaded_metrics_dataset = loader.loads(yaml_string, core_schema.MetricsDataset)
+    loaded_metrics_dataset = loader.loads(yaml_string, mm_schema.MetricsDataset)
 
     assert metrics_dataset_fixture == loaded_metrics_dataset
 
 
 def test_image_as_numpy_creation(image_as_numpy_2d_fixture, image_as_numpy_5d_fixture):
-    image_as_numpy_2d = core_schema.ImageAsNumpy(
+    image_as_numpy_2d = mm_schema.ImageAsNumpy(
         name=image_as_numpy_2d_fixture.name,
         description=image_as_numpy_2d_fixture.description,
         image_url=image_as_numpy_2d_fixture.image_url,
         source_image_url=image_as_numpy_2d_fixture.source_image_url,
         data=image_as_numpy_2d_fixture.data,
     )
-    image_as_numpy_5d = core_schema.ImageAsNumpy(
+    image_as_numpy_5d = mm_schema.ImageAsNumpy(
         name=image_as_numpy_5d_fixture.name,
         description=image_as_numpy_5d_fixture.description,
         image_url=image_as_numpy_5d_fixture.image_url,
@@ -333,7 +333,7 @@ def test_image_as_numpy_attributes_required():
     with pytest.raises(ValueError):
         # Data is a required attribute, so this should raise an exception but as it
         # is defined as any, it is not possible to check this
-        image_as_numpy = core_schema.ImageAsNumpy(
+        image_as_numpy = mm_schema.ImageAsNumpy(
             name="image_as_numpy",
             description="A test image as numpy",
             image_url="https://example.com/image_as_numpy001",
@@ -358,7 +358,7 @@ def test_image_as_numpy_attribute_types(image_as_numpy_2d_fixture, image_as_nump
 def test_image_as_numpy_attribute_values(image_as_numpy_2d_fixture, image_as_numpy_5d_fixture):
     with pytest.raises(ValueError):
         # Data is restricted to a number of permissible values
-        image_as_numpy = core_schema.ImageAsNumpy(
+        image_as_numpy = mm_schema.ImageAsNumpy(
             name="image_as_numpy",
             description="A test image as numpy",
             image_url="https://example.com/image_as_numpy001",
@@ -372,18 +372,18 @@ def test_image_as_numpy_validity(image_as_numpy_2d_fixture, image_as_numpy_5d_fi
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(image_as_numpy_2d_fixture)
-    loaded_image_as_numpy = loader.loads(yaml_string, core_schema.ImageAsNumpy)
+    loaded_image_as_numpy = loader.loads(yaml_string, mm_schema.ImageAsNumpy)
 
     assert image_as_numpy_2d_fixture == loaded_image_as_numpy
 
     yaml_string = dumper.dumps(image_as_numpy_5d_fixture)
-    loaded_image_as_numpy = loader.loads(yaml_string, core_schema.ImageAsNumpy)
+    loaded_image_as_numpy = loader.loads(yaml_string, mm_schema.ImageAsNumpy)
 
     assert image_as_numpy_5d_fixture == loaded_image_as_numpy
 
 
 def test_image_mask_creation(image_mask_fixture):
-    image_mask = core_schema.ImageMask(
+    image_mask = mm_schema.ImageMask(
         name=image_mask_fixture.name,
         description=image_mask_fixture.description,
         image_url=image_mask_fixture.image_url,
@@ -398,7 +398,7 @@ def test_image_mask_creation(image_mask_fixture):
 
 def test_image_mask_attributes_required(image_mask_fixture):
     with pytest.raises(ValueError):
-        image_mask = core_schema.ImageMask(
+        image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
@@ -407,7 +407,7 @@ def test_image_mask_attributes_required(image_mask_fixture):
             x=image_mask_fixture.x,
         )
     with pytest.raises(ValueError):
-        image_mask = core_schema.ImageMask(
+        image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
@@ -416,7 +416,7 @@ def test_image_mask_attributes_required(image_mask_fixture):
             x=image_mask_fixture.x,
         )
     with pytest.raises(ValueError):
-        image_mask = core_schema.ImageMask(
+        image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
@@ -432,13 +432,13 @@ def test_image_mask_attribute_types(image_mask_fixture):
     assert isinstance(image_mask_fixture.image_url, str)
     assert isinstance(image_mask_fixture.source_image_url, list)
     assert isinstance(image_mask_fixture.data, list)
-    assert isinstance(image_mask_fixture.y, core_schema.PixelSeries)
-    assert isinstance(image_mask_fixture.x, core_schema.PixelSeries)
+    assert isinstance(image_mask_fixture.y, mm_schema.PixelSeries)
+    assert isinstance(image_mask_fixture.x, mm_schema.PixelSeries)
 
 
 def test_image_mask_attribute_values(image_mask_fixture):
     with pytest.raises(ValueError):
-        image_mask = core_schema.ImageMask(
+        image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
@@ -449,7 +449,7 @@ def test_image_mask_attribute_values(image_mask_fixture):
         )
     with pytest.raises(TypeError):
         # Y must be a PixelSeries
-        image_mask = core_schema.ImageMask(
+        image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
@@ -460,7 +460,7 @@ def test_image_mask_attribute_values(image_mask_fixture):
         )
     with pytest.raises(TypeError):
         # X must be a PixelSeries
-        image_mask = core_schema.ImageMask(
+        image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
@@ -475,13 +475,13 @@ def test_image_mask_validity(image_mask_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(image_mask_fixture)
-    loaded_image_mask = loader.loads(yaml_string, core_schema.ImageMask)
+    loaded_image_mask = loader.loads(yaml_string, mm_schema.ImageMask)
 
     assert image_mask_fixture == loaded_image_mask
 
 
 def test_image_2d_creation(image_2d_fixture):
-    image_2d = core_schema.Image2D(
+    image_2d = mm_schema.Image2D(
         name=image_2d_fixture.name,
         description=image_2d_fixture.description,
         image_url=image_2d_fixture.image_url,
@@ -497,7 +497,7 @@ def test_image_2d_creation(image_2d_fixture):
 def test_image_2d_attributes_required(image_2d_fixture):
     # no data
     with pytest.raises(ValueError):
-        image_2d = core_schema.Image2D(
+        image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
@@ -507,7 +507,7 @@ def test_image_2d_attributes_required(image_2d_fixture):
         )
     # no y
     with pytest.raises(ValueError):
-        image_2d = core_schema.Image2D(
+        image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
@@ -517,7 +517,7 @@ def test_image_2d_attributes_required(image_2d_fixture):
         )
     # no x
     with pytest.raises(ValueError):
-        image_2d = core_schema.Image2D(
+        image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
@@ -533,13 +533,13 @@ def test_image_2d_attribute_types(image_2d_fixture):
     assert isinstance(image_2d_fixture.image_url, str)
     assert isinstance(image_2d_fixture.source_image_url, list)
     assert isinstance(image_2d_fixture.data, list)
-    assert isinstance(image_2d_fixture.y, core_schema.PixelSeries)
-    assert isinstance(image_2d_fixture.x, core_schema.PixelSeries)
+    assert isinstance(image_2d_fixture.y, mm_schema.PixelSeries)
+    assert isinstance(image_2d_fixture.x, mm_schema.PixelSeries)
 
 
 def test_image_2d_attribute_values(image_2d_fixture):
     with pytest.raises(ValueError):
-        image_2d = core_schema.Image2D(
+        image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
@@ -550,7 +550,7 @@ def test_image_2d_attribute_values(image_2d_fixture):
         )
     with pytest.raises(TypeError):
         # Y must be a PixelSeries
-        image_2d = core_schema.Image2D(
+        image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
@@ -561,7 +561,7 @@ def test_image_2d_attribute_values(image_2d_fixture):
         )
     with pytest.raises(TypeError):
         # X must be a PixelSeries
-        image_2d = core_schema.Image2D(
+        image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
@@ -576,13 +576,13 @@ def test_image_2d_validity(image_2d_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(image_2d_fixture)
-    loaded_image_2d = loader.loads(yaml_string, core_schema.Image2D)
+    loaded_image_2d = loader.loads(yaml_string, mm_schema.Image2D)
 
     assert image_2d_fixture == loaded_image_2d
 
 
 def test_image_5d_creation(image_5d_fixture):
-    image_5d = core_schema.Image5D(
+    image_5d = mm_schema.Image5D(
         name=image_5d_fixture.name,
         description=image_5d_fixture.description,
         image_url=image_5d_fixture.image_url,
@@ -601,7 +601,7 @@ def test_image_5d_creation(image_5d_fixture):
 def test_image_5d_attributes_required(image_5d_fixture):
     # no data
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -614,7 +614,7 @@ def test_image_5d_attributes_required(image_5d_fixture):
         )
     # no t
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -627,7 +627,7 @@ def test_image_5d_attributes_required(image_5d_fixture):
         )
     # no z
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -640,7 +640,7 @@ def test_image_5d_attributes_required(image_5d_fixture):
         )
     # no y
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -653,7 +653,7 @@ def test_image_5d_attributes_required(image_5d_fixture):
         )
     # no x
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -666,7 +666,7 @@ def test_image_5d_attributes_required(image_5d_fixture):
         )
     # no c
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -685,16 +685,16 @@ def test_image_5d_attribute_types(image_5d_fixture):
     assert isinstance(image_5d_fixture.image_url, str)
     assert isinstance(image_5d_fixture.source_image_url, list)
     assert isinstance(image_5d_fixture.data, list)
-    assert isinstance(image_5d_fixture.t, core_schema.TimeSeries)
-    assert isinstance(image_5d_fixture.z, core_schema.PixelSeries)
-    assert isinstance(image_5d_fixture.y, core_schema.PixelSeries)
-    assert isinstance(image_5d_fixture.x, core_schema.PixelSeries)
-    assert isinstance(image_5d_fixture.c, core_schema.ChannelSeries)
+    assert isinstance(image_5d_fixture.t, mm_schema.TimeSeries)
+    assert isinstance(image_5d_fixture.z, mm_schema.PixelSeries)
+    assert isinstance(image_5d_fixture.y, mm_schema.PixelSeries)
+    assert isinstance(image_5d_fixture.x, mm_schema.PixelSeries)
+    assert isinstance(image_5d_fixture.c, mm_schema.ChannelSeries)
 
 
 def test_image_5d_attribute_values(image_5d_fixture):
     with pytest.raises(ValueError):
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -708,7 +708,7 @@ def test_image_5d_attribute_values(image_5d_fixture):
         )
     with pytest.raises(TypeError):
         # T must be a TimeSeries
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -722,7 +722,7 @@ def test_image_5d_attribute_values(image_5d_fixture):
         )
     with pytest.raises(TypeError):
         # Z must be a PixelSeries
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -736,7 +736,7 @@ def test_image_5d_attribute_values(image_5d_fixture):
         )
     with pytest.raises(TypeError):
         # Y must be a PixelSeries
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -750,7 +750,7 @@ def test_image_5d_attribute_values(image_5d_fixture):
         )
     with pytest.raises(TypeError):
         # X must be a PixelSeries
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -764,7 +764,7 @@ def test_image_5d_attribute_values(image_5d_fixture):
         )
     with pytest.raises(TypeError):
         # C must be a ChannelSeries
-        image_5d = core_schema.Image5D(
+        image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
@@ -782,13 +782,13 @@ def test_image_5d_validity(image_5d_fixture):
     dumper = YAMLDumper()
     loader = YAMLLoader()
     yaml_string = dumper.dumps(image_5d_fixture)
-    loaded_image_5d = loader.loads(yaml_string, core_schema.Image5D)
+    loaded_image_5d = loader.loads(yaml_string, mm_schema.Image5D)
 
     assert image_5d_fixture == loaded_image_5d
 
 
 def test_point_creation():
-    point = core_schema.Point(x=1, y=2, z=3)
+    point = mm_schema.Point(x=1, y=2, z=3)
     assert point.x == 1
     assert point.y == 2
     assert point.z == 3
@@ -796,13 +796,13 @@ def test_point_creation():
 
 def test_point_attributes_required():
     with pytest.raises(ValueError):
-        point = core_schema.Point(x=1, z=3)
+        point = mm_schema.Point(x=1, z=3)
     with pytest.raises(ValueError):
-        point = core_schema.Point(y=2, z=3)
+        point = mm_schema.Point(y=2, z=3)
 
 
 def test_point_attributes_types():
-    point = core_schema.Point(x=1, y=2, z=3)
+    point = mm_schema.Point(x=1, y=2, z=3)
     assert isinstance(point.x, float)
     assert isinstance(point.y, float)
     assert isinstance(point.z, float)
@@ -810,16 +810,16 @@ def test_point_attributes_types():
 
 def test_point_attributes_values():
     with pytest.raises(ValueError):
-        point = core_schema.Point(x="x", y=2)
+        point = mm_schema.Point(x="x", y=2)
     with pytest.raises(ValueError):
-        point = core_schema.Point(x=1, y="y")
+        point = mm_schema.Point(x=1, y="y")
     with pytest.raises(ValueError):
-        point = core_schema.Point(x=1, y=2, z="z")
+        point = mm_schema.Point(x=1, y=2, z="z")
     with pytest.raises(ValueError):
-        point = core_schema.Point(x=1, y=2, c="c")
+        point = mm_schema.Point(x=1, y=2, c="c")
     with pytest.raises(TypeError):
-        point = core_schema.Point(x=1, y=2, fill_color="fill_color")
+        point = mm_schema.Point(x=1, y=2, fill_color="fill_color")
     with pytest.raises(TypeError):
-        point = core_schema.Point(x=1, y=2, stroke_color="stroke_color")
+        point = mm_schema.Point(x=1, y=2, stroke_color="stroke_color")
     with pytest.raises(ValueError):
-        point = core_schema.Point(x=1, y=2, stroke_width="stroke_width")
+        point = mm_schema.Point(x=1, y=2, stroke_width="stroke_width")

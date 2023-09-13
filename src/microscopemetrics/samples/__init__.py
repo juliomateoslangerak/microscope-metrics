@@ -6,7 +6,7 @@ from typing import List, Union, Dict
 
 import numpy as np
 
-from microscopemetrics.data_schema import core_schema
+import microscopemetrics_schema.datamodel as mm_schema
 
 # We are defining some global dictionaries to register the different analysis types
 IMAGE_ANALYSIS_REGISTRY = {}
@@ -40,7 +40,7 @@ def numpy_to_inlined_mask(
     description: str = None,
     image_url: str = None,
     source_image_url: Union[str, List[str]] = None,
-) -> core_schema.ImageMask:
+) -> mm_schema.ImageMask:
     """Converts a bool numpy array to an inlined mask"""
     if array.ndim != 2:
         raise ValueError("Input array should be 2D")
@@ -52,14 +52,14 @@ def numpy_to_inlined_mask(
     if array.dtype != bool:
         raise ValueError("Input array should be of type bool")
 
-    return core_schema.ImageMask(
+    return mm_schema.ImageMask(
         name=name,
         description=description,
         image_url=image_url,
         source_image_url=source_image_url,
         data=array.flatten().tolist(),
-        y=core_schema.PixelSeries(values=array.shape[0]),
-        x=core_schema.PixelSeries(values=array.shape[1]),
+        y=mm_schema.PixelSeries(values=array.shape[0]),
+        x=mm_schema.PixelSeries(values=array.shape[1]),
     )
 
 
@@ -69,30 +69,30 @@ def numpy_to_inlined_image(
     description: str = None,
     image_url: str = None,
     source_image_url: Union[str, List[str]] = None,
-) -> core_schema.ImageInline:
+) -> mm_schema.ImageInline:
     """Converts a numpy array to an inlined image"""
     if array.ndim == 5:
-        return core_schema.Image5D(
+        return mm_schema.Image5D(
             name=name,
             description=description,
             image_url=image_url,
             source_image_url=source_image_url,
             data=array.flatten().tolist(),
-            t=core_schema.TimeSeries(values=array.shape[0]),
-            z=core_schema.PixelSeries(values=array.shape[1]),
-            y=core_schema.PixelSeries(values=array.shape[2]),
-            x=core_schema.PixelSeries(values=array.shape[3]),
-            c=core_schema.ChannelSeries(values=array.shape[4]),
+            t=mm_schema.TimeSeries(values=array.shape[0]),
+            z=mm_schema.PixelSeries(values=array.shape[1]),
+            y=mm_schema.PixelSeries(values=array.shape[2]),
+            x=mm_schema.PixelSeries(values=array.shape[3]),
+            c=mm_schema.ChannelSeries(values=array.shape[4]),
         )
     elif array.ndim == 2:
-        return core_schema.Image2D(
+        return mm_schema.Image2D(
             name=name,
             description=description,
             image_url=image_url,
             source_image_url=source_image_url,
             data=array.flatten().tolist(),
-            y=core_schema.PixelSeries(values=array.shape[0]),
-            x=core_schema.PixelSeries(values=array.shape[1]),
+            y=mm_schema.PixelSeries(values=array.shape[0]),
+            x=mm_schema.PixelSeries(values=array.shape[1]),
         )
     else:
         raise NotImplementedError(
@@ -104,9 +104,9 @@ def dict_to_inlined_table(
     dictionary: Dict[str, list],
     name: str = None,
     description: str = None,
-) -> core_schema.Table:
+) -> mm_schema.Table:
     """Converts a dictionary to an microscope-metrics inlined table"""
-    return core_schema.TableAsDict(
+    return mm_schema.TableAsDict(
         name=name,
         description=description,
         columns=[{"name": k, "values": dictionary[k]} for k in dictionary.keys()],
