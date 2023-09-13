@@ -8,19 +8,24 @@
 
 # microscope-metrics
 
-microscope-metrics is a Python library to control microscope quality based on standardized samples
+_microscope-metrics_ is a Python library to control microscope quality based on standardized samples
 
 
 ## Documentation
 
-[Documentation](https://linktodocumentation)
-
+By teh time of writing this the documentation is not existing, but you shoudl be able to find it one day following this link
+[Documentation](https://github.com/juliomateoslangerak/microscope-metrics/blob/42ff5cba4d4e46310a40f67f3501e43b55eb64d9/docs)
+We aim to provide some example code in the future
+[examples](https://github.com/juliomateoslangerak/microscope-metrics/blob/d27005964d38c461839ff705652c18358a45f784/docs/examples)
+For the time being you can find some examples in the [tests](https://github.com/juliomateoslangerak/microscope-metrics/blob/b2d101745568af294f0b40393aa9ab1fafb3d480/tests)
+directory
 
 ## Related
 
-Here are some related projects
-
-[Awesome README](https://github.com/matiassingers/awesome-readme)
+microscope-metrics is designed to be used with [microscopemetrics-omero](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-omero.git)
+to properly store the results in an OMERO server.
+microscope-metrics uses [linkML](https://linkml.github.io/linkml/) to define its data model. This model can be found in
+the microscope-metrics [schema](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-schema.git)
 
 
 ## Installation
@@ -31,24 +36,25 @@ If you just want to use microscope-metrics you may just install microscope-metri
   pip install microscopemetrics
 ```
 
-For development we use [poetry](https://python-poetry.org/)
+For development, we use [poetry](https://python-poetry.org/)
+After installing poetry, you can install microscope-metrics running the following command 
+in the root directory of the project
+
+```bash
+  poetry install
+```
 
 ## Usage/Examples
 
-```javascript
-import Component from 'my-project'
-
-function App() {
-  return <Component />
-}
+```python
+# TODO: add some examples
 ```
-
 
 ## Running Tests
 
-To run tests, use pytest
+To run tests, use pytest from the root directory of the project
 
 ```bash
-  pytest tests
+  pytest 
 ```
 
