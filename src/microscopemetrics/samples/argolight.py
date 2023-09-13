@@ -107,10 +107,10 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             # Key metrics for spots intensities
             ch_properties_kv["channel"] = ch
             ch_properties_kv["nr_of_spots"] = len(ch_df)
-            ch_properties_kv["max_intensity"] = ch_df["integrated_intensity"].max().item()
-            ch_properties_kv["max_intensity_roi"] = ch_df["integrated_intensity"].argmax().item()
-            ch_properties_kv["min_intensity"] = ch_df["integrated_intensity"].min().item()
-            ch_properties_kv["min_intensity_roi"] = ch_df["integrated_intensity"].argmin().item()
+            ch_properties_kv["intensity_max_spot"] = ch_df["integrated_intensity"].max().item()
+            ch_properties_kv["intensity_max_spot_roi"] = ch_df["integrated_intensity"].argmax().item()
+            ch_properties_kv["intensity_min_spot"] = ch_df["integrated_intensity"].min().item()
+            ch_properties_kv["intensity_min_spot_roi"] = ch_df["integrated_intensity"].argmin().item()
             ch_properties_kv["mean_intensity"] = ch_df["integrated_intensity"].mean().item()
             ch_properties_kv["median_intensity"] = ch_df["integrated_intensity"].median().item()
             ch_properties_kv["std_mean_intensity"] = ch_df["integrated_intensity"].std().item()
