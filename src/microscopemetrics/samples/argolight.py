@@ -118,7 +118,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
                 (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean()).abs().mean()
             )
             ch_properties_kv["min_max_intensity_ratio"] = (
-                ch_properties_kv["min_intensity"] / ch_properties_kv["max_intensity"]
+                ch_properties_kv["intensity_min_spot"] / ch_properties_kv["intensity_max_spot"]
             )
 
             properties_ls.append(ch_df)
