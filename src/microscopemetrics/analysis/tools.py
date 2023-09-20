@@ -177,34 +177,33 @@ def compute_distances_matrix(positions, max_distance, pixel_size=None):
     else:
         pixel_size = np.array(pixel_size)
 
-    distances_df = pd.DataFrame()
+    distances_rows = []
 
     for a, b in channel_permutations:
         distances_matrix = cdist(positions[a], positions[b], w=pixel_size)
 
-        for i, (pos_A, d) in enumerate(zip(positions[a], distances_matrix)):
-            if d.min() < max_distance:
-                distances_df = distances_df.append(
-                    {
-                        "channel_a": a,
-                        "channel_b": b,
-                        "z_coord_a": pos_A[0],
-                        "y_coord_a": pos_A[1],
-                        "x_coord_a": pos_A[2],
-                        "z_coord_b": positions[b][d.argmin()][0],
-                        "y_coord_b": positions[b][d.argmin()][1],
-                        "x_coord_b": positions[b][d.argmin()][2],
-                        "z_dist": pos_A[0] - positions[b][d.argmin()][0],
-                        "y_dist": pos_A[1] - positions[b][d.argmin()][1],
-                        "x_dist": pos_A[2] - positions[b][d.argmin()][2],
-                        "dist_3d": d.min(),
-                        "labels_a": i,
-                        "labels_b": d.argmin(),
-                    },
-                    ignore_index=True,
-                )
+        distances_rows.extend(
+            {
+                "channel_a": a,
+                "channel_b": b,
+                "z_coord_a": pos_A[0],
+                "y_coord_a": pos_A[1],
+                "x_coord_a": pos_A[2],
+                "z_coord_b": positions[b][d.argmin()][0],
+                "y_coord_b": positions[b][d.argmin()][1],
+                "x_coord_b": positions[b][d.argmin()][2],
+                "z_dist": pos_A[0] - positions[b][d.argmin()][0],
+                "y_dist": pos_A[1] - positions[b][d.argmin()][1],
+                "x_dist": pos_A[2] - positions[b][d.argmin()][2],
+                "dist_3d": d.min(),
+                "labels_a": i,
+                "labels_b": d.argmin(),
+            }
+            for i, (pos_A, d) in enumerate(zip(positions[a], distances_matrix))
+            if d.min() < max_distance
+        )
 
-    return distances_df
+    return pd.DataFrame(distances_rows)
 
 
 def _radial_mean(image, bins=None):
