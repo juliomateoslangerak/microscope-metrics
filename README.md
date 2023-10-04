@@ -13,20 +13,20 @@ _microscope-metrics_ is a Python library to control microscope quality based on 
 
 ## Documentation
 
-By teh time of writing this the documentation is not existing, but you shoudl be able to find it one day following this link
-[Documentation](https://github.com/juliomateoslangerak/microscope-metrics/blob/42ff5cba4d4e46310a40f67f3501e43b55eb64d9/docs)
+You may find documentation the [Documentation](https://github.com/juliomateoslangerak/microscope-metrics/blob/42ff5cba4d4e46310a40f67f3501e43b55eb64d9/docs) pages.
+
 We aim to provide some example code in the future
 [examples](https://github.com/juliomateoslangerak/microscope-metrics/blob/d27005964d38c461839ff705652c18358a45f784/docs/examples)
-For the time being you can find some examples in the [tests](https://github.com/juliomateoslangerak/microscope-metrics/blob/b2d101745568af294f0b40393aa9ab1fafb3d480/tests)
-directory
+For the time being please refer to the [tests](https://github.com/juliomateoslangerak/microscope-metrics/blob/b2d101745568af294f0b40393aa9ab1fafb3d480/tests)
+directory to find some example code
 
-## Related
+## Related to
 
 microscope-metrics is designed to be used with [microscopemetrics-omero](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-omero.git)
-to properly store the results in an OMERO server.
-microscope-metrics uses [linkML](https://linkml.github.io/linkml/) to define its data model. This model can be found in
-the microscope-metrics [schema](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-schema.git)
-
+to store the results in an OMERO server.
+The measurements made by micrsocope-metrics are backed up by a model that can be found in the 
+[microscopemetrics-schema](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-schema.git) repository. The model is also accessible through the 
+[schema website](https://montpellierressourcesimagerie.github.io/microscopemetrics-schema/)
 
 ## Installation
 
