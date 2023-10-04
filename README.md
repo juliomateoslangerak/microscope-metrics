@@ -37,7 +37,7 @@ If you just want to use microscope-metrics you may just install microscope-metri
 ```
 
 For development, we use [poetry](https://python-poetry.org/)
-After installing poetry, you can install microscope-metrics running the following command 
+After [installing poetry](https://python-poetry.org/docs/#installation), you can install microscope-metrics running the following command 
 in the root directory of the project
 
 ```bash
