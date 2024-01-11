@@ -17,6 +17,11 @@ keywords = ["microscopy", "metrology"]
 testpaths = [
     "tests"
 ]
+filterwarnings = [
+    "ignore:.*Support for class-based `config` is deprecated.*:DeprecationWarning",
+    "ignore:.*Pydantic V1 style `@validator` validators are deprecated.*:DeprecationWarning",
+    "ignore:.*urllib3 v2 only supports OpenSSL.*:Warning",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8 <=3.11"
