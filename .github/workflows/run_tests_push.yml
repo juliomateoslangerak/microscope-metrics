@@ -27,7 +27,7 @@ jobs:
         run: |
           source .venv/bin/activate
           poetry run pytest
-          coverage report
+#          coverage report
 
 #      - name: Test with pytest and generate coverage report/badge
 #        run: |
