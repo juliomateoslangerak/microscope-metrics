@@ -20,10 +20,6 @@ testpaths = [
 
 [tool.poetry.dependencies]
 python = ">=3.8 <=3.11"
-scikit-image = "^0.19"
-scipy = "^1.5"
-pandas = "^1.1"
-matplotlib = "^3.7"
 scikit-image = "^0.21"
 scipy = "^1.10"
 pandas = "^1"
