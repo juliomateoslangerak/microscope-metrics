@@ -207,9 +207,7 @@ class Device:
             my_keys = set(self._settings.keys())
             their_keys = set(incoming.keys())
             update_keys = set(
-                key
-                for key in my_keys & their_keys
-                if self.get_setting(key) != incoming[key]
+                key for key in my_keys & their_keys if self.get_setting(key) != incoming[key]
             )
         results = {}
         # Update values.
@@ -246,9 +244,7 @@ class Microscope(Device):
                 "More than one reference to an objective lens was found in the image name. Only the first one will be considered."
             )
         elif len(obj_nrs) == 0:
-            module_logger.info(
-                "No references to any objective lens were found in the image name"
-            )
+            module_logger.info("No references to any objective lens were found in the image name")
             return None
         return obj_nrs[0]
 
@@ -290,9 +286,7 @@ class Microscope(Device):
         # Sort channels according to their position in the name
         ch_nrs = tuple(ch for _, ch in sorted(zip(token_positions, ch_nrs)))
         if len(ch_nrs) == 0:
-            module_logger.info(
-                "No references to any channel were found in the image name"
-            )
+            module_logger.info("No references to any channel were found in the image name")
             return None
         return ch_nrs
 
@@ -405,9 +399,7 @@ class WideFieldMicroscope(Microscope):
         return settings
 
     def _get_conf_objective_lens_refr_index(self, image):
-        return self._get_conf_objective_setting(
-            "objective_lens_refractive_index", image
-        )
+        return self._get_conf_objective_setting("objective_lens_refractive_index", image)
 
     def _get_name_objective_lens_refr_index(self, image):
         return self._get_metadata_from_name("_RI=", "_", float, image)
@@ -419,9 +411,7 @@ class WideFieldMicroscope(Microscope):
         return self._get_metadata_from_name("_NA=", "_", float, image)
 
     def _get_conf_objective_lens_nominal_magnification(self, image):
-        return self._get_conf_objective_setting(
-            "objective_lens_nominal_magnification", image
-        )
+        return self._get_conf_objective_setting("objective_lens_nominal_magnification", image)
 
     def _get_name_objective_lens_nominal_magnification(self, image):
         return self._get_metadata_from_name("_MAG=", "_", float, image)
@@ -500,9 +490,7 @@ class WideFieldMicroscope(Microscope):
         na = self.get_setting("objective_lens_na", **kwargs)
         for em in self.get_setting("emission_wavelengths", **kwargs):
             try:
-                theoretical_res["resolution_theoretical_fwhm_lateral"].append(
-                    0.353 * em / na
-                )
+                theoretical_res["resolution_theoretical_fwhm_lateral"].append(0.353 * em / na)
             except TypeError as e:
                 module_logger.warning(
                     "FWHM theoretical resolution could not be calculated. Verify configuration files."
@@ -538,9 +526,7 @@ class WideFieldMicroscope(Microscope):
         ri = self.get_setting("objective_lens_refractive_index", **kwargs)
         for em in self.get_setting("emission_wavelengths", **kwargs):
             try:
-                theoretical_res["resolution_theoretical_rayleigh_lateral"].append(
-                    0.61 * em / na
-                )
+                theoretical_res["resolution_theoretical_rayleigh_lateral"].append(0.61 * em / na)
             except TypeError as e:
                 module_logger.warning(
                     "Rayleigh theoretical lateral resolution could not be calculated. Verify configuration files."
@@ -585,9 +571,7 @@ class WideFieldMicroscope(Microscope):
                 )
                 nyquist_delta["nyquist_lateral"].append(None)
             try:
-                nyquist_delta["nyquist_axial"].append(
-                    em / (2 * ri * (1 - cos(asin(na / ri))))
-                )
+                nyquist_delta["nyquist_axial"].append(em / (2 * ri * (1 - cos(asin(na / ri)))))
             except TypeError as e:
                 module_logger.warning(
                     "Axial Nyquist criterion could not be calculated. Verify configuration files."

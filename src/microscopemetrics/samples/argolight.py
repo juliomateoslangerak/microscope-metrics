@@ -2,6 +2,7 @@ from datetime import datetime
 from itertools import product
 from typing import Any, Dict, List, Tuple, Union
 
+import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from numpy import float64, int64, ndarray
@@ -11,7 +12,6 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
 
-import microscopemetrics_schema.datamodel as mm_schema
 from microscopemetrics.analysis.tools import (
     compute_distances_matrix,
     compute_spots_properties,
@@ -108,9 +108,13 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             ch_properties_kv["channel"] = ch
             ch_properties_kv["nr_of_spots"] = len(ch_df)
             ch_properties_kv["intensity_max_spot"] = ch_df["integrated_intensity"].max().item()
-            ch_properties_kv["intensity_max_spot_roi"] = ch_df["integrated_intensity"].argmax().item()
+            ch_properties_kv["intensity_max_spot_roi"] = (
+                ch_df["integrated_intensity"].argmax().item()
+            )
             ch_properties_kv["intensity_min_spot"] = ch_df["integrated_intensity"].min().item()
-            ch_properties_kv["intensity_min_spot_roi"] = ch_df["integrated_intensity"].argmin().item()
+            ch_properties_kv["intensity_min_spot_roi"] = (
+                ch_df["integrated_intensity"].argmin().item()
+            )
             ch_properties_kv["mean_intensity"] = ch_df["integrated_intensity"].mean().item()
             ch_properties_kv["median_intensity"] = ch_df["integrated_intensity"].median().item()
             ch_properties_kv["std_mean_intensity"] = ch_df["integrated_intensity"].std().item()

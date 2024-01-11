@@ -29,9 +29,7 @@ class DatasetAnalysis(Analysis):
             "laser_power_measurement": self.analyze_laser_power_measurement,
         }
         self.configurator = DatasetConfigurator(config)
-        super().__init__(
-            config=config, dataset_analysis_to_func=dataset_analysis_to_func
-        )
+        super().__init__(config=config, dataset_analysis_to_func=dataset_analysis_to_func)
 
     @staticmethod
     def analyze_laser_power_measurement(dataset, config):

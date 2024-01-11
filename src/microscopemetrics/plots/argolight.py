@@ -33,9 +33,7 @@ class ArgolightReporter(Reporter):
         x_dim = image.getSizeX()
         y_dim = image.getSizeY()
 
-        tables = self.get_tables(
-            image, namespace_start="metrics", name_filter="properties"
-        )
+        tables = self.get_tables(image, namespace_start="metrics", name_filter="properties")
         if len(tables) != 1:
             raise Exception(
                 "There are none or more than one properties tables. Verify data integrity."
@@ -69,12 +67,7 @@ class ArgolightReporter(Reporter):
                 ),
             )
             max_intensity = np.array(
-                [
-                    val
-                    for col in data.columns
-                    for val in col.values
-                    if col.name == "max_intensity"
-                ]
+                [val for col in data.columns for val in col.values if col.name == "max_intensity"]
             )
             integrated_intensity = np.array(
                 [
@@ -165,9 +158,7 @@ class ArgolightReporter(Reporter):
         col_names = [c.name for c in table.getHeaders()]
 
         # We need the positions too
-        pos_tables = get_tables(
-            image, namespace_start="metrics", name_filter="properties"
-        )
+        pos_tables = get_tables(image, namespace_start="metrics", name_filter="properties")
         if len(tables) != 1:
             raise Exception(
                 "There are none or more than one positions tables. Verify data integrity."
@@ -205,12 +196,7 @@ class ArgolightReporter(Reporter):
             )
 
             mask_labels = np.array(
-                [
-                    val
-                    for col in pos_data.columns
-                    for val in col.values
-                    if col.name == "mask_labels"
-                ]
+                [val for col in pos_data.columns for val in col.values if col.name == "mask_labels"]
             )
             x_positions = np.array(
                 [
@@ -251,36 +237,16 @@ class ArgolightReporter(Reporter):
                 )
                 labels_map += 1  # Mask labels are augmented by one as 0 is background
                 distances_map_3d = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_3d"
-                    ]
+                    [val for col in data.columns for val in col.values if col.name == "distance_3d"]
                 )
                 distances_map_x = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_x"
-                    ]
+                    [val for col in data.columns for val in col.values if col.name == "distance_x"]
                 )
                 distances_map_y = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_y"
-                    ]
+                    [val for col in data.columns for val in col.values if col.name == "distance_y"]
                 )
                 distances_map_z = np.array(
-                    [
-                        val
-                        for col in data.columns
-                        for val in col.values
-                        if col.name == "distance_z"
-                    ]
+                    [val for col in data.columns for val in col.values if col.name == "distance_z"]
                 )
 
                 filtered_positions = positions_map[

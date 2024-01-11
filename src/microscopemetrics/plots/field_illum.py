@@ -99,6 +99,7 @@ def get_norm_intensity_profile(img, save_path=""):
 
     return fig
 
+
 def get_intensity_plot(img, save_path=""):
     """
     get the distribution of pixel intensities of the mid

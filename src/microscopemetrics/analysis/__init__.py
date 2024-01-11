@@ -46,9 +46,7 @@ def get_image_data(image, device):
     if raw_img.shape[2] == 1:
         raw_img = np.squeeze(raw_img, 2)  # TODO: Fix this time dimension.
     else:
-        raise Exception(
-            "Image has a time dimension. Time is not yet implemented for this analysis"
-        )
+        raise Exception("Image has a time dimension. Time is not yet implemented for this analysis")
     pixel_size = interface.get_pixel_size(image)
     pixel_size_units = interface.get_pixel_size_units(image)
 
@@ -69,7 +67,6 @@ def get_image_data(image, device):
 def save_data_table(
     conn, table_name, col_names, col_descriptions, col_data, interface_obj, namespace
 ):
-
     table_ann = interface.create_annotation_table(
         connection=conn,
         table_name=table_name,
@@ -118,7 +115,6 @@ def create_image(
     source_image_id=None,
     metrics_generated_tag_id=None,
 ):
-
     zct_list = list(
         product(
             range(image_intensities.shape[0]),
@@ -175,9 +171,7 @@ def analyze_dataset(connection, script_params, dataset, analysis_config, device_
         "sources": list(),
     }
 
-    for section, analyses, handler in zip(
-        SAMPLE_SECTIONS, SAMPLE_ANALYSES, SAMPLE_HANDLERS
-    ):
+    for section, analyses, handler in zip(SAMPLE_SECTIONS, SAMPLE_ANALYSES, SAMPLE_HANDLERS):
         if analysis_config.has_section(section):
             module_logger.info(f"Running analysis on {section.capitalize()} sample(s)")
             section_conf = analysis_config[section]

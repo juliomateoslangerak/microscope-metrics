@@ -2,11 +2,10 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Union, Dict
-
-import numpy as np
+from typing import Dict, List, Union
 
 import microscopemetrics_schema.datamodel as mm_schema
+import numpy as np
 
 # We are defining some global dictionaries to register the different analysis types
 IMAGE_ANALYSIS_REGISTRY = {}

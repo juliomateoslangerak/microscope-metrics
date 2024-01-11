@@ -1,11 +1,11 @@
 from typing import List
 
+import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-import microscopemetrics_schema.datamodel as mm_schema
 from microscopemetrics.samples import numpy_to_inlined_image, numpy_to_inlined_mask
 
 

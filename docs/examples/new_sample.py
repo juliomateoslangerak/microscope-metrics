@@ -32,7 +32,8 @@ class DetectLinesAnalysis(
     AnalysisMixin
 ):  # Subclass Analysis for each analysis you want to implement for a given sample
     """Write a good documentation:
-    This analysis detects lines in a 2D image through a progressive probabilistic hough transform."""
+    This analysis detects lines in a 2D image through a progressive probabilistic hough transform.
+    """
 
     # Define the __init__
     def __init__(self):

@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import Dict, Tuple
 
+import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import scipy
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
-import microscopemetrics_schema.datamodel as mm_schema
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_inlined_image
 from microscopemetrics.utilities.utilities import is_saturated
 

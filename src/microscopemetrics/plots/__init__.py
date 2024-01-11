@@ -71,9 +71,7 @@ def plot_distances_maps(distances, x_dim, y_dim):
         distances_map = np.asarray(p["dist_3d"])
 
         grid_x, grid_y = np.mgrid[0:x_dim:1, 0:y_dim:1]
-        interpolated = griddata(
-            positions_map, distances_map, (grid_x, grid_y), method="cubic"
-        )
+        interpolated = griddata(positions_map, distances_map, (grid_x, grid_y), method="cubic")
 
         ax = axes.ravel()
         ax[(p["channels"][0] * 4) + p["channels"][1]].imshow(
@@ -89,19 +87,14 @@ def plot_distances_maps(distances, x_dim, y_dim):
 
 
 def plot_homogeneity_map(raw_stack, spots_properties, spots_positions, labels_stack):
-
     nb_of_channels = raw_stack.shape[1]
     x_dim = raw_stack.shape[-2]
     y_dim = raw_stack.shape[-1]
 
-    fig, axes = plt.subplots(
-        ncols=nb_of_channels, nrows=3, squeeze=False, figsize=(12, 6)
-    )
+    fig, axes = plt.subplots(ncols=nb_of_channels, nrows=3, squeeze=False, figsize=(12, 6))
 
     for c in range(nb_of_channels):
-        weighted_centroid = np.array(
-            [x["weighted_centroid"][0] for x in spots_properties[c]]
-        )
+        weighted_centroid = np.array([x["weighted_centroid"][0] for x in spots_properties[c]])
         areas = np.array([x["area"] for x in spots_properties[c]])
         max_intensity = np.array([x["max_intensity"] for x in spots_properties[c]])
         grid_x, grid_y = np.mgrid[0:x_dim, 0:y_dim]
@@ -143,12 +136,9 @@ def plot_homogeneity_map(raw_stack, spots_properties, spots_positions, labels_st
 
 
 def plot_peaks(profiles, peaks, properties, resolutions, res_indexes):
-    fig, axes = plt.subplots(
-        ncols=1, nrows=len(profiles), squeeze=False, figsize=(48, 24)
-    )
+    fig, axes = plt.subplots(ncols=1, nrows=len(profiles), squeeze=False, figsize=(48, 24))
 
     for c, profile in enumerate(profiles):
-
         ax = axes.ravel()
 
         ax[c].plot(profile)

@@ -1,7 +1,9 @@
-from tests.constants import TEST_DATA_DIR
-from urllib.parse import urlparse
-import requests
 from os import path
+from urllib.parse import urlparse
+
+import requests
+
+from tests.constants import TEST_DATA_DIR
 
 
 def get_file(file_url):

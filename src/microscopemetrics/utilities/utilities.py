@@ -57,7 +57,6 @@ def multi_airy_fun(x: ndarray, *params) -> ndarray:
 
 
 def wavelength_to_rgb(wavelength, gamma=0.8):
-
     """
     Copied from https://www.noah.org/wiki/Wavelength_to_RGB_in_Python
     This converts a given wavelength of light to an

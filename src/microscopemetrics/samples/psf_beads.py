@@ -125,7 +125,6 @@ class PSFBeadsAnalysis(AnalysisMixin):
 
     @staticmethod
     def _find_beads(image, min_distance, sigma=None):
-
         image = np.squeeze(image)
         image_mip = np.max(image, axis=0)
 
