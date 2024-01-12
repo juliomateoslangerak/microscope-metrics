@@ -41,7 +41,7 @@ black = "^23"
 poetry = "^1"
 jupyter = "^1"
 isort = "^5"
-pre-commit = "3.5"
+pre-commit = "^3"
 
 [build-system]
 requires = ["poetry-core>=1.7.0"]
