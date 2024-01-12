@@ -24,7 +24,7 @@ filterwarnings = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8 <=3.11"
+python = ">=3.8.10 <=3.11"
 scikit-image = "^0.21"
 scipy = "^1.10"
 pandas = "^1"
