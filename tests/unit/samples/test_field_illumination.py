@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from microscopemetrics.samples import field_illumination
+from microscopemetrics.samples import field_illumination, numpy_to_image_byref
 from tests.test_utilities import get_file
 
 
@@ -14,11 +14,13 @@ def field_illumination_analysis():
         name="an analysis",
         description="a description",
         input={
-            "field_illumination_image": {
-                "data": data,
-                "name": "image_name",
-                "image_url": image_url,
-            }
+            "field_illumination_image": numpy_to_image_byref(
+                array=data,
+                name="image_name",
+                description="image_description",
+                image_url=image_url,
+                source_image_url=image_url,
+            ),
         },
         output={},
     )

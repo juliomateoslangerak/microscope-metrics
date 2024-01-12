@@ -6,7 +6,11 @@ import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-from microscopemetrics.samples import numpy_to_inlined_image, numpy_to_inlined_mask
+from microscopemetrics.samples import (
+    numpy_to_image_byref,
+    numpy_to_image_inlined,
+    numpy_to_mask_inlined,
+)
 
 
 @pytest.fixture
@@ -71,29 +75,29 @@ def numpy_5d_ndarray_fixture():
 
 @pytest.fixture
 def image_as_numpy_2d_fixture(numpy_2d_ndarray_fixture):
-    return mm_schema.ImageAsNumpy(
+    return numpy_to_image_byref(
+        array=numpy_2d_ndarray_fixture,
         name="ImageAsNumpy001",
         description="A test image as numpy",
         image_url="https://example.com/image001",
         source_image_url="https://example.com/source_image002",
-        data=numpy_2d_ndarray_fixture,
     )
 
 
 @pytest.fixture
 def image_as_numpy_5d_fixture(numpy_5d_ndarray_fixture):
-    return mm_schema.ImageAsNumpy(
+    return numpy_to_image_byref(
+        array=numpy_5d_ndarray_fixture,
         name="ImageAsNumpy001",
         description="A test image as numpy",
         image_url="https://example.com/image001",
         source_image_url="https://example.com/source_image002",
-        data=numpy_5d_ndarray_fixture,
     )
 
 
 @pytest.fixture
 def image_mask_fixture(numpy_2d_mask_ndarray_fixture):
-    return numpy_to_inlined_mask(
+    return numpy_to_mask_inlined(
         array=numpy_2d_mask_ndarray_fixture,
         name="ImageMask001",
         description="A test image mask",
@@ -104,7 +108,7 @@ def image_mask_fixture(numpy_2d_mask_ndarray_fixture):
 
 @pytest.fixture
 def image_2d_fixture(numpy_2d_ndarray_fixture):
-    return numpy_to_inlined_image(
+    return numpy_to_image_inlined(
         array=numpy_2d_ndarray_fixture,
         name="Image2D001",
         description="A test image 2D",
@@ -115,7 +119,7 @@ def image_2d_fixture(numpy_2d_ndarray_fixture):
 
 @pytest.fixture
 def image_5d_fixture(numpy_5d_ndarray_fixture):
-    return numpy_to_inlined_image(
+    return numpy_to_image_inlined(
         array=numpy_5d_ndarray_fixture,
         name="Image5D001",
         description="A test image 5D",
@@ -288,7 +292,7 @@ def test_metrics_dataset_attribute_types(metrics_dataset_fixture):
 
 def test_metrics_dataset_attribute_values(metrics_dataset_fixture):
     with pytest.raises(ValueError):
-        # Processed is restricted to a number of permissible values
+        # Processed must be a bool
         metrics_dataset = mm_schema.MetricsDataset(
             name="metrics_dataset",
             description="A test metrics dataset",
@@ -308,20 +312,20 @@ def test_metrics_dataset_validity(metrics_dataset_fixture):
     assert metrics_dataset_fixture == loaded_metrics_dataset
 
 
-def test_image_as_numpy_creation(image_as_numpy_2d_fixture, image_as_numpy_5d_fixture):
-    image_as_numpy_2d = mm_schema.ImageAsNumpy(
+def test_image_byref_from_numpy_creation(image_as_numpy_2d_fixture, image_as_numpy_5d_fixture):
+    image_as_numpy_2d = numpy_to_image_byref(
+        array=image_as_numpy_2d_fixture.data,
         name=image_as_numpy_2d_fixture.name,
         description=image_as_numpy_2d_fixture.description,
         image_url=image_as_numpy_2d_fixture.image_url,
         source_image_url=image_as_numpy_2d_fixture.source_image_url,
-        data=image_as_numpy_2d_fixture.data,
     )
-    image_as_numpy_5d = mm_schema.ImageAsNumpy(
+    image_as_numpy_5d = numpy_to_image_byref(
+        array=image_as_numpy_5d_fixture.data,
         name=image_as_numpy_5d_fixture.name,
         description=image_as_numpy_5d_fixture.description,
         image_url=image_as_numpy_5d_fixture.image_url,
         source_image_url=image_as_numpy_5d_fixture.source_image_url,
-        data=image_as_numpy_5d_fixture.data,
     )
 
     assert image_as_numpy_2d == image_as_numpy_2d_fixture
@@ -389,8 +393,8 @@ def test_image_mask_creation(image_mask_fixture):
         image_url=image_mask_fixture.image_url,
         source_image_url=image_mask_fixture.source_image_url,
         data=image_mask_fixture.data,
-        y=image_mask_fixture.y,
-        x=image_mask_fixture.x,
+        shape_y=image_mask_fixture.shape_y,
+        shape_x=image_mask_fixture.shape_x,
     )
 
     assert image_mask == image_mask_fixture
@@ -403,8 +407,8 @@ def test_image_mask_attributes_required(image_mask_fixture):
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
             source_image_url=image_mask_fixture.source_image_url,
-            y=image_mask_fixture.y,
-            x=image_mask_fixture.x,
+            shape_y=image_mask_fixture.shape_y,
+            shape_x=image_mask_fixture.shape_x,
         )
     with pytest.raises(ValueError):
         image_mask = mm_schema.ImageMask(
@@ -413,7 +417,7 @@ def test_image_mask_attributes_required(image_mask_fixture):
             image_url=image_mask_fixture.image_url,
             source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
-            x=image_mask_fixture.x,
+            shape_x=image_mask_fixture.shape_x,
         )
     with pytest.raises(ValueError):
         image_mask = mm_schema.ImageMask(
@@ -422,7 +426,7 @@ def test_image_mask_attributes_required(image_mask_fixture):
             image_url=image_mask_fixture.image_url,
             source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
-            y=image_mask_fixture.y,
+            shape_y=image_mask_fixture.shape_y,
         )
 
 
@@ -432,42 +436,43 @@ def test_image_mask_attribute_types(image_mask_fixture):
     assert isinstance(image_mask_fixture.image_url, str)
     assert isinstance(image_mask_fixture.source_image_url, list)
     assert isinstance(image_mask_fixture.data, list)
-    assert isinstance(image_mask_fixture.y, mm_schema.PixelSeries)
-    assert isinstance(image_mask_fixture.x, mm_schema.PixelSeries)
+    assert isinstance(image_mask_fixture.shape_y, int)
+    assert isinstance(image_mask_fixture.shape_x, int)
 
 
 def test_image_mask_attribute_values(image_mask_fixture):
     with pytest.raises(ValueError):
+        # data is a list of bools
         image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
             source_image_url=image_mask_fixture.source_image_url,
             data="Unknown",
-            y=image_mask_fixture.y,
-            x=image_mask_fixture.x,
+            shape_y=image_mask_fixture.shape_y,
+            shape_x=image_mask_fixture.shape_x,
         )
     with pytest.raises(TypeError):
-        # Y must be a PixelSeries
+        # shape_y must be a int
         image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
             source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
-            y=[2, 3],
-            x=image_mask_fixture.x,
+            shape_y=[2, 3],
+            shape_x=image_mask_fixture.shape_x,
         )
     with pytest.raises(TypeError):
-        # X must be a PixelSeries
+        # shape_x must be a int
         image_mask = mm_schema.ImageMask(
             name=image_mask_fixture.name,
             description=image_mask_fixture.description,
             image_url=image_mask_fixture.image_url,
             source_image_url=image_mask_fixture.source_image_url,
             data=image_mask_fixture.data,
-            y=image_mask_fixture.y,
-            x="wrong type",
+            shape_y=image_mask_fixture.shape_y,
+            shape_x=[2, 3],
         )
 
 
@@ -487,8 +492,8 @@ def test_image_2d_creation(image_2d_fixture):
         image_url=image_2d_fixture.image_url,
         source_image_url=image_2d_fixture.source_image_url,
         data=image_2d_fixture.data,
-        y=image_2d_fixture.y,
-        x=image_2d_fixture.x,
+        shape_y=image_2d_fixture.shape_y,
+        shape_x=image_2d_fixture.shape_x,
     )
 
     assert image_2d == image_2d_fixture
@@ -502,10 +507,10 @@ def test_image_2d_attributes_required(image_2d_fixture):
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
             source_image_url=image_2d_fixture.source_image_url,
-            y=image_2d_fixture.y,
-            x=image_2d_fixture.x,
+            shape_y=image_2d_fixture.shape_y,
+            shape_x=image_2d_fixture.shape_x,
         )
-    # no y
+    # no shape_y
     with pytest.raises(ValueError):
         image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
@@ -513,9 +518,9 @@ def test_image_2d_attributes_required(image_2d_fixture):
             image_url=image_2d_fixture.image_url,
             source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
-            x=image_2d_fixture.x,
+            shape_x=image_2d_fixture.shape_x,
         )
-    # no x
+    # no shape_x
     with pytest.raises(ValueError):
         image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
@@ -523,7 +528,7 @@ def test_image_2d_attributes_required(image_2d_fixture):
             image_url=image_2d_fixture.image_url,
             source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
-            y=image_2d_fixture.y,
+            shape_y=image_2d_fixture.shape_y,
         )
 
 
@@ -533,42 +538,43 @@ def test_image_2d_attribute_types(image_2d_fixture):
     assert isinstance(image_2d_fixture.image_url, str)
     assert isinstance(image_2d_fixture.source_image_url, list)
     assert isinstance(image_2d_fixture.data, list)
-    assert isinstance(image_2d_fixture.y, mm_schema.PixelSeries)
-    assert isinstance(image_2d_fixture.x, mm_schema.PixelSeries)
+    assert isinstance(image_2d_fixture.shape_y, int)
+    assert isinstance(image_2d_fixture.shape_x, int)
 
 
 def test_image_2d_attribute_values(image_2d_fixture):
     with pytest.raises(ValueError):
+        # data is a list of floats
         image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
             source_image_url=image_2d_fixture.source_image_url,
             data="Unknown",
-            y=image_2d_fixture.y,
-            x=image_2d_fixture.x,
+            shape_y=image_2d_fixture.shape_y,
+            shape_x=image_2d_fixture.shape_x,
         )
     with pytest.raises(TypeError):
-        # Y must be a PixelSeries
+        # shape_y must be an int
         image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
             source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
-            y=[2, 3],
-            x=image_2d_fixture.x,
+            shape_y=[2, 3],
+            shape_x=image_2d_fixture.shape_x,
         )
     with pytest.raises(TypeError):
-        # X must be a PixelSeries
+        # shape_x must be an int
         image_2d = mm_schema.Image2D(
             name=image_2d_fixture.name,
             description=image_2d_fixture.description,
             image_url=image_2d_fixture.image_url,
             source_image_url=image_2d_fixture.source_image_url,
             data=image_2d_fixture.data,
-            y=image_2d_fixture.y,
-            x="wrong type",
+            shape_y=image_2d_fixture.shape_y,
+            shape_x=[2, 3],
         )
 
 
@@ -588,11 +594,11 @@ def test_image_5d_creation(image_5d_fixture):
         image_url=image_5d_fixture.image_url,
         source_image_url=image_5d_fixture.source_image_url,
         data=image_5d_fixture.data,
-        t=image_5d_fixture.t,
-        z=image_5d_fixture.z,
-        y=image_5d_fixture.y,
-        x=image_5d_fixture.x,
-        c=image_5d_fixture.c,
+        shape_t=image_5d_fixture.shape_t,
+        shape_z=image_5d_fixture.shape_z,
+        shape_y=image_5d_fixture.shape_y,
+        shape_x=image_5d_fixture.shape_x,
+        shape_c=image_5d_fixture.shape_c,
     )
 
     assert image_5d == image_5d_fixture
@@ -606,13 +612,13 @@ def test_image_5d_attributes_required(image_5d_fixture):
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=image_5d_fixture.shape_y,
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=image_5d_fixture.shape_c,
         )
-    # no t
+    # no shape_y
     with pytest.raises(ValueError):
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
@@ -620,12 +626,12 @@ def test_image_5d_attributes_required(image_5d_fixture):
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=image_5d_fixture.shape_c,
         )
-    # no z
+    # no shape_x
     with pytest.raises(ValueError):
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
@@ -633,49 +639,10 @@ def test_image_5d_attributes_required(image_5d_fixture):
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
-        )
-    # no y
-    with pytest.raises(ValueError):
-        image_5d = mm_schema.Image5D(
-            name=image_5d_fixture.name,
-            description=image_5d_fixture.description,
-            image_url=image_5d_fixture.image_url,
-            source_image_url=image_5d_fixture.source_image_url,
-            data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
-        )
-    # no x
-    with pytest.raises(ValueError):
-        image_5d = mm_schema.Image5D(
-            name=image_5d_fixture.name,
-            description=image_5d_fixture.description,
-            image_url=image_5d_fixture.image_url,
-            source_image_url=image_5d_fixture.source_image_url,
-            data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            c=image_5d_fixture.c,
-        )
-    # no c
-    with pytest.raises(ValueError):
-        image_5d = mm_schema.Image5D(
-            name=image_5d_fixture.name,
-            description=image_5d_fixture.description,
-            image_url=image_5d_fixture.image_url,
-            source_image_url=image_5d_fixture.source_image_url,
-            data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=image_5d_fixture.shape_y,
+            shape_c=image_5d_fixture.shape_c,
         )
 
 
@@ -685,96 +652,97 @@ def test_image_5d_attribute_types(image_5d_fixture):
     assert isinstance(image_5d_fixture.image_url, str)
     assert isinstance(image_5d_fixture.source_image_url, list)
     assert isinstance(image_5d_fixture.data, list)
-    assert isinstance(image_5d_fixture.t, mm_schema.TimeSeries)
-    assert isinstance(image_5d_fixture.z, mm_schema.PixelSeries)
-    assert isinstance(image_5d_fixture.y, mm_schema.PixelSeries)
-    assert isinstance(image_5d_fixture.x, mm_schema.PixelSeries)
-    assert isinstance(image_5d_fixture.c, mm_schema.ChannelSeries)
+    assert isinstance(image_5d_fixture.shape_t, int)
+    assert isinstance(image_5d_fixture.shape_z, int)
+    assert isinstance(image_5d_fixture.shape_y, int)
+    assert isinstance(image_5d_fixture.shape_x, int)
+    assert isinstance(image_5d_fixture.shape_c, int)
 
 
 def test_image_5d_attribute_values(image_5d_fixture):
     with pytest.raises(ValueError):
+        # data is a list of floats
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
-            data="Unknown",
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
+            array="Unknown",
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=image_5d_fixture.shape_y,
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=image_5d_fixture.shape_c,
         )
     with pytest.raises(TypeError):
-        # T must be a TimeSeries
+        # shape_t must be an int
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            t=[2, 3],
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
+            shape_t=[2, 3],
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=image_5d_fixture.shape_y,
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=image_5d_fixture.shape_c,
         )
     with pytest.raises(TypeError):
-        # Z must be a PixelSeries
+        # shape_z must be an int
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=[2, 3],
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=[2, 3],
+            shape_y=image_5d_fixture.shape_y,
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=image_5d_fixture.shape_c,
         )
     with pytest.raises(TypeError):
-        # Y must be a PixelSeries
+        # shape_y must be an int
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=[2, 3],
-            x=image_5d_fixture.x,
-            c=image_5d_fixture.c,
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=[2, 3],
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=image_5d_fixture.shape_c,
         )
     with pytest.raises(TypeError):
-        # X must be a PixelSeries
+        # shape_x must be a PixelSeries
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x="wrong type",
-            c=image_5d_fixture.c,
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=image_5d_fixture.shape_y,
+            shape_x=[2, 3],
+            shape_c=image_5d_fixture.shape_c,
         )
     with pytest.raises(TypeError):
-        # C must be a ChannelSeries
+        # shape_c must be a ChannelSeries
         image_5d = mm_schema.Image5D(
             name=image_5d_fixture.name,
             description=image_5d_fixture.description,
             image_url=image_5d_fixture.image_url,
             source_image_url=image_5d_fixture.source_image_url,
             data=image_5d_fixture.data,
-            t=image_5d_fixture.t,
-            z=image_5d_fixture.z,
-            y=image_5d_fixture.y,
-            x=image_5d_fixture.x,
-            c=[2, 3],
+            shape_t=image_5d_fixture.shape_t,
+            shape_z=image_5d_fixture.shape_z,
+            shape_y=image_5d_fixture.shape_y,
+            shape_x=image_5d_fixture.shape_x,
+            shape_c=[2, 3],
         )
 
 

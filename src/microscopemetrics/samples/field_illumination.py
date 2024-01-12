@@ -7,7 +7,7 @@ import scipy
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_inlined_image
+from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
 from microscopemetrics.utilities.utilities import is_saturated
 
 
@@ -346,7 +346,7 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
             )
         )
 
-        self.output.intensity_map = numpy_to_inlined_image(
+        self.output.intensity_map = numpy_to_image_inlined(
             array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
             name=f"{self.input.field_illumination_image.name}_intensity_map",
             description=f"Intensity map of {self.input.field_illumination_image.name}",
