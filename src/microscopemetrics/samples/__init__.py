@@ -136,7 +136,7 @@ def numpy_to_image_inlined(
         )
 
 
-def dict_to_inlined_table(
+def dict_to_table_inlined(
     dictionary: Dict[str, list],
     name: str = None,
     description: str = None,
