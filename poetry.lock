@@ -764,13 +764,13 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "curies"
-version = "0.7.5"
+version = "0.7.6"
 description = "Idiomatic conversion between URIs and compact URIs (CURIEs)."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "curies-0.7.5-py3-none-any.whl", hash = "sha256:56b6a980b0b6a1e4ebe59c42c528ab3ce365d521d8382f37601a4c030c66c28d"},
-    {file = "curies-0.7.5.tar.gz", hash = "sha256:7fdc5fcf357b6a4b13dff46ba4544aeea4f1421c584e026a0985d3915ad5206a"},
+    {file = "curies-0.7.6-py3-none-any.whl", hash = "sha256:3307e757e47ed4384edb705c73cad40ad5e688e2dea263a60e6a5e5a6c33105d"},
+    {file = "curies-0.7.6.tar.gz", hash = "sha256:f86da3539cee349249f5b64db99651053649551920b9fe945c150719c8b9b40e"},
 ]
 
 [package.dependencies]
@@ -2204,7 +2204,7 @@ docs = []
 type = "git"
 url = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"
 reference = "HEAD"
-resolved_reference = "b69b8a6179f0553bdfb5f029594a341bfd54a56e"
+resolved_reference = "a1497dd5be72be987dce5a4a0578e8fd6506d95c"
 
 [[package]]
 name = "mistune"
