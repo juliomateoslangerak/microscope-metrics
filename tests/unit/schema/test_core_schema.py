@@ -756,7 +756,8 @@ def test_image_5d_validity(image_5d_fixture):
 
 
 def test_point_creation():
-    point = mm_schema.Point(x=1, y=2, z=3)
+    point = mm_schema.Point(label="test_point", x=1, y=2, z=3)
+    assert point.label == "test_point"
     assert point.x == 1
     assert point.y == 2
     assert point.z == 3
@@ -764,13 +765,16 @@ def test_point_creation():
 
 def test_point_attributes_required():
     with pytest.raises(ValueError):
-        point = mm_schema.Point(x=1, z=3)
+        point = mm_schema.Point(x=1, y=2, z=3)
     with pytest.raises(ValueError):
-        point = mm_schema.Point(y=2, z=3)
+        point = mm_schema.Point(label="test_label", x=1, z=3)
+    with pytest.raises(ValueError):
+        point = mm_schema.Point(label="test_label", y=2, z=3)
 
 
 def test_point_attributes_types():
-    point = mm_schema.Point(x=1, y=2, z=3)
+    point = mm_schema.Point(label="test_label", x=1, y=2, z=3)
+    assert isinstance(point.label, str)
     assert isinstance(point.x, float)
     assert isinstance(point.y, float)
     assert isinstance(point.z, float)
@@ -778,16 +782,18 @@ def test_point_attributes_types():
 
 def test_point_attributes_values():
     with pytest.raises(ValueError):
-        point = mm_schema.Point(x="x", y=2)
+        point = mm_schema.Point(label=None, x=1, y=2)
     with pytest.raises(ValueError):
-        point = mm_schema.Point(x=1, y="y")
+        point = mm_schema.Point(label="test_label", x="x", y=2)
     with pytest.raises(ValueError):
-        point = mm_schema.Point(x=1, y=2, z="z")
+        point = mm_schema.Point(label="test_label", x=1, y="y")
     with pytest.raises(ValueError):
-        point = mm_schema.Point(x=1, y=2, c="c")
+        point = mm_schema.Point(label="test_label", x=1, y=2, z="z")
+    with pytest.raises(ValueError):
+        point = mm_schema.Point(label="test_label", x=1, y=2, c="c")
     with pytest.raises(TypeError):
-        point = mm_schema.Point(x=1, y=2, fill_color="fill_color")
+        point = mm_schema.Point(label="test_label", x=1, y=2, fill_color="fill_color")
     with pytest.raises(TypeError):
-        point = mm_schema.Point(x=1, y=2, stroke_color="stroke_color")
+        point = mm_schema.Point(label="test_label", x=1, y=2, stroke_color="stroke_color")
     with pytest.raises(ValueError):
-        point = mm_schema.Point(x=1, y=2, stroke_width="stroke_width")
+        point = mm_schema.Point(label="test_label", x=1, y=2, stroke_width="stroke_width")
