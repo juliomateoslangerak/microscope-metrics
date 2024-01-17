@@ -315,7 +315,7 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
             for c in range(len(out_tables))
         ]
 
-        self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.processing_date = datetime.now().strftime("%Y-%m-%d")
         self.processed = True
 
         return True
