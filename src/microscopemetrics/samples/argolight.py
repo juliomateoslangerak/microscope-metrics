@@ -130,18 +130,18 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
 
             channel_shapes = [
                 mm_schema.Point(
+                    label=str(p["label"]),
                     x=p["weighted_centroid"][2].item(),
                     y=p["weighted_centroid"][1].item(),
                     z=p["weighted_centroid"][0].item(),
                     c=ch,
-                    label=f'{p["label"]}',
                     # TODO: put some color
                 )
                 for p in ch_spot_props
             ]
 
             spots_centroids.append(
-                mm_schema.Roi(
+                mm_schema.PointsRoi(
                     label=f"Centroids_ch{ch:02}",
                     image=self.input.argolight_b_image.image_url,
                     shapes=channel_shapes,
@@ -273,8 +273,8 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
                 key_values["peak_position_A"][ch],
                 key_values["peak_position_B"][ch],
             )
-            for peak in (pos_a, pos_b):
-                # Measurements are taken at center of pixel so we add .5 pixel to peak positions
+            for peak_index, peak in enumerate((pos_a, pos_b)):
+                # Measurements are taken at center of pixel, so we add .5 pixel to peak positions
                 if axis == 1:  # Y resolution -> horizontal rois
                     axis_len = image.shape[2]
                     x1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
@@ -290,7 +290,7 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
 
                 shapes.append(
                     mm_schema.Line(
-                        label=f"ch{ch:02}_resolution_{resolution_values[ch]:.2f}",
+                        label=f"ch{ch:02}_{peak_index}_peak",
                         x1=x1_pos,
                         y1=y1_pos,
                         x2=x2_pos,
@@ -300,10 +300,10 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
                     )
                 )
             rois.append(
-                mm_schema.Roi(
+                mm_schema.LinesRoi(
                     label=f"ch{ch:02}_peaks",
-                    shapes=shapes,
                     image=self.input.argolight_e_image.image_url,
+                    shapes=shapes,
                 )
             )
         self.output.peaks_rois = rois
