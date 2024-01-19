@@ -1,8 +1,13 @@
-from typing import List
+import json
+from urllib import request
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
+from hypothesis_jsonschema import from_schema
+from jsonschema import RefResolver
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
@@ -11,6 +16,73 @@ from microscopemetrics.samples import (
     numpy_to_image_inlined,
     numpy_to_mask_inlined,
 )
+
+SCHEMA_URL = "https://raw.githubusercontent.com/juliomateoslangerak/microscopemetrics-schema/main/project/jsonschema/microscopemetrics_schema.schema.json"
+
+
+class NotAString:
+    def __str__(self):
+        pass
+
+
+with request.urlopen(SCHEMA_URL) as url:
+    mm_schema_json = json.load(url)
+
+
+def extract_definitions(original_schema, definition_name):
+    standalone_schema = {
+        "$schema": original_schema.get("$schema"),
+        "$defs": {definition_name: original_schema["$defs"][definition_name]},
+    }
+
+    resolver = RefResolver.from_schema(original_schema)
+    standalone_schema = resolver.resolve(standalone_schema)[1]
+
+    return standalone_schema
+
+
+@given(st.builds(mm_schema.NamedObject))
+def test_named_object(named_object):
+    assert named_object
+
+
+@given(
+    st.builds(
+        mm_schema.Experimenter,
+        name=st.text(),
+        orcid=st.from_regex(r"\d{4}-\d{4}-\d{4}-\d{4}"),
+    )
+)
+# @example(mm_schema.Experimenter(name=st.text(), orcid=st.lists(elements=st.integers()))).xfail()
+def test_experimenter_creation(experimenter):
+    assert experimenter
+
+
+@given(
+    st.builds(
+        mm_schema.Protocol,
+        name=st.text(),
+        description=st.text(),
+        version=st.text(),
+        authors=st.lists(st.from_regex(r"\d{4}-\d{4}-\d{4}-\d{4}")),
+        url=st.text(),
+    )
+)
+def test_protocol_creation(protocol):
+    assert protocol
+
+
+@given(
+    st.builds(
+        mm_schema.Sample,
+        name=st.text(),
+        description=st.text(),
+        type=st.text(),
+        protocol=st.from_regex(r"\d{4}-\d{4}-\d{4}-\d{4}"),
+    )
+)
+def test_sample_creation(sample):
+    assert sample
 
 
 @pytest.fixture
@@ -128,12 +200,12 @@ def image_5d_fixture(numpy_5d_ndarray_fixture):
     )
 
 
-def test_experimenter_creation(experimenter_1_fixture):
-    experimenter = mm_schema.Experimenter(
-        name=experimenter_1_fixture.name, orcid=experimenter_1_fixture.orcid
-    )
-
-    assert experimenter == experimenter_1_fixture
+# def test_experimenter_creation(experimenter_1_fixture):
+#     experimenter = mm_schema.Experimenter(
+#         name=experimenter_1_fixture.name, orcid=experimenter_1_fixture.orcid
+#     )
+#
+#     assert experimenter == experimenter_1_fixture
 
 
 def test_experimenter_attributes_required():
