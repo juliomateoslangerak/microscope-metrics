@@ -214,7 +214,7 @@ def _channel_max_intensity_properties(
     image_properties = regionprops(max_int_mask, channel)
 
     return {
-        "nb_pixels": image_properties[0].area,
+        "nb_pixels_center": image_properties[0].area,
         "center_of_mass_y": image_properties[0].centroid_weighted[0],
         "center_of_mass_x": image_properties[0].centroid_weighted[1],
         "max_intensity": max_intensity,
