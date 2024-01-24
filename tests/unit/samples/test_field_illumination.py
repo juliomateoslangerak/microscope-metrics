@@ -13,6 +13,7 @@ def field_illumination_analysis():
     analysis = field_illumination.FieldIlluminationAnalysis(
         name="an analysis",
         description="a description",
+        microscope="1234",
         input={
             "field_illumination_image": numpy_to_image_byref(
                 array=data,

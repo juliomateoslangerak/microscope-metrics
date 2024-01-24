@@ -14,6 +14,7 @@ def argolight_b():
     analysis = argolight.ArgolightBAnalysis(
         name="an analysis",
         description="a description",
+        microscope="1234",
         input={
             "argolight_b_image": numpy_to_image_byref(
                 array=data,
@@ -39,6 +40,7 @@ def argolight_e_horizontal():
     analysis = argolight.ArgolightEAnalysis(
         name="an analysis",
         description="a description",
+        microscope="1234",
         input={
             "argolight_e_image": numpy_to_image_byref(
                 array=data,
@@ -63,6 +65,7 @@ def argolight_e_vertical():
     analysis = argolight.ArgolightEAnalysis(
         name="an analysis",
         description="a description",
+        microscope="1234",
         input={
             "argolight_e_image": numpy_to_image_byref(
                 array=data,
