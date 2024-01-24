@@ -141,7 +141,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             ]
 
             spots_centroids.append(
-                mm_schema.PointsRoi(
+                mm_schema.Roi(
                     label=f"Centroids_ch{ch:02}",
                     image=self.input.argolight_b_image.image_url,
                     shapes=channel_shapes,
@@ -300,7 +300,7 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
                     )
                 )
             rois.append(
-                mm_schema.LinesRoi(
+                mm_schema.Roi(
                     label=f"ch{ch:02}_peaks",
                     image=self.input.argolight_e_image.image_url,
                     shapes=shapes,

@@ -358,21 +358,21 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
             name="intensity_profiles", columns=_image_line_profile(image, profile_size=255)
         )
 
-        self.output.profile_rois = mm_schema.LinesRoi(
+        self.output.profile_rois = mm_schema.Roi(
             label="Profile ROIs",
             description="ROIs used to compute the intensity profiles",
             image=self.input.field_illumination_image.image_url,
             shapes=_line_profile_shapes(image),
         )
 
-        self.output.corner_rois = mm_schema.RectanglesRoi(
+        self.output.corner_rois = mm_schema.Roi(
             label="Corner ROIs",
             description="ROIs used to compute the corner intensities",
             image=self.input.field_illumination_image.image_url,
             shapes=_corner_shapes(image, self.input.corner_fraction),
         )
 
-        self.output.center_of_illumination = mm_schema.PointsRoi(
+        self.output.center_of_illumination = mm_schema.Roi(
             label="Center of illumination",
             description="Point ROI marking the center of illumination",
             image=self.input.field_illumination_image.image_url,
