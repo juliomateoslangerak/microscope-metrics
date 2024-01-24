@@ -5,3 +5,9 @@
 /.tox/
 /.venv/
 /.coverage
+/htmlReport/
+/.hypothesis/
+/tests/monkeytype.sqlite3
+/tests/.coverage
+/tests/*/.coverage
+/tests/*/*/.coverage
