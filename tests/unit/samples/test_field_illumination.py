@@ -47,7 +47,13 @@ def field_illumination_image(
         image, sigma=max(x_image_shape, y_image_shape) * dispersion, preserve_range=True
     )
 
-    return image
+    return {
+        "image": image,
+        "noise": noise,
+        "x_center_rel_offset": x_center_rel_offset,
+        "y_center_rel_offset": y_center_rel_offset,
+        "dispersion": dispersion,
+    }
 
 
 @pytest.fixture
