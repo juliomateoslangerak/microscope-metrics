@@ -394,7 +394,7 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
             ],
         )
 
-        self.processing_date = datetime.now().strftime("%Y-%m-%d")
+        self.processing_datetime = datetime.now()
         self.processed = True
 
         return True
