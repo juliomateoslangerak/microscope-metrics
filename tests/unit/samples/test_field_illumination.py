@@ -9,7 +9,7 @@ from tests.test_utilities import get_file
 
 
 @given(st_mm.st_field_illumination_dataset())
-@settings(max_examples=1)
+@settings(max_examples=10)
 def test_field_illumination_analysis_instantiation(dataset):
     assert isinstance(dataset["unprocessed_analysis"], field_illumination.FieldIlluminationAnalysis)
     assert dataset["unprocessed_analysis"].name
@@ -19,7 +19,7 @@ def test_field_illumination_analysis_instantiation(dataset):
 
 
 @given(st_mm.st_field_illumination_dataset())
-@settings(max_examples=1)
+@settings(max_examples=10)
 def test_field_illumination_analysis_run(dataset):
     dataset["unprocessed_analysis"].run()
     assert dataset["unprocessed_analysis"].processed
