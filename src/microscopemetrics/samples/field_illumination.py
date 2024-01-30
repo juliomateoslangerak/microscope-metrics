@@ -19,14 +19,15 @@ def _channel_intensity_map(channel: np.ndarray, map_size: int):
     channel : np.array.
         image on a 2d np.ndarray format.
     map_size : int
-        size of the intensity map.
+        size of the intensity map along its longest axis.
     Returns
     -------
     intensity_map : np.ndarray
         2d np.ndarray representing the intensity map of the chosen channel.
     """
     channel = channel / channel.max()
-    return scipy.ndimage.zoom(channel, map_size / channel.shape[0])
+    zoom_factor = map_size / max(channel.shape)
+    return scipy.ndimage.zoom(channel, zoom_factor)
 
 
 def _image_intensity_map(image: np.ndarray, map_size: int):
@@ -37,15 +38,17 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
     image : np.ndarray.
         image on a 3d np.ndarray format yxc.
     map_size : int
-        size of the intensity map.
+        size of the intensity map on its longest axis.
     Returns
     -------
     intensity_map : np.ndarray
         3d np.ndarray representing the intensity map of the chosen image.
     """
-    output = np.zeros((map_size, map_size, image.shape[2]))
+    output = []
     for c in range(image.shape[2]):
-        output[:, :, c] = _channel_intensity_map(np.squeeze(image[:, :, c]), map_size)
+        output.append(_channel_intensity_map(np.squeeze(image[:, :, c]), map_size))
+
+    output = np.stack(output, axis=2)
 
     # We want to return a 5d array (adding z and t) for compatibility with the rest of the code
     return np.expand_dims(output, axis=(0, 1))
