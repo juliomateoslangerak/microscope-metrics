@@ -1,0 +1,2 @@
+class SaturationError(Exception):
+    pass

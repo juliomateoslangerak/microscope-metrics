@@ -7,6 +7,7 @@ import scipy
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
+from microscopemetrics import SaturationError
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
 from microscopemetrics.utilities.utilities import is_saturated
 
@@ -338,7 +339,7 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
                 saturated_channels.append(c)
         if len(saturated_channels):
             logger.error(f"Channels {saturated_channels} are saturated")
-            return False
+            raise SaturationError(f"Channels {saturated_channels} are saturated")
 
         self.output.key_values = mm_schema.FieldIlluminationKeyValues(
             **_image_properties(

@@ -26,6 +26,19 @@ def test_field_illumination_analysis_run(dataset):
     assert dataset["unprocessed_analysis"].output
 
 
+@given(
+    st_mm.st_field_illumination_dataset(
+        field_illumination_test_data=st_mm.st_field_illumination_test_data(
+            target_min_intensity=st.just(1.5),
+        )
+    )
+)
+@settings(max_examples=1, suppress_health_check=[HealthCheck.too_slow])
+def test_field_illumination_analysis_raises_saturation_error(dataset):
+    with pytest.raises(SaturationError):
+        assert dataset["unprocessed_analysis"].run()
+
+
 @pytest.fixture
 def field_illumination_analysis():
     image_url = "https://dev.mri.cnrs.fr/attachments/download/3071/chroma.npy"
