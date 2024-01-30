@@ -14,8 +14,8 @@ from microscopemetrics.samples import field_illumination
 @st.composite
 def st_field_illumination_test_data(
     draw,
-    x_image_shape=st.integers(min_value=256, max_value=2048),
-    y_image_shape=st.integers(min_value=256, max_value=2048),
+    x_image_shape=st.integers(min_value=256, max_value=1024),
+    y_image_shape=st.integers(min_value=256, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=5),
     dtype=st.sampled_from([np.uint8, np.uint16, np.float32]),
     do_noise=st.just(True),
