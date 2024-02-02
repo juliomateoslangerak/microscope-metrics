@@ -220,7 +220,8 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
 
         image = self.input.argolight_e_image.data
         image = image[0]  # if there is a time dimension, take the first one
-        axis = self.input.axis
+        axis = self.input.orientation_axis
+        pixel_size = self.input.argolight_e_image.voxel_size_x_micron
         measured_band = self.input.measured_band
 
         (
@@ -240,7 +241,8 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
         )
         key_values = {
             "channel": [c for c in range(image.shape[-1])],
-            "rayleigh_resolution": resolution_values,
+            "rayleigh_resolution_pixels": resolution_values,
+            "rayleigh_resolution_microns": [r * pixel_size for r in resolution_values if pixel_size is not None],
             "peak_position_A": [
                 peak_positions[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
             ],

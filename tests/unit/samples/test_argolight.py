@@ -49,7 +49,7 @@ def argolight_e_horizontal():
                 image_url=image_url,
                 source_image_url=image_url,
             ),
-            "axis": 2,
+            "orientation_axis": 2,
         },
         output={},
     )
@@ -74,7 +74,7 @@ def argolight_e_vertical():
                 image_url=image_url,
                 source_image_url=image_url,
             ),
-            "axis": 1,
+            "orientation_axis": 1,
         },
         output={},
     )
