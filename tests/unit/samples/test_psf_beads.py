@@ -1,4 +1,23 @@
-# import pytest
+import numpy as np
+import pytest
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import strategies as st
+
+from microscopemetrics import SaturationError
+from microscopemetrics.samples import psf_beads, numpy_to_image_byref
+from tests import strategies as st_mm
+from tests.test_utilities import get_file
+
+
+@given(st_mm.st_psf_beads_dataset())
+@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
+def test_psf_beads_analysis_instantiation(dataset):
+    assert isinstance(dataset["unprocessed_analysis"], psf_beads.PSFBeadsAnalysis)
+    assert dataset["unprocessed_analysis"].name
+    assert dataset["unprocessed_analysis"].description
+    assert dataset["unprocessed_analysis"].microscope
+    assert dataset["unprocessed_analysis"].input
+
 # from tests.test_utilities import get_file
 #
 # from microscopemetrics.samples import psf_beads
