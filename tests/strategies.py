@@ -3,21 +3,20 @@ import dataclasses
 import numpy as np
 
 try:
-    from hypothesis import strategies as st
     from hypothesis import assume
+    from hypothesis import strategies as st
 except ImportError:
-    raise ImportError("In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`.")
+    raise ImportError(
+        "In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`."
+    )
 from microscopemetrics_schema import strategies as st_mm_schema
+from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
-from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 
 from microscopemetrics import samples as mm_samples
-from microscopemetrics.samples import (
-    field_illumination,
-    argolight,
-    psf_beads,
-)
+from microscopemetrics.samples import argolight, field_illumination, psf_beads
+
 
 # Strategies for Field Illumination
 @st.composite
@@ -122,12 +121,24 @@ def st_field_illumination_dataset(
 ):
     unprocessed_dataset = draw(unprocessed_dataset)
     field_illumination_test_data = draw(field_illumination_test_data)
+
+    # updating input field illumination image
     unprocessed_dataset.input.field_illumination_image = draw(
         st_mm_schema.st_mm_image_as_numpy(
             shape=st.just(field_illumination_test_data["image"].shape),
             data=field_illumination_test_data["image"],
         )
     )
+
+    # Setting the bit depth to the data type of the image
+    image_dtype = field_illumination_test_data["image"].dtype
+    if np.issubdtype(image_dtype, np.integer):
+        unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
+    elif np.issubdtype(image_dtype, np.floating):
+        unprocessed_dataset.input.bit_depth = np.finfo(image_dtype).bits
+    else:
+        unprocessed_dataset.input.bit_depth = None
+
     unprocessed_analysis = field_illumination.FieldIlluminationAnalysis(
         **dataclasses.asdict(unprocessed_dataset)
     )
@@ -140,6 +151,7 @@ def st_field_illumination_dataset(
 # Strategies for Argolight B
 
 # Strategies for Argolight E
+
 
 # Strategies for PSF beads
 @st.composite
@@ -203,7 +215,9 @@ def st_psf_beads_test_data(
         raise ValueError("Unsupported datatype")
 
     # Generate the image as float64
-    image = np.zeros(shape=(z_image_shape, y_image_shape, x_image_shape, c_image_shape), dtype="float32")
+    image = np.zeros(
+        shape=(z_image_shape, y_image_shape, x_image_shape, c_image_shape), dtype="float32"
+    )
 
     non_edge_beads_positions = []
     edge_beads_positions = []
@@ -211,17 +225,20 @@ def st_psf_beads_test_data(
     out_of_focus_beads_positions = []
     clustering_beads_positions = []
 
-    while len(non_edge_beads_positions) < (nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads):
+    while len(non_edge_beads_positions) < (
+        nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads
+    ):
         z_pos = z_image_shape // 2
-        y_pos = draw(st.integers(min_value=min_distance_y, max_value=y_image_shape - min_distance_y - 1))
-        x_pos = draw(st.integers(min_value=min_distance_x, max_value=x_image_shape - min_distance_x - 1))
+        y_pos = draw(
+            st.integers(min_value=min_distance_y, max_value=y_image_shape - min_distance_y - 1)
+        )
+        x_pos = draw(
+            st.integers(min_value=min_distance_x, max_value=x_image_shape - min_distance_x - 1)
+        )
         if len(non_edge_beads_positions) == 0:
             non_edge_beads_positions.append((z_pos, y_pos, x_pos))
         for pos in non_edge_beads_positions:
-            if (
-                abs(pos[1] - y_pos) < min_distance_y
-                and abs(pos[2] - x_pos) < min_distance_x
-            ):
+            if abs(pos[1] - y_pos) < min_distance_y and abs(pos[2] - x_pos) < min_distance_x:
                 break
             else:
                 continue
@@ -230,21 +247,22 @@ def st_psf_beads_test_data(
 
     while len(edge_beads_positions) < nr_edge_beads:
         z_pos = z_image_shape
-        y_pos = draw(st.one_of(
-            st.integers(min_value=0, max_value=min_distance_y - 1),
-            st.integers(min_value=y_image_shape - min_distance_y, max_value=y_image_shape - 1),
-        ))
-        x_pos = draw(st.one_of(
-            st.integers(min_value=0, max_value=min_distance_x - 1),
-            st.integers(min_value=x_image_shape - min_distance_x, max_value=x_image_shape - 1),
-        ))
+        y_pos = draw(
+            st.one_of(
+                st.integers(min_value=0, max_value=min_distance_y - 1),
+                st.integers(min_value=y_image_shape - min_distance_y, max_value=y_image_shape - 1),
+            )
+        )
+        x_pos = draw(
+            st.one_of(
+                st.integers(min_value=0, max_value=min_distance_x - 1),
+                st.integers(min_value=x_image_shape - min_distance_x, max_value=x_image_shape - 1),
+            )
+        )
         if len(edge_beads_positions) == 0:
             edge_beads_positions.append((z_pos, y_pos, x_pos))
         for pos in edge_beads_positions:
-            if (
-                abs(pos[1] - y_pos) < min_distance_y
-                and abs(pos[2] - x_pos) < min_distance_x
-            ):
+            if abs(pos[1] - y_pos) < min_distance_y and abs(pos[2] - x_pos) < min_distance_x:
                 break
             else:
                 continue
@@ -253,25 +271,32 @@ def st_psf_beads_test_data(
 
     for _ in range(nr_out_of_focus_beads):
         pos = non_edge_beads_positions.pop()
-        image[draw(st.one_of(
-            st.integers(min_value=0, max_value=min_distance_z-1),
-            st.integers(min_value=z_image_shape-min_distance_z, max_value=z_image_shape-1),
-            )
-        ), pos[1], pos[2], :] = signal
+        image[
+            draw(
+                st.one_of(
+                    st.integers(min_value=0, max_value=min_distance_z - 1),
+                    st.integers(
+                        min_value=z_image_shape - min_distance_z, max_value=z_image_shape - 1
+                    ),
+                )
+            ),
+            pos[1],
+            pos[2],
+            :,
+        ] = signal
         out_of_focus_beads_positions.append(pos)
 
     for _ in range(nr_clustering_beads):
         pos_1 = non_edge_beads_positions.pop()
-        pos_2 = (pos_1[0],
-                 pos_1[1] + draw(st.sampled_from([-1, 1])),
-                 pos_1[2] + draw(st.sampled_from([-1, 1]))
-                 )
+        pos_2 = (
+            pos_1[0],
+            pos_1[1] + draw(st.sampled_from([-1, 1])),
+            pos_1[2] + draw(st.sampled_from([-1, 1])),
+        )
         image[pos_1[0], pos_1[1], pos_1[2], :] = signal
         image[pos_2[0], pos_2[1], pos_2[2], :] = signal
         clustering_beads_positions.append(
-            (pos_1[0],
-            (pos_1[1] + pos_2[1]) // 2,
-            (pos_1[2] + pos_2[2]) // 2)
+            (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
         )
 
     for pos in non_edge_beads_positions:
@@ -280,12 +305,10 @@ def st_psf_beads_test_data(
 
     # Apply a gaussian filter to the image
     for ch in range(c_image_shape):
-        sigma_correction = 1 + ch * .1
-        applied_sigmas.append((
-            sigma_z * sigma_correction,
-            sigma_y * sigma_correction,
-            sigma_x * sigma_correction
-        ))
+        sigma_correction = 1 + ch * 0.1
+        applied_sigmas.append(
+            (sigma_z * sigma_correction, sigma_y * sigma_correction, sigma_x * sigma_correction)
+        )
         image[:, :, :, ch] = skimage_gaussian(
             image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
         )
@@ -296,6 +319,7 @@ def st_psf_beads_test_data(
 
     image = skimage_rescale_intensity(image, out_range=(target_min_intensity, target_max_intensity))
 
+    # TODO" use rescale from skimage to rescale the image to the target dtype
     # Rescale to the target dtype
     # Saturation point is at 1.0
     image = np.clip(image, None, 1.0)
@@ -329,9 +353,6 @@ def st_psf_beads_dataset(
             data=psf_beads_test_data["image"],
         )
     )
-    unprocessed_analysis = psf_beads.PSFBeadsAnalysis(
-        **dataclasses.asdict(unprocessed_dataset)
-    )
+    unprocessed_analysis = psf_beads.PSFBeadsAnalysis(**dataclasses.asdict(unprocessed_dataset))
 
     return {"unprocessed_analysis": unprocessed_analysis, "expected_output": unprocessed_dataset}
-
