@@ -9,7 +9,8 @@ import numpy as np
 from numpy import float64, ndarray
 from scipy import special
 
-DETECTOR_BIT_DEPTHS = [10, 11, 12, 15]
+INT_DETECTOR_BIT_DEPTHS = [8, 10, 11, 12, 15, 16, 32]
+FLOAT_DETECTOR_BIT_DEPTHS = [32, 64]
 
 
 ## Some useful functions
@@ -159,7 +160,45 @@ def is_saturated(
         Here it can be specified the bit depth of the detector if known. The function is going to raise
         If None, it will be inferred from the channel dtype.
     """
-    if detector_bit_depth is None:
+    if detector_bit_depth is not None:
+        if (
+            detector_bit_depth not in INT_DETECTOR_BIT_DEPTHS
+            or detector_bit_depth not in FLOAT_DETECTOR_BIT_DEPTHS
+        ):
+            raise ValueError(
+                f"The detector bit depth provided is not supported. Supported values are {INT_DETECTOR_BIT_DEPTHS} for integer detectors and {FLOAT_DETECTOR_BIT_DEPTHS} for floating point detectors."
+            )
+        if (
+            np.issubdtype(channel.dtype, np.integer)
+            and detector_bit_depth not in INT_DETECTOR_BIT_DEPTHS
+        ):
+            raise ValueError(
+                f"The channel datatype {channel.dtype} does not match the detector bit depth {detector_bit_depth}. The channel might be saturated."
+            )
+        elif (
+            np.issubdtype(channel.dtype, np.floating)
+            and detector_bit_depth not in FLOAT_DETECTOR_BIT_DEPTHS
+        ):
+            raise ValueError(
+                f"The channel datatype {channel.dtype} does not match the detector bit depth {detector_bit_depth}. The channel might be saturated."
+            )
+        else:
+            if np.issubdtype(channel.dtype, np.integer):
+                if detector_bit_depth > np.iinfo(channel.dtype).bits:
+                    raise ValueError(
+                        f"The channel datatype {channel.dtype} does not support the detector bit depth {detector_bit_depth}. The channel might be saturated."
+                    )
+                else:
+                    max_limit = pow(2, detector_bit_depth) - 1
+            elif np.issubdtype(channel.dtype, np.floating):
+                if detector_bit_depth != np.finfo(channel.dtype).bits:
+                    raise ValueError(
+                        f"The channel datatype {channel.dtype} does not support the detector bit depth {detector_bit_depth}. The channel might be saturated."
+                    )
+                else:
+                    max_limit = np.finfo(channel.dtype).max
+
+    else:
         if np.issubdtype(channel.dtype, np.integer):
             max_limit = np.iinfo(channel.dtype).max
         elif np.issubdtype(channel.dtype, np.floating):
@@ -167,22 +206,10 @@ def is_saturated(
         else:
             raise ValueError("The channel provided is not a valid numpy dtype.")
 
-        for bit_depth in DETECTOR_BIT_DEPTHS:
-            try:
-                saturated = is_saturated(channel, threshold=threshold, detector_bit_depth=bit_depth)
-            except ValueError:
-                continue
-        if saturated:
-            warnings.warn(
-                "The channel might be saturated. The channel saturation matches a common detector bit depth"
-            )
-
-    else:
-        max_limit = pow(2, detector_bit_depth) - 1
-        if np.any(channel > max_limit):
-            raise ValueError(
-                "The channel provided has values larger than the bit depth of the detector."
-            )
+    if channel.max() > max_limit:
+        raise ValueError(
+            "The channel provided has values larger than the bit depth of the detector."
+        )
 
     saturation_matrix = channel == max_limit
     saturation_ratio = np.count_nonzero(saturation_matrix) / channel.size
