@@ -1,6 +1,6 @@
-import logging
-from typing import Tuple
+from typing import Tuple, Dict, Any
 
+import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 from pandas import DataFrame
 from pydantic.color import Color
@@ -8,11 +8,9 @@ from scipy.optimize import curve_fit, fsolve
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
-from microscopemetrics.samples import *
-
-from ..utilities.utilities import airy_fun, gaussian_fun
-
-module_logger = logging.getLogger("metrics.samples.psf_beads")
+from microscopemetrics import SaturationError, FittingError
+from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
+from microscopemetrics.utilities.utilities import is_saturated, airy_fun, gaussian_fun
 
 
 def _fit_gaussian(profile, guess=None):
@@ -31,7 +29,7 @@ def _fit_airy(profile, guess=None):
     if guess is None:
         guess = [profile.argmax(), 4 * profile.max()]
     x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
-    popt, pcov = curve_fit(airy_fun, x, profile, guess)
+    popt, pcov = curve_fit(f=airy_fun, xdata=x, ydata=profile, p0=guess)
 
     fitted_profile = airy_fun(x, popt[0], popt[1])
 
@@ -42,223 +40,433 @@ def _fit_airy(profile, guess=None):
     v = fsolve(_f, guess)
     fwhm = abs(v[1] - v[0])
 
-    return fitted_profile, fwhm
+    # Calculate the fit quality
+    residuals = profile - fitted_profile
+    rss = np.sum(residuals**2)
+
+    return fitted_profile, rss, fwhm
 
 
-@register_image_analysis
-class PSFBeadsAnalysis(AnalysisMixin):
-    """This class handles a PSF beads sample"""
+def _calculate_bead_intensity_outliers(bead_images: Dict, zscore_threshold: float) -> Dict:
+    bead_max_intensities = []
+    bead_considered_intensity = {}
+    for _, image_beads in bead_images.items():
+        for ch_beads in image_beads:
+            for bead in ch_beads:
+                bead_max_intensities.append(bead.max())
 
-    def __init__(self, config=None):
-        super().__init__(
-            output_description="Analysis output of samples containing PSF grade fluorescent beads. "
-            "It contains information about resolution."
+    mean = np.mean(bead_max_intensities)
+    std = np.std(bead_max_intensities)
+
+    for label, image_beads in bead_images.items():
+        bead_considered_intensity[label] = []
+        for ch_beads in image_beads:
+            ch_is_outlier = []
+            for bead in ch_beads:
+                if abs(bead.max() - mean) / std) > zscore_threshold:
+                    ch_is_outlier.append(True)
+                else:
+                    ch_is_outlier.append(False)
+            bead_considered_intensity[label].append(ch_is_outlier)
+
+    return bead_considered_intensity
+
+
+def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float]):
+    # Find the strongest sections to generate profiles
+    # TODO: We should use the center of the bead image for x and y, for the z we should do the fit first
+    z_max = np.max(bead, axis=(1, 2))
+    z_focus = np.argmax(z_max)
+    y_max = np.max(bead, axis=(0, 2))
+    y_focus = np.argmax(y_max)
+    x_max = np.max(bead, axis=(0, 1))
+    x_focus = np.argmax(x_max)
+
+    # Generate profiles
+    z_profile = np.squeeze(bead[:, y_focus, x_focus])
+    y_profile = np.squeeze(bead[z_focus, :, x_focus])
+    x_profile = np.squeeze(bead[z_focus, y_focus, :])
+
+    # Fitting the profiles
+    z_fitted_profile, z_rss, z_fwhm = _fit_airy(z_profile)
+    y_fitted_profile, y_rss, y_fwhm = _fit_airy(y_profile)
+    x_fitted_profile, x_rss, x_fwhm = _fit_airy(x_profile)
+
+    if all(voxel_size_micron):
+        z_fwhm_micron = z_fwhm * voxel_size_micron[0]
+        y_fwhm_micron = y_fwhm * voxel_size_micron[1]
+        x_fwhm_micron = x_fwhm * voxel_size_micron[2]
+    else:
+        z_fwhm_micron = None
+        y_fwhm_micron = None
+        x_fwhm_micron = None
+
+    # TODO: Implement the discarding of beads that are too close to the edge
+    discarding_axial_edge = False
+
+    return (
+        (z_profile, y_profile, x_profile),
+        (z_fitted_profile, y_fitted_profile, x_fitted_profile),
+        (z_rss, y_rss, x_rss),
+        (z_fwhm, y_fwhm, x_fwhm),
+        (z_fwhm_micron, y_fwhm_micron, x_fwhm_micron),
+        discarding_axial_edge
+    )
+
+def _find_beads(
+        channel: np.ndarray,
+        sigma: Tuple[float, float, float],
+        min_distance: float
+):
+    logger.debug(f"Finding beads in channel of shape {channel.shape}")
+
+    if all(sigma):
+        logger.debug(f"Applying Gaussian filter with sigma {sigma}")
+        image_mip = gaussian(
+            image=channel, sigma=sigma, preserve_range=True
         )
-        self.add_data_requirement(
-            name="beads_image",
-            description="The image containing the beads in teh form of a numpy array",
-            data_type=np.ndarray,
-        )
-        self.add_metadata_requirement(
-            name="pixel_size",
-            description="Physical size of the voxel in z, y and x",
-            data_type=Tuple[float, float, float],
-            units="MICRON",
-            optional=False,
-        )
-        self.add_metadata_requirement(
-            name="min_lateral_distance_factor",
-            description="Minimal distance that has to separate laterally the beads represented as the "
-            "number of times the theoretical resolution.",
-            data_type=int,
-            optional=True,
-            default=20,
-        )
-        self.add_metadata_requirement(
-            name="theoretical_fwhm_lateral_res",
-            description="Theoretical FWHM lateral resolution of the sample.",
-            data_type=float,
-            units="MICRON",
-            optional=False,
-        )
-        self.add_metadata_requirement(
-            name="theoretical_fwhm_axial_res",
-            description="Theoretical FWHM axial resolution of the sample.",
-            data_type=float,
-            units="MICRON",
-            optional=False,
-        )
-        self.add_metadata_requirement(
-            name="sigma",
-            description="When provided, smoothing sigma to be applied to image prior to bead detection."
-            "Does not apply to resolution measurements",
-            data_type=float,
-            optional=True,
-            default=None,
-        )
+    else:
+        logger.debug("No Gaussian filter applied")
 
-    @staticmethod
-    def _analyze_bead(image):
-        # Find the strongest sections to generate profiles
-        x_max = np.max(image, axis=(0, 1))
-        x_focus = np.argmax(x_max)
-        y_max = np.max(image, axis=(0, 2))
-        y_focus = np.argmax(y_max)
-        z_max = np.max(image, axis=(1, 2))
-        z_focus = np.argmax(z_max)
+    # Find bead centers
+    positions_all = peak_local_max(image=channel, threshold_rel=0.2)
 
-        # Generate profiles
-        x_profile = np.squeeze(image[z_focus, y_focus, :])
-        y_profile = np.squeeze(image[z_focus, :, x_focus])
-        z_profile = np.squeeze(image[:, y_focus, x_focus])
+    # Find beads min distance filtered
+    # We need to remove the beads that are close to each other before the
+    # ones that are close to the edge in order to avoid keeping beads that
+    # are close to each other but far from the edge. If an edge bead is
+    # removed, the other bead that was close to it will be kept.
+    positions_proximity_filtered = peak_local_max(
+        image=channel, threshold_rel=0.2, min_distance=min_distance
+    )
 
-        # Fitting the profiles
-        x_fitted_profile, x_fwhm = _fit_airy(x_profile)
-        y_fitted_profile, y_fwhm = _fit_airy(y_profile)
-        z_fitted_profile, z_fwhm = _fit_airy(z_profile)
+    # find beads edge filtered
+    positions_edge_filtered = positions_all[
+        (positions_proximity_filtered[:, 2] > min_distance // 2)
+        & (positions_proximity_filtered[:, 2] < channel.shape[2] - min_distance // 2)
+        & (positions_proximity_filtered[:, 1] > min_distance // 2)
+        & (positions_proximity_filtered[:, 1] < channel.shape[1] - min_distance // 2)
+    ]
 
-        return (
-            (z_profile, y_profile, x_profile),
-            (z_fitted_profile, y_fitted_profile, x_fitted_profile),
-            (z_fwhm, y_fwhm, x_fwhm),
-        )
+    # Convert arrays to sets for easier comparison
+    positions_all_set = set(map(tuple, positions_all))
+    positions_proximity_filtered_set = set(map(tuple, positions_proximity_filtered))
+    positions_edge_filtered_set = set(map(tuple, positions_edge_filtered))
 
-    @staticmethod
-    def _find_beads(image, min_distance, sigma=None):
-        image = np.squeeze(image)
-        image_mip = np.max(image, axis=0)
+    valid_positions_set = positions_proximity_filtered_set & positions_edge_filtered_set
+    discarded_positions_proximity_set = positions_all_set - positions_proximity_filtered_set
+    discarded_positions_edge_set = positions_all_set - positions_edge_filtered_set
+    discarded_positions_set = discarded_positions_proximity_set | discarded_positions_edge_set
 
-        if sigma is not None:
-            image_mip = gaussian(
-                image=image_mip, multichannel=False, sigma=sigma, preserve_range=True
-            )
+    logger.debug(f"Beads found: {len(positions_all)}")
+    logger.debug(f"Beads kept for analysis: {len(valid_positions_set)}")
+    logger.debug(f"Beads discarded: {len(discarded_positions_set)}")
+    logger.debug(f"Beads discarded for being to close to the edge: {len(discarded_positions_edge_set)}")
+    logger.debug(f"Beads discarded for being to close to each other: {len(discarded_positions_proximity_set)}")
 
-        # Find bead centers
-        positions_2d = peak_local_max(image=image_mip, threshold_rel=0.2, min_distance=5)
-        # Add the mas intensity value in z
-        positions_3d = np.insert(
-            positions_2d[:],
-            0,
-            np.argmax(image[:, positions_2d[:, 0], positions_2d[:, 1]], axis=0),
-            axis=1,
-        )
+    # Convert back to numpy arrays
+    valid_positions = np.array(list(valid_positions_set))
+    discarded_positions_proximity = np.array(list(discarded_positions_proximity_set))
+    discarded_positions_edge = np.array(list(discarded_positions_edge_set))
 
-        nr_beads = positions_2d.shape[0]
-        module_logger.info(f"Beads found: {nr_beads}")
-
-        # Exclude beads too close to the edge
-        edge_keep_mask = (
-            (positions_2d[:, 0] > min_distance)
-            & (positions_2d[:, 0] < image_mip.shape[0] - min_distance)
-            & (positions_2d[:, 1] > min_distance)
-            & (positions_2d[:, 1] < image_mip.shape[1] - min_distance)
-        )
-        module_logger.info(f"Beads too close to the edge: {nr_beads - np.sum(edge_keep_mask)}")
-
-        # Exclude beads too close to each other
-        proximity_keep_mask = np.ones((nr_beads, nr_beads), dtype=bool)
-        for i, pos in enumerate(positions_2d):
-            proximity_keep_mask[i] = (abs(positions_2d[:, 0] - pos[0]) > min_distance) | (
-                abs(positions_2d[:, 1] - pos[1]) > min_distance
-            )
-            proximity_keep_mask[i, i] = True  # Correcting the diagonal
-        proximity_keep_mask = np.all(proximity_keep_mask, axis=0)
-        module_logger.info(
-            f"Beads too close to each other: {nr_beads - np.sum(proximity_keep_mask)}"
-        )
-
-        # Exclude beads too intense or too weak
-        intensity_keep_mask = np.ones(nr_beads, dtype=bool)
-        # TODO: Implement beads intensity filter
-        module_logger.info(
-            f"Beads too intense (probably more than one bead): {nr_beads - np.sum(intensity_keep_mask)}"
-        )
-
-        keep_mask = edge_keep_mask & proximity_keep_mask & intensity_keep_mask
-        module_logger.info(f"Beads kept for analysis: {np.sum(keep_mask)}")
-
-        positions = positions_3d[keep_mask, :]
-        pos_edge_disc = positions_3d[np.logical_not(edge_keep_mask), :]
-        pos_proximity_disc = positions_3d[np.logical_not(proximity_keep_mask), :]
-        pos_intensity_disc = positions_3d[np.logical_not(intensity_keep_mask), :]
-
-        bead_images = [
-            image[
-                :,
-                (pos[1] - (min_distance // 2)) : (pos[1] + (min_distance // 2)),
-                (pos[2] - (min_distance // 2)) : (pos[2] + (min_distance // 2)),
-            ]
-            for pos in positions
+    bead_images = [
+        channel[
+            :,
+            (pos[1] - (min_distance // 2)): (pos[1] + (min_distance // 2)),
+            (pos[2] - (min_distance // 2)): (pos[2] + (min_distance // 2)),
         ]
-        return (
-            bead_images,
-            positions,
-            pos_edge_disc,
-            pos_proximity_disc,
-            pos_intensity_disc,
+        for pos in valid_positions
+    ]
+    return (
+        bead_images,
+        valid_positions,
+        discarded_positions_proximity,
+        discarded_positions_edge,
+    )
+
+
+def _process_channel(
+        channel: np.ndarray,
+        sigma: Tuple[float, float, float],
+        min_bead_distance: float,
+        voxel_size_micron: Tuple[float, float, float]
+) -> Tuple:
+    (
+        beads,
+        bead_positions,
+        disc_prox_positions,
+        disc_lat_edge_positions,
+    ) = _find_beads(
+        channel=channel,
+        sigma=sigma,
+        min_distance=min_bead_distance,
+    )
+
+    bead_profiles = []
+    bead_fitted_profiles = []
+    bead_rsss = []
+    bead_fwhms = []
+    bead_fwhms_micron = []
+    disc_ax_edge_positions = []
+
+    for bead, pos in zip(beads, bead_positions):
+        try:
+            bpr, fpr, rss, fwhm, fwhm_micron, disc_ax_edge = _process_bead(bead, voxel_size_micron)
+            bead_profiles.append(bpr)
+            bead_fitted_profiles.append(fpr)
+            bead_rsss.append(rss)
+            bead_fwhms.append(fwhm)
+            bead_fwhms_micron.append(fwhm_micron)
+            if disc_ax_edge:
+                disc_ax_edge_positions.append(pos)
+        except FittingError as e:
+            logger.error(f"Could not fit bead at position: {pos}: {e}")
+            raise e
+
+    return (
+        beads,
+        bead_positions,
+        bead_profiles,
+        bead_fitted_profiles,
+        bead_rsss,
+        bead_fwhms,
+        bead_fwhms_micron,
+        disc_prox_positions,
+        disc_lat_edge_positions,
+        disc_ax_edge_positions,
+    )
+
+
+def _process_image(
+        image: np.ndarray,
+        sigma: Tuple[float, float, float],
+        min_bead_distance: float,
+        voxel_size_micron: Tuple[float, float, float]
+) -> Dict[str, Any]:
+
+    # Some images (e.g. OMX-3D-SIM) may contain negative values.
+    image = np.clip(image, a_min=0, a_max=None)
+
+    nr_channels = image.shape[-1]
+
+    bead_images = []
+    bead_positions = []
+    bead_profiles = []
+    bead_fitted_profiles = []
+    bead_rsss = []
+    bead_fwhms = []
+    bead_fwhms_micron = []
+    discarded_positions_self_proximity = []
+    discarded_positions_lateral_edge = []
+    discarded_positions_axial_edge = []
+
+    for ch in range(nr_channels):
+        (
+            ch_bead_images,
+            ch_bead_positions,
+            ch_bead_profiles,
+            ch_bead_fitted_profiles,
+            ch_bead_rsss,
+            ch_bead_fwhms,
+            ch_bead_fwhms_micron,
+            ch_disc_prox_positions,
+            ch_disc_lat_edge_positions,
+            ch_disc_ax_edge_positions,
+        ) = _process_channel(
+            channel=image[..., ch],
+            sigma=sigma,
+            min_bead_distance=min_bead_distance,
+            voxel_size_micron=voxel_size_micron,
         )
+
+        bead_images.append(ch_bead_images)
+        bead_positions.append(ch_bead_positions)
+        bead_profiles.append(ch_bead_profiles)
+        bead_fitted_profiles.append(ch_bead_fitted_profiles)
+        bead_rsss.append(ch_bead_rsss)
+        bead_fwhms.append(ch_bead_fwhms)
+        bead_fwhms_micron.append(ch_bead_fwhms_micron)
+        discarded_positions_self_proximity.append(ch_disc_prox_positions)
+        discarded_positions_lateral_edge.append(ch_disc_lat_edge_positions)
+        discarded_positions_axial_edge.append(ch_disc_ax_edge_positions)
+
+    return {
+        "bead_images": bead_images,
+        "bead_positions": bead_positions,
+        "bead_profiles": bead_profiles,
+        "bead_fitted_profiles": bead_fitted_profiles,
+        "bead_rsss": bead_rsss,
+        "bead_fwhms": bead_fwhms,
+        "bead_fwhms_micron": bead_fwhms_micron,
+        "discarded_positions_self_proximity": discarded_positions_self_proximity,
+        "discarded_positions_lateral_edge": discarded_positions_lateral_edge,
+        "discarded_positions_axial_edge": discarded_positions_axial_edge,
+    }
+
+
+class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
+    """Analysis of PSF beads images to extract resolution information."""
 
     def estimate_min_bead_distance(self):
         # TODO: get the resolution somewhere or pass it as a metadata
-        res = 3  # theoretical resolution in pixels
-        distance = self.get_metadata_values("min_lateral_distance_factor")
-        return res * distance
+        return 3 * self.input.min_lateral_distance_factor
 
-    def _run(self):
-        """Analyzes images of sub-resolution beads in order to extract data on the optical
-        performance of the microscope.
-        """
-        # Verify that image is not saturated
-        if np.issubdtype(self.get_data_values("beads_image").dtype, np.integer):
-            if (
-                self.get_data_values("beads_image").max()
-                == np.iinfo(self.get_data_values("beads_image").dtype).max
-            ):
-                logger.error("Image is saturated. No attempt to find beads will be done.")
-                return False
-        elif np.issubdtype(self.get_data_values("beads_image").dtype, np.float):
-            if (
-                self.get_data_values("beads_image").max()
-                == np.finfo(self.get_data_values("beads_image").dtype).max
-            ):
-                logger.error("Image is saturated. No attempt to find beads will be done.")
-                return False
+    def run(self) -> bool:
+        self.validate_requirements()
+        # TODO: Implement Nyquist validation??
 
-        # Get some analysis_config parameters
-        pixel_size_units = self.get_metadata_units("pixel_size")
-        pixel_size = self.get_metadata_values("pixel_size")
+        # Containers for input data and input parameters
+        images = {}
+        voxel_sizes_micron = {}
         min_bead_distance = self.estimate_min_bead_distance()
 
-        # Remove all negative intensities. eg. 3D-SIM images may contain negative values.
-        image_data = np.clip(self.get_data_values("beads_image"), a_min=0, a_max=None)
+        # Containers for output data
+        saturated_channels = {}
+        bead_images = {}
+        bead_positions = {}
+        bead_profiles = {}
+        bead_fitted_profiles = {}
+        bead_rsss = {}
+        bead_fwhms = {}
+        bead_fwhms_micron = {}
+        discarded_positions_self_proximity = {}
+        discarded_positions_lateral_edge = {}
+        bead_considered_axial_edge = {}
+        bead_considered_intensity = {}
 
-        # Validating nyquist
-        try:
-            if pixel_size[1] > (2 * self.get_metadata_values("theoretical_fwhm_lateral_res")):
-                module_logger.warning("Nyquist criterion is not fulfilled in the lateral direction")
-            if pixel_size[0] > (2 * self.get_metadata_values("theoretical_fwhm_axial_res")):
-                module_logger.warning("Nyquist criterion is not fulfilled in the axial direction")
-        except (TypeError, IndexError) as e:
-            module_logger.error("Could not validate Nyquist sampling criterion")
+        # Prepare data
+        for label, image in self.input.psf_beads_images.items():
+            images[label] = image.data[0, ...]
 
-        (
-            bead_images,
-            positions,
-            positions_edge_discarded,
-            positions_proximity_discarded,
-            positions_intensity_discarded,
-        ) = self._find_beads(
-            image=image_data,
-            min_distance=min_bead_distance,
-            sigma=self.get_metadata_values("sigma"),
-        )
+            voxel_sizes_micron[label] = (
+                image.voxel_size_z,
+                image.voxel_size_y,
+                image.voxel_size_x
+            )
+            saturated_channels[label] = []
 
-        for i, bead_image in enumerate(bead_images):
+            # Check image shape
+            logger.info(f"Checking image {label} shape...")
+            if len(image.data.shape) != 5:
+                logger.error(f"Image {label} must be 5D")
+                return False
+            if image.data.shape[0] != 1:
+                logger.warning(
+                    f"Image {label} must be in TZYXC order and single time-point. Using first time-point."
+                )
+
+            # Check image saturation
+            logger.info(f"Checking image {label} saturation...")
+            for c in range(image.data.shape[-1]):
+                if is_saturated(
+                    channel=image.data[..., c],
+                    threshold=self.input.saturation_threshold,
+                    detector_bit_depth=self.input.bit_depth,
+                ):
+                    logger.error(f"Image {label}: channel {c} is saturated")
+                    saturated_channels[label].append(c)
+
+        if any(len(saturated_channels[name]) for name in saturated_channels):
+            logger.error(f"Channels {saturated_channels} are saturated")
+            raise SaturationError(f"Channels {saturated_channels} are saturated")
+
+        # Main image loop
+        for image_label, image in images.items():
+            logger.info(f"Processing image {image_label}...")
+            image_output = _process_image(
+                image=image,
+                sigma=(
+                self.input.sigma_z,
+                self.input.sigma_y,
+                self.input.sigma_x
+                ),
+                min_bead_distance=min_bead_distance,
+                voxel_size_micron=voxel_sizes_micron[image_label],
+            )
+            logger.info(f"Image {image_label} processed:"
+                        f"    {len(image_output['bead_positions'])} beads found"
+                        f"    {len(image_output['discarded_positions_self_proximity'])} beads discarded for being to close to each other"
+                        f"    {len(image_output['discarded_positions_lateral_edge'])} beads discarded for being to close to the edge"
+                        f"    {len(image_output['discarded_positions_axial_edge'])} beads considered as to close to the top or bottom of the image"
+                        )
+
+            bead_images[image_label] = image_output["bead_images"]
+            bead_positions[image_label] = image_output["bead_positions"]
+            bead_profiles[image_label] = image_output["bead_profiles"]
+            bead_fitted_profiles[image_label] = image_output["bead_fitted_profiles"]
+            bead_rsss[image_label] = image_output["bead_rsss"]
+            bead_fwhms[image_label] = image_output["bead_fwhms"]
+            bead_fwhms_micron[image_label] = image_output["bead_fwhms_micron"]
+            discarded_positions_self_proximity[image_label] = image_output["discarded_positions_self_proximity"]
+            discarded_positions_self_proximity[image_label] = image_output["discarded_positions_lateral_edge"]
+            bead_considered_axial_edge[image_label] = image_output["discarded_positions_axial_edge"]
+
+        # Validate bead intensity
+        bead_considered_intensity = _calculate_bead_intensity_outliers(bead_images, self.input.intensity_zscore_threshold)
+
+            val_pos_qc_beads = []
+                val_pos_qc_positions = []
+                for bead, pos in zip(val_pos_beads, val_pos_pos):
+                    try:
+                        opr, fpr, fwhm = self._analyze_bead(bead)
+                        val_pos_qc_beads.append(bead)
+                        val_pos_qc_positions.append(pos)
+                    except SaturationError as e:
+                        logger.warning(f"Discarding bead {pos} due to saturation: {e}")
+                        bead_considered_intensity[image_label].append(pos)
+
+                bead_images[image_label].append(beads)
+                valid_positions[image_label].append(val_pos)
+                discarded_positions_self_proximity[image_label].append(disc_prox_pos)
+                discarded_positions_lateral_edge[image_label].append(disc_edge_pos)
+
+                # Generate profiles and measure FWHM
+                raw_profiles = []
+                fitted_profiles = []
+                fwhm_values = []
+                for bead in bead_images:
+                    opr, fpr, fwhm = self._analyze_bead(bead)
+                    raw_profiles.append(opr)
+                    fitted_profiles.append(fpr)
+                    fwhm = tuple(f * ps for f, ps in zip(fwhm, pixel_size))
+                    fwhm_values.append(fwhm)
+
+                properties_df = DataFrame()
+                properties_df["bead_nr"] = range(len(bead_images))
+                properties_df["max_intensity"] = [e.max() for e in bead_images]
+                properties_df["min_intensity"] = [e.min() for e in bead_images]
+                properties_df["z_centroid"] = [e[0] for e in positions]
+                properties_df["y_centroid"] = [e[1] for e in positions]
+                properties_df["x_centroid"] = [e[2] for e in positions]
+                properties_df["centroid_units"] = "PIXEL"
+                properties_df["z_fwhm"] = [e[0] for e in fwhm_values]
+                properties_df["y_fwhm"] = [e[1] for e in fwhm_values]
+                properties_df["x_fwhm"] = [e[2] for e in fwhm_values]
+                properties_df["fwhm_units"] = pixel_size_units
+
+                profiles_z_df = DataFrame()
+                profiles_y_df = DataFrame()
+                profiles_x_df = DataFrame()
+
+                for i, (raw_profile, fitted_profile) in enumerate(zip(raw_profiles, fitted_profiles)):
+                    profiles_z_df[f"raw_z_profile_bead_{i:02d}"] = raw_profile[0]
+                    profiles_z_df[f"fitted_z_profile_bead_{i:02d}"] = fitted_profile[0]
+                    profiles_y_df[f"raw_y_profile_bead_{i:02d}"] = raw_profile[1]
+                    profiles_y_df[f"fitted_y_profile_bead_{i:02d}"] = fitted_profile[1]
+                    profiles_x_df[f"raw_x_profile_bead_{i:02d}"] = raw_profile[2]
+                    profiles_x_df[f"fitted_x_profile_bead_{i:02d}"] = fitted_profile[2]
+
+                    psf_properties
+                    psf_z_profiles
+                    psf_y_profiles
+                    psf_x_profiles
+
+        for i, bead in enumerate(beads):
             self.output.append(
                 model.Image(
                     name=f"bead_nr{i:02d}",
                     description=f"PSF bead crop for bead nr {i}",
-                    data=np.expand_dims(bead_image, axis=(1, 2)),
+                    data=np.expand_dims(bead, axis=(1, 2)),
                 )
             )
 
@@ -287,7 +495,7 @@ class PSFBeadsAnalysis(AnalysisMixin):
                 stroke_color=Color((255, 0, 0, 0.6)),
                 fill_color=Color((255, 50, 50, 0.1)),
             )
-            for pos in positions_edge_discarded
+            for pos in disc_edge_pos
         ]
         self.output.append(
             model.Roi(
@@ -305,7 +513,7 @@ class PSFBeadsAnalysis(AnalysisMixin):
                 stroke_color=Color((255, 0, 0, 0.6)),
                 fill_color=Color((255, 50, 50, 0.1)),
             )
-            for pos in positions_proximity_discarded
+            for pos in disc_prox_pos
         ]
         self.output.append(
             model.Roi(
@@ -334,29 +542,6 @@ class PSFBeadsAnalysis(AnalysisMixin):
             )
         )
 
-        # Generate profiles and measure FWHM
-        raw_profiles = []
-        fitted_profiles = []
-        fwhm_values = []
-        for bead_image in bead_images:
-            opr, fpr, fwhm = self._analyze_bead(bead_image)
-            raw_profiles.append(opr)
-            fitted_profiles.append(fpr)
-            fwhm = tuple(f * ps for f, ps in zip(fwhm, pixel_size))
-            fwhm_values.append(fwhm)
-
-        properties_df = DataFrame()
-        properties_df["bead_nr"] = range(len(bead_images))
-        properties_df["max_intensity"] = [e.max() for e in bead_images]
-        properties_df["min_intensity"] = [e.min() for e in bead_images]
-        properties_df["z_centroid"] = [e[0] for e in positions]
-        properties_df["y_centroid"] = [e[1] for e in positions]
-        properties_df["x_centroid"] = [e[2] for e in positions]
-        properties_df["centroid_units"] = "PIXEL"
-        properties_df["z_fwhm"] = [e[0] for e in fwhm_values]
-        properties_df["y_fwhm"] = [e[1] for e in fwhm_values]
-        properties_df["x_fwhm"] = [e[2] for e in fwhm_values]
-        properties_df["fwhm_units"] = pixel_size_units
 
         self.output.append(
             model.Table(
@@ -366,17 +551,6 @@ class PSFBeadsAnalysis(AnalysisMixin):
             )
         )
 
-        profiles_z_df = DataFrame()
-        profiles_y_df = DataFrame()
-        profiles_x_df = DataFrame()
-
-        for i, (raw_profile, fitted_profile) in enumerate(zip(raw_profiles, fitted_profiles)):
-            profiles_z_df[f"raw_z_profile_bead_{i:02d}"] = raw_profile[0]
-            profiles_z_df[f"fitted_z_profile_bead_{i:02d}"] = fitted_profile[0]
-            profiles_y_df[f"raw_y_profile_bead_{i:02d}"] = raw_profile[1]
-            profiles_y_df[f"fitted_y_profile_bead_{i:02d}"] = fitted_profile[1]
-            profiles_x_df[f"raw_x_profile_bead_{i:02d}"] = raw_profile[2]
-            profiles_x_df[f"fitted_x_profile_bead_{i:02d}"] = fitted_profile[2]
 
         self.output.append(
             model.Table(
