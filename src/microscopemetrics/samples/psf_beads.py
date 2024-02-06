@@ -464,7 +464,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
 
         ## Populate output
         output_bead_crops = {}
-        bead_properties = pd.DataFrame()
+        bead_properties = []
 
         for image_label, input_image in self.input.psf_beads_images.items():
             ## Image linked information
@@ -482,7 +482,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     )
 
                     # Append data to beads table
-                    bead_properties = bead_properties.append(
+                    bead_properties.append(
                         {
                             "image_name": input_image.name,
                             "channel_nr": ch,
@@ -508,7 +508,6 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                             "y_fwhm_micron": bead_fwhms_micron[image_label][ch][i][1],
                             "x_fwhm_micron": bead_fwhms_micron[image_label][ch][i][2],
                             "considered_axial_edge": bead_considered_axial_edge[image_label][ch][i],
-
                         }
                     )
 
