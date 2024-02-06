@@ -2,6 +2,7 @@ from typing import Any, Dict, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 from pydantic.color import Color
 from scipy.optimize import curve_fit, fsolve
@@ -47,8 +48,9 @@ def _fit_airy(profile, guess=None):
     return fitted_profile, rss, fwhm
 
 
-def _calculate_bead_intensity_outliers(bead_images: Dict, zscore_threshold: float) -> Dict:
+def _calculate_bead_intensity_outliers(bead_images: Dict, zscore_threshold: float) -> Tuple[Dict, Dict]:
     bead_max_intensities = []
+    bead_zscores = {}
     bead_considered_intensity_outlier = {}
     for _, image_beads in bead_images.items():
         for ch_beads in image_beads:
@@ -62,14 +64,17 @@ def _calculate_bead_intensity_outliers(bead_images: Dict, zscore_threshold: floa
         bead_considered_intensity_outlier[label] = []
         for ch_beads in image_beads:
             ch_is_outlier = []
+            ch_zscores = []
             for bead in ch_beads:
-                if (abs(bead.max() - mean) / std) > zscore_threshold:
+                zscore = abs(bead.max() - mean) / std
+                ch_zscores.append(zscore)
+                if zscore > zscore_threshold:
                     ch_is_outlier.append(True)
                 else:
                     ch_is_outlier.append(False)
             bead_considered_intensity_outlier[label].append(ch_is_outlier)
 
-    return bead_considered_intensity_outlier
+    return bead_zscores, bead_considered_intensity_outlier
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float]):
@@ -312,9 +317,54 @@ def _process_image(
 class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
     """Analysis of PSF beads images to extract resolution information."""
 
-    def estimate_min_bead_distance(self):
+    def _estimate_min_bead_distance(self):
         # TODO: get the resolution somewhere or pass it as a metadata
         return 3 * self.input.min_lateral_distance_factor
+
+    def _add_centroids_roi(self, positions, root_name, color, stroke_width, filter=None):
+        rois = {}
+        for image_label, input_image in self.input.psf_beads_images.items():
+            for ch in range(input_image.data.shape[-1]):
+                shapes = {}
+                if filter is None:
+                    for i, pos in enumerate(positions[image_label][ch]):
+                        shapes[f"{i:02d}"] = mm_schema.Point(
+                            z=pos[0],
+                            y=pos[1],
+                            x=pos[2],
+                            c=ch,
+                            stroke_color=color,
+                            stroke_width=stroke_width,
+                        )
+                    label = f"{root_name}_{image_label}_ch_{ch:02d}"
+                    rois[label] = mm_schema.RoiMassCenters(
+                        label=label,
+                        description=f"{root_name} channel {ch} in image {image_label}",
+                        image=image_label,
+                        shapes=shapes,
+                    )
+                else:
+                    for i, (pos, is_filtered) in enumerate(
+                        zip(positions[image_label][ch], filter[image_label][ch])
+                    ):
+                        if is_filtered:
+                            shapes[f"{i:02d}"] = mm_schema.Point(
+                                z=pos[0],
+                                y=pos[1],
+                                x=pos[2],
+                                c=ch,
+                                stroke_color=color,
+                                stroke_width=stroke_width,
+                            )
+                    label = f"{root_name}_{image_label}_ch_{ch:02d}"
+                    rois[label] = mm_schema.RoiMassCenters(
+                        label=label,
+                        description=f"{root_name} channel {ch} in image {image_label}",
+                        image=image_label,
+                        shapes=shapes,
+                    )
+
+        return rois
 
     def run(self) -> bool:
         self.validate_requirements()
@@ -323,7 +373,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         # Containers for input data and input parameters
         images = {}
         voxel_sizes_micron = {}
-        min_bead_distance = self.estimate_min_bead_distance()
+        min_bead_distance = self._estimate_min_bead_distance()
         intensity_zscore_threshold = self.input.intensity_zscore_threshold
         snr_threshold = self.input.snr_threshold
         fitting_rss_threshold = self.input.fitting_rss_threshold
@@ -408,12 +458,14 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             bead_considered_axial_edge[image_label] = image_output["bead_considered_axial_edge"]
 
         # Validate bead intensity
-        bead_considered_intensity_outlier = _calculate_bead_intensity_outliers(
+        bead_zscores, bead_considered_intensity_outlier = _calculate_bead_intensity_outliers(
             bead_images=bead_images, zscore_threshold=intensity_zscore_threshold
         )
 
         ## Populate output
         output_bead_crops = {}
+        bead_properties = pd.DataFrame()
+
         for image_label, input_image in self.input.psf_beads_images.items():
             ## Image linked information
             for ch in range(input_image.data.shape[-1]):
@@ -429,104 +481,76 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                         source_image_url=self.input.psf_beads_images[image_label].image_url,
                     )
 
-                # Append data to beads table
+                    # Append data to beads table
+                    bead_properties = bead_properties.append(
+                        {
+                            "image_name": input_image.name,
+                            "channel_nr": ch,
+                            "bead_nr": i,
+                            "intensity_max": bead.max(),
+                            "min_intensity_min": bead.min(),
+                            "intensity_std": bead.std(),
+                            "intensity_zscore": bead_zscores[image_label][ch][i],
+                            "considered_intensity_outlier": bead_considered_intensity_outlier[image_label][ch][i],
+                            "z_centroid": bead_positions[image_label][ch][i][0],
+                            "y_centroid": bead_positions[image_label][ch][i][1],
+                            "x_centroid": bead_positions[image_label][ch][i][2],
+                            "z_fit_rss": bead_rsss[image_label][ch][i],
+                            "y_fit_rss": bead_rsss[image_label][ch][i],
+                            "x_fit_rss": bead_rsss[image_label][ch][i],
+                            "z_fwhm": bead_fwhms[image_label][ch][i][0],
+                            "y_fwhm": bead_fwhms[image_label][ch][i][1],
+                            "x_fwhm": bead_fwhms[image_label][ch][i][2],
+                            "fwhm_lateral_asymmetry_ratio":
+                                max(bead_fwhms[image_label][ch][i][1], bead_fwhms[image_label][ch][i][2]) /
+                                min(bead_fwhms[image_label][ch][i][1], bead_fwhms[image_label][ch][i][2]),
+                            "z_fwhm_micron": bead_fwhms_micron[image_label][ch][i][0],
+                            "y_fwhm_micron": bead_fwhms_micron[image_label][ch][i][1],
+                            "x_fwhm_micron": bead_fwhms_micron[image_label][ch][i][2],
+                            "considered_axial_edge": bead_considered_axial_edge[image_label][ch][i],
 
-                # Beam positions
-                bead_positions_shapes = {}
-                for i, pos in enumerate(bead_positions[image_label][ch]):
-                    bead_positions_shapes[f"{i:02d}"] = mm_schema.Point(
-                        z=pos[0],
-                        y=pos[1],
-                        x=pos[2],
-                        c=ch,
-                        stroke_color=Color((0, 255, 0, 100)),
-                        stroke_width=8,
+                        }
                     )
-                self.output.analyzed_bead_centroids = mm_schema.RoiMassCenters(
-                    label=f"analyzed_bead_centroids_{image_label}_ch_{ch:02d}",
-                    description=f"Centroids of the beads that have been analyzed for channel {ch} in image {image_label}",
-                    image=image_label,
-                    shapes=bead_positions_shapes,
-                )
 
-                discarded_lateral_edge_shapes = {}
-                for i, pos in enumerate(discarded_positions_lateral_edge[image_label][ch]):
-                    discarded_lateral_edge_shapes[f"{i:02d}"] = mm_schema.Point(
-                        z=pos[0],
-                        y=pos[1],
-                        x=pos[2],
-                        c=ch,
-                        stroke_color=Color((255, 0, 0, 100)),
-                        stroke_width=4,
-                    )
-                self.output.discarded_bead_centroids_lateral_edge = mm_schema.RoiMassCenters(
-                    label=f"discarded_bead_centroids_lateral_edge_{image_label}_ch_{ch:02d}",
-                    description=f"Centroids of the beads that have been discarded for being too close to the edge for channel {ch} in image {image_label}",
-                    image=image_label,
-                    shapes=discarded_lateral_edge_shapes,
-                )
+        self.output.analyzed_bead_crops = output_bead_crops
 
-                discarded_self_proximity_shapes = {}
-                for i, pos in enumerate(discarded_positions_self_proximity[image_label][ch]):
-                    discarded_self_proximity_shapes[f"{i:02d}"] = mm_schema.Point(
-                        z=pos[0],
-                        y=pos[1],
-                        x=pos[2],
-                        c=ch,
-                        stroke_color=Color((255, 0, 0, 100)),
-                        stroke_width=4,
-                    )
-                self.output.discarded_bead_centroids_self_proximity = mm_schema.RoiMassCenters(
-                    label=f"discarded_bead_centroids_self_proximity_{image_label}_ch_{ch:02d}",
-                    description=f"Centroids of the beads that have been discarded for being too close to each other for channel {ch} in image {image_label}",
-                    image=image_label,
-                    shapes=discarded_self_proximity_shapes,
-                )
+        self.output.analyzed_bead_centroids = self._add_centroids_roi(
+            positions=bead_positions,
+            root_name="analyzed_bead_centroids",
+            color=Color((0, 255, 0, 100)),
+            stroke_width=8,
+        )
 
-                considered_axial_edge_shapes = {}
-                for i, (is_axial_edge, pos) in enumerate(
-                    zip(
-                        bead_considered_axial_edge[image_label][ch], bead_positions[image_label][ch]
-                    )
-                ):
-                    if is_axial_edge:
-                        considered_axial_edge_shapes[f"{i:02d}"] = mm_schema.Point(
-                            z=pos[0],
-                            y=pos[1],
-                            x=pos[2],
-                            c=ch,
-                            stroke_color=Color((0, 0, 255, 100)),
-                            stroke_width=4,
-                        )
-                self.output.discarded_bead_centroids_axial_edge = mm_schema.RoiMassCenters(
-                    label=f"discarded_bead_centroids_axial_edge_{image_label}_ch_{ch:02d}",
-                    description=f"Centroids of the beads that have been discarded for being too close to the edge for channel {ch} in image {image_label}",
-                    image=image_label,
-                    shapes=considered_axial_edge_shapes,
-                )
+        self.output.discarded_bead_centroids_lateral_edge = self._add_centroids_roi(
+            positions=discarded_positions_lateral_edge,
+            root_name="discarded_bead_centroids_lateral_edge",
+            color=Color((255, 0, 0, 100)),
+            stroke_width=4,
+        )
 
-                considered_intensity_outlier_shapes = {}
-                for i, (is_outlier, pos) in enumerate(
-                    zip(
-                        bead_considered_intensity_outlier[image_label][ch],
-                        bead_positions[image_label][ch],
-                    )
-                ):
-                    if is_outlier:
-                        considered_intensity_outlier_shapes[f"{i:02d}"] = mm_schema.Point(
-                            z=pos[0],
-                            y=pos[1],
-                            x=pos[2],
-                            c=ch,
-                            stroke_color=Color((0, 0, 255, 100)),
-                            stroke_width=4,
-                        )
-                self.output.discarded_bead_centroids_intensity_outlier = mm_schema.RoiMassCenters(
-                    label=f"discarded_bead_centroids_intensity_outlier_{image_label}_ch_{ch:02d}",
-                    description=f"Centroids of the beads that have been discarded for being too intense or too weak for channel {ch} in image {image_label}",
-                    image=image_label,
-                    shapes=considered_intensity_outlier_shapes,
-                )
+        self.output.discarded_bead_centroids_self_proximity = self._add_centroids_roi(
+            positions=discarded_positions_self_proximity,
+            root_name="discarded_bead_centroids_self_proximity",
+            color=Color((255, 0, 0, 100)),
+            stroke_width=4,
+        )
+
+        self.output.considered_bead_centroids_axial_edge = self._add_centroids_roi(
+            positions=bead_positions,
+            root_name="considered_bead_centroids_axial_edge",
+            color=Color((0, 0, 255, 100)),
+            stroke_width=4,
+            filter=bead_considered_axial_edge,
+        )
+
+        self.output.considered_bead_centroids_intensity_outlier = self._add_centroids_roi(
+            positions=bead_positions,
+            root_name="considered_bead_centroids_intensity_outlier",
+            color=Color((0, 0, 255, 100)),
+            stroke_width=4,
+            filter=bead_considered_intensity_outlier,
+        )
+
 
         """
       discarded_bead_centroids_fit_quality:
