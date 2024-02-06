@@ -10,7 +10,12 @@ from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_byref
+from microscopemetrics.samples import (
+    AnalysisMixin,
+    dict_to_table_inlined,
+    logger,
+    numpy_to_image_byref,
+)
 from microscopemetrics.utilities.utilities import airy_fun, gaussian_fun, is_saturated
 
 
@@ -48,24 +53,26 @@ def _fit_airy(profile, guess=None):
     return fitted_profile, rss, fwhm
 
 
-def _calculate_bead_intensity_outliers(bead_images: Dict, zscore_threshold: float) -> Tuple[Dict, Dict]:
+def _calculate_bead_intensity_outliers(
+    bead_crops: Dict, zscore_threshold: float
+) -> Tuple[Dict, Dict]:
     bead_max_intensities = []
     bead_zscores = {}
     bead_considered_intensity_outlier = {}
-    for _, image_beads in bead_images.items():
-        for ch_beads in image_beads:
-            for bead in ch_beads:
+    for _, im_bead_crops in bead_crops.items():
+        for ch_bead_crops in im_bead_crops:
+            for bead in ch_bead_crops:
                 bead_max_intensities.append(bead.max())
 
     mean = np.mean(bead_max_intensities)
     std = np.std(bead_max_intensities)
 
-    for label, image_beads in bead_images.items():
+    for label, im_bead_crops in bead_crops.items():
         bead_considered_intensity_outlier[label] = []
-        for ch_beads in image_beads:
+        for ch_bead_crops in im_bead_crops:
             ch_is_outlier = []
             ch_zscores = []
-            for bead in ch_beads:
+            for bead in ch_bead_crops:
                 zscore = abs(bead.max() - mean) / std
                 ch_zscores.append(zscore)
                 if zscore > zscore_threshold:
@@ -321,12 +328,14 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         # TODO: get the resolution somewhere or pass it as a metadata
         return 3 * self.input.min_lateral_distance_factor
 
-    def _add_centroids_roi(self, positions, root_name, color, stroke_width, filter=None):
+    def _generate_centroids_roi(
+        self, positions, root_name, color, stroke_width, positions_filter=None
+    ):
         rois = {}
         for image_label, input_image in self.input.psf_beads_images.items():
             for ch in range(input_image.data.shape[-1]):
                 shapes = {}
-                if filter is None:
+                if positions_filter is None:
                     for i, pos in enumerate(positions[image_label][ch]):
                         shapes[f"{i:02d}"] = mm_schema.Point(
                             z=pos[0],
@@ -345,7 +354,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     )
                 else:
                     for i, (pos, is_filtered) in enumerate(
-                        zip(positions[image_label][ch], filter[image_label][ch])
+                        zip(positions[image_label][ch], positions_filter[image_label][ch])
                     ):
                         if is_filtered:
                             shapes[f"{i:02d}"] = mm_schema.Point(
@@ -366,6 +375,49 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
 
         return rois
 
+    # def _generate_key_values(self, bead_properties_df):
+    #     key_values = {
+    #         "nr_of_beads_analyzed": len(bead_properties_df),
+    #         "nr_of_beads_discarded_lateral_edge": len(
+    #             bead_properties_df[bead_properties_df["considered_axial_edge"] == True]
+    #         ),
+    #         "nr_of_beads_discarded_axial_edge": len(
+    #             bead_properties_df[bead_properties_df["considered_axial_edge"] == True]
+    #         ),
+    #         "nr_of_beads_discarded_self_proximity
+    #         "nr_of_beads_discarded_cluster
+    #         "nr_of_beads_discarded_fit_quality
+    #         "fit_quality_z_mean
+    #         "fit_quality_z_median
+    #         "fit_quality_z_stdev
+    #         "fit_quality_y_mean
+    #         "fit_quality_y_median
+    #         "fit_quality_y_stdev
+    #         "fit_quality_x_mean
+    #         "fit_quality_x_median
+    #         "fit_quality_x_stdev
+    #         "resolution_mean_fwhm_z_pixels
+    #         "resolution_median_fwhm_z_pixels
+    #         "resolution_stdev_fwhm_z_pixels
+    #         "resolution_mean_fwhm_y_pixels
+    #         "resolution_median_fwhm_y_pixels
+    #         "resolution_stdev_fwhm_y_pixels
+    #         "resolution_mean_fwhm_x_pixels
+    #         "resolution_median_fwhm_x_pixels
+    #         "resolution_stdev_fwhm_x_pixels
+    #         "resolution_mean_fwhm_z_microns
+    #         "resolution_median_fwhm_z_microns
+    #         "resolution_stdev_fwhm_z_microns
+    #         "resolution_mean_fwhm_y_microns
+    #         "resolution_median_fwhm_y_microns
+    #         "resolution_stdev_fwhm_y_microns
+    #         "resolution_mean_fwhm_x_microns
+    #         "resolution_median_fwhm_x_microns
+    #         "resolution_stdev_fwhm_x_microns
+    #         "resolution_mean_fwhm_lateral_asymmetry_ratio
+    #         "resolution_median_fwhm_lateral_asymmetry_ratio
+    #         "resolution_stdev_fwhm_lateral_asymmetry_ratio
+
     def run(self) -> bool:
         self.validate_requirements()
         # TODO: Implement Nyquist validation??
@@ -380,7 +432,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
 
         # Containers for output data
         saturated_channels = {}
-        bead_images = {}
+        bead_crops = {}
         bead_positions = {}
         bead_profiles = {}
         bead_fitted_profiles = {}
@@ -442,7 +494,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                 f"    {len(image_output['discarded_positions_axial_edge'])} beads considered as to close to the top or bottom of the image"
             )
 
-            bead_images[image_label] = image_output["bead_images"]
+            bead_crops[image_label] = image_output["bead_images"]
             bead_positions[image_label] = image_output["bead_positions"]
             bead_profiles[image_label] = image_output["bead_profiles"]
             bead_fitted_profiles[image_label] = image_output["bead_fitted_profiles"]
@@ -459,19 +511,46 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
 
         # Validate bead intensity
         bead_zscores, bead_considered_intensity_outlier = _calculate_bead_intensity_outliers(
-            bead_images=bead_images, zscore_threshold=intensity_zscore_threshold
+            bead_crops=bead_crops, zscore_threshold=intensity_zscore_threshold
         )
 
         ## Populate output
         output_bead_crops = {}
-        bead_properties = []
+        bead_properties = {
+            "image_label": [],
+            "image_name": [],
+            "channel_nr": [],
+            "bead_nr": [],
+            "intensity_max": [],
+            "min_intensity_min": [],
+            "intensity_std": [],
+            "intensity_zscore": [],
+            "considered_intensity_outlier": [],
+            "z_centroid": [],
+            "y_centroid": [],
+            "x_centroid": [],
+            "z_fit_rss": [],
+            "y_fit_rss": [],
+            "x_fit_rss": [],
+            "considered_bad_z_fit": [],
+            "considered_bad_y_fit": [],
+            "considered_bad_x_fit": [],
+            "z_fwhm": [],
+            "y_fwhm": [],
+            "x_fwhm": [],
+            "fwhm_lateral_asymmetry_ratio": [],
+            "z_fwhm_micron": [],
+            "y_fwhm_micron": [],
+            "x_fwhm_micron": [],
+            "considered_axial_edge": [],
+        }
 
         for image_label, input_image in self.input.psf_beads_images.items():
             ## Image linked information
             for ch in range(input_image.data.shape[-1]):
                 ## Channel linked information
                 # Bead crops
-                for i, bead in enumerate(bead_images[image_label][ch]):
+                for i, bead in enumerate(bead_crops[image_label][ch]):
                     output_bead_crops[
                         f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}"
                     ] = numpy_to_image_byref(
@@ -482,74 +561,87 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     )
 
                     # Append data to beads table
-                    bead_properties.append(
-                        {
-                            "image_name": input_image.name,
-                            "channel_nr": ch,
-                            "bead_nr": i,
-                            "intensity_max": bead.max(),
-                            "min_intensity_min": bead.min(),
-                            "intensity_std": bead.std(),
-                            "intensity_zscore": bead_zscores[image_label][ch][i],
-                            "considered_intensity_outlier": bead_considered_intensity_outlier[image_label][ch][i],
-                            "z_centroid": bead_positions[image_label][ch][i][0],
-                            "y_centroid": bead_positions[image_label][ch][i][1],
-                            "x_centroid": bead_positions[image_label][ch][i][2],
-                            "z_fit_rss": bead_rsss[image_label][ch][i],
-                            "y_fit_rss": bead_rsss[image_label][ch][i],
-                            "x_fit_rss": bead_rsss[image_label][ch][i],
-                            "z_fwhm": bead_fwhms[image_label][ch][i][0],
-                            "y_fwhm": bead_fwhms[image_label][ch][i][1],
-                            "x_fwhm": bead_fwhms[image_label][ch][i][2],
-                            "fwhm_lateral_asymmetry_ratio":
-                                max(bead_fwhms[image_label][ch][i][1], bead_fwhms[image_label][ch][i][2]) /
-                                min(bead_fwhms[image_label][ch][i][1], bead_fwhms[image_label][ch][i][2]),
-                            "z_fwhm_micron": bead_fwhms_micron[image_label][ch][i][0],
-                            "y_fwhm_micron": bead_fwhms_micron[image_label][ch][i][1],
-                            "x_fwhm_micron": bead_fwhms_micron[image_label][ch][i][2],
-                            "considered_axial_edge": bead_considered_axial_edge[image_label][ch][i],
-                        }
+                    bead_properties["image_label"] = image_label
+                    bead_properties["image_name"] = input_image.name
+                    bead_properties["channel_nr"] = ch
+                    bead_properties["bead_nr"] = i
+                    bead_properties["intensity_max"] = bead.max()
+                    bead_properties["min_intensity_min"] = bead.min()
+                    bead_properties["intensity_std"] = bead.std()
+                    bead_properties["intensity_zscore"] = bead_zscores[image_label][ch][i]
+                    bead_properties[
+                        "considered_intensity_outlier"
+                    ] = bead_considered_intensity_outlier[image_label][ch][i]
+                    bead_properties["z_centroid"] = bead_positions[image_label][ch][i][0]
+                    bead_properties["y_centroid"] = bead_positions[image_label][ch][i][1]
+                    bead_properties["x_centroid"] = bead_positions[image_label][ch][i][2]
+                    bead_properties["z_fit_rss"] = bead_rsss[image_label][ch][i]
+                    bead_properties["y_fit_rss"] = bead_rsss[image_label][ch][i]
+                    bead_properties["x_fit_rss"] = bead_rsss[image_label][ch][i]
+                    bead_properties["considered_bad_z_fit"] = (
+                        bead_rsss[image_label][ch][i][0] > fitting_rss_threshold
                     )
+                    bead_properties["considered_bad_y_fit"] = (
+                        bead_rsss[image_label][ch][i][1] > fitting_rss_threshold
+                    )
+                    bead_properties["considered_bad_x_fit"] = (
+                        bead_rsss[image_label][ch][i][2] > fitting_rss_threshold
+                    )
+                    bead_properties["z_fwhm"] = bead_fwhms[image_label][ch][i][0]
+                    bead_properties["y_fwhm"] = bead_fwhms[image_label][ch][i][1]
+                    bead_properties["x_fwhm"] = bead_fwhms[image_label][ch][i][2]
+                    bead_properties["fwhm_lateral_asymmetry_ratio"] = max(
+                        bead_fwhms[image_label][ch][i][1], bead_fwhms[image_label][ch][i][2]
+                    ) / min(bead_fwhms[image_label][ch][i][1], bead_fwhms[image_label][ch][i][2])
+                    bead_properties["z_fwhm_micron"] = (bead_fwhms_micron[image_label][ch][i][0],)
+                    bead_properties["y_fwhm_micron"] = (bead_fwhms_micron[image_label][ch][i][1],)
+                    bead_properties["x_fwhm_micron"] = (bead_fwhms_micron[image_label][ch][i][2],)
+                    bead_properties["considered_axial_edge"] = (
+                        bead_considered_axial_edge[image_label][ch][i],
+                    )
+
+        self.output.bead_properties = dict_to_table_inlined(bead_properties)
+
+        bead_properties_df = pd.DataFrame(bead_properties)
 
         self.output.analyzed_bead_crops = output_bead_crops
 
-        self.output.analyzed_bead_centroids = self._add_centroids_roi(
+        self.output.analyzed_bead_centroids = self._generate_centroids_roi(
             positions=bead_positions,
             root_name="analyzed_bead_centroids",
             color=Color((0, 255, 0, 100)),
             stroke_width=8,
         )
 
-        self.output.discarded_bead_centroids_lateral_edge = self._add_centroids_roi(
+        self.output.discarded_bead_centroids_lateral_edge = self._generate_centroids_roi(
             positions=discarded_positions_lateral_edge,
             root_name="discarded_bead_centroids_lateral_edge",
             color=Color((255, 0, 0, 100)),
             stroke_width=4,
         )
 
-        self.output.discarded_bead_centroids_self_proximity = self._add_centroids_roi(
+        self.output.discarded_bead_centroids_self_proximity = self._generate_centroids_roi(
             positions=discarded_positions_self_proximity,
             root_name="discarded_bead_centroids_self_proximity",
             color=Color((255, 0, 0, 100)),
             stroke_width=4,
         )
 
-        self.output.considered_bead_centroids_axial_edge = self._add_centroids_roi(
+        self.output.considered_bead_centroids_axial_edge = self._generate_centroids_roi(
             positions=bead_positions,
             root_name="considered_bead_centroids_axial_edge",
             color=Color((0, 0, 255, 100)),
             stroke_width=4,
-            filter=bead_considered_axial_edge,
+            positions_filter=bead_considered_axial_edge,
         )
 
-        self.output.considered_bead_centroids_intensity_outlier = self._add_centroids_roi(
+        self.output.considered_bead_centroids_intensity_outlier = self._generate_centroids_roi(
             positions=bead_positions,
             root_name="considered_bead_centroids_intensity_outlier",
             color=Color((0, 0, 255, 100)),
             stroke_width=4,
-            filter=bead_considered_intensity_outlier,
+            positions_filter=bead_considered_intensity_outlier,
         )
-
 
         """
       discarded_bead_centroids_fit_quality:
@@ -566,7 +658,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
           The key measurements of the PSF beads analysis.
         multivalued: False
         inlined: true
-      psf_properties:
+      bead_properties:
         range: TableAsDict
         description: >-
           Properties associated with the analysis of the beads. This properties include:
@@ -587,19 +679,19 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
           resolution_lateral_asymmetry_ratio
         multivalued: false
         inlined: true
-      psf_z_profiles:
+      bead_z_profiles:
         range: TableAsDict
         description: >-
           The intensity profiles along the z axis of the analyzed beads as well as the fits.
         multivalued: false
         inlined: true
-      psf_y_profiles:
+      bead_y_profiles:
         range: TableAsDict
         description: >-
           The intensity profiles along the y axis of the analyzed beads as well as the fits.
         multivalued: false
         inlined: true
-      psf_x_profiles:
+      bead_x_profiles:
         """
 
 
