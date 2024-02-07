@@ -141,7 +141,7 @@ def dict_to_table_inlined(
     name: str = None,
     description: str = None,
 ) -> mm_schema.Table:
-    """Converts a dictionary to an microscope-metrics inlined table"""
+    """Converts a dictionary to a microscope-metrics inlined table"""
     return mm_schema.TableAsDict(
         name=name,
         description=description,
