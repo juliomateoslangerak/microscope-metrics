@@ -4,7 +4,6 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-from pydantic.color import Color
 from scipy.optimize import curve_fit, fsolve
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
@@ -209,7 +208,7 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
     # are close to each other but far from the edge. If an edge bead is
     # removed, the other bead that was close to it will be kept.
     positions_proximity_filtered = peak_local_max(
-        image=channel, threshold_rel=0.2, min_distance=min_distance
+        image=channel, threshold_rel=0.2, min_distance=int(min_distance)
     )
 
     # find beads edge filtered
@@ -403,11 +402,14 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                 if positions_filter is None:
                     for i, pos in enumerate(positions[image_label][ch]):
                         shapes[f"{i:02d}"] = mm_schema.Point(
+                            label=f"{i:02d}",
                             z=pos[0],
                             y=pos[1],
                             x=pos[2],
                             c=ch,
-                            stroke_color=color,
+                            stroke_color=mm_schema.Color(
+                                r=color[0], g=color[1], b=color[2], alpha=color[3]
+                            ),
                             stroke_width=stroke_width,
                         )
                     label = f"{root_name}_{image_label}_ch_{ch:02d}"
@@ -423,11 +425,14 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     ):
                         if is_filtered:
                             shapes[f"{i:02d}"] = mm_schema.Point(
+                                label=f"{i:02d}",
                                 z=pos[0],
                                 y=pos[1],
                                 x=pos[2],
                                 c=ch,
-                                stroke_color=color,
+                                stroke_color=mm_schema.Color(
+                                    r=color[0], g=color[1], b=color[2], alpha=color[3]
+                                ),
                                 stroke_width=stroke_width,
                             )
                     label = f"{root_name}_{image_label}_ch_{ch:02d}"
@@ -517,7 +522,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                 f"    {len(image_output['bead_positions'])} beads found"
                 f"    {len(image_output['discarded_positions_self_proximity'])} beads discarded for being to close to each other"
                 f"    {len(image_output['discarded_positions_lateral_edge'])} beads discarded for being to close to the edge"
-                f"    {len(image_output['discarded_positions_axial_edge'])} beads considered as to close to the top or bottom of the image"
+                f"    {len(image_output['bead_considered_axial_edge'])} beads considered as to close to the top or bottom of the image"
             )
 
             bead_crops[image_label] = image_output["bead_images"]
@@ -624,8 +629,10 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     bead_properties["considered_axial_edge"] = (
                         bead_considered_axial_edge[image_label][ch][i],
                     )
-
-        self.output.bead_properties = dict_to_table_inlined(bead_properties)
+        try:
+            self.output.bead_properties = dict_to_table_inlined(bead_properties)
+        except Exception as e:
+            logger.warning(f"Bead properties could not be generated: {e}")
 
         bead_properties_df = pd.DataFrame(bead_properties)
         self.output.key_values = _generate_key_values(
@@ -639,28 +646,28 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         self.output.analyzed_bead_centroids = self._generate_centroids_roi(
             positions=bead_positions,
             root_name="analyzed_bead_centroids",
-            color=Color((0, 255, 0, 100)),
+            color=(0, 255, 0, 100),
             stroke_width=8,
         )
 
         self.output.discarded_bead_centroids_lateral_edge = self._generate_centroids_roi(
             positions=discarded_positions_lateral_edge,
             root_name="discarded_bead_centroids_lateral_edge",
-            color=Color((255, 0, 0, 100)),
+            color=(255, 0, 0, 100),
             stroke_width=4,
         )
 
         self.output.discarded_bead_centroids_self_proximity = self._generate_centroids_roi(
             positions=discarded_positions_self_proximity,
             root_name="discarded_bead_centroids_self_proximity",
-            color=Color((255, 0, 0, 100)),
+            color=(255, 0, 0, 100),
             stroke_width=4,
         )
 
         self.output.considered_bead_centroids_axial_edge = self._generate_centroids_roi(
             positions=bead_positions,
             root_name="considered_bead_centroids_axial_edge",
-            color=Color((0, 0, 255, 100)),
+            color=(0, 0, 255, 100),
             stroke_width=4,
             positions_filter=bead_considered_axial_edge,
         )
@@ -668,10 +675,12 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         self.output.considered_bead_centroids_intensity_outlier = self._generate_centroids_roi(
             positions=bead_positions,
             root_name="considered_bead_centroids_intensity_outlier",
-            color=Color((0, 0, 255, 100)),
+            color=(0, 0, 255, 100),
             stroke_width=4,
             positions_filter=bead_considered_intensity_outlier,
         )
+
+        self.processed = True
 
         return True
 
