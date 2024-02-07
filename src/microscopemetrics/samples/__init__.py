@@ -142,6 +142,12 @@ def dict_to_table_inlined(
     description: str = None,
 ) -> mm_schema.Table:
     """Converts a dictionary to a microscope-metrics inlined table"""
+    if len(dictionary) == 0:
+        raise ValueError("Input dictionary should not be empty")
+    if any(len(dictionary[key]) == 0 for key in dictionary.keys()):
+        raise ValueError("All columns should have at least one value")
+    if not all(len(dictionary[key]) == len(dictionary[list(dictionary.keys())[0]]) for key in dictionary.keys()):
+        raise ValueError("All columns should have the same length")
     return mm_schema.TableAsDict(
         name=name,
         description=description,
