@@ -48,13 +48,13 @@ def _fit_airy(profile, guess=None):
 
     # Calculate the fit quality
     residuals = profile - fitted_profile
-    rss = np.sum(residuals ** 2)
+    rss = np.sum(residuals**2)
 
     return fitted_profile, rss, fwhm
 
 
 def _calculate_bead_intensity_outliers(
-        bead_crops: Dict, zscore_threshold: float
+    bead_crops: Dict, zscore_threshold: float
 ) -> Tuple[Dict, Dict]:
     bead_max_intensities = []
     bead_zscores = {}
@@ -84,9 +84,9 @@ def _calculate_bead_intensity_outliers(
     return bead_zscores, bead_considered_intensity_outlier
 
 
-def _generate_key_values(bead_properties_df, discarded_positions_self_proximity,
-                         discarded_positions_lateral_edge
-                         ):
+def _generate_key_values(
+    bead_properties_df, discarded_positions_self_proximity, discarded_positions_lateral_edge
+):
     return {
         "nr_of_beads_analyzed": len(bead_properties_df),
         "nr_of_beads_discarded_lateral_edge": sum(
@@ -137,15 +137,15 @@ def _generate_key_values(bead_properties_df, discarded_positions_self_proximity,
         "resolution_mean_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].mean() or None,
         "resolution_median_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].median() or None,
         "resolution_std_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].std() or None,
-        "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df[
-            ["y_fwhm", "x_fwhm"]
-        ].max(axis=1).mean(),
-        "resolution_median_fwhm_lateral_asymmetry_ratio": bead_properties_df[
-            ["y_fwhm", "x_fwhm"]
-        ].max(axis=1).median(),
-        "resolution_std_fwhm_lateral_asymmetry_ratio": bead_properties_df[
-            ["y_fwhm", "x_fwhm"]
-        ].max(axis=1).std()
+        "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df[["y_fwhm", "x_fwhm"]]
+        .max(axis=1)
+        .mean(),
+        "resolution_median_fwhm_lateral_asymmetry_ratio": bead_properties_df[["y_fwhm", "x_fwhm"]]
+        .max(axis=1)
+        .median(),
+        "resolution_std_fwhm_lateral_asymmetry_ratio": bead_properties_df[["y_fwhm", "x_fwhm"]]
+        .max(axis=1)
+        .std(),
     }
 
 
@@ -218,7 +218,7 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
         & (positions_proximity_filtered[:, 2] < channel.shape[2] - min_distance // 2)
         & (positions_proximity_filtered[:, 1] > min_distance // 2)
         & (positions_proximity_filtered[:, 1] < channel.shape[1] - min_distance // 2)
-        ]
+    ]
 
     # Convert arrays to sets for easier comparison
     positions_all_set = set(map(tuple, positions_all))
@@ -247,9 +247,9 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
 
     bead_images = [
         channel[
-        :,
-        (pos[1] - (min_distance // 2)): (pos[1] + (min_distance // 2)),
-        (pos[2] - (min_distance // 2)): (pos[2] + (min_distance // 2)),
+            :,
+            (pos[1] - (min_distance // 2)) : (pos[1] + (min_distance // 2)),
+            (pos[2] - (min_distance // 2)) : (pos[2] + (min_distance // 2)),
         ]
         for pos in valid_positions
     ]
@@ -262,12 +262,12 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
 
 
 def _process_channel(
-        channel: np.ndarray,
-        sigma: Tuple[float, float, float],
-        min_bead_distance: float,
-        snr_threshold: float,
-        fitting_rss_threshold: float,
-        voxel_size_micron: Tuple[float, float, float],
+    channel: np.ndarray,
+    sigma: Tuple[float, float, float],
+    min_bead_distance: float,
+    snr_threshold: float,
+    fitting_rss_threshold: float,
+    voxel_size_micron: Tuple[float, float, float],
 ) -> Tuple:
     (
         beads,
@@ -317,12 +317,12 @@ def _process_channel(
 
 
 def _process_image(
-        image: np.ndarray,
-        sigma: Tuple[float, float, float],
-        min_bead_distance: float,
-        snr_threshold: float,
-        fitting_rss_threshold: float,
-        voxel_size_micron: Tuple[float, float, float],
+    image: np.ndarray,
+    sigma: Tuple[float, float, float],
+    min_bead_distance: float,
+    snr_threshold: float,
+    fitting_rss_threshold: float,
+    voxel_size_micron: Tuple[float, float, float],
 ) -> Dict[str, Any]:
     # Some images (e.g. OMX-3D-SIM) may contain negative values.
     image = np.clip(image, a_min=0, a_max=None)
@@ -394,7 +394,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         return 3 * self.input.min_lateral_distance_factor
 
     def _generate_centroids_roi(
-            self, positions, root_name, color, stroke_width, positions_filter=None
+        self, positions, root_name, color, stroke_width, positions_filter=None
     ):
         rois = {}
         for image_label, input_image in self.input.psf_beads_images.items():
@@ -419,7 +419,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     )
                 else:
                     for i, (pos, is_filtered) in enumerate(
-                            zip(positions[image_label][ch], positions_filter[image_label][ch])
+                        zip(positions[image_label][ch], positions_filter[image_label][ch])
                     ):
                         if is_filtered:
                             shapes[f"{i:02d}"] = mm_schema.Point(
@@ -469,7 +469,11 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         for label, image in self.input.psf_beads_images.items():
             images[label] = image.data[0, ...]
 
-            voxel_sizes_micron[label] = (image.voxel_size_z, image.voxel_size_y, image.voxel_size_x)
+            voxel_sizes_micron[label] = (
+                image.voxel_size_z_micron,
+                image.voxel_size_y_micron,
+                image.voxel_size_x_micron,
+            )
             saturated_channels[label] = []
 
             # Check image shape
@@ -486,9 +490,9 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             logger.info(f"Checking image {label} saturation...")
             for c in range(image.data.shape[-1]):
                 if is_saturated(
-                        channel=image.data[..., c],
-                        threshold=self.input.saturation_threshold,
-                        detector_bit_depth=self.input.bit_depth,
+                    channel=image.data[..., c],
+                    threshold=self.input.saturation_threshold,
+                    detector_bit_depth=self.input.bit_depth,
                 ):
                     logger.error(f"Image {label}: channel {c} is saturated")
                     saturated_channels[label].append(c)
@@ -570,7 +574,6 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         for image_label, input_image in self.input.psf_beads_images.items():
             # Image linked information
             for ch in range(input_image.data.shape[-1]):
-
                 # Channel linked information
                 for i, bead in enumerate(bead_crops[image_label][ch]):
                     output_bead_crops[
@@ -601,13 +604,13 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     bead_properties["y_fit_rss"] = bead_rsss[image_label][ch][i]
                     bead_properties["x_fit_rss"] = bead_rsss[image_label][ch][i]
                     bead_properties["considered_bad_z_fit"] = (
-                            bead_rsss[image_label][ch][i][0] > fitting_rss_threshold
+                        bead_rsss[image_label][ch][i][0] > fitting_rss_threshold
                     )
                     bead_properties["considered_bad_y_fit"] = (
-                            bead_rsss[image_label][ch][i][1] > fitting_rss_threshold
+                        bead_rsss[image_label][ch][i][1] > fitting_rss_threshold
                     )
                     bead_properties["considered_bad_x_fit"] = (
-                            bead_rsss[image_label][ch][i][2] > fitting_rss_threshold
+                        bead_rsss[image_label][ch][i][2] > fitting_rss_threshold
                     )
                     bead_properties["z_fwhm"] = bead_fwhms[image_label][ch][i][0]
                     bead_properties["y_fwhm"] = bead_fwhms[image_label][ch][i][1]
