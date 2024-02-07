@@ -151,7 +151,7 @@ def dict_to_table_inlined(
     return mm_schema.TableAsDict(
         name=name,
         description=description,
-        columns=[{"name": k, "values": dictionary[k]} for k in dictionary.keys()],
+        columns=[{k: {"values": dictionary[k]}} for k in dictionary.keys()],
     )
 
 
