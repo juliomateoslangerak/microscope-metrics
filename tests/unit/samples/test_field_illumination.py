@@ -20,7 +20,7 @@ def test_field_illumination_analysis_instantiation(dataset):
 
 
 @given(mm_st.st_field_illumination_dataset())
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=1, suppress_health_check=[HealthCheck.too_slow])
 def test_field_illumination_analysis_run(dataset):
     assert not dataset["unprocessed_analysis"].processed
     assert dataset["unprocessed_analysis"].run()

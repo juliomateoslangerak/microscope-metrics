@@ -18,6 +18,15 @@ def test_psf_beads_analysis_instantiation(dataset):
     assert dataset["unprocessed_analysis"].microscope
     assert dataset["unprocessed_analysis"].input
 
+
+@given(st_mm.st_psf_beads_dataset())
+@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
+def test_psf_beads_analysis_run(dataset):
+    assert not dataset["unprocessed_analysis"].processed
+    assert dataset["unprocessed_analysis"].run()
+    assert dataset["unprocessed_analysis"].processed
+    assert dataset["unprocessed_analysis"].output
+
 # from tests.test_utilities import get_file
 #
 # from microscopemetrics.samples import psf_beads
