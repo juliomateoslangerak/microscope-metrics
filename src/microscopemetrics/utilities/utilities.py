@@ -12,7 +12,6 @@ from scipy import special
 INT_DETECTOR_BIT_DEPTHS = [8, 10, 11, 12, 15, 16, 32]
 FLOAT_DETECTOR_BIT_DEPTHS = [32, 64]
 
-
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
     si = {
@@ -163,10 +162,10 @@ def is_saturated(
     if detector_bit_depth is not None:
         if (
             detector_bit_depth not in INT_DETECTOR_BIT_DEPTHS
-            or detector_bit_depth not in FLOAT_DETECTOR_BIT_DEPTHS
+            and detector_bit_depth not in FLOAT_DETECTOR_BIT_DEPTHS
         ):
             raise ValueError(
-                f"The detector bit depth provided is not supported. Supported values are {INT_DETECTOR_BIT_DEPTHS} for integer detectors and {FLOAT_DETECTOR_BIT_DEPTHS} for floating point detectors."
+                f"The detector bit depth provided ({detector_bit_depth}) is not supported. Supported values are {INT_DETECTOR_BIT_DEPTHS} for integer detectors and {FLOAT_DETECTOR_BIT_DEPTHS} for floating point detectors."
             )
         if (
             np.issubdtype(channel.dtype, np.integer)
