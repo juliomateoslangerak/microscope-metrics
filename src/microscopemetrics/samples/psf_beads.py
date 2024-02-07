@@ -48,13 +48,13 @@ def _fit_airy(profile, guess=None):
 
     # Calculate the fit quality
     residuals = profile - fitted_profile
-    rss = np.sum(residuals**2)
+    rss = np.sum(residuals ** 2)
 
     return fitted_profile, rss, fwhm
 
 
 def _calculate_bead_intensity_outliers(
-    bead_crops: Dict, zscore_threshold: float
+        bead_crops: Dict, zscore_threshold: float
 ) -> Tuple[Dict, Dict]:
     bead_max_intensities = []
     bead_zscores = {}
@@ -82,6 +82,71 @@ def _calculate_bead_intensity_outliers(
             bead_considered_intensity_outlier[label].append(ch_is_outlier)
 
     return bead_zscores, bead_considered_intensity_outlier
+
+
+def _generate_key_values(bead_properties_df, discarded_positions_self_proximity,
+                         discarded_positions_lateral_edge
+                         ):
+    return {
+        "nr_of_beads_analyzed": len(bead_properties_df),
+        "nr_of_beads_discarded_lateral_edge": sum(
+            sum(len(ch) for ch in im) for im in discarded_positions_lateral_edge.values()
+        ),
+        "nr_of_beads_discarded_self_proximity:": sum(
+            sum(len(ch) for ch in im) for im in discarded_positions_self_proximity.values()
+        ),
+        "nr_of_beads_discarded_axial_edge": len(
+            bead_properties_df[bead_properties_df["considered_axial_edge"] == True]
+        ),
+        "nr_of_beads_considered_intensity_outlier": len(
+            bead_properties_df[bead_properties_df["considered_intensity_outlier"] == True]
+        ),
+        "nr_of_beads_considered_bad_z_fit": len(
+            bead_properties_df[bead_properties_df["considered_bad_z_fit"] == True]
+        ),
+        "nr_of_beads_considered_bad_y_fit": len(
+            bead_properties_df[bead_properties_df["considered_bad_y_fit"] == True]
+        ),
+        "nr_of_beads_considered_bad_x_fit": len(
+            bead_properties_df[bead_properties_df["considered_bad_x_fit"] == True]
+        ),
+        "fit_rss_z_mean": bead_properties_df["z_fit_rss"].mean(),
+        "fit_rss_z_median": bead_properties_df["z_fit_rss"].median(),
+        "fit_rss_z_std": bead_properties_df["z_fit_rss"].std(),
+        "fit_rss_y_mean": bead_properties_df["y_fit_rss"].mean(),
+        "fit_rss_y_median": bead_properties_df["y_fit_rss"].median(),
+        "fit_rss_y_std": bead_properties_df["y_fit_rss"].std(),
+        "fit_rss_x_mean": bead_properties_df["x_fit_rss"].mean(),
+        "fit_rss_x_median": bead_properties_df["x_fit_rss"].median(),
+        "fit_rss_x_std": bead_properties_df["x_fit_rss"].std(),
+        "resolution_mean_fwhm_z_pixels": bead_properties_df["z_fwhm"].mean(),
+        "resolution_median_fwhm_z_pixels": bead_properties_df["z_fwhm"].median(),
+        "resolution_std_fwhm_z_pixels": bead_properties_df["z_fwhm"].std(),
+        "resolution_mean_fwhm_y_pixels": bead_properties_df["y_fwhm"].mean(),
+        "resolution_median_fwhm_y_pixels": bead_properties_df["y_fwhm"].median(),
+        "resolution_std_fwhm_y_pixels": bead_properties_df["y_fwhm"].std(),
+        "resolution_mean_fwhm_x_pixels": bead_properties_df["x_fwhm"].mean(),
+        "resolution_median_fwhm_x_pixels": bead_properties_df["x_fwhm"].median(),
+        "resolution_std_fwhm_x_pixels": bead_properties_df["x_fwhm"].std(),
+        "resolution_mean_fwhm_z_microns": bead_properties_df["z_fwhm_micron"].mean() or None,
+        "resolution_median_fwhm_z_microns": bead_properties_df["z_fwhm_micron"].median() or None,
+        "resolution_std_fwhm_z_microns": bead_properties_df["z_fwhm_micron"].std() or None,
+        "resolution_mean_fwhm_y_microns": bead_properties_df["y_fwhm_micron"].mean() or None,
+        "resolution_median_fwhm_y_microns": bead_properties_df["y_fwhm_micron"].median() or None,
+        "resolution_std_fwhm_y_microns": bead_properties_df["y_fwhm_micron"].std() or None,
+        "resolution_mean_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].mean() or None,
+        "resolution_median_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].median() or None,
+        "resolution_std_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].std() or None,
+        "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df[
+            ["y_fwhm", "x_fwhm"]
+        ].max(axis=1).mean(),
+        "resolution_median_fwhm_lateral_asymmetry_ratio": bead_properties_df[
+            ["y_fwhm", "x_fwhm"]
+        ].max(axis=1).median(),
+        "resolution_std_fwhm_lateral_asymmetry_ratio": bead_properties_df[
+            ["y_fwhm", "x_fwhm"]
+        ].max(axis=1).std()
+    }
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float]):
@@ -153,7 +218,7 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
         & (positions_proximity_filtered[:, 2] < channel.shape[2] - min_distance // 2)
         & (positions_proximity_filtered[:, 1] > min_distance // 2)
         & (positions_proximity_filtered[:, 1] < channel.shape[1] - min_distance // 2)
-    ]
+        ]
 
     # Convert arrays to sets for easier comparison
     positions_all_set = set(map(tuple, positions_all))
@@ -182,9 +247,9 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
 
     bead_images = [
         channel[
-            :,
-            (pos[1] - (min_distance // 2)) : (pos[1] + (min_distance // 2)),
-            (pos[2] - (min_distance // 2)) : (pos[2] + (min_distance // 2)),
+        :,
+        (pos[1] - (min_distance // 2)): (pos[1] + (min_distance // 2)),
+        (pos[2] - (min_distance // 2)): (pos[2] + (min_distance // 2)),
         ]
         for pos in valid_positions
     ]
@@ -197,12 +262,12 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
 
 
 def _process_channel(
-    channel: np.ndarray,
-    sigma: Tuple[float, float, float],
-    min_bead_distance: float,
-    snr_threshold: float,
-    fitting_rss_threshold: float,
-    voxel_size_micron: Tuple[float, float, float],
+        channel: np.ndarray,
+        sigma: Tuple[float, float, float],
+        min_bead_distance: float,
+        snr_threshold: float,
+        fitting_rss_threshold: float,
+        voxel_size_micron: Tuple[float, float, float],
 ) -> Tuple:
     (
         beads,
@@ -252,12 +317,12 @@ def _process_channel(
 
 
 def _process_image(
-    image: np.ndarray,
-    sigma: Tuple[float, float, float],
-    min_bead_distance: float,
-    snr_threshold: float,
-    fitting_rss_threshold: float,
-    voxel_size_micron: Tuple[float, float, float],
+        image: np.ndarray,
+        sigma: Tuple[float, float, float],
+        min_bead_distance: float,
+        snr_threshold: float,
+        fitting_rss_threshold: float,
+        voxel_size_micron: Tuple[float, float, float],
 ) -> Dict[str, Any]:
     # Some images (e.g. OMX-3D-SIM) may contain negative values.
     image = np.clip(image, a_min=0, a_max=None)
@@ -329,7 +394,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         return 3 * self.input.min_lateral_distance_factor
 
     def _generate_centroids_roi(
-        self, positions, root_name, color, stroke_width, positions_filter=None
+            self, positions, root_name, color, stroke_width, positions_filter=None
     ):
         rois = {}
         for image_label, input_image in self.input.psf_beads_images.items():
@@ -354,7 +419,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     )
                 else:
                     for i, (pos, is_filtered) in enumerate(
-                        zip(positions[image_label][ch], positions_filter[image_label][ch])
+                            zip(positions[image_label][ch], positions_filter[image_label][ch])
                     ):
                         if is_filtered:
                             shapes[f"{i:02d}"] = mm_schema.Point(
@@ -374,49 +439,6 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     )
 
         return rois
-
-    # def _generate_key_values(self, bead_properties_df):
-    #     key_values = {
-    #         "nr_of_beads_analyzed": len(bead_properties_df),
-    #         "nr_of_beads_discarded_lateral_edge": len(
-    #             bead_properties_df[bead_properties_df["considered_axial_edge"] == True]
-    #         ),
-    #         "nr_of_beads_discarded_axial_edge": len(
-    #             bead_properties_df[bead_properties_df["considered_axial_edge"] == True]
-    #         ),
-    #         "nr_of_beads_discarded_self_proximity
-    #         "nr_of_beads_discarded_cluster
-    #         "nr_of_beads_discarded_fit_quality
-    #         "fit_quality_z_mean
-    #         "fit_quality_z_median
-    #         "fit_quality_z_stdev
-    #         "fit_quality_y_mean
-    #         "fit_quality_y_median
-    #         "fit_quality_y_stdev
-    #         "fit_quality_x_mean
-    #         "fit_quality_x_median
-    #         "fit_quality_x_stdev
-    #         "resolution_mean_fwhm_z_pixels
-    #         "resolution_median_fwhm_z_pixels
-    #         "resolution_stdev_fwhm_z_pixels
-    #         "resolution_mean_fwhm_y_pixels
-    #         "resolution_median_fwhm_y_pixels
-    #         "resolution_stdev_fwhm_y_pixels
-    #         "resolution_mean_fwhm_x_pixels
-    #         "resolution_median_fwhm_x_pixels
-    #         "resolution_stdev_fwhm_x_pixels
-    #         "resolution_mean_fwhm_z_microns
-    #         "resolution_median_fwhm_z_microns
-    #         "resolution_stdev_fwhm_z_microns
-    #         "resolution_mean_fwhm_y_microns
-    #         "resolution_median_fwhm_y_microns
-    #         "resolution_stdev_fwhm_y_microns
-    #         "resolution_mean_fwhm_x_microns
-    #         "resolution_median_fwhm_x_microns
-    #         "resolution_stdev_fwhm_x_microns
-    #         "resolution_mean_fwhm_lateral_asymmetry_ratio
-    #         "resolution_median_fwhm_lateral_asymmetry_ratio
-    #         "resolution_stdev_fwhm_lateral_asymmetry_ratio
 
     def run(self) -> bool:
         self.validate_requirements()
@@ -464,9 +486,9 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             logger.info(f"Checking image {label} saturation...")
             for c in range(image.data.shape[-1]):
                 if is_saturated(
-                    channel=image.data[..., c],
-                    threshold=self.input.saturation_threshold,
-                    detector_bit_depth=self.input.bit_depth,
+                        channel=image.data[..., c],
+                        threshold=self.input.saturation_threshold,
+                        detector_bit_depth=self.input.bit_depth,
                 ):
                     logger.error(f"Image {label}: channel {c} is saturated")
                     saturated_channels[label].append(c)
@@ -546,10 +568,10 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         }
 
         for image_label, input_image in self.input.psf_beads_images.items():
-            ## Image linked information
+            # Image linked information
             for ch in range(input_image.data.shape[-1]):
-                ## Channel linked information
-                # Bead crops
+
+                # Channel linked information
                 for i, bead in enumerate(bead_crops[image_label][ch]):
                     output_bead_crops[
                         f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}"
@@ -579,13 +601,13 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     bead_properties["y_fit_rss"] = bead_rsss[image_label][ch][i]
                     bead_properties["x_fit_rss"] = bead_rsss[image_label][ch][i]
                     bead_properties["considered_bad_z_fit"] = (
-                        bead_rsss[image_label][ch][i][0] > fitting_rss_threshold
+                            bead_rsss[image_label][ch][i][0] > fitting_rss_threshold
                     )
                     bead_properties["considered_bad_y_fit"] = (
-                        bead_rsss[image_label][ch][i][1] > fitting_rss_threshold
+                            bead_rsss[image_label][ch][i][1] > fitting_rss_threshold
                     )
                     bead_properties["considered_bad_x_fit"] = (
-                        bead_rsss[image_label][ch][i][2] > fitting_rss_threshold
+                            bead_rsss[image_label][ch][i][2] > fitting_rss_threshold
                     )
                     bead_properties["z_fwhm"] = bead_fwhms[image_label][ch][i][0]
                     bead_properties["y_fwhm"] = bead_fwhms[image_label][ch][i][1]
@@ -603,6 +625,11 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         self.output.bead_properties = dict_to_table_inlined(bead_properties)
 
         bead_properties_df = pd.DataFrame(bead_properties)
+        self.output.key_values = _generate_key_values(
+            bead_properties_df=bead_properties_df,
+            discarded_positions_self_proximity=discarded_positions_self_proximity,
+            discarded_positions_lateral_edge=discarded_positions_lateral_edge,
+        )
 
         self.output.analyzed_bead_crops = output_bead_crops
 
@@ -643,42 +670,9 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             positions_filter=bead_considered_intensity_outlier,
         )
 
+        return True
+
         """
-      discarded_bead_centroids_fit_quality:
-        range: RoiMassCenters
-        description: >-
-          The centroids of the beads detected but discarded as the fit quality was not good enough.
-          One point will be provided per bead.
-          One ROI per channel.
-        multivalued: true
-        inlined: true
-      key_values:
-        range: PSFBeadsKeyMeasurements
-        description: >-
-          The key measurements of the PSF beads analysis.
-        multivalued: False
-        inlined: true
-      bead_properties:
-        range: TableAsDict
-        description: >-
-          Properties associated with the analysis of the beads. This properties include:
-          dataset_id
-          image_id
-          roi_id
-          channel_nr
-          fit_parameters
-          fit_quality_z
-          fit_quality_y
-          fit_quality_x
-          resolution_fwhm_z_pixels
-          resolution_fwhm_y_pixels
-          resolution_fwhm_x_pixels
-          resolution_fwhm_z_microns
-          resolution_fwhm_y_microns
-          resolution_fwhm_x_microns
-          resolution_lateral_asymmetry_ratio
-        multivalued: false
-        inlined: true
       bead_z_profiles:
         range: TableAsDict
         description: >-
@@ -867,13 +861,13 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         else:
             key_values["resolution_mean_fwhm_z"] = properties_df["z_fwhm"].mean()
             key_values["resolution_median_fwhm_z"] = properties_df["z_fwhm"].median()
-            key_values["resolution_stdev_fwhm_z"] = properties_df["z_fwhm"].std()
+            key_values["resolution_std_fwhm_z"] = properties_df["z_fwhm"].std()
             key_values["resolution_mean_fwhm_y"] = properties_df["y_fwhm"].mean()
             key_values["resolution_median_fwhm_y"] = properties_df["y_fwhm"].median()
-            key_values["resolution_stdev_fwhm_y"] = properties_df["y_fwhm"].std()
+            key_values["resolution_std_fwhm_y"] = properties_df["y_fwhm"].std()
             key_values["resolution_mean_fwhm_x"] = properties_df["x_fwhm"].mean()
             key_values["resolution_median_fwhm_x"] = properties_df["x_fwhm"].median()
-            key_values["resolution_stdev_fwhm_x"] = properties_df["x_fwhm"].std()
+            key_values["resolution_std_fwhm_x"] = properties_df["x_fwhm"].std()
         key_values["resolution_theoretical_fwhm_lateral"] = self.get_metadata_values(
             "theoretical_fwhm_lateral_res"
         )

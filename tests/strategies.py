@@ -347,12 +347,12 @@ def st_psf_beads_dataset(
 ):
     unprocessed_dataset = draw(unprocessed_dataset)
     psf_beads_test_data = draw(psf_beads_test_data)
-    unprocessed_dataset.input.psf_beads_image = draw(
+    psf_beads_images = {"my_image_url": draw(
         st_mm_schema.st_mm_image_as_numpy(
             shape=st.just(psf_beads_test_data["image"].shape),
             data=psf_beads_test_data["image"],
-        )
-    )
+        ))}
+    unprocessed_dataset.input.psf_beads_images = psf_beads_images
     unprocessed_analysis = psf_beads.PSFBeadsAnalysis(**dataclasses.asdict(unprocessed_dataset))
 
     return {"unprocessed_analysis": unprocessed_analysis, "expected_output": unprocessed_dataset}
