@@ -116,14 +116,14 @@ def st_field_illumination_test_data(
 @st.composite
 def st_field_illumination_dataset(
     draw,
-    unprocessed_dataset=st_mm_schema.st_mm_field_illumination_unprocessed_dataset(),
+    field_illumination_unprocessed_dataset=st_mm_schema.st_mm_field_illumination_unprocessed_dataset(),
     field_illumination_test_data=st_field_illumination_test_data(),
 ):
-    unprocessed_dataset = draw(unprocessed_dataset)
+    field_illumination_unprocessed_dataset = draw(field_illumination_unprocessed_dataset)
     field_illumination_test_data = draw(field_illumination_test_data)
 
     # updating input field illumination image
-    unprocessed_dataset.input.field_illumination_image = draw(
+    field_illumination_unprocessed_dataset.input.field_illumination_image = draw(
         st_mm_schema.st_mm_image_as_numpy(
             shape=st.just(field_illumination_test_data["image"].shape),
             data=field_illumination_test_data["image"],
@@ -133,17 +133,20 @@ def st_field_illumination_dataset(
     # Setting the bit depth to the data type of the image
     image_dtype = field_illumination_test_data["image"].dtype
     if np.issubdtype(image_dtype, np.integer):
-        unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
+        field_illumination_unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
     elif np.issubdtype(image_dtype, np.floating):
-        unprocessed_dataset.input.bit_depth = np.finfo(image_dtype).bits
+        field_illumination_unprocessed_dataset.input.bit_depth = np.finfo(image_dtype).bits
     else:
-        unprocessed_dataset.input.bit_depth = None
+        field_illumination_unprocessed_dataset.input.bit_depth = None
 
     unprocessed_analysis = field_illumination.FieldIlluminationAnalysis(
-        **dataclasses.asdict(unprocessed_dataset)
+        **dataclasses.asdict(field_illumination_unprocessed_dataset)
     )
 
-    return {"unprocessed_analysis": unprocessed_analysis, "expected_output": unprocessed_dataset}
+    return {
+        "unprocessed_analysis": unprocessed_analysis,
+        "expected_output": field_illumination_unprocessed_dataset,
+    }
 
 
 # Strategies for Argolight
@@ -342,17 +345,22 @@ def st_psf_beads_test_data(
 @st.composite
 def st_psf_beads_dataset(
     draw,
-    unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(),
     psf_beads_test_data=st_psf_beads_test_data(),
+    nr_input_images=st.integers(min_value=1, max_value=3),
 ):
-    unprocessed_dataset = draw(unprocessed_dataset)
-    psf_beads_test_data = draw(psf_beads_test_data)
-    psf_beads_images = {"my_image_url": draw(
-        st_mm_schema.st_mm_image_as_numpy(
-            shape=st.just(psf_beads_test_data["image"].shape),
-            data=psf_beads_test_data["image"],
-        ))}
-    unprocessed_dataset.input.psf_beads_images = psf_beads_images
+    psf_beads_images = {}
+    nr_input_images = draw(nr_input_images)
+    for i in range(nr_input_images):
+        data = draw(psf_beads_test_data)
+        image = draw(st_mm_schema.st_mm_image_as_numpy(data=data["image"]))
+        psf_beads_images[image.image_url] = image
+
+    unprocessed_dataset = draw(
+        st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+            input=st_mm_schema.st_mm_psf_beads_input(psf_beads_images=st.just(psf_beads_images))
+        )
+    )
+
     unprocessed_analysis = psf_beads.PSFBeadsAnalysis(**dataclasses.asdict(unprocessed_dataset))
 
     return {"unprocessed_analysis": unprocessed_analysis, "expected_output": unprocessed_dataset}
