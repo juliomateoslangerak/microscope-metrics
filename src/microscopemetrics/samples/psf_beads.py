@@ -208,26 +208,27 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
     # are close to each other but far from the edge. If an edge bead is
     # removed, the other bead that was close to it will be kept.
     positions_proximity_filtered = peak_local_max(
-        image=channel, threshold_rel=0.2, min_distance=int(min_distance)
+        image=channel, threshold_rel=0.2, min_distance=(1, int(min_distance), int(min_distance))
     )
-
-    # find beads edge filtered
-    positions_edge_filtered = positions_all[
-        (positions_proximity_filtered[:, 2] > min_distance // 2)
-        & (positions_proximity_filtered[:, 2] < channel.shape[2] - min_distance // 2)
-        & (positions_proximity_filtered[:, 1] > min_distance // 2)
-        & (positions_proximity_filtered[:, 1] < channel.shape[1] - min_distance // 2)
-    ]
+    positions_proximity_edge_filtered = peak_local_max(
+        image=channel,
+        threshold_rel=0.2,
+        min_distance=(1, int(min_distance // 2), int(min_distance // 2)),
+        exclude_border=(1, int(min_distance // 2), int(min_distance // 2)),
+    )
 
     # Convert arrays to sets for easier comparison
     positions_all_set = set(map(tuple, positions_all))
     positions_proximity_filtered_set = set(map(tuple, positions_proximity_filtered))
-    positions_edge_filtered_set = set(map(tuple, positions_edge_filtered))
+    positions_proximity_edge_filtered_set = set(map(tuple, positions_proximity_edge_filtered))
+    positions_edge_filtered_set = (
+        positions_proximity_filtered_set & positions_proximity_edge_filtered_set
+    )
 
-    valid_positions_set = positions_proximity_filtered_set & positions_edge_filtered_set
+    valid_positions_set = positions_proximity_edge_filtered_set
     discarded_positions_proximity_set = positions_all_set - positions_proximity_filtered_set
     discarded_positions_edge_set = positions_all_set - positions_edge_filtered_set
-    discarded_positions_set = discarded_positions_proximity_set | discarded_positions_edge_set
+    discarded_positions_set = positions_all_set - positions_proximity_edge_filtered_set
 
     logger.debug(f"Beads found: {len(positions_all)}")
     logger.debug(f"Beads kept for analysis: {len(valid_positions_set)}")
@@ -390,7 +391,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
 
     def _estimate_min_bead_distance(self):
         # TODO: get the resolution somewhere or pass it as a metadata
-        return 3 * self.input.min_lateral_distance_factor
+        return 1 * self.input.min_lateral_distance_factor
 
     def _generate_centroids_roi(
         self, positions, root_name, color, stroke_width, positions_filter=None
