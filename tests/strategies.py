@@ -338,6 +338,7 @@ def st_psf_beads_test_data(
         "out_of_focus_bead_positions": out_of_focus_beads_positions,
         "clustering_bead_positions": clustering_beads_positions,
         "applied_sigmas": applied_sigmas,
+        "signal": signal,
         "do_noise": do_noise,
     }
 
