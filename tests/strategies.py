@@ -1,6 +1,7 @@
 import dataclasses
 
 import numpy as np
+import pandas as pd
 
 try:
     from hypothesis import assume
@@ -39,6 +40,8 @@ def st_field_illumination_test_data(
     c_image_shape = draw(c_image_shape)
     # We do not want images that are too elongated
     assume(0.5 < (x_image_shape / y_image_shape) < 2)
+
+    do_noise = draw(do_noise)
 
     dtype = draw(dtype)
     if np.issubdtype(dtype, np.integer):
@@ -116,22 +119,21 @@ def st_field_illumination_test_data(
 @st.composite
 def st_field_illumination_dataset(
     draw,
-    field_illumination_unprocessed_dataset=st_mm_schema.st_mm_field_illumination_unprocessed_dataset(),
-    field_illumination_test_data=st_field_illumination_test_data(),
+    expected_output=st_field_illumination_test_data(),
 ):
-    field_illumination_unprocessed_dataset = draw(field_illumination_unprocessed_dataset)
-    field_illumination_test_data = draw(field_illumination_test_data)
-
-    # updating input field illumination image
-    field_illumination_unprocessed_dataset.input.field_illumination_image = draw(
-        st_mm_schema.st_mm_image_as_numpy(
-            shape=st.just(field_illumination_test_data["image"].shape),
-            data=field_illumination_test_data["image"],
+    expected_output = draw(expected_output)
+    field_illumination_unprocessed_dataset = draw(
+        st_mm_schema.st_mm_field_illumination_unprocessed_dataset(
+            input=st_mm_schema.st_mm_field_illumination_input(
+                field_illumination_image=st_mm_schema.st_mm_image_as_numpy(
+                    data=expected_output.pop("image"),
+                )
+            )
         )
     )
 
     # Setting the bit depth to the data type of the image
-    image_dtype = field_illumination_test_data["image"].dtype
+    image_dtype = field_illumination_unprocessed_dataset.input.field_illumination_image.data.dtype
     if np.issubdtype(image_dtype, np.integer):
         field_illumination_unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
     elif np.issubdtype(image_dtype, np.floating):
@@ -145,12 +147,39 @@ def st_field_illumination_dataset(
 
     return {
         "unprocessed_analysis": unprocessed_analysis,
-        "expected_output": field_illumination_unprocessed_dataset,
+        "expected_output": expected_output,
     }
 
 
-# Strategies for Argolight
+@st.composite
+def st_field_illumination_table(
+    draw,
+    nr_rows=st.integers(min_value=1, max_value=50),
+):
+    nr_rows = draw(nr_rows)
+    columns = [
+        "bottom_center_intensity_mean",
+        "bottom_center_intensity_ratio",
+        "channel",
+    ]
+    table = []
+    for _ in range(nr_rows):
+        dataset = draw(st_field_illumination_dataset())["unprocessed_analysis"]
+        dataset.run()
+        if dataset.processed:
+            key_values = {}
+            for col in columns:
+                key_values[col] = getattr(dataset.output.key_values, col)
+        else:
+            continue
+        table.append(key_values)
 
+    table = [pd.DataFrame(d) for d in table]
+
+    return pd.concat(table, ignore_index=True)
+
+
+# Strategies for Argolight
 # Strategies for Argolight B
 
 # Strategies for Argolight E
@@ -350,11 +379,13 @@ def st_psf_beads_dataset(
     nr_input_images=st.integers(min_value=1, max_value=3),
 ):
     psf_beads_images = {}
+    expected_output = {}
     nr_input_images = draw(nr_input_images)
     for i in range(nr_input_images):
         data = draw(psf_beads_test_data)
-        image = draw(st_mm_schema.st_mm_image_as_numpy(data=data["image"]))
+        image = draw(st_mm_schema.st_mm_image_as_numpy(data=data.pop("image")))
         psf_beads_images[image.image_url] = image
+        expected_output[image.image_url] = data
 
     unprocessed_dataset = draw(
         st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
@@ -364,4 +395,4 @@ def st_psf_beads_dataset(
 
     unprocessed_analysis = psf_beads.PSFBeadsAnalysis(**dataclasses.asdict(unprocessed_dataset))
 
-    return {"unprocessed_analysis": unprocessed_analysis, "expected_output": unprocessed_dataset}
+    return {"unprocessed_analysis": unprocessed_analysis, "expected_output": expected_output}
