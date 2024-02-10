@@ -6,6 +6,7 @@ import numpy as np
 import scipy
 from skimage.filters import gaussian
 from skimage.measure import regionprops
+from skimage.exposure import rescale_intensity
 
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
@@ -186,44 +187,47 @@ def _corner_shapes(image: np.ndarray, corner_fraction: float):
     ]
 
 
-def _segment_channel(channel: np.ndarray, threshold: float, sigma: float):
-    if sigma is not None:
-        channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
-
-    channel_norm = channel / np.max(channel)
-    return (channel_norm > threshold).astype(int)
-
-
 def _channel_max_intensity_properties(
     channel: np.ndarray, sigma: float, center_threshold: float
 ) -> dict:
     """Computes the center of mass and the max intensity of the maximum intensity region of an image.
     Parameters
     ----------
-    channel : np.array.
+    proc_channel : np.array.
         2d np.ndarray.
     Returns
     -------
     center_of_mass: dict
         dict enclosing the number of pixels, the coordinates of the
-        center of mass of the and the max intensity value of the max intensity
+        center of mass and the max intensity value of the max intensity
         area of the provided image.
     """
-    max_intensity = np.max(channel)
-    # TODO: check if there is more than one pixel with the same intensity.
-    #  We take the first one but we should take the one closest to the center or use a find_peaks function
-    max_intensity_indexes = np.unravel_index(np.argmax(channel), channel.shape)
+    if sigma is not None:
+        proc_channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
+    else:
+        proc_channel = channel
 
-    max_int_mask = _segment_channel(channel, center_threshold, sigma)
-    image_properties = regionprops(max_int_mask, channel)
+    # noinspection PyTypeChecker
+    rescaled_channel = rescale_intensity(
+        proc_channel.astype(float), in_range=(0, proc_channel.max()), out_range=(0, 11))
+    labels_channel = rescaled_channel.astype(int)
+    properties = regionprops(labels_channel, proc_channel)
+
+    # When images are very flat, the max intensity region is always detected in the center. We need to stretch the
+    # intensity of the image to detect the actual center.
+    rescaled_channel = rescale_intensity(
+        proc_channel.astype(float), out_range=(0, 11)
+    )
+    labels_channel = rescaled_channel.astype(int)
+    properties_stretched = regionprops(labels_channel, proc_channel)
 
     return {
-        "nb_pixels_center": image_properties[0].area,
-        "center_of_mass_y": image_properties[0].centroid_weighted[0],
-        "center_of_mass_x": image_properties[0].centroid_weighted[1],
-        "max_intensity": max_intensity,
-        "max_intensity_pos_y": max_intensity_indexes[0],
-        "max_intensity_pos_x": max_intensity_indexes[1],
+        "nb_pixels_center": properties[-2].area,
+        "center_of_mass_y": properties_stretched[-2].centroid_weighted[0],
+        "center_of_mass_x": properties_stretched[-2].centroid_weighted[1],
+        "max_intensity": properties[-2].intensity_max,
+        "max_intensity_pos_y": properties[-1].centroid_weighted[0],
+        "max_intensity_pos_x": properties[-1].centroid_weighted[0],
     }
 
 

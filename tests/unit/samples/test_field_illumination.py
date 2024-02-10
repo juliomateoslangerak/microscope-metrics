@@ -28,6 +28,35 @@ def test_field_illumination_analysis_run(dataset):
     assert dataset["unprocessed_analysis"].output
 
 
+@given(mm_st.st_field_illumination_dataset())
+@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=10000)
+def test_field_illumination_analysis_center_of_illumination(dataset):
+    field_illumination_analysis = dataset["unprocessed_analysis"]
+    expected_output = dataset["expected_output"]
+    field_illumination_analysis.run()
+
+    assert field_illumination_analysis.processed
+
+    image_center = tuple([dim / 2 for dim in field_illumination_analysis.input.field_illumination_image.data.shape[2:4]])
+    measured_centers = [
+        ((p.y - image_center[0])/image_center[0], (p.x - image_center[1])/image_center[1])
+        for p in field_illumination_analysis.output.center_of_illumination.shapes.values()]
+    expected_centers = [(y, x) for y, x in zip(expected_output["y_center_rel_offsets"], expected_output["x_center_rel_offsets"])]
+    expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
+    expected_dispersion = [d for d in expected_output["dispersions"]]
+
+    for measured, expected, contrast, dispersion in zip(measured_centers, expected_centers, expected_contrast, expected_dispersion):
+        # If the image contrast is not too low, we can expect the center of illumination
+        # to be measured with more precision
+        if dispersion < 0.7 and contrast > 0.3:
+            assert measured[0] == pytest.approx(expected[0], abs=0.02)
+            assert measured[1] == pytest.approx(expected[1], abs=0.02)
+        else:
+            assert measured[0] == pytest.approx(expected[0], abs=0.2)
+            assert measured[1] == pytest.approx(expected[1], abs=0.2)
+
+
+
 @given(
     mm_st.st_field_illumination_dataset(
         expected_output=mm_st.st_field_illumination_test_data(
