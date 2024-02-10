@@ -30,7 +30,7 @@ def test_field_illumination_analysis_run(dataset):
 
 @given(
     mm_st.st_field_illumination_dataset(
-        field_illumination_test_data=mm_st.st_field_illumination_test_data(
+        expected_output=mm_st.st_field_illumination_test_data(
             target_min_intensity=st.just(1.5),
         )
     )
