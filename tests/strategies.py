@@ -27,6 +27,7 @@ def st_field_illumination_test_data(
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
     dtype=st.sampled_from([np.uint8, np.uint16, np.float32]),
+    signal=st.integers(min_value=10, max_value=1000),
     do_noise=st.just(True),
     target_min_intensity=st.floats(min_value=0.1, max_value=0.49),
     target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
@@ -75,27 +76,41 @@ def st_field_illumination_test_data(
         image_dispersions.append(ch_dispersion)
 
         # Generate the channel as float64
-        channel = np.zeros(shape=(y_image_shape, x_image_shape), dtype="float64")
-        y_center = int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2))
-        x_center = int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2))
-
-        # Add a gaussian field at the center of the channel
-        channel[y_center, x_center] = 1.0
-        channel = skimage_gaussian(
-            channel, sigma=max(channel.shape) * ch_dispersion, preserve_range=True
+        # To avoid edge artifacts we first generate an image double the size and then crop it
+        source_channel = np.zeros(
+            shape=((y_image_shape * 2) + 1, (x_image_shape * 2) + 1), dtype="float64"
         )
+        source_channel[y_image_shape, x_image_shape] = 1.0
+        source_channel = skimage_gaussian(
+            source_channel,
+            sigma=max((y_image_shape, x_image_shape)) * ch_dispersion,
+            preserve_range=True,
+        )
+
+        channel = source_channel[
+            int(y_image_shape * (0.5 + -image_y_center_rel_offsets[ch] / 2)) : int(
+                y_image_shape * (0.5 + -image_y_center_rel_offsets[ch] / 2)
+            )
+            + y_image_shape,
+            int(x_image_shape * (0.5 + -image_x_center_rel_offsets[ch] / 2)) : int(
+                x_image_shape * (0.5 + -image_x_center_rel_offsets[ch] / 2)
+            )
+            + x_image_shape,
+        ]
 
         # Normalize channel intensity to be between ch_target_min_intensity and ch_target_max_intensity
         # Saturation point is at 1.0 when we rescale later to the target dtype
-        channel = channel - np.min(channel)
-        channel = channel / np.max(channel)
-        channel = (
-            channel * (ch_target_max_intensity - ch_target_min_intensity) + ch_target_min_intensity
+        channel = skimage_rescale_intensity(
+            channel, out_range=(ch_target_min_intensity, ch_target_max_intensity)
         )
 
-        # Add noise
         if do_noise:
+            # The noise on a 1.0 intensity image is too strong so we rescale the image to
+            # the defined signal and then rescale it back to the target intensity
+            ch_signal = draw(signal)
+            channel = channel * ch_signal
             channel = skimage_random_noise(channel, mode="poisson", clip=False)
+            channel = channel / ch_signal
 
         image[:, :, ch] = channel
 

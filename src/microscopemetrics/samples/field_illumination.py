@@ -4,9 +4,9 @@ from typing import Dict, Tuple
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import scipy
+from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage.measure import regionprops
-from skimage.exposure import rescale_intensity
 
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
@@ -46,10 +46,9 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
     intensity_map : np.ndarray
         3d np.ndarray representing the intensity map of the chosen image.
     """
-    output = []
-    for c in range(image.shape[2]):
-        output.append(_channel_intensity_map(np.squeeze(image[:, :, c]), map_size))
-
+    output = [
+        _channel_intensity_map(np.squeeze(image[:, :, c]), map_size) for c in range(image.shape[2])
+    ]
     output = np.stack(output, axis=2)
 
     # We want to return a 5d array (adding z and t) for compatibility with the rest of the code
@@ -190,17 +189,8 @@ def _corner_shapes(image: np.ndarray, corner_fraction: float):
 def _channel_max_intensity_properties(
     channel: np.ndarray, sigma: float, center_threshold: float
 ) -> dict:
-    """Computes the center of mass and the max intensity of the maximum intensity region of an image.
-    Parameters
-    ----------
-    proc_channel : np.array.
-        2d np.ndarray.
-    Returns
-    -------
-    center_of_mass: dict
-        dict enclosing the number of pixels, the coordinates of the
-        center of mass and the max intensity value of the max intensity
-        area of the provided image.
+    """
+    Compute the maximum intensity properties of a channel
     """
     if sigma is not None:
         proc_channel = gaussian(image=channel, sigma=sigma, preserve_range=True, channel_axis=None)
@@ -209,22 +199,25 @@ def _channel_max_intensity_properties(
 
     # noinspection PyTypeChecker
     rescaled_channel = rescale_intensity(
-        proc_channel.astype(float), in_range=(0, proc_channel.max()), out_range=(0, 11))
+        proc_channel.astype(float), in_range=(0, proc_channel.max()), out_range=(0, 11)
+    )
     labels_channel = rescaled_channel.astype(int)
     properties = regionprops(labels_channel, proc_channel)
 
+    center_fraction = properties[-2].area / (channel.shape[0] * channel.shape[1])
+
     # When images are very flat, the max intensity region is always detected in the center. We need to stretch the
-    # intensity of the image to detect the actual center.
-    rescaled_channel = rescale_intensity(
-        proc_channel.astype(float), out_range=(0, 11)
-    )
+    # intensity of the image to detect the actual center and select not the 0.1 max intensity region but the 0.01
+    rescaled_channel = rescale_intensity(proc_channel.astype(float), out_range=(0, 101))
     labels_channel = rescaled_channel.astype(int)
     properties_stretched = regionprops(labels_channel, proc_channel)
 
     return {
-        "nb_pixels_center": properties[-2].area,
-        "center_of_mass_y": properties_stretched[-2].centroid_weighted[0],
-        "center_of_mass_x": properties_stretched[-2].centroid_weighted[1],
+        "center_fraction": center_fraction,
+        "centroid_weighted_y": properties_stretched[-2].centroid_weighted[0],
+        "centroid_weighted_x": properties_stretched[-2].centroid_weighted[1],
+        "centroid_y": properties[-2].centroid[0],
+        "centroid_x": properties[-2].centroid[1],
         "max_intensity": properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid_weighted[0],
         "max_intensity_pos_x": properties[-1].centroid_weighted[0],
@@ -307,8 +300,7 @@ def _image_properties(
         else:
             properties.append(channel_properties)
 
-    properties = {k: [i[k] for i in properties] for k in properties[0]}
-    return properties
+    return {k: [i[k] for i in properties] for k in properties[0]}
 
 
 class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixin):
@@ -387,8 +379,8 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
             shapes=[
                 mm_schema.Point(
                     label=f"ch{c:02}_center",
-                    y=self.output.key_values.center_of_mass_y[c],
-                    x=self.output.key_values.center_of_mass_x[c],
+                    y=self.output.key_values.centroid_weighted_y[c],
+                    x=self.output.key_values.centroid_weighted_x[c],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},

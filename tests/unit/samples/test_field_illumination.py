@@ -29,32 +29,113 @@ def test_field_illumination_analysis_run(dataset):
 
 
 @given(mm_st.st_field_illumination_dataset())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=10000)
-def test_field_illumination_analysis_center_of_illumination(dataset):
+@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=100000)
+def test_field_illumination_analysis_centroids(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
     field_illumination_analysis.run()
 
     assert field_illumination_analysis.processed
 
-    image_center = tuple([dim / 2 for dim in field_illumination_analysis.input.field_illumination_image.data.shape[2:4]])
-    measured_centers = [
-        ((p.y - image_center[0])/image_center[0], (p.x - image_center[1])/image_center[1])
-        for p in field_illumination_analysis.output.center_of_illumination.shapes.values()]
-    expected_centers = [(y, x) for y, x in zip(expected_output["y_center_rel_offsets"], expected_output["x_center_rel_offsets"])]
-    expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
-    expected_dispersion = [d for d in expected_output["dispersions"]]
+    image_center = tuple(
+        dim / 2
+        for dim in field_illumination_analysis.input.field_illumination_image.data.shape[2:4]
+    )
+    measured_centroids = [
+        ((c_y - image_center[0]) / image_center[0], (c_x - image_center[1]) / image_center[1])
+        for c_y, c_x in zip(
+            field_illumination_analysis.output.key_values.centroid_y,
+            field_illumination_analysis.output.key_values.centroid_x,
+        )
+    ]
+    expected_centroids = list(
+        zip(
+            expected_output["y_center_rel_offsets"],
+            expected_output["x_center_rel_offsets"],
+        )
+    )
+    # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
+    # expected_dispersion = list(expected_output["dispersions"])
 
-    for measured, expected, contrast, dispersion in zip(measured_centers, expected_centers, expected_contrast, expected_dispersion):
-        # If the image contrast is not too low, we can expect the center of illumination
-        # to be measured with more precision
-        if dispersion < 0.7 and contrast > 0.3:
-            assert measured[0] == pytest.approx(expected[0], abs=0.02)
-            assert measured[1] == pytest.approx(expected[1], abs=0.02)
-        else:
-            assert measured[0] == pytest.approx(expected[0], abs=0.2)
-            assert measured[1] == pytest.approx(expected[1], abs=0.2)
+    for measured_c, expected_c in zip(measured_centroids, expected_centroids):
+        assert measured_c[0] == pytest.approx(expected_c[0], abs=0.02)
+        assert measured_c[1] == pytest.approx(expected_c[1], abs=0.02)
 
+
+@given(mm_st.st_field_illumination_dataset())
+@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=100000)
+def test_field_illumination_analysis_centroids_weighted(dataset):
+    field_illumination_analysis = dataset["unprocessed_analysis"]
+    expected_output = dataset["expected_output"]
+    field_illumination_analysis.run()
+
+    assert field_illumination_analysis.processed
+
+    image_center = tuple(
+        dim / 2
+        for dim in field_illumination_analysis.input.field_illumination_image.data.shape[2:4]
+    )
+    measured_centroids_weighted = [
+        ((c_y - image_center[0]) / image_center[0], (c_x - image_center[1]) / image_center[1])
+        for c_y, c_x in zip(
+            field_illumination_analysis.output.key_values.centroid_weighted_y,
+            field_illumination_analysis.output.key_values.centroid_weighted_x,
+        )
+    ]
+    expected_centroids = list(
+        zip(
+            expected_output["y_center_rel_offsets"],
+            expected_output["x_center_rel_offsets"],
+        )
+    )
+    # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
+    # expected_dispersion = list(expected_output["dispersions"])
+
+    for measured_c_w, expected_c in zip(measured_centroids_weighted, expected_centroids):
+        assert measured_c_w[0] == pytest.approx(expected_c[0], abs=0.02)
+        assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.02)
+
+
+@given(
+    mm_st.st_field_illumination_dataset(
+        expected_output=mm_st.st_field_illumination_test_data(
+            signal=st.integers(min_value=100, max_value=1000),
+            target_min_intensity=st.floats(min_value=0.1, max_value=0.4),
+            target_max_intensity=st.floats(min_value=0.6, max_value=0.9),
+        )
+    )
+)
+@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow], deadline=10000)
+def test_field_illumination_analysis_max_intensity_positions(dataset):
+    field_illumination_analysis = dataset["unprocessed_analysis"]
+    expected_output = dataset["expected_output"]
+    field_illumination_analysis.run()
+
+    assert field_illumination_analysis.processed
+
+    image_center = tuple(
+        dim / 2
+        for dim in field_illumination_analysis.input.field_illumination_image.data.shape[2:4]
+    )
+    measured_max_intensity_positions = [
+        ((c_y - image_center[0]) / image_center[0], (c_x - image_center[1]) / image_center[1])
+        for c_y, c_x in zip(
+            field_illumination_analysis.output.key_values.max_intensity_pos_y,
+            field_illumination_analysis.output.key_values.max_intensity_pos_x,
+        )
+    ]
+    expected_centroids = list(
+        zip(
+            expected_output["y_center_rel_offsets"],
+            expected_output["x_center_rel_offsets"],
+        )
+    )
+    # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
+    # expected_dispersion = list(expected_output["dispersions"])
+
+    for measured_m_i, expected_c in zip(measured_max_intensity_positions, expected_centroids):
+        assert measured_m_i[0] == pytest.approx(expected_c[0], abs=0.5)
+        assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.5)
 
 
 @given(
