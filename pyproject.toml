@@ -35,10 +35,10 @@ hypothesis-jsonschema = "^0.23.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7"
-pytest-xdist = "^3"
 hypothesis = "^6"
 tox = "^3"
 coverage = "^7"
+pytest-parallel = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23"
