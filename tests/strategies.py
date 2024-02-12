@@ -60,6 +60,7 @@ def st_field_illumination_test_data(
     image_y_center_rel_offsets = []
     image_x_center_rel_offsets = []
     image_dispersions = []
+    image_signals = []
 
     for ch in range(c_image_shape):
         ch_target_min_intensity = draw(target_min_intensity)
@@ -111,6 +112,7 @@ def st_field_illumination_test_data(
             channel = channel * ch_signal
             channel = skimage_random_noise(channel, mode="poisson", clip=False)
             channel = channel / ch_signal
+            image_signals.append(ch_signal)
 
         image[:, :, ch] = channel
 
@@ -128,6 +130,7 @@ def st_field_illumination_test_data(
         "target_max_intensities": image_target_max_intensities,
         "dispersions": image_dispersions,
         "do_noise": do_noise,
+        "signals": image_signals,
     }
 
 

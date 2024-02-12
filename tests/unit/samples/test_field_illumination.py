@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck, given, note, settings
 from hypothesis import strategies as st
 
 from microscopemetrics import SaturationError
@@ -56,6 +56,14 @@ def test_field_illumination_analysis_centroids(dataset):
     )
     # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
     # expected_dispersion = list(expected_output["dispersions"])
+    note(f"Expected output: {expected_output}")
+    note(
+        f"Input params: "
+        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
+        f"center_threshold: {field_illumination_analysis.input.center_threshold}"
+        f"sigma: {field_illumination_analysis.input.sigma}"
+    )
 
     for measured_c, expected_c in zip(measured_centroids, expected_centroids):
         assert measured_c[0] == pytest.approx(expected_c[0], abs=0.02)
@@ -88,8 +96,14 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
             expected_output["x_center_rel_offsets"],
         )
     )
-    # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
-    # expected_dispersion = list(expected_output["dispersions"])
+    note(f"Expected output: {expected_output}")
+    note(
+        f"Input params: "
+        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
+        f"center_threshold: {field_illumination_analysis.input.center_threshold}"
+        f"sigma: {field_illumination_analysis.input.sigma}"
+    )
 
     for measured_c_w, expected_c in zip(measured_centroids_weighted, expected_centroids):
         assert measured_c_w[0] == pytest.approx(expected_c[0], abs=0.02)
@@ -132,6 +146,14 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
     )
     # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
     # expected_dispersion = list(expected_output["dispersions"])
+    note(f"Expected output: {expected_output}")
+    note(
+        f"Input params: "
+        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
+        f"center_threshold: {field_illumination_analysis.input.center_threshold}"
+        f"sigma: {field_illumination_analysis.input.sigma}"
+    )
 
     for measured_m_i, expected_c in zip(measured_max_intensity_positions, expected_centroids):
         assert measured_m_i[0] == pytest.approx(expected_c[0], abs=0.5)
