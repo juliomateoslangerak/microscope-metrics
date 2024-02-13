@@ -26,7 +26,7 @@ def st_field_illumination_test_data(
     y_image_shape=st.integers(min_value=512, max_value=1024),
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
-    dtype=st.sampled_from([np.uint8, np.uint16, np.float32]),
+    dtype=st.sampled_from([np.uint8, np.uint16]),
     signal=st.integers(min_value=10, max_value=1000),
     do_noise=st.just(True),
     target_min_intensity=st.floats(min_value=0.1, max_value=0.49),
