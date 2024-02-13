@@ -187,7 +187,8 @@ def _corner_shapes(image: np.ndarray, corner_fraction: float):
 
 
 def _channel_max_intensity_properties(
-    channel: np.ndarray, sigma: float, center_threshold: float
+    channel: np.ndarray,
+    sigma: float,
 ) -> dict:
     """
     Compute the maximum intensity properties of a channel
@@ -216,11 +217,15 @@ def _channel_max_intensity_properties(
         "center_fraction": center_fraction,
         "centroid_weighted_y": properties_stretched[-2].centroid_weighted[0],
         "centroid_weighted_x": properties_stretched[-2].centroid_weighted[1],
-        "centroid_y": properties[-2].centroid[0],
-        "centroid_x": properties[-2].centroid[1],
+        # "centroid_weighted_y": properties[-2].centroid_weighted[0],
+        # "centroid_weighted_x": properties[-2].centroid_weighted[1],
+        # "centroid_y": properties[-2].centroid[0],
+        # "centroid_x": properties[-2].centroid[1],
+        "centroid_y": properties_stretched[-2].centroid[0],
+        "centroid_x": properties_stretched[-2].centroid[1],
         "max_intensity": properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid_weighted[0],
-        "max_intensity_pos_x": properties[-1].centroid_weighted[0],
+        "max_intensity_pos_x": properties[-1].centroid_weighted[1],
     }
 
 
@@ -270,9 +275,7 @@ def _channel_area_deciles(channel: np.ndarray) -> dict:
     return {f"decile_{i}": np.percentile(channel, i * 10) for i in range(10)}
 
 
-def _image_properties(
-    image: np.ndarray, corner_fraction: float, sigma: float, center_threshold: float
-):
+def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
     """
     given an image in a 3d np.ndarray format (yxc), this function return intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
@@ -290,9 +293,7 @@ def _image_properties(
     properties = []
     for c in range(image.shape[2]):
         channel_properties = {"channel": c}
-        channel_properties.update(
-            _channel_max_intensity_properties(image[:, :, c], sigma, center_threshold)
-        )
+        channel_properties.update(_channel_max_intensity_properties(image[:, :, c], sigma))
         channel_properties.update(_channel_corner_properties(image[:, :, c], corner_fraction))
         channel_properties.update(_channel_area_deciles(image[:, :, c]))
         if image.shape[2] == 1:
@@ -342,7 +343,6 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
                 image=image,
                 corner_fraction=self.input.corner_fraction,
                 sigma=self.input.sigma,
-                center_threshold=self.input.center_threshold,
             )
         )
 

@@ -61,7 +61,6 @@ def test_field_illumination_analysis_centroids(dataset):
         f"Input params: "
         f"bit_depth: {field_illumination_analysis.input.bit_depth}"
         f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"center_threshold: {field_illumination_analysis.input.center_threshold}"
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
@@ -101,7 +100,6 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
         f"Input params: "
         f"bit_depth: {field_illumination_analysis.input.bit_depth}"
         f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"center_threshold: {field_illumination_analysis.input.center_threshold}"
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
@@ -151,7 +149,6 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
         f"Input params: "
         f"bit_depth: {field_illumination_analysis.input.bit_depth}"
         f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"center_threshold: {field_illumination_analysis.input.center_threshold}"
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
