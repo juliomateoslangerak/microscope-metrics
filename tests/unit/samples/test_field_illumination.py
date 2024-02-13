@@ -9,6 +9,7 @@ from tests import strategies as mm_st
 from tests.test_utilities import get_file
 
 
+@pytest.mark.instantiation
 @given(mm_st.st_field_illumination_dataset())
 @settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
 def test_field_illumination_analysis_instantiation(dataset):
@@ -19,6 +20,7 @@ def test_field_illumination_analysis_instantiation(dataset):
     assert dataset["unprocessed_analysis"].input
 
 
+@pytest.mark.run
 @given(mm_st.st_field_illumination_dataset())
 @settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow], deadline=10000)
 def test_field_illumination_analysis_run(dataset):
@@ -28,6 +30,7 @@ def test_field_illumination_analysis_run(dataset):
     assert dataset["unprocessed_analysis"].output
 
 
+@pytest.mark.analysis
 @given(mm_st.st_field_illumination_dataset())
 @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=100000)
 def test_field_illumination_analysis_centroids(dataset):
@@ -69,6 +72,7 @@ def test_field_illumination_analysis_centroids(dataset):
         assert measured_c[1] == pytest.approx(expected_c[1], abs=0.02)
 
 
+@pytest.mark.analysis
 @given(mm_st.st_field_illumination_dataset())
 @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=100000)
 def test_field_illumination_analysis_centroids_weighted(dataset):
@@ -108,6 +112,7 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
         assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.02)
 
 
+@pytest.mark.analysis
 @given(
     mm_st.st_field_illumination_dataset(
         expected_output=mm_st.st_field_illumination_test_data(
@@ -157,6 +162,7 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.5)
 
 
+@pytest.mark.errors
 @given(
     mm_st.st_field_illumination_dataset(
         expected_output=mm_st.st_field_illumination_test_data(
