@@ -30,7 +30,7 @@ scikit-image = "^0.21"
 scipy = "^1.10"
 pandas = "^1"
 matplotlib = "^3"
-microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"}
+microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev"}
 hypothesis-jsonschema = "^0.23.0"
 
 [tool.poetry.group.test.dependencies]
