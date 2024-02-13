@@ -214,18 +214,29 @@ def _channel_max_intensity_properties(
     properties_stretched = regionprops(labels_channel, proc_channel)
 
     return {
-        "center_fraction": center_fraction,
+        "center_region_intensity_fraction": None,
+        "center_region_area_fraction": center_fraction,
         "centroid_weighted_y": properties_stretched[-2].centroid_weighted[0],
+        "centroid_weighted_y_relative": None,
         "centroid_weighted_x": properties_stretched[-2].centroid_weighted[1],
-        # "centroid_weighted_y": properties[-2].centroid_weighted[0],
-        # "centroid_weighted_x": properties[-2].centroid_weighted[1],
-        # "centroid_y": properties[-2].centroid[0],
-        # "centroid_x": properties[-2].centroid[1],
+        "centroid_weighted_x_relative": None,
+        "centroid_weighted_distance_relative": None,
         "centroid_y": properties_stretched[-2].centroid[0],
+        "centroid_y_relative": None,
         "centroid_x": properties_stretched[-2].centroid[1],
+        "centroid_x_relative": None,
+        "centroid_distance_relative": None,
+        "centroid_fitted_y": None,
+        "centroid_fitted_y_relative": None,
+        "centroid_fitted_x": None,
+        "centroid_fitted_x_relative": None,
+        "centroid_fitted_distance_relative": None,
         "max_intensity": properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid_weighted[0],
+        "max_intensity_pos_y_relative": None,
         "max_intensity_pos_x": properties[-1].centroid_weighted[1],
+        "max_intensity_pos_x_relative": None,
+        "max_intensity_distance_relative": None,
     }
 
 

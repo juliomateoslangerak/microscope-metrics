@@ -31,8 +31,8 @@ def st_field_illumination_test_data(
     do_noise=st.just(True),
     target_min_intensity=st.floats(min_value=0.1, max_value=0.49),
     target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
-    x_center_rel_offset=st.floats(min_value=-0.8, max_value=0.8),
-    y_center_rel_offset=st.floats(min_value=-0.8, max_value=0.8),
+    centroid_y_relative=st.floats(min_value=-0.8, max_value=0.8),
+    centroid_x_relative=st.floats(min_value=-0.8, max_value=0.8),
     dispersion=st.floats(min_value=0.5, max_value=1.0),
 ):
     """Generate a field illumination image."""
@@ -55,8 +55,8 @@ def st_field_illumination_test_data(
 
     image_target_min_intensities = []
     image_target_max_intensities = []
-    image_y_center_rel_offsets = []
-    image_x_center_rel_offsets = []
+    centroids_generated_y_relative = []
+    centroids_generated_x_relative = []
     image_dispersions = []
     image_signals = []
 
@@ -66,10 +66,10 @@ def st_field_illumination_test_data(
         image_target_min_intensities.append(ch_target_min_intensity)
         image_target_max_intensities.append(ch_target_max_intensity)
 
-        ch_y_center_rel_offset = draw(y_center_rel_offset)
-        ch_x_center_rel_offset = draw(x_center_rel_offset)
-        image_y_center_rel_offsets.append(ch_y_center_rel_offset)
-        image_x_center_rel_offsets.append(ch_x_center_rel_offset)
+        ch_y_center_rel_offset = draw(centroid_y_relative)
+        ch_x_center_rel_offset = draw(centroid_x_relative)
+        centroids_generated_y_relative.append(ch_y_center_rel_offset)
+        centroids_generated_x_relative.append(ch_x_center_rel_offset)
 
         ch_dispersion = draw(dispersion)
         image_dispersions.append(ch_dispersion)
@@ -87,12 +87,12 @@ def st_field_illumination_test_data(
         )
 
         channel = source_channel[
-            int(y_image_shape * (0.5 + -image_y_center_rel_offsets[ch] / 2)) : int(
-                y_image_shape * (0.5 + -image_y_center_rel_offsets[ch] / 2)
+            int(y_image_shape * (0.5 + -centroids_generated_y_relative[ch] / 2)) : int(
+                y_image_shape * (0.5 + -centroids_generated_y_relative[ch] / 2)
             )
             + y_image_shape,
-            int(x_image_shape * (0.5 + -image_x_center_rel_offsets[ch] / 2)) : int(
-                x_image_shape * (0.5 + -image_x_center_rel_offsets[ch] / 2)
+            int(x_image_shape * (0.5 + -centroids_generated_x_relative[ch] / 2)) : int(
+                x_image_shape * (0.5 + -centroids_generated_x_relative[ch] / 2)
             )
             + x_image_shape,
         ]
@@ -122,8 +122,8 @@ def st_field_illumination_test_data(
 
     return {
         "image": image,
-        "y_center_rel_offsets": image_y_center_rel_offsets,
-        "x_center_rel_offsets": image_x_center_rel_offsets,
+        "centroid_generated_y_relative": centroids_generated_y_relative,
+        "centroid_generated_x_relative": centroids_generated_x_relative,
         "target_min_intensities": image_target_min_intensities,
         "target_max_intensities": image_target_max_intensities,
         "dispersions": image_dispersions,
