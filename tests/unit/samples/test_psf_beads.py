@@ -1,12 +1,8 @@
-import numpy as np
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis import strategies as st
+from hypothesis import HealthCheck, given, settings
 
-from microscopemetrics import SaturationError
-from microscopemetrics.samples import numpy_to_image_byref, psf_beads
-from tests import strategies as st_mm
-from tests.test_utilities import get_file
+from microscopemetrics.samples import psf_beads
+from microscopemetrics.strategies import strategies as st_mm
 
 
 @pytest.mark.instantiation
