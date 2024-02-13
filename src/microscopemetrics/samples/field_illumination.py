@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import hypot
 from typing import Dict, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
@@ -10,7 +11,7 @@ from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
-from microscopemetrics.utilities.utilities import is_saturated
+from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
 
 
 def _channel_intensity_map(channel: np.ndarray, map_size: int):
@@ -198,45 +199,74 @@ def _channel_max_intensity_properties(
     else:
         proc_channel = channel
 
-    # noinspection PyTypeChecker
-    rescaled_channel = rescale_intensity(
-        proc_channel.astype(float), in_range=(0, proc_channel.max()), out_range=(0, 11)
-    )
-    labels_channel = rescaled_channel.astype(int)
-    properties = regionprops(labels_channel, proc_channel)
-
-    center_fraction = properties[-2].area / (channel.shape[0] * channel.shape[1])
-
     # When images are very flat, the max intensity region is always detected in the center. We need to stretch the
-    # intensity of the image to detect the actual center and select not the 0.1 max intensity region but the 0.01
-    rescaled_channel = rescale_intensity(proc_channel.astype(float), out_range=(0, 101))
-    labels_channel = rescaled_channel.astype(int)
-    properties_stretched = regionprops(labels_channel, proc_channel)
+    # intensity of the image to detect the actual center. We loop over a list of number of bins to get a central region
+    # that is not too big. We consider 0.25 as the maximum fraction of the image that can be considered as the center.
+    center_region_area_fraction = 1
+    center_region_intensity_fraction = None
+    properties = None
+    for n_bins in [11, 21, 51, 101]:
+        if center_region_area_fraction < 0.25:
+            break
+        else:
+            # noinspection PyTypeChecker
+            rescaled_channel = rescale_intensity(
+                # We scale in 1 value more than the bins we want to achieve.
+                # Like that the top value is not included in the last bin.
+                proc_channel.astype(float),
+                in_range=(0, proc_channel.max()),
+                out_range=(0, n_bins),
+            )
+            labels_channel = rescaled_channel.astype(int)
+            properties = regionprops(labels_channel, proc_channel)
+            center_region_area_fraction = properties[-2].area / (
+                channel.shape[0] * channel.shape[1]
+            )
+            center_region_intensity_fraction = 1 / (n_bins - 1)
+
+    # Fitting the intensity profile to a gaussian
+    _, _, _, centroid_fitted_y = fit_gaussian(np.max(channel, axis=1))
+    _, _, _, centroid_fitted_x = fit_gaussian(np.max(channel, axis=0))
 
     return {
-        "center_region_intensity_fraction": 0,  # TODO: Not implemented
-        "center_region_area_fraction": center_fraction,
-        "centroid_weighted_y": properties_stretched[-2].centroid_weighted[0],
-        "centroid_weighted_y_relative": 0,  # TODO: Not implemented
-        "centroid_weighted_x": properties_stretched[-2].centroid_weighted[1],
-        "centroid_weighted_x_relative": 0,  # TODO: Not implemented
-        "centroid_weighted_distance_relative": 0,  # TODO: Not implemented
-        "centroid_y": properties_stretched[-2].centroid[0],
-        "centroid_y_relative": 0,  # TODO: Not implemented
-        "centroid_x": properties_stretched[-2].centroid[1],
-        "centroid_x_relative": 0,  # TODO: Not implemented
-        "centroid_distance_relative": 0,  # TODO: Not implemented
-        "centroid_fitted_y": 0,  # TODO: Not implemented
-        "centroid_fitted_y_relative": 0,  # TODO: Not implemented
-        "centroid_fitted_x": 0,  # TODO: Not implemented
-        "centroid_fitted_x_relative": 0,  # TODO: Not implemented
-        "centroid_fitted_distance_relative": 0,  # TODO: Not implemented
+        "center_region_intensity_fraction": center_region_intensity_fraction,
+        "center_region_area_fraction": center_region_area_fraction,
+        "centroid_weighted_y": properties[-2].centroid_weighted[0],
+        "centroid_weighted_y_relative": properties[-2].centroid_weighted[0] / channel.shape[0]
+        - 0.5,
+        "centroid_weighted_x": properties[-2].centroid_weighted[1],
+        "centroid_weighted_x_relative": properties[-2].centroid_weighted[1] / channel.shape[1]
+        - 0.5,
+        "centroid_weighted_distance_relative": hypot(
+            properties[-2].centroid_weighted[0] / channel.shape[0] - 0.5,
+            properties[-2].centroid_weighted[1] / channel.shape[1] - 0.5,
+        ),
+        "centroid_y": properties[-2].centroid[0],
+        "centroid_y_relative": properties[-2].centroid[0] / channel.shape[0] - 0.5,
+        "centroid_x": properties[-2].centroid[1],
+        "centroid_x_relative": properties[-2].centroid[1] / channel.shape[1] - 0.5,
+        "centroid_distance_relative": hypot(
+            properties[-2].centroid[0] / channel.shape[0] - 0.5,
+            properties[-2].centroid[1] / channel.shape[1] - 0.5,
+        ),
+        "centroid_fitted_y": centroid_fitted_y,
+        "centroid_fitted_y_relative": centroid_fitted_y / channel.shape[0] - 0.5,
+        "centroid_fitted_x": centroid_fitted_x,
+        "centroid_fitted_x_relative": centroid_fitted_x / channel.shape[1] - 0.5,
+        "centroid_fitted_distance_relative": hypot(
+            centroid_fitted_y / channel.shape[0] - 0.5, centroid_fitted_x / channel.shape[1] - 0.5
+        ),
         "max_intensity": properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid_weighted[0],
-        "max_intensity_pos_y_relative": 0,  # TODO: Not implemented
+        "max_intensity_pos_y_relative": properties[-1].centroid_weighted[0] / channel.shape[0]
+        - 0.5,
         "max_intensity_pos_x": properties[-1].centroid_weighted[1],
-        "max_intensity_pos_x_relative": 0,  # TODO: Not implemented
-        "max_intensity_distance_relative": 0,  # TODO: Not implemented
+        "max_intensity_pos_x_relative": properties[-1].centroid_weighted[1] / channel.shape[1]
+        - 0.5,
+        "max_intensity_distance_relative": hypot(
+            properties[-1].centroid_weighted[0] / channel.shape[0] - 0.5,
+            properties[-1].centroid_weighted[1] / channel.shape[1] - 0.5,
+        ),
     }
 
 
@@ -271,21 +301,6 @@ def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> d
     }
 
 
-def _channel_area_deciles(channel: np.ndarray) -> dict:
-    """Computes the intensity deciles of an image.
-    Parameters
-    ----------
-    channel : np.array.
-        2d np.ndarray.
-    Returns
-    -------
-    deciles: dict
-        dict enclosing the intensity deciles of the provided channel.
-    """
-    channel = channel / np.max(channel)
-    return {f"decile_{i}": np.percentile(channel, i * 10) for i in range(10)}
-
-
 def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
     """
     given an image in a 3d np.ndarray format (yxc), this function return intensities for the corner and central regions
@@ -306,7 +321,6 @@ def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
         channel_properties = {"channel": c}
         channel_properties.update(_channel_max_intensity_properties(image[:, :, c], sigma))
         channel_properties.update(_channel_corner_properties(image[:, :, c], corner_fraction))
-        channel_properties.update(_channel_area_deciles(image[:, :, c]))
         if image.shape[2] == 1:
             return channel_properties
         else:

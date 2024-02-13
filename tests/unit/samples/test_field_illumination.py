@@ -51,8 +51,8 @@ def test_field_illumination_analysis_centroids(dataset):
     ]
     expected_centroids = list(
         zip(
-            expected_output["y_center_rel_offsets"],
-            expected_output["x_center_rel_offsets"],
+            expected_output["centroid_generated_y_relative"],
+            expected_output["centroid_generated_x_relative"],
         )
     )
     # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
@@ -93,8 +93,8 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
     ]
     expected_centroids = list(
         zip(
-            expected_output["y_center_rel_offsets"],
-            expected_output["x_center_rel_offsets"],
+            expected_output["centroid_generated_y_relative"],
+            expected_output["centroid_generated_x_relative"],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -141,8 +141,8 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
     ]
     expected_centroids = list(
         zip(
-            expected_output["y_center_rel_offsets"],
-            expected_output["x_center_rel_offsets"],
+            expected_output["centroid_generated_y_relative"],
+            expected_output["centroid_generated_x_relative"],
         )
     )
     # expected_contrast = [a - b for a, b in zip(expected_output["target_max_intensities"], expected_output["target_min_intensities"])]
