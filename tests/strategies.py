@@ -39,8 +39,6 @@ def st_field_illumination_test_data(
     y_image_shape = draw(y_image_shape)
     x_image_shape = draw(x_image_shape)
     c_image_shape = draw(c_image_shape)
-    # We do not want images that are too elongated
-    assume(0.5 < (x_image_shape / y_image_shape) < 2)
 
     do_noise = draw(do_noise)
 
