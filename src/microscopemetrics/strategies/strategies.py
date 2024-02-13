@@ -75,27 +75,21 @@ def st_field_illumination_test_data(
         image_dispersions.append(ch_dispersion)
 
         # Generate the channel as float64
-        # To avoid edge artifacts we first generate an image double the size and then crop it
-        source_channel = np.zeros(
-            shape=((y_image_shape * 2) + 1, (x_image_shape * 2) + 1), dtype="float64"
-        )
-        source_channel[y_image_shape, x_image_shape] = 1.0
-        source_channel = skimage_gaussian(
-            source_channel,
-            sigma=max((y_image_shape, x_image_shape)) * ch_dispersion,
+        channel = np.zeros(shape=(y_image_shape, x_image_shape), dtype="float64")
+        y_center = int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2))
+        x_center = int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2))
+        channel[
+            int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2)),
+            int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2)),
+        ] = 1.0
+
+        channel = skimage_gaussian(
+            channel,
+            sigma=max(channel.shape) * ch_dispersion,
+            mode="constant",
+            cval=0.0,
             preserve_range=True,
         )
-
-        channel = source_channel[
-            int(y_image_shape * (0.5 + -centroids_generated_y_relative[ch] / 2)) : int(
-                y_image_shape * (0.5 + -centroids_generated_y_relative[ch] / 2)
-            )
-            + y_image_shape,
-            int(x_image_shape * (0.5 + -centroids_generated_x_relative[ch] / 2)) : int(
-                x_image_shape * (0.5 + -centroids_generated_x_relative[ch] / 2)
-            )
-            + x_image_shape,
-        ]
 
         # Normalize channel intensity to be between ch_target_min_intensity and ch_target_max_intensity
         # Saturation point is at 1.0 when we rescale later to the target dtype
