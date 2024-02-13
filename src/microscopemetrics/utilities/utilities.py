@@ -8,9 +8,11 @@ from typing import Optional
 import numpy as np
 from numpy import float64, ndarray
 from scipy import special
+from scipy.optimize import curve_fit, fsolve
 
 INT_DETECTOR_BIT_DEPTHS = [8, 10, 11, 12, 15, 16, 32]
 FLOAT_DETECTOR_BIT_DEPTHS = [32, 64]
+
 
 ## Some useful functions
 def convert_SI(val, unit_in, unit_out):
@@ -47,6 +49,44 @@ def airy_fun(x: ndarray, centre: float64, amp: float64) -> ndarray:  # , exp):  
 def gaussian_fun(x, background, amplitude, center, sd):
     gauss = np.exp(-np.power(x - center, 2.0) / (2 * np.power(sd, 2.0)))
     return background + (amplitude - background) * gauss
+
+
+def fit_gaussian(profile, guess=None):
+    if guess is None:
+        guess = [profile.min(), profile.max(), profile.argmax(), 0.8]
+    x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
+    popt, pcov = curve_fit(gaussian_fun, x, profile, guess)
+
+    fitted_profile = gaussian_fun(x, popt[0], popt[1], popt[2], popt[3])
+    fwhm = popt[3] * 2.35482
+
+    # Calculate the fit quality
+    residuals = profile - fitted_profile
+    rss = np.sum(residuals**2)
+
+    return fitted_profile, rss, fwhm, popt[2]
+
+
+def fit_airy(profile, guess=None):
+    if guess is None:
+        guess = [profile.argmax(), 4 * profile.max()]
+    x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
+    popt, pcov = curve_fit(f=airy_fun, xdata=x, ydata=profile, p0=guess)
+
+    fitted_profile = airy_fun(x, popt[0], popt[1])
+
+    def _f(d):
+        return airy_fun(d, popt[0], popt[1]) - (fitted_profile.max() - fitted_profile.min()) / 2
+
+    guess = np.array([fitted_profile.argmax() - 1, fitted_profile.argmax() + 1])
+    v = fsolve(_f, guess)
+    fwhm = abs(v[1] - v[0])
+
+    # Calculate the fit quality
+    residuals = profile - fitted_profile
+    rss = np.sum(residuals**2)
+
+    return fitted_profile, rss, fwhm, popt[0]
 
 
 def multi_airy_fun(x: ndarray, *params) -> ndarray:
