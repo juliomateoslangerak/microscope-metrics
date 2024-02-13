@@ -2276,8 +2276,8 @@ docs = []
 [package.source]
 type = "git"
 url = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"
-reference = "HEAD"
-resolved_reference = "baf06be1b71623d19e8884c090803fa28b6ec631"
+reference = "dev"
+resolved_reference = "c981d24dd0286efa28bd19bc196aa7a49cb457f4"
 
 [[package]]
 name = "mistune"
@@ -4600,4 +4600,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.10 <3.12"
-content-hash = "d138df36f11754010a2c169fc0da0020482ef3e6a2b155cfd1401339ffdf208a"
+content-hash = "4479dd6ebad8c2eae5b32aed9d70c82b6137e0387145e88a7f104556114dfdba"
