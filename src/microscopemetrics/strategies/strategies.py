@@ -129,17 +129,17 @@ def st_field_illumination_test_data(
 @st.composite
 def st_field_illumination_dataset(
     draw,
+    unprocessed_dataset=st_mm_schema.st_mm_field_illumination_unprocessed_dataset(
+        input=st_mm_schema.st_mm_field_illumination_input(
+            field_illumination_image=st_mm_schema.st_mm_image_as_numpy()
+        )
+    ),
     expected_output=st_field_illumination_test_data(),
 ):
     expected_output = draw(expected_output)
-    field_illumination_unprocessed_dataset = draw(
-        st_mm_schema.st_mm_field_illumination_unprocessed_dataset(
-            input=st_mm_schema.st_mm_field_illumination_input(
-                field_illumination_image=st_mm_schema.st_mm_image_as_numpy(
-                    data=expected_output.pop("image"),
-                )
-            )
-        )
+    field_illumination_unprocessed_dataset = draw(unprocessed_dataset)
+    field_illumination_unprocessed_dataset.input.field_illumination_image.data = draw(
+        st.just(expected_output.pop("image"))
     )
 
     # Setting the bit depth to the data type of the image
