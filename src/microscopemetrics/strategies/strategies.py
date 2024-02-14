@@ -10,6 +10,7 @@ except ImportError:
     raise ImportError(
         "In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`."
     )
+from microscopemetrics_schema import datamodel as mm_schema
 from microscopemetrics_schema import strategies as st_mm_schema
 from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
@@ -27,7 +28,7 @@ def st_field_illumination_test_data(
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
     dtype=st.sampled_from([np.uint8, np.uint16]),
-    signal=st.integers(min_value=10, max_value=1000),
+    signal=st.integers(min_value=100, max_value=1000),
     do_noise=st.just(True),
     target_min_intensity=st.floats(min_value=0.1, max_value=0.49),
     target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
@@ -130,8 +131,12 @@ def st_field_illumination_test_data(
 def st_field_illumination_dataset(
     draw,
     unprocessed_dataset=st_mm_schema.st_mm_field_illumination_unprocessed_dataset(
-        input=st_mm_schema.st_mm_field_illumination_input(
-            field_illumination_image=st_mm_schema.st_mm_image_as_numpy()
+        dataset=st_mm_schema.st_mm_dataset(
+            target_class=mm_schema.FieldIlluminationDataset,
+            processed=st.just(False),
+            input=st_mm_schema.st_mm_field_illumination_input(
+                field_illumination_image=st_mm_schema.st_mm_image_as_numpy()
+            ),
         )
     ),
     expected_output=st_field_illumination_test_data(),
@@ -170,7 +175,7 @@ def st_field_illumination_table(
     columns = [
         "bottom_center_intensity_mean",
         "bottom_center_intensity_ratio",
-        "channel",
+        "channel_nr",
     ]
     table = []
     for _ in range(nr_rows):

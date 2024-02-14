@@ -318,7 +318,7 @@ def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
     """
     properties = []
     for c in range(image.shape[2]):
-        channel_properties = {"channel": c}
+        channel_properties = {"channel_nr": c}
         channel_properties.update(_channel_max_intensity_properties(image[:, :, c], sigma))
         channel_properties.update(_channel_corner_properties(image[:, :, c], corner_fraction))
         if image.shape[2] == 1:

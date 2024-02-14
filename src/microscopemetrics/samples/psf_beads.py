@@ -62,56 +62,123 @@ def _generate_key_values(
     bead_properties_df, discarded_positions_self_proximity, discarded_positions_lateral_edge
 ):
     return {
-        "nr_of_beads_analyzed": len(bead_properties_df),
-        "nr_of_beads_discarded_lateral_edge": sum(
-            sum(len(ch) for ch in im) for im in discarded_positions_lateral_edge.values()
-        ),
-        "nr_of_beads_discarded_self_proximity:": sum(
-            sum(len(ch) for ch in im) for im in discarded_positions_self_proximity.values()
-        ),
-        "nr_of_beads_discarded_axial_edge": bead_properties_df["considered_axial_edge"].sum(),
-        "nr_of_beads_considered_intensity_outlier": bead_properties_df[
+        "channel_nr": bead_properties_df.groupby("channel_nr")["channel_nr"].first().tolist(),
+        "nr_of_beads_analyzed": bead_properties_df.groupby("channel_nr").size().tolist(),
+        "nr_of_beads_discarded_lateral_edge": [
+            sum(len(pos) for pos in ch) for ch in zip(*discarded_positions_lateral_edge.values())
+        ],
+        "nr_of_beads_discarded_self_proximity": [
+            sum(len(pos) for pos in ch) for ch in zip(*discarded_positions_self_proximity.values())
+        ],
+        "nr_of_beads_considered_axial_edge": bead_properties_df.groupby("channel_nr")[
+            "considered_axial_edge"
+        ]
+        .apply(lambda x: (x == True).sum())
+        .tolist(),
+        "nr_of_beads_considered_intensity_outlier": bead_properties_df.groupby("channel_nr")[
             "considered_intensity_outlier"
-        ].sum(),
-        "nr_of_beads_considered_bad_z_fit": bead_properties_df["considered_bad_z_fit"].sum(),
-        "nr_of_beads_considered_bad_y_fit": bead_properties_df["considered_bad_y_fit"].sum(),
-        "nr_of_beads_considered_bad_x_fit": bead_properties_df["considered_bad_x_fit"].sum(),
-        "fit_rss_z_mean": bead_properties_df["z_fit_rss"].mean(),
-        "fit_rss_z_median": bead_properties_df["z_fit_rss"].median(),
-        "fit_rss_z_std": bead_properties_df["z_fit_rss"].std(),
-        "fit_rss_y_mean": bead_properties_df["y_fit_rss"].mean(),
-        "fit_rss_y_median": bead_properties_df["y_fit_rss"].median(),
-        "fit_rss_y_std": bead_properties_df["y_fit_rss"].std(),
-        "fit_rss_x_mean": bead_properties_df["x_fit_rss"].mean(),
-        "fit_rss_x_median": bead_properties_df["x_fit_rss"].median(),
-        "fit_rss_x_std": bead_properties_df["x_fit_rss"].std(),
-        "resolution_mean_fwhm_z_pixels": bead_properties_df["z_fwhm"].mean(),
-        "resolution_median_fwhm_z_pixels": bead_properties_df["z_fwhm"].median(),
-        "resolution_std_fwhm_z_pixels": bead_properties_df["z_fwhm"].std(),
-        "resolution_mean_fwhm_y_pixels": bead_properties_df["y_fwhm"].mean(),
-        "resolution_median_fwhm_y_pixels": bead_properties_df["y_fwhm"].median(),
-        "resolution_std_fwhm_y_pixels": bead_properties_df["y_fwhm"].std(),
-        "resolution_mean_fwhm_x_pixels": bead_properties_df["x_fwhm"].mean(),
-        "resolution_median_fwhm_x_pixels": bead_properties_df["x_fwhm"].median(),
-        "resolution_std_fwhm_x_pixels": bead_properties_df["x_fwhm"].std(),
-        "resolution_mean_fwhm_z_microns": bead_properties_df["z_fwhm_micron"].mean() or None,
-        "resolution_median_fwhm_z_microns": bead_properties_df["z_fwhm_micron"].median() or None,
-        "resolution_std_fwhm_z_microns": bead_properties_df["z_fwhm_micron"].std() or None,
-        "resolution_mean_fwhm_y_microns": bead_properties_df["y_fwhm_micron"].mean() or None,
-        "resolution_median_fwhm_y_microns": bead_properties_df["y_fwhm_micron"].median() or None,
-        "resolution_std_fwhm_y_microns": bead_properties_df["y_fwhm_micron"].std() or None,
-        "resolution_mean_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].mean() or None,
-        "resolution_median_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].median() or None,
-        "resolution_std_fwhm_x_microns": bead_properties_df["x_fwhm_micron"].std() or None,
-        "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df[
+        ]
+        .apply(lambda x: (x == True).sum())
+        .tolist(),
+        "nr_of_beads_considered_bad_z_fit": bead_properties_df.groupby("channel_nr")[
+            "considered_bad_z_fit"
+        ]
+        .apply(lambda x: (x == True).sum())
+        .tolist(),
+        "nr_of_beads_considered_bad_y_fit": bead_properties_df.groupby("channel_nr")[
+            "considered_bad_y_fit"
+        ]
+        .apply(lambda x: (x == True).sum())
+        .tolist(),
+        "nr_of_beads_considered_bad_x_fit": bead_properties_df.groupby("channel_nr")[
+            "considered_bad_x_fit"
+        ]
+        .apply(lambda x: (x == True).sum())
+        .tolist(),
+        "fit_rss_z_mean": bead_properties_df.groupby("channel_nr")["z_fit_rss"].mean().tolist(),
+        "fit_rss_z_median": bead_properties_df.groupby("channel_nr")["z_fit_rss"].median().tolist(),
+        "fit_rss_z_std": bead_properties_df.groupby("channel_nr")["z_fit_rss"].std().tolist(),
+        "fit_rss_y_mean": bead_properties_df.groupby("channel_nr")["y_fit_rss"].mean().tolist(),
+        "fit_rss_y_median": bead_properties_df.groupby("channel_nr")["y_fit_rss"].median().tolist(),
+        "fit_rss_y_std": bead_properties_df.groupby("channel_nr")["y_fit_rss"].std().tolist(),
+        "fit_rss_x_mean": bead_properties_df.groupby("channel_nr")["x_fit_rss"].mean().tolist(),
+        "fit_rss_x_median": bead_properties_df.groupby("channel_nr")["x_fit_rss"].median().tolist(),
+        "fit_rss_x_std": bead_properties_df.groupby("channel_nr")["x_fit_rss"].std().tolist(),
+        "resolution_mean_fwhm_z_pixels": bead_properties_df.groupby("channel_nr")["z_fwhm"]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_z_pixels": bead_properties_df.groupby("channel_nr")["z_fwhm"]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_z_pixels": bead_properties_df.groupby("channel_nr")["z_fwhm"]
+        .std()
+        .tolist(),
+        "resolution_mean_fwhm_y_pixels": bead_properties_df.groupby("channel_nr")["y_fwhm"]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_y_pixels": bead_properties_df.groupby("channel_nr")["y_fwhm"]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_y_pixels": bead_properties_df.groupby("channel_nr")["y_fwhm"]
+        .std()
+        .tolist(),
+        "resolution_mean_fwhm_x_pixels": bead_properties_df.groupby("channel_nr")["x_fwhm"]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_x_pixels": bead_properties_df.groupby("channel_nr")["x_fwhm"]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_x_pixels": bead_properties_df.groupby("channel_nr")["x_fwhm"]
+        .std()
+        .tolist(),
+        "resolution_mean_fwhm_z_microns": bead_properties_df.groupby("channel_nr")["z_fwhm_micron"]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_z_microns": bead_properties_df.groupby("channel_nr")[
+            "z_fwhm_micron"
+        ]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_z_microns": bead_properties_df.groupby("channel_nr")["z_fwhm_micron"]
+        .std()
+        .tolist(),
+        "resolution_mean_fwhm_y_microns": bead_properties_df.groupby("channel_nr")["y_fwhm_micron"]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_y_microns": bead_properties_df.groupby("channel_nr")[
+            "y_fwhm_micron"
+        ]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_y_microns": bead_properties_df.groupby("channel_nr")["y_fwhm_micron"]
+        .std()
+        .tolist(),
+        "resolution_mean_fwhm_x_microns": bead_properties_df.groupby("channel_nr")["x_fwhm_micron"]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_x_microns": bead_properties_df.groupby("channel_nr")[
+            "x_fwhm_micron"
+        ]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_x_microns": bead_properties_df.groupby("channel_nr")["x_fwhm_micron"]
+        .std()
+        .tolist(),
+        "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df.groupby("channel_nr")[
             "fwhm_lateral_asymmetry_ratio"
-        ].mean(),
-        "resolution_median_fwhm_lateral_asymmetry_ratio": bead_properties_df[
+        ]
+        .mean()
+        .tolist(),
+        "resolution_median_fwhm_lateral_asymmetry_ratio": bead_properties_df.groupby("channel_nr")[
             "fwhm_lateral_asymmetry_ratio"
-        ].median(),
-        "resolution_std_fwhm_lateral_asymmetry_ratio": bead_properties_df[
+        ]
+        .median()
+        .tolist(),
+        "resolution_std_fwhm_lateral_asymmetry_ratio": bead_properties_df.groupby("channel_nr")[
             "fwhm_lateral_asymmetry_ratio"
-        ].std(),
+        ]
+        .std()
+        .tolist(),
     }
 
 
@@ -319,7 +386,7 @@ def _process_image(
             ch_bead_fwhms_micron,
             ch_disc_prox_positions,
             ch_disc_lat_edge_positions,
-            ch_disc_ax_edge_positions,
+            ch_consid_ax_edge_positions,
         ) = _process_channel(
             channel=image[..., ch],
             sigma=sigma,
@@ -338,7 +405,7 @@ def _process_image(
         bead_fwhms_micron.append(ch_bead_fwhms_micron)
         discarded_positions_self_proximity.append(ch_disc_prox_positions)
         discarded_positions_lateral_edge.append(ch_disc_lat_edge_positions)
-        bead_considered_axial_edge.append(ch_disc_ax_edge_positions)
+        bead_considered_axial_edge.append(ch_consid_ax_edge_positions)
 
     return {
         "bead_images": bead_images,
@@ -612,13 +679,15 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             logger.warning(f"Bead properties could not be generated: {e}")
 
         bead_properties_df = pd.DataFrame(bead_properties)
-        self.output.key_values = _generate_key_values(
-            bead_properties_df=bead_properties_df,
-            discarded_positions_self_proximity=discarded_positions_self_proximity,
-            discarded_positions_lateral_edge=discarded_positions_lateral_edge,
+        self.output.key_values = mm_schema.PSFBeadsKeyMeasurements(
+            **_generate_key_values(
+                bead_properties_df=bead_properties_df,
+                discarded_positions_self_proximity=discarded_positions_self_proximity,
+                discarded_positions_lateral_edge=discarded_positions_lateral_edge,
+            )
         )
 
-        self.output.analyzed_bead_crops = output_bead_crops
+        self.output.bead_crops = output_bead_crops
 
         self.output.analyzed_bead_centroids = self._generate_centroids_roi(
             positions=bead_positions,

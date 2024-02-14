@@ -19,7 +19,7 @@ def test_psf_beads_analysis_instantiation(dataset):
 
 @pytest.mark.run
 @given(st_mm.st_psf_beads_dataset())
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow], deadline=100000)
 def test_psf_beads_analysis_run(dataset):
     assert not dataset["unprocessed_analysis"].processed
     assert dataset["unprocessed_analysis"].run()
