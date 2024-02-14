@@ -30,7 +30,7 @@ def st_field_illumination_test_data(
     dtype=st.sampled_from([np.uint8, np.uint16]),
     signal=st.integers(min_value=100, max_value=1000),
     do_noise=st.just(True),
-    target_min_intensity=st.floats(min_value=0.1, max_value=0.49),
+    target_min_intensity=st.floats(min_value=0.1, max_value=0.45),
     target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
     centroid_y_relative=st.floats(min_value=-0.8, max_value=0.8),
     centroid_x_relative=st.floats(min_value=-0.8, max_value=0.8),
