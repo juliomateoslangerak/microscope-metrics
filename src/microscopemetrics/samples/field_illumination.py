@@ -205,8 +205,8 @@ def _channel_max_intensity_properties(
     center_region_area_fraction = 1
     center_region_intensity_fraction = None
     properties = None
-    for n_bins in [11, 21, 51, 101]:
-        if center_region_area_fraction < 0.25:
+    for n_bins in [11, 21, 51, 101, 201, 501]:
+        if center_region_area_fraction < 0.2:
             break
         rescaled_channel = rescale_intensity(
             # We scale in 1 value more than the bins we want to achieve.
