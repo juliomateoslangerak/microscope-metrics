@@ -43,13 +43,12 @@ def test_field_illumination_analysis_centroids(dataset):
 
     assert field_illumination_analysis.processed
 
-    measured_centroids = [
-        (c_y, c_x)
-        for c_y, c_x in zip(
+    measured_centroids = list(
+        zip(
             field_illumination_analysis.output.key_values.centroid_y_relative,
             field_illumination_analysis.output.key_values.centroid_x_relative,
         )
-    ]
+    )
     expected_centroids = list(
         zip(
             expected_output["centroid_generated_y_relative"],
@@ -84,13 +83,12 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
 
     assert field_illumination_analysis.processed
 
-    measured_centroids_weighted = [
-        (c_y, c_x)
-        for c_y, c_x in zip(
+    measured_centroids_weighted = list(
+        zip(
             field_illumination_analysis.output.key_values.centroid_weighted_y_relative,
             field_illumination_analysis.output.key_values.centroid_weighted_x_relative,
         )
-    ]
+    )
     expected_centroids = list(
         zip(
             expected_output["centroid_generated_y_relative"],
@@ -133,13 +131,12 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
 
     assert field_illumination_analysis.processed
 
-    measured_max_intensity_positions = [
-        (c_y, c_x)
-        for c_y, c_x in zip(
+    measured_max_intensity_positions = list(
+        zip(
             field_illumination_analysis.output.key_values.max_intensity_pos_y_relative,
             field_illumination_analysis.output.key_values.max_intensity_pos_x_relative,
         )
-    ]
+    )
     expected_centroids = list(
         zip(
             expected_output["centroid_generated_y_relative"],
