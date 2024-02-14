@@ -228,40 +228,41 @@ def _channel_max_intensity_properties(
         "center_region_intensity_fraction": center_region_intensity_fraction,
         "center_region_area_fraction": center_region_area_fraction,
         "centroid_weighted_y": properties[-2].centroid_weighted[0],
-        "centroid_weighted_y_relative": properties[-2].centroid_weighted[0] / channel.shape[0]
-        - 0.5,
+        "centroid_weighted_y_relative": properties[-2].centroid_weighted[0] / (channel.shape[0] / 2)
+        - 1,
         "centroid_weighted_x": properties[-2].centroid_weighted[1],
-        "centroid_weighted_x_relative": properties[-2].centroid_weighted[1] / channel.shape[1]
-        - 0.5,
+        "centroid_weighted_x_relative": properties[-2].centroid_weighted[1] / (channel.shape[1] / 2)
+        - 1,
         "centroid_weighted_distance_relative": hypot(
-            properties[-2].centroid_weighted[0] / channel.shape[0] - 0.5,
-            properties[-2].centroid_weighted[1] / channel.shape[1] - 0.5,
+            properties[-2].centroid_weighted[0] / (channel.shape[0] / 2) - 1,
+            properties[-2].centroid_weighted[1] / (channel.shape[1] / 2) - 1,
         ),
         "centroid_y": properties[-2].centroid[0],
-        "centroid_y_relative": properties[-2].centroid[0] / channel.shape[0] - 0.5,
+        "centroid_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
         "centroid_x": properties[-2].centroid[1],
-        "centroid_x_relative": properties[-2].centroid[1] / channel.shape[1] - 0.5,
+        "centroid_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
         "centroid_distance_relative": hypot(
-            properties[-2].centroid[0] / channel.shape[0] - 0.5,
-            properties[-2].centroid[1] / channel.shape[1] - 0.5,
+            properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
+            properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
         ),
         "centroid_fitted_y": centroid_fitted_y,
-        "centroid_fitted_y_relative": centroid_fitted_y / channel.shape[0] - 0.5,
+        "centroid_fitted_y_relative": centroid_fitted_y / (channel.shape[0] / 2) - 1,
         "centroid_fitted_x": centroid_fitted_x,
-        "centroid_fitted_x_relative": centroid_fitted_x / channel.shape[1] - 0.5,
+        "centroid_fitted_x_relative": centroid_fitted_x / (channel.shape[1] / 2) - 1,
         "centroid_fitted_distance_relative": hypot(
-            centroid_fitted_y / channel.shape[0] - 0.5, centroid_fitted_x / channel.shape[1] - 0.5
+            centroid_fitted_y / (channel.shape[0] / 2) - 1,
+            centroid_fitted_x / (channel.shape[1] / 2) - 1,
         ),
         "max_intensity": properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid_weighted[0],
-        "max_intensity_pos_y_relative": properties[-1].centroid_weighted[0] / channel.shape[0]
-        - 0.5,
+        "max_intensity_pos_y_relative": properties[-1].centroid_weighted[0] / (channel.shape[0] / 2)
+        - 1,
         "max_intensity_pos_x": properties[-1].centroid_weighted[1],
-        "max_intensity_pos_x_relative": properties[-1].centroid_weighted[1] / channel.shape[1]
-        - 0.5,
+        "max_intensity_pos_x_relative": properties[-1].centroid_weighted[1] / (channel.shape[1] / 2)
+        - 1,
         "max_intensity_distance_relative": hypot(
-            properties[-1].centroid_weighted[0] / channel.shape[0] - 0.5,
-            properties[-1].centroid_weighted[1] / channel.shape[1] - 0.5,
+            properties[-1].centroid_weighted[0] / (channel.shape[0] / 2) - 1,
+            properties[-1].centroid_weighted[1] / (channel.shape[1] / 2) - 1,
         ),
     }
 
