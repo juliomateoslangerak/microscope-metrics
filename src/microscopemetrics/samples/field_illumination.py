@@ -208,21 +208,17 @@ def _channel_max_intensity_properties(
     for n_bins in [11, 21, 51, 101]:
         if center_region_area_fraction < 0.25:
             break
-        else:
-            # noinspection PyTypeChecker
-            rescaled_channel = rescale_intensity(
-                # We scale in 1 value more than the bins we want to achieve.
-                # Like that the top value is not included in the last bin.
-                proc_channel.astype(float),
-                in_range=(0, proc_channel.max()),
-                out_range=(0, n_bins),
-            )
-            labels_channel = rescaled_channel.astype(int)
-            properties = regionprops(labels_channel, proc_channel)
-            center_region_area_fraction = properties[-2].area / (
-                channel.shape[0] * channel.shape[1]
-            )
-            center_region_intensity_fraction = 1 / (n_bins - 1)
+        rescaled_channel = rescale_intensity(
+            # We scale in 1 value more than the bins we want to achieve.
+            # Like that the top value is not included in the last bin.
+            proc_channel.astype(float),
+            in_range=(0, proc_channel.max()),
+            out_range=(0, n_bins),
+        )
+        labels_channel = rescaled_channel.astype(int)
+        properties = regionprops(labels_channel, proc_channel)
+        center_region_area_fraction = properties[-2].area / (channel.shape[0] * channel.shape[1])
+        center_region_intensity_fraction = 1 / (n_bins - 1)
 
     # Fitting the intensity profile to a gaussian
     _, _, _, centroid_fitted_y = fit_gaussian(np.max(channel, axis=1))
