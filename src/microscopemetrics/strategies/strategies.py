@@ -409,7 +409,13 @@ def st_psf_beads_dataset(
 
     unprocessed_dataset = draw(
         st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
-            input=st_mm_schema.st_mm_psf_beads_input(psf_beads_images=st.just(psf_beads_images))
+            dataset=st_mm_schema.st_mm_dataset(
+                target_class=mm_schema.PSFBeadsDataset,
+                processed=st.just(False),
+                input=st_mm_schema.st_mm_psf_beads_input(
+                    psf_beads_images=st.just(psf_beads_images)
+                ),
+            )
         )
     )
 
