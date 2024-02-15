@@ -109,15 +109,7 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
 
 
 @pytest.mark.analysis
-@given(
-    st_mm.st_field_illumination_dataset(
-        expected_output=st_mm.st_field_illumination_test_data(
-            signal=st.integers(min_value=100, max_value=1000),
-            target_min_intensity=st.floats(min_value=0.1, max_value=0.4),
-            target_max_intensity=st.floats(min_value=0.6, max_value=0.9),
-        )
-    )
-)
+@given(st_mm.st_field_illumination_dataset())
 @settings(
     max_examples=50,
     suppress_health_check=[HealthCheck.too_slow],
