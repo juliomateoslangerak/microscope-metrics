@@ -31,6 +31,7 @@ def test_psf_beads_analysis_run(dataset):
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
+            c_image_shape=st.just(3),
             nr_valid_beads=st.integers(min_value=0, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
@@ -55,6 +56,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
+            c_image_shape=st.just(3),
             nr_valid_beads=st.just(0),
             nr_edge_beads=st.integers(min_value=0, max_value=10),
             nr_out_of_focus_beads=st.just(0),
