@@ -55,14 +55,15 @@ def fit_gaussian(profile, guess=None):
     if guess is None:
         guess = [profile.min(), profile.max(), profile.argmax(), 0.8]
     x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
-    popt, pcov = curve_fit(gaussian_fun, x, profile, guess)
+    popt, pcov, infodict, mesgstr, ier = curve_fit(
+        f=gaussian_fun, xdata=x, ydata=profile, p0=guess, maxfev=5000, full_output=True
+    )
 
     fitted_profile = gaussian_fun(x, popt[0], popt[1], popt[2], popt[3])
     fwhm = popt[3] * 2.35482
 
     # Calculate the fit quality
-    residuals = profile - fitted_profile
-    rss = np.sum(residuals**2)
+    rss = infodict["fvec"].sum()
 
     return fitted_profile, rss, fwhm, popt[2]
 
