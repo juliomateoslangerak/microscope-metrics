@@ -148,6 +148,46 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
 
 
+@pytest.mark.analysis
+@given(st_mm.st_field_illumination_dataset())
+@settings(
+    max_examples=50,
+    suppress_health_check=[HealthCheck.too_slow],
+    verbosity=Verbosity.verbose,
+    deadline=10000,
+)
+def test_field_illumination_analysis_centroids_fitted(dataset):
+    field_illumination_analysis = dataset["unprocessed_analysis"]
+    expected_output = dataset["expected_output"]
+    field_illumination_analysis.run()
+
+    assert field_illumination_analysis.processed
+
+    measured_centroids_fitted = list(
+        zip(
+            field_illumination_analysis.output.key_values.centroid_fitted_y_relative,
+            field_illumination_analysis.output.key_values.centroid_fitted_x_relative,
+        )
+    )
+    expected_centroids = list(
+        zip(
+            expected_output["centroid_generated_y_relative"],
+            expected_output["centroid_generated_x_relative"],
+        )
+    )
+    note(f"Expected output: {expected_output}")
+    note(
+        f"Input params: "
+        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
+        f"sigma: {field_illumination_analysis.input.sigma}"
+    )
+
+    for measured_m_i, expected_c in zip(measured_centroids_fitted, expected_centroids):
+        assert measured_m_i[0] == pytest.approx(expected_c[0], abs=0.05)
+        assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
+
+
 @pytest.mark.errors
 @given(
     st_mm.st_field_illumination_dataset(
