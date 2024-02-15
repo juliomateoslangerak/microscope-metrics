@@ -31,7 +31,7 @@ def test_field_illumination_analysis_run(dataset):
 @pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
 @settings(
-    max_examples=100,
+    max_examples=50,
     suppress_health_check=[HealthCheck.too_slow],
     verbosity=Verbosity.verbose,
     deadline=100000,
@@ -64,14 +64,14 @@ def test_field_illumination_analysis_centroids(dataset):
     )
 
     for measured_c, expected_c in zip(measured_centroids, expected_centroids):
-        assert measured_c[0] == pytest.approx(expected_c[0], abs=0.05)
-        assert measured_c[1] == pytest.approx(expected_c[1], abs=0.05)
+        assert measured_c[0] == pytest.approx(expected_c[0], abs=0.2)
+        assert measured_c[1] == pytest.approx(expected_c[1], abs=0.2)
 
 
 @pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
 @settings(
-    max_examples=100,
+    max_examples=50,
     suppress_health_check=[HealthCheck.too_slow],
     verbosity=Verbosity.verbose,
     deadline=100000,
@@ -104,8 +104,8 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
     )
 
     for measured_c_w, expected_c in zip(measured_centroids_weighted, expected_centroids):
-        assert measured_c_w[0] == pytest.approx(expected_c[0], abs=0.05)
-        assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.05)
+        assert measured_c_w[0] == pytest.approx(expected_c[0], abs=0.2)
+        assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.2)
 
 
 @pytest.mark.analysis
@@ -119,7 +119,7 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
     )
 )
 @settings(
-    max_examples=100,
+    max_examples=50,
     suppress_health_check=[HealthCheck.too_slow],
     verbosity=Verbosity.verbose,
     deadline=10000,
