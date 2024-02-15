@@ -84,8 +84,6 @@ def st_field_illumination_test_data(
 
         # Generate the channel as float64
         channel = np.zeros(shape=(y_image_shape, x_image_shape), dtype="float64")
-        y_center = int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2))
-        x_center = int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2))
         channel[
             int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2)),
             int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2)),
