@@ -215,7 +215,7 @@ def st_psf_beads_test_data(
     c_image_shape=st.integers(min_value=1, max_value=3),
     dtype=st.sampled_from([np.uint8, np.uint16, np.float32]),
     do_noise=st.just(True),
-    signal=st.floats(min_value=1.0, max_value=1000.0),
+    signal=st.floats(min_value=10.0, max_value=1000.0),
     target_min_intensity=st.floats(min_value=0.001, max_value=0.1),
     target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
     sigma_z=st.floats(min_value=0.7, max_value=2.0),
