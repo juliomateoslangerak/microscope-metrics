@@ -64,6 +64,13 @@ def st_field_illumination_test_data(
     for ch in range(c_image_shape):
         ch_target_min_intensity = draw(target_min_intensity)
         ch_target_max_intensity = draw(target_max_intensity)
+
+        # if the dtype is uint8, the difference between the min and max intensity should be less than 0.5
+        # otherwise, with only a few intensity levels, the detection will not be accurate. It is anyway a very
+        # unlikely scenario in a real world situation
+        if dtype == np.uint8:
+            assume((ch_target_max_intensity - ch_target_min_intensity) > 0.7)
+
         image_target_min_intensities.append(ch_target_min_intensity)
         image_target_max_intensities.append(ch_target_max_intensity)
 
