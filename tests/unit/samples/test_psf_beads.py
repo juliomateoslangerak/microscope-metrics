@@ -65,7 +65,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
     )
 )
 @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow], deadline=20000)
-def test_psf_beads_analysis_nr_edge_beads(dataset):
+def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
     psf_beads_dataset.run()
