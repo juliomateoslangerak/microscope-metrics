@@ -432,9 +432,11 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         self, positions, root_name, color, stroke_width, positions_filter=None
     ):
         rois = {}
+
+        # TODO: add a condition to not create the ROI if no beads are found?
         for image_label, input_image in self.input.psf_beads_images.items():
+            shapes = {}
             for ch in range(input_image.data.shape[-1]):
-                shapes = {}
                 if positions_filter is None:
                     for i, pos in enumerate(positions[image_label][ch]):
                         shapes[f"{i:02d}"] = mm_schema.Point(
@@ -448,13 +450,6 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                             ),
                             stroke_width=stroke_width,
                         )
-                    label = f"{root_name}_{image_label}_ch_{ch:02d}"
-                    rois[label] = mm_schema.RoiMassCenters(
-                        label=label,
-                        description=f"{root_name} channel {ch} in image {image_label}",
-                        image=image_label,
-                        shapes=shapes,
-                    )
                 else:
                     for i, (pos, is_filtered) in enumerate(
                         zip(positions[image_label][ch], positions_filter[image_label][ch])
@@ -471,15 +466,40 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                                 ),
                                 stroke_width=stroke_width,
                             )
-                    label = f"{root_name}_{image_label}_ch_{ch:02d}"
-                    rois[label] = mm_schema.RoiMassCenters(
-                        label=label,
-                        description=f"{root_name} channel {ch} in image {image_label}",
-                        image=image_label,
-                        shapes=shapes,
-                    )
+            label = f"{root_name}_{image_label}"
+            rois[label] = mm_schema.RoiMassCenters(
+                label=label,
+                description=f"{root_name} in image {image_label}",
+                image=image_label,
+                shapes=shapes,
+            )
 
         return rois
+
+    def _generate_profiles_table(self, axis, raw_profiles, fitted_profiles):
+        # TODO: Add descriptions
+        profiles = {}
+        axis_names = ["z", "y", "x"]
+        for image_label in self.input.psf_beads_images.keys():
+            for ch in range(self.input.psf_beads_images[image_label].data.shape[-1]):
+                for i, (raw, fitted) in enumerate(
+                    zip(raw_profiles[image_label][ch], fitted_profiles[image_label][ch])
+                ):
+                    profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw"] = mm_schema.Column(
+                        name=f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw",
+                        # description=f"Bead {i:02d} in channel {ch} of image {image_label} raw profile in {axis_names[axis]} axis",
+                        values=raw[axis].tolist(),
+                    )
+                    profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted"] = mm_schema.Column(
+                        name=f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted",
+                        # description=f"Bead {i:02d} in channel {ch} of image {image_label} fitted profile in {axis_names[axis]} axis",
+                        values=fitted[axis].tolist(),
+                    )
+        return mm_schema.TableAsDict(
+            name=f"bead_profiles_{axis_names[axis]}",
+            description=f"Bead profiles in {axis_names[axis]} axis",
+            columns=profiles,
+        )
 
     def run(self) -> bool:
         self.validate_requirements()
@@ -505,6 +525,9 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         discarded_positions_self_proximity = {}
         discarded_positions_lateral_edge = {}
         bead_considered_axial_edge = {}
+        bead_considered_bad_z_fit = {}
+        bead_considered_bad_y_fit = {}
+        bead_considered_bad_x_fit = {}
 
         # Prepare data
         for label, image in self.input.psf_beads_images.items():
@@ -575,6 +598,18 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                 "discarded_positions_lateral_edge"
             ]
             bead_considered_axial_edge[image_label] = image_output["bead_considered_axial_edge"]
+            bead_considered_bad_z_fit[image_label] = [
+                [b_rss[0] > fitting_rss_threshold for b_rss in ch_rss]
+                for ch_rss in image_output["bead_rsss"]
+            ]
+            bead_considered_bad_y_fit[image_label] = [
+                [b_rss[1] > fitting_rss_threshold for b_rss in ch_rss]
+                for ch_rss in image_output["bead_rsss"]
+            ]
+            bead_considered_bad_x_fit[image_label] = [
+                [b_rss[2] > fitting_rss_threshold for b_rss in ch_rss]
+                for ch_rss in image_output["bead_rsss"]
+            ]
 
         # Validate bead intensity
         bead_zscores, bead_considered_intensity_outlier = _calculate_bead_intensity_outliers(
@@ -673,57 +708,79 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     bead_properties["considered_axial_edge"].append(
                         bead_considered_axial_edge[image_label][ch][i]
                     )
-        try:
-            self.output.bead_properties = dict_to_table_inlined(bead_properties)
-        except Exception as e:
-            logger.warning(f"Bead properties could not be generated: {e}")
 
-        bead_properties_df = pd.DataFrame(bead_properties)
-        self.output.key_values = mm_schema.PSFBeadsKeyMeasurements(
-            **_generate_key_values(
-                bead_properties_df=bead_properties_df,
-                discarded_positions_self_proximity=discarded_positions_self_proximity,
-                discarded_positions_lateral_edge=discarded_positions_lateral_edge,
-            )
-        )
-
-        self.output.bead_crops = output_bead_crops
-
-        self.output.analyzed_bead_centroids = self._generate_centroids_roi(
-            positions=bead_positions,
-            root_name="analyzed_bead_centroids",
-            color=(0, 255, 0, 100),
-            stroke_width=8,
-        )
-
-        self.output.discarded_bead_centroids_lateral_edge = self._generate_centroids_roi(
-            positions=discarded_positions_lateral_edge,
-            root_name="discarded_bead_centroids_lateral_edge",
-            color=(255, 0, 0, 100),
-            stroke_width=4,
-        )
-
-        self.output.discarded_bead_centroids_self_proximity = self._generate_centroids_roi(
-            positions=discarded_positions_self_proximity,
-            root_name="discarded_bead_centroids_self_proximity",
-            color=(255, 0, 0, 100),
-            stroke_width=4,
-        )
-
-        self.output.considered_bead_centroids_axial_edge = self._generate_centroids_roi(
-            positions=bead_positions,
-            root_name="considered_bead_centroids_axial_edge",
-            color=(0, 0, 255, 100),
-            stroke_width=4,
-            positions_filter=bead_considered_axial_edge,
-        )
-
-        self.output.considered_bead_centroids_intensity_outlier = self._generate_centroids_roi(
-            positions=bead_positions,
-            root_name="considered_bead_centroids_intensity_outlier",
-            color=(0, 0, 255, 100),
-            stroke_width=4,
-            positions_filter=bead_considered_intensity_outlier,
+        self.output = mm_schema.PSFBeadsOutput(
+            bead_crops=output_bead_crops,
+            analyzed_bead_centroids=self._generate_centroids_roi(
+                positions=bead_positions,
+                root_name="analyzed_bead_centroids",
+                color=(0, 255, 0, 100),
+                stroke_width=8,
+            ),
+            discarded_bead_centroids_lateral_edge=self._generate_centroids_roi(
+                positions=discarded_positions_lateral_edge,
+                root_name="discarded_bead_centroids_lateral_edge",
+                color=(255, 0, 0, 100),
+                stroke_width=4,
+            ),
+            discarded_bead_centroids_self_proximity=self._generate_centroids_roi(
+                positions=discarded_positions_self_proximity,
+                root_name="discarded_bead_centroids_self_proximity",
+                color=(255, 0, 0, 100),
+                stroke_width=4,
+            ),
+            considered_bead_centroids_axial_edge=self._generate_centroids_roi(
+                positions=bead_positions,
+                root_name="considered_bead_centroids_axial_edge",
+                color=(0, 0, 255, 100),
+                stroke_width=4,
+                positions_filter=bead_considered_axial_edge,
+            ),
+            considered_bead_centroids_intensity_outlier=self._generate_centroids_roi(
+                positions=bead_positions,
+                root_name="considered_bead_centroids_intensity_outlier",
+                color=(0, 0, 255, 100),
+                stroke_width=4,
+                positions_filter=bead_considered_intensity_outlier,
+            ),
+            considered_bead_centroids_z_fit_quality=self._generate_centroids_roi(
+                positions=bead_positions,
+                root_name="considered_bead_centroids_z_fit_quality",
+                color=(0, 0, 255, 100),
+                stroke_width=4,
+                positions_filter=bead_considered_bad_z_fit,
+            ),
+            considered_bead_centroids_y_fit_quality=self._generate_centroids_roi(
+                positions=bead_positions,
+                root_name="considered_bead_centroids_y_fit_quality",
+                color=(0, 0, 255, 100),
+                stroke_width=4,
+                positions_filter=bead_considered_bad_y_fit,
+            ),
+            considered_bead_centroids_x_fit_quality=self._generate_centroids_roi(
+                positions=bead_positions,
+                root_name="considered_bead_centroids_x_fit_quality",
+                color=(0, 0, 255, 100),
+                stroke_width=4,
+                positions_filter=bead_considered_bad_x_fit,
+            ),
+            key_values=mm_schema.PSFBeadsKeyMeasurements(
+                **_generate_key_values(
+                    bead_properties_df=pd.DataFrame(bead_properties),
+                    discarded_positions_self_proximity=discarded_positions_self_proximity,
+                    discarded_positions_lateral_edge=discarded_positions_lateral_edge,
+                )
+            ),
+            bead_properties=dict_to_table_inlined(bead_properties),
+            bead_z_profiles=self._generate_profiles_table(
+                axis=0, raw_profiles=bead_profiles, fitted_profiles=bead_fitted_profiles
+            ),
+            bead_y_profiles=self._generate_profiles_table(
+                axis=1, raw_profiles=bead_profiles, fitted_profiles=bead_fitted_profiles
+            ),
+            bead_x_profiles=self._generate_profiles_table(
+                axis=2, raw_profiles=bead_profiles, fitted_profiles=bead_fitted_profiles
+            ),
         )
 
         self.processed = True

@@ -2334,7 +2334,7 @@ docs = []
 type = "git"
 url = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"
 reference = "dev"
-resolved_reference = "ec55ab3f9ec3e8ac8243ed2d2c1f9fa703687736"
+resolved_reference = "8501205e4e254f5ed01996ed9b491ce1d36a48da"
 
 [[package]]
 name = "mistune"

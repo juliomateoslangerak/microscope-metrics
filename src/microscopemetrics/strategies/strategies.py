@@ -221,6 +221,7 @@ def st_psf_beads_test_data(
     sigma_z=st.floats(min_value=0.7, max_value=2.0),
     sigma_x=st.floats(min_value=0.7, max_value=2.0),
     sigma_y=st.floats(min_value=0.7, max_value=2.0),
+    min_distance=st.just(25),
     nr_valid_beads=st.integers(min_value=1, max_value=10),
     nr_edge_beads=st.integers(min_value=0, max_value=3),
     nr_out_of_focus_beads=st.integers(min_value=0, max_value=3),
@@ -251,9 +252,9 @@ def st_psf_beads_test_data(
 
     do_noise = draw(do_noise)
 
-    min_distance_z = int(sigma_z * 20)
-    min_distance_y = int(sigma_y * 20)
-    min_distance_x = int(sigma_x * 20)
+    min_distance_z = draw(min_distance) // 2
+    min_distance_y = draw(min_distance)
+    min_distance_x = draw(min_distance)
 
     # We do not want images that are too elongated
     assume(0.5 < (x_image_shape / y_image_shape) < 2)
@@ -282,15 +283,15 @@ def st_psf_beads_test_data(
     ):
         z_pos = z_image_shape // 2
         y_pos = draw(
-            st.integers(min_value=min_distance_y, max_value=y_image_shape - min_distance_y - 1)
+            st.integers(min_value=min_distance_y + 1, max_value=y_image_shape - min_distance_y - 2)
         )
         x_pos = draw(
-            st.integers(min_value=min_distance_x, max_value=x_image_shape - min_distance_x - 1)
+            st.integers(min_value=min_distance_x + 1, max_value=x_image_shape - min_distance_x - 2)
         )
         if len(non_edge_beads_positions) == 0:
             non_edge_beads_positions.append((z_pos, y_pos, x_pos))
         for pos in non_edge_beads_positions:
-            if abs(pos[1] - y_pos) < min_distance_y and abs(pos[2] - x_pos) < min_distance_x:
+            if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
                 break
             else:
                 continue
@@ -301,20 +302,26 @@ def st_psf_beads_test_data(
         z_pos = z_image_shape
         y_pos = draw(
             st.one_of(
-                st.integers(min_value=0, max_value=min_distance_y - 1),
-                st.integers(min_value=y_image_shape - min_distance_y, max_value=y_image_shape - 1),
+                st.integers(min_value=1, max_value=int(min_distance_y / 2) - 2),
+                st.integers(
+                    min_value=y_image_shape - int(min_distance_y / 2) + 1,
+                    max_value=y_image_shape - 2,
+                ),
             )
         )
         x_pos = draw(
             st.one_of(
-                st.integers(min_value=0, max_value=min_distance_x - 1),
-                st.integers(min_value=x_image_shape - min_distance_x, max_value=x_image_shape - 1),
+                st.integers(min_value=1, max_value=int(min_distance_x / 2) - 2),
+                st.integers(
+                    min_value=x_image_shape - int(min_distance_x / 2) + 1,
+                    max_value=x_image_shape - 2,
+                ),
             )
         )
         if len(edge_beads_positions) == 0:
             edge_beads_positions.append((z_pos, y_pos, x_pos))
         for pos in edge_beads_positions:
-            if abs(pos[1] - y_pos) < min_distance_y and abs(pos[2] - x_pos) < min_distance_x:
+            if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
                 break
             else:
                 continue
@@ -326,9 +333,9 @@ def st_psf_beads_test_data(
         image[
             draw(
                 st.one_of(
-                    st.integers(min_value=0, max_value=min_distance_z - 1),
+                    st.integers(min_value=1, max_value=min_distance_z - 2),
                     st.integers(
-                        min_value=z_image_shape - min_distance_z, max_value=z_image_shape - 1
+                        min_value=z_image_shape - min_distance_z + 1, max_value=z_image_shape - 2
                     ),
                 )
             ),

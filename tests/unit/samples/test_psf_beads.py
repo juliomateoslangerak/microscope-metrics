@@ -31,34 +31,48 @@ def test_psf_beads_analysis_run(dataset):
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
+            nr_valid_beads=st.integers(min_value=0, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
         )
     )
 )
-@settings(max_examples=1, suppress_health_check=[HealthCheck.too_slow], deadline=20000)
-def test_psf_beads_analysis_valid_beads(dataset):
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
     psf_beads_dataset.run()
-
     assert psf_beads_dataset.processed
 
-    assert len(psf_beads_dataset.output.analyzed_bead_centroids) == len(
-        psf_beads_dataset.input.psf_beads_images
+    expected = sum(len(im["valid_bead_positions"]) for im in expected_output.values())
+
+    for measured in psf_beads_dataset.output.key_values.nr_of_beads_analyzed:
+        assert measured == expected
+
+
+@pytest.mark.analysis
+@given(
+    st_mm.st_psf_beads_dataset(
+        psf_beads_test_data=st_mm.st_psf_beads_test_data(
+            nr_valid_beads=st.just(0),
+            nr_edge_beads=st.integers(min_value=0, max_value=10),
+            nr_out_of_focus_beads=st.just(0),
+            nr_clustering_beads=st.just(0),
+        )
     )
+)
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+def test_psf_beads_analysis_nr_edge_beads(dataset):
+    psf_beads_dataset = dataset["unprocessed_analysis"]
+    expected_output = dataset["expected_output"]
+    psf_beads_dataset.run()
+    assert psf_beads_dataset.processed
 
+    expected = sum(len(im["edge_bead_positions"]) for im in expected_output.values())
 
-"""
-        "valid_bead_positions": valid_bead_positions,
-        "edge_bead_positions": edge_beads_positions,
-        "out_of_focus_bead_positions": out_of_focus_beads_positions,
-        "clustering_bead_positions": clustering_beads_positions,
-        "applied_sigmas": applied_sigmas,
-        "signal": signal,
-        "do_noise": do_noise,
-"""
+    for measured in psf_beads_dataset.output.key_values.nr_of_beads_discarded_lateral_edge:
+        assert measured == expected
 
 
 # from tests.test_utilities import get_file
