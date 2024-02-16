@@ -338,7 +338,7 @@ def st_psf_beads_test_data(
         pos = (
             draw(
                 st.one_of(
-                    st.integers(min_value=1, max_value=min_distance_z - 2),
+                    st.integers(min_value=2, max_value=min_distance_z - 2),
                     st.integers(
                         min_value=z_image_shape - min_distance_z + 1, max_value=z_image_shape - 2
                     ),
