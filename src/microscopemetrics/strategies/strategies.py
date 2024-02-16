@@ -209,7 +209,8 @@ def st_field_illumination_table(
 @st.composite
 def st_psf_beads_test_data(
     draw,
-    z_image_shape=st.integers(min_value=51, max_value=71),
+    # We want an odd number of slices so we can have a center slice
+    z_image_shape=st.integers(min_value=51, max_value=71).filter(lambda x: x % 2 != 0),
     y_image_shape=st.integers(min_value=512, max_value=1024),
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
@@ -229,7 +230,6 @@ def st_psf_beads_test_data(
 ):
     """Generate a psf beads image."""
     z_image_shape = draw(z_image_shape)
-    assume(z_image_shape % 2 == 1)  # We want an odd number of slices so we can have a center slice
     y_image_shape = draw(y_image_shape)
     x_image_shape = draw(x_image_shape)
     c_image_shape = draw(c_image_shape)
