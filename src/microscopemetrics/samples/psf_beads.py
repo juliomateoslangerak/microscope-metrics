@@ -440,8 +440,8 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             for ch in range(input_image.data.shape[-1]):
                 if positions_filter is None:
                     for i, pos in enumerate(positions[image_label][ch]):
-                        shapes[f"{i:02d}"] = mm_schema.Point(
-                            label=f"{i:02d}",
+                        shapes[f"ch{ch:02d}_b{i:02d}"] = mm_schema.Point(
+                            label=f"ch{ch:02d}_b{i:02d}",
                             z=pos[0],
                             y=pos[1],
                             x=pos[2],
@@ -456,8 +456,8 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                         zip(positions[image_label][ch], positions_filter[image_label][ch])
                     ):
                         if is_filtered:
-                            shapes[f"{i:02d}"] = mm_schema.Point(
-                                label=f"{i:02d}",
+                            shapes[f"ch{ch:02d}_b{i:02d}"] = mm_schema.Point(
+                                label=f"ch{ch:02d}_b{i:02d}",
                                 z=pos[0],
                                 y=pos[1],
                                 x=pos[2],
