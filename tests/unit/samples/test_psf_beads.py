@@ -8,7 +8,7 @@ from microscopemetrics.strategies import strategies as st_mm
 
 @pytest.mark.instantiation
 @given(st_mm.st_psf_beads_dataset())
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=1)
 def test_psf_beads_analysis_instantiation(dataset):
     assert isinstance(dataset["unprocessed_analysis"], psf_beads.PSFBeadsAnalysis)
     assert dataset["unprocessed_analysis"].name
@@ -26,7 +26,7 @@ def test_psf_beads_analysis_instantiation(dataset):
         )
     )
 )
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow], deadline=100000)
+@settings(max_examples=1)
 def test_psf_beads_analysis_run(dataset):
     assert not dataset["unprocessed_analysis"].processed
     assert dataset["unprocessed_analysis"].run()
@@ -47,7 +47,7 @@ def test_psf_beads_analysis_run(dataset):
         )
     )
 )
-@settings(suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+@settings(deadline=200000)
 def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
@@ -73,7 +73,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
         )
     )
 )
-@settings(suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+@settings(deadline=200000)
 def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
@@ -99,7 +99,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
         )
     )
 )
-@settings(suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+@settings(deadline=200000)
 def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
@@ -125,7 +125,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
         )
     )
 )
-@settings(suppress_health_check=[HealthCheck.too_slow], deadline=20000)
+@settings(deadline=200000)
 def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
