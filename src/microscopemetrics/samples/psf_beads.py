@@ -198,9 +198,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
     x_profile = np.squeeze(bead[z_focus, y_focus, :])
 
     # Fitting the profiles
-    z_fitted_profile, z_rss, z_fwhm, _ = fit_airy(z_profile)
-    y_fitted_profile, y_rss, y_fwhm, _ = fit_airy(y_profile)
-    x_fitted_profile, x_rss, x_fwhm, _ = fit_airy(x_profile)
+    z_fitted_profile, z_rss, z_fwhm, z_center_pos = fit_airy(z_profile)
+    y_fitted_profile, y_rss, y_fwhm, y_center_pos = fit_airy(y_profile)
+    x_fitted_profile, x_rss, x_fwhm, x_center_pos = fit_airy(x_profile)
 
     if all(voxel_size_micron):
         z_fwhm_micron = z_fwhm * voxel_size_micron[0]
@@ -211,8 +211,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
         y_fwhm_micron = None
         x_fwhm_micron = None
 
-    # TODO: Implement the discarding of beads that are too close to the edge in Z
-    considered_axial_edge = False
+    considered_axial_edge = (
+        z_center_pos - z_profile[0] < z_fwhm * 4 or z_profile[-1] - z_center_pos < z_fwhm * 4
+    )
 
     return (
         (z_profile, y_profile, x_profile),
