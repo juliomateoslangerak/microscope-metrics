@@ -29,7 +29,14 @@ def test_field_illumination_analysis_run(dataset):
 
 
 @pytest.mark.analysis
-@given(st_mm.st_field_illumination_dataset())
+@given(
+    st_mm.st_field_illumination_dataset(
+        expected_output=st_mm.st_field_illumination_test_data(
+            centroid_y_relative=st.floats(min_value=-0.7, max_value=0.7),
+            centroid_x_relative=st.floats(min_value=-0.7, max_value=0.7),
+        )
+    )
+)
 @settings(
     suppress_health_check=[HealthCheck.too_slow],
     verbosity=Verbosity.verbose,
