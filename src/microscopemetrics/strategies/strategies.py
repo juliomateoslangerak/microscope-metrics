@@ -278,6 +278,11 @@ def st_psf_beads_test_data(
     out_of_focus_beads_positions = []
     clustering_beads_positions = []
 
+    # The strategy is as follows:
+    # 1. Generate the valid beads in the center of the image.
+    # Those equal to valid_beads + out_of_focus_beads + clustering_beads
+    # 2. Generate the edge beads in the edge of the image making sure that they are not too close to the valid beads
+    # 3. Gradually remove out_of_focus_beads and clustering_beads from those not in the edge
     while len(non_edge_beads_positions) < (
         nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads
     ):
@@ -299,7 +304,7 @@ def st_psf_beads_test_data(
             non_edge_beads_positions.append((z_pos, y_pos, x_pos))
 
     while len(edge_beads_positions) < nr_edge_beads:
-        z_pos = z_image_shape
+        z_pos = z_image_shape // 2
         y_pos = draw(
             st.one_of(
                 st.integers(min_value=1, max_value=int(min_distance_y / 2) - 2),
@@ -330,7 +335,7 @@ def st_psf_beads_test_data(
 
     for _ in range(nr_out_of_focus_beads):
         pos = non_edge_beads_positions.pop()
-        image[
+        pos = (
             draw(
                 st.one_of(
                     st.integers(min_value=1, max_value=min_distance_z - 2),
@@ -341,8 +346,7 @@ def st_psf_beads_test_data(
             ),
             pos[1],
             pos[2],
-            :,
-        ] = signal
+        )
         out_of_focus_beads_positions.append(pos)
 
     for _ in range(nr_clustering_beads):
@@ -358,9 +362,13 @@ def st_psf_beads_test_data(
             (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
         )
 
+    for pos in edge_beads_positions:
+        image[pos[0], pos[1], pos[2], :] = signal
     for pos in non_edge_beads_positions:
         image[pos[0], pos[1], pos[2], :] = signal
-        valid_bead_positions.append(pos)
+        valid_bead_positions = non_edge_beads_positions
+    for pos in out_of_focus_beads_positions:
+        image[pos[0], pos[1], pos[2], :] = signal
 
     # Apply a gaussian filter to the image
     for ch in range(c_image_shape):
