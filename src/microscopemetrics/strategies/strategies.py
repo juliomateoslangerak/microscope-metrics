@@ -394,6 +394,7 @@ def st_psf_beads_test_data(
         "out_of_focus_bead_positions": out_of_focus_beads_positions,
         "clustering_bead_positions": clustering_beads_positions,
         "applied_sigmas": applied_sigmas,
+        "min_distance": min_distance,
         "signal": signal,
         "do_noise": do_noise,
     }
@@ -409,10 +410,12 @@ def st_psf_beads_dataset(
     expected_output = {}
     nr_input_images = draw(nr_input_images)
     for i in range(nr_input_images):
-        data = draw(psf_beads_test_data)
-        image = draw(st_mm_schema.st_mm_image_as_numpy(data=data.pop("image")))
+        test_data = draw(psf_beads_test_data)
+        image = draw(st_mm_schema.st_mm_image_as_numpy(data=test_data.pop("image")))
         psf_beads_images[image.image_url] = image
-        expected_output[image.image_url] = data
+        expected_output[image.image_url] = test_data
+
+    min_lateral_distance_factor = max([o["min_distance"] for o in expected_output.values()])
 
     unprocessed_dataset = draw(
         st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
@@ -420,7 +423,8 @@ def st_psf_beads_dataset(
                 target_class=mm_schema.PSFBeadsDataset,
                 processed=st.just(False),
                 input=st_mm_schema.st_mm_psf_beads_input(
-                    psf_beads_images=st.just(psf_beads_images)
+                    psf_beads_images=st.just(psf_beads_images),
+                    min_lateral_distance_factor=st.just(min_lateral_distance_factor),
                 ),
             )
         )
