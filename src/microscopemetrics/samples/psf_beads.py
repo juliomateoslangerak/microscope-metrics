@@ -477,28 +477,57 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         return rois
 
     def _generate_profiles_table(self, axis, raw_profiles, fitted_profiles):
-        # TODO: Add descriptions
-        profiles = {}
         axis_names = ["z", "y", "x"]
+        if len(raw_profiles) != len(fitted_profiles):
+            logger.error(
+                f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of images. Raising error."
+            )
+            raise ValueError(
+                f"Raw and fitted profiles for axis {axis_names[axis]} must have the same image length"
+            )
+
+        if any(
+            len(raw_profiles[image_label]) != len(fitted_profiles[image_label])
+            for image_label in raw_profiles
+        ):
+            logger.error(
+                f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of profiles. Raising error."
+            )
+            raise ValueError(
+                f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of profiles."
+            )
+
+        if all(
+            all(not ch_profiles for ch_profiles in raw_profiles[image_label])
+            for image_label in raw_profiles
+        ):
+            logger.error(f"No profiles for axis {axis_names[axis]} available. No table generated.")
+            return None
+
+        profiles = {}
+        descriptions = {}
         for image_label in self.input.psf_beads_images.keys():
             for ch in range(self.input.psf_beads_images[image_label].data.shape[-1]):
                 for i, (raw, fitted) in enumerate(
                     zip(raw_profiles[image_label][ch], fitted_profiles[image_label][ch])
                 ):
-                    profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw"] = mm_schema.Column(
-                        name=f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw",
-                        # description=f"Bead {i:02d} in channel {ch} of image {image_label} raw profile in {axis_names[axis]} axis",
-                        values=raw[axis].tolist(),
-                    )
-                    profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted"] = mm_schema.Column(
-                        name=f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted",
-                        # description=f"Bead {i:02d} in channel {ch} of image {image_label} fitted profile in {axis_names[axis]} axis",
-                        values=fitted[axis].tolist(),
-                    )
-        return mm_schema.TableAsDict(
+                    profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
+                    descriptions[
+                        f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw"
+                    ] = f"Bead {i:02d} in channel {ch} of image {image_label} raw profile in {axis_names[axis]} axis"
+
+                    profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[
+                        axis
+                    ].tolist()
+                    descriptions[
+                        f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted"
+                    ] = f"Bead {i:02d} in channel {ch} of image {image_label} fitted profile in {axis_names[axis]} axis"
+
+        return dict_to_table_inlined(
             name=f"bead_profiles_{axis_names[axis]}",
-            description=f"Bead profiles in {axis_names[axis]} axis",
-            columns=profiles,
+            dictionary=profiles,
+            table_description=f"Bead profiles in {axis_names[axis]} axis",
+            column_description=descriptions,
         )
 
     def run(self) -> bool:
@@ -771,7 +800,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     discarded_positions_lateral_edge=discarded_positions_lateral_edge,
                 )
             ),
-            bead_properties=dict_to_table_inlined(bead_properties),
+            bead_properties=dict_to_table_inlined(bead_properties, "bead_properties"),
             bead_z_profiles=self._generate_profiles_table(
                 axis=0, raw_profiles=bead_profiles, fitted_profiles=bead_fitted_profiles
             ),

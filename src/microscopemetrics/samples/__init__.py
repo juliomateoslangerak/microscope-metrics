@@ -138,9 +138,9 @@ def numpy_to_image_inlined(
 
 def dict_to_table_inlined(
     dictionary: Dict[str, list],
-    name: str = None,
-    column_description: Dict[str, str] = None,
+    name: str,
     table_description: str = None,
+    column_description: Dict[str, str] = None,
 ) -> mm_schema.Table:
     """Converts a dictionary to a microscope-metrics inlined table"""
     if not dictionary:
