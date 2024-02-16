@@ -139,20 +139,46 @@ def numpy_to_image_inlined(
 def dict_to_table_inlined(
     dictionary: Dict[str, list],
     name: str = None,
-    description: str = None,
+    column_description: Dict[str, str] = None,
+    table_description: str = None,
 ) -> mm_schema.Table:
     """Converts a dictionary to a microscope-metrics inlined table"""
-    if len(dictionary) == 0:
-        raise ValueError("Input dictionary should not be empty")
-    if any(len(dictionary[key]) == 0 for key in dictionary.keys()):
-        raise ValueError("All columns should have at least one value")
-    if not all(len(dictionary[key]) == len(dictionary[list(dictionary.keys())[0]]) for key in dictionary.keys()):
-        raise ValueError("All columns should have the same length")
-    return mm_schema.TableAsDict(
-        name=name,
-        description=description,
-        columns=[{k: {"values": dictionary[k]}} for k in dictionary.keys()],
-    )
+    if not dictionary:
+        logger.error(f"Table {name} could not created as there are no columns")
+        raise ValueError(f"Table {name} should have at least one column")
+
+    if any(len(dictionary[k]) != len(dictionary[list(dictionary)[0]]) for k in dictionary):
+        logger.error(f"Table {name} could not created as the columns have different lengths")
+        raise ValueError(
+            f"Table {name} could not be created. All columns should have the same length"
+        )
+
+    if not all(dictionary[k] for k in dictionary):
+        logger.warning(f"Table {name} was created empty. All the column values are empty")
+
+    if column_description is not None:
+        try:
+            output_table = mm_schema.TableAsDict(
+                name=name,
+                description=table_description,
+                columns=[
+                    {k: {"values": dictionary[k], "description": column_description[k]}}
+                    for k in dictionary
+                ],
+            )
+        except KeyError as e:
+            logger.error(
+                f"Table {name} could not be created. Verify that all columns have a description"
+            )
+            raise e
+    else:
+        output_table = mm_schema.TableAsDict(
+            name=name,
+            description=table_description,
+            columns=[{k: {"values": dictionary[k]}} for k in dictionary],
+        )
+
+    return output_table
 
 
 class AnalysisMixin(ABC):
