@@ -252,7 +252,7 @@ def st_psf_beads_test_data(
 
     do_noise = draw(do_noise)
 
-    min_distance_z = draw(min_distance) // 3
+    min_distance_z = draw(min_distance) // 4
     min_distance_y = draw(min_distance)
     min_distance_x = draw(min_distance)
 
