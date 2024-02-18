@@ -1,3 +1,5 @@
+# run pytest with --hypothesis-profile=dev to load a profile
+
 from hypothesis import HealthCheck, Verbosity, settings
 
 settings.register_profile(
