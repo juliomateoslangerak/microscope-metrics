@@ -97,6 +97,18 @@ def multi_airy_fun(x: ndarray, *params) -> ndarray:
     return y
 
 
+def robust_z_score(data):
+    median = np.median(data)
+    mad = np.median(np.abs(data - median))
+    return 0.6745 * (data - median) / mad
+
+
+def z_score(data):
+    mean = np.mean(data)
+    std_dev = np.std(data)
+    return (data - mean) / std_dev
+
+
 def wavelength_to_rgb(wavelength, gamma=0.8):
     """
     Copied from https://www.noah.org/wiki/Wavelength_to_RGB_in_Python
