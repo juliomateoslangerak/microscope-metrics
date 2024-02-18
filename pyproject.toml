@@ -14,9 +14,15 @@ documentation = "https://github.com/MontpellierRessourcesImagerie/microscope-met
 keywords = ["microscopy", "metrology"]
 
 [tool.pytest.ini_options]
-addopts = "--workers=auto"
+addopts = "--hypothesis-show-statistics --workers=auto"
 testpaths = [
     "tests"
+]
+markers = [
+    "instantiation: marks tests that instantiate a MetricsDataset",
+    "run: marks tests that run a metric",
+    "analysis: marks tests that test correctness of analysis",
+    "errors: marks tests that should throw errors"
 ]
 filterwarnings = [
     "ignore:.*Support for class-based `config` is deprecated.*:DeprecationWarning",
