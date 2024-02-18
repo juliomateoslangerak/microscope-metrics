@@ -384,15 +384,12 @@ def st_psf_beads_test_data(
     if do_noise:
         image = skimage_random_noise(image, mode="poisson", clip=False)
 
-    image = skimage_rescale_intensity(image, out_range=(target_min_intensity, target_max_intensity))
+    image = skimage_rescale_intensity(
+        image, in_range=(0.0, signal / 20), out_range=(target_min_intensity, target_max_intensity)
+    )
 
-    # TODO" use rescale from skimage to rescale the image to the target dtype
-    # Rescale to the target dtype
-    # Saturation point is at 1.0
-    image = np.clip(image, None, 1.0)
-    image = image * max_value
-    image = image.astype(dtype)
-    # Add the time dimension
+    image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
+
     image = np.expand_dims(image, 0)
 
     return {
