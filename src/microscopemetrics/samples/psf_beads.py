@@ -18,9 +18,9 @@ from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
 def _calculate_bead_intensity_outliers(
-    bead_crops: Dict, zscore_threshold: float
+    bead_crops: Dict, robust_z_score_threshold: float
 ) -> Tuple[Dict, Dict]:
-    bead_zscores = {}
+    bead_rzscores = {}
     bead_considered_intensity_outlier = {}
 
     bead_max_intensities = [
@@ -30,32 +30,32 @@ def _calculate_bead_intensity_outliers(
         for bead in ch_bead_crops
     ]
 
-    mean = np.mean(bead_max_intensities)
-    std = np.std(bead_max_intensities)
+    median = np.median(bead_max_intensities)
+    mad = np.median(np.abs(bead_max_intensities - median))
 
     for label, im_bead_crops in bead_crops.items():
-        bead_zscores[label] = []
+        bead_rzscores[label] = []
         bead_considered_intensity_outlier[label] = []
         for ch_bead_crops in im_bead_crops:
-            ch_zscores = []
+            ch_rzscores = []
             ch_is_outlier = []
             for bead in ch_bead_crops:
                 if len(bead_max_intensities) == 1:
-                    ch_zscores.append(0)
+                    ch_rzscores.append(0)
                     ch_is_outlier.append(False)
                 elif 1 < len(bead_max_intensities) < 6:
-                    ch_zscores.append(abs(bead.max() - mean) / std)
+                    ch_rzscores.append(0.6745 * (bead.max() - median) / mad)
                     ch_is_outlier.append(False)
                 else:
-                    ch_zscores.append(abs(bead.max() - mean) / std)
-                    if ch_zscores[-1] > zscore_threshold:
+                    ch_rzscores.append(0.6745 * (bead.max() - median) / mad)
+                    if abs(ch_rzscores[-1]) > robust_z_score_threshold:
                         ch_is_outlier.append(True)
                     else:
                         ch_is_outlier.append(False)
-            bead_zscores[label].append(ch_zscores)
+            bead_rzscores[label].append(ch_rzscores)
             bead_considered_intensity_outlier[label].append(ch_is_outlier)
 
-    return bead_zscores, bead_considered_intensity_outlier
+    return bead_rzscores, bead_considered_intensity_outlier
 
 
 def _generate_key_values(
@@ -539,7 +539,6 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
         images = {}
         voxel_sizes_micron = {}
         min_bead_distance = self._estimate_min_bead_distance()
-        intensity_zscore_threshold = self.input.intensity_zscore_threshold
         snr_threshold = self.input.snr_threshold
         fitting_rss_threshold = self.input.fitting_rss_threshold
 
@@ -642,8 +641,12 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             ]
 
         # Validate bead intensity
-        bead_zscores, bead_considered_intensity_outlier = _calculate_bead_intensity_outliers(
-            bead_crops=bead_crops, zscore_threshold=intensity_zscore_threshold
+        (
+            bead_robust_z_scores,
+            bead_considered_intensity_outlier,
+        ) = _calculate_bead_intensity_outliers(
+            bead_crops=bead_crops,
+            robust_z_score_threshold=self.input.intensity_robust_z_score_threshold,
         )
 
         ## Populate output
@@ -656,7 +659,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
             "intensity_max": [],
             "min_intensity_min": [],
             "intensity_std": [],
-            "intensity_zscore": [],
+            "intensity_robust_z_score": [],
             "considered_intensity_outlier": [],
             "z_centroid": [],
             "y_centroid": [],
@@ -700,7 +703,9 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                     bead_properties["intensity_max"].append(bead.max())
                     bead_properties["min_intensity_min"].append(bead.min())
                     bead_properties["intensity_std"].append(bead.std())
-                    bead_properties["intensity_zscore"].append(bead_zscores[image_label][ch][i])
+                    bead_properties["intensity_robust_z_score"].append(
+                        bead_robust_z_scores[image_label][ch][i]
+                    )
                     bead_properties["considered_intensity_outlier"].append(
                         bead_considered_intensity_outlier[image_label][ch][i]
                     )
