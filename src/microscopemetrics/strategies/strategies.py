@@ -356,19 +356,19 @@ def st_psf_beads_test_data(
             pos_1[1] + draw(st.sampled_from([-1, 1])),
             pos_1[2] + draw(st.sampled_from([-1, 1])),
         )
-        image[pos_1[0], pos_1[1], pos_1[2], :] = signal
-        image[pos_2[0], pos_2[1], pos_2[2], :] = signal
+        image[pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(signal * 1.5, signal / 10)
+        image[pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(signal * 1.5, signal / 10)
         clustering_beads_positions.append(
             (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
         )
 
     for pos in edge_beads_positions:
-        image[pos[0], pos[1], pos[2], :] = signal
+        image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
     for pos in non_edge_beads_positions:
-        image[pos[0], pos[1], pos[2], :] = signal
+        image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
         valid_bead_positions = non_edge_beads_positions
     for pos in out_of_focus_beads_positions:
-        image[pos[0], pos[1], pos[2], :] = signal
+        image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
 
     # Apply a gaussian filter to the image
     for ch in range(c_image_shape):
