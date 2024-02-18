@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -96,7 +97,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
-            z_image_shape=st.just(61),
+            z_image_shape=st.just(71),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
@@ -132,6 +133,15 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.integers(min_value=0, max_value=2),
+            # To find the outliers we need to ensure that all images have the same intensity related parameters
+            dtype=st.just(np.uint16),
+            do_noise=st.just(True),
+            signal=st.just(100.0),
+            target_min_intensity=st.just(0.1),
+            target_max_intensity=st.just(0.5),
+            sigma_z=st.just(2),
+            sigma_y=st.just(1.5),
+            sigma_x=st.just(1.5),
         )
     )
 )
