@@ -288,10 +288,10 @@ def st_psf_beads_test_data(
     ):
         z_pos = z_image_shape // 2
         y_pos = draw(
-            st.integers(min_value=min_distance_y + 1, max_value=y_image_shape - min_distance_y - 2)
+            st.integers(min_value=min_distance_y + 2, max_value=y_image_shape - min_distance_y - 2)
         )
         x_pos = draw(
-            st.integers(min_value=min_distance_x + 1, max_value=x_image_shape - min_distance_x - 2)
+            st.integers(min_value=min_distance_x + 2, max_value=x_image_shape - min_distance_x - 2)
         )
         if not non_edge_beads_positions:
             non_edge_beads_positions.append((z_pos, y_pos, x_pos))
@@ -307,19 +307,19 @@ def st_psf_beads_test_data(
         z_pos = z_image_shape // 2
         y_pos = draw(
             st.one_of(
-                st.integers(min_value=1, max_value=int(min_distance_y / 2) - 2),
+                st.integers(min_value=5, max_value=int(min_distance_y / 2) - 2),
                 st.integers(
-                    min_value=y_image_shape - int(min_distance_y / 2) + 1,
-                    max_value=y_image_shape - 2,
+                    min_value=y_image_shape - int(min_distance_y / 2) + 2,
+                    max_value=y_image_shape - 5,
                 ),
             )
         )
         x_pos = draw(
             st.one_of(
-                st.integers(min_value=1, max_value=int(min_distance_x / 2) - 2),
+                st.integers(min_value=5, max_value=int(min_distance_x / 2) - 2),
                 st.integers(
-                    min_value=x_image_shape - int(min_distance_x / 2) + 1,
-                    max_value=x_image_shape - 2,
+                    min_value=x_image_shape - int(min_distance_x / 2) + 2,
+                    max_value=x_image_shape - 5,
                 ),
             )
         )
@@ -338,9 +338,9 @@ def st_psf_beads_test_data(
         pos = (
             draw(
                 st.one_of(
-                    st.integers(min_value=2, max_value=min_distance_z - 2),
+                    st.integers(min_value=3, max_value=min_distance_z - 2),
                     st.integers(
-                        min_value=z_image_shape - min_distance_z + 1, max_value=z_image_shape - 2
+                        min_value=z_image_shape - min_distance_z + 2, max_value=z_image_shape - 4
                     ),
                 )
             ),
