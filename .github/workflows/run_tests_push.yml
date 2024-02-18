@@ -26,20 +26,4 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          poetry run pytest
-#          coverage report
-
-#      - name: Test with pytest and generate coverage report/badge
-#        run: |
-#          pip install coverage coverage-badge
-#          coverage run -m pytest tests/
-#          coverage report -i
-#          coverage-badge -f -o coverage.svg
-#      - name: Commit badge
-#        run: |
-#          git config --global user.name 'Erick Ratamero'
-#          git config --global user.email 'erickmartins@users.noreply.github.com'
-#          git add coverage.svg
-#          git commit --allow-empty -am "Automated updating coverage badge"
-#          git push
-
+          poetry run pytest --hypothesis-profile=push

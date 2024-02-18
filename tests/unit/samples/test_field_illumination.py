@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import HealthCheck, Verbosity, given, note, settings
+from hypothesis import given, note, settings
 from hypothesis import strategies as st
 
 from microscopemetrics import SaturationError
@@ -9,7 +9,7 @@ from microscopemetrics.strategies import strategies as st_mm
 
 @pytest.mark.instantiation
 @given(st_mm.st_field_illumination_dataset())
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=10)
 def test_field_illumination_analysis_instantiation(dataset):
     assert isinstance(dataset["unprocessed_analysis"], field_illumination.FieldIlluminationAnalysis)
     assert dataset["unprocessed_analysis"].name
@@ -20,7 +20,7 @@ def test_field_illumination_analysis_instantiation(dataset):
 
 @pytest.mark.run
 @given(st_mm.st_field_illumination_dataset())
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow], deadline=10000)
+@settings(max_examples=10)
 def test_field_illumination_analysis_run(dataset):
     assert not dataset["unprocessed_analysis"].processed
     assert dataset["unprocessed_analysis"].run()
@@ -36,11 +36,6 @@ def test_field_illumination_analysis_run(dataset):
             centroid_x_relative=st.floats(min_value=-0.7, max_value=0.7),
         )
     )
-)
-@settings(
-    suppress_health_check=[HealthCheck.too_slow],
-    verbosity=Verbosity.verbose,
-    deadline=100000,
 )
 def test_field_illumination_analysis_centroids(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
@@ -83,11 +78,6 @@ def test_field_illumination_analysis_centroids(dataset):
         )
     )
 )
-@settings(
-    suppress_health_check=[HealthCheck.too_slow],
-    verbosity=Verbosity.verbose,
-    deadline=100000,
-)
 def test_field_illumination_analysis_centroids_weighted(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
@@ -122,11 +112,6 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
 
 @pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
-@settings(
-    suppress_health_check=[HealthCheck.too_slow],
-    verbosity=Verbosity.verbose,
-    deadline=10000,
-)
 def test_field_illumination_analysis_max_intensity_positions(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
@@ -161,11 +146,6 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
 
 @pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
-@settings(
-    suppress_health_check=[HealthCheck.too_slow],
-    verbosity=Verbosity.verbose,
-    deadline=10000,
-)
 def test_field_illumination_analysis_centroids_fitted(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
@@ -206,7 +186,6 @@ def test_field_illumination_analysis_centroids_fitted(dataset):
         )
     )
 )
-@settings(max_examples=10, suppress_health_check=[HealthCheck.too_slow])
 def test_field_illumination_analysis_raises_saturation_error(dataset):
     with pytest.raises(SaturationError):
         assert dataset["unprocessed_analysis"].run()

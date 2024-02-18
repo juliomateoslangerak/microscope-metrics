@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from microscopemetrics.samples import psf_beads
