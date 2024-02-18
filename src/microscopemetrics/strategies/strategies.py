@@ -293,7 +293,7 @@ def st_psf_beads_test_data(
         x_pos = draw(
             st.integers(min_value=min_distance_x + 1, max_value=x_image_shape - min_distance_x - 2)
         )
-        if len(non_edge_beads_positions) == 0:
+        if not non_edge_beads_positions:
             non_edge_beads_positions.append((z_pos, y_pos, x_pos))
         for pos in non_edge_beads_positions:
             if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
@@ -323,7 +323,7 @@ def st_psf_beads_test_data(
                 ),
             )
         )
-        if len(edge_beads_positions) == 0:
+        if not edge_beads_positions:
             edge_beads_positions.append((z_pos, y_pos, x_pos))
         for pos in edge_beads_positions:
             if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
@@ -419,7 +419,7 @@ def st_psf_beads_dataset(
     psf_beads_images = {}
     expected_output = {}
     nr_input_images = draw(nr_input_images)
-    for i in range(nr_input_images):
+    for _ in range(nr_input_images):
         test_data = draw(psf_beads_test_data)
         image = draw(st_mm_schema.st_mm_image_as_numpy(data=test_data.pop("image")))
         psf_beads_images[image.image_url] = image
