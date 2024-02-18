@@ -418,6 +418,8 @@ def st_psf_beads_dataset(
     nr_input_images = draw(nr_input_images)
     for _ in range(nr_input_images):
         test_data = draw(psf_beads_test_data)
+        test_data["nr_input_images"] = nr_input_images
+        test_data["nr_channels"] = test_data["image"].shape[-1]
         image = draw(st_mm_schema.st_mm_image_as_numpy(data=test_data.pop("image")))
         psf_beads_images[image.image_url] = image
         expected_output[image.image_url] = test_data
