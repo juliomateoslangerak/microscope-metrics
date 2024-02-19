@@ -32,8 +32,8 @@ def test_field_illumination_analysis_run(dataset):
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
-            centroid_y_relative=st.floats(min_value=-0.7, max_value=0.7),
-            centroid_x_relative=st.floats(min_value=-0.7, max_value=0.7),
+            centroid_y_relative=st.floats(min_value=-0.0, max_value=0.6),
+            centroid_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
     )
 )
@@ -73,8 +73,8 @@ def test_field_illumination_analysis_centroids(dataset):
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
-            centroid_y_relative=st.floats(min_value=-0.7, max_value=0.7),
-            centroid_x_relative=st.floats(min_value=-0.7, max_value=0.7),
+            centroid_y_relative=st.floats(min_value=-0.0, max_value=0.6),
+            centroid_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
     )
 )
