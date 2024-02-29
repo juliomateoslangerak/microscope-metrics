@@ -82,19 +82,16 @@ def argolight_e_vertical():
     return analysis
 
 
-@pytest.mark.skip(reason="Need to pass to hypothesis")
 def test_run_argolight_b(argolight_b):
     assert argolight_b.run()
     assert argolight_b.processed
 
 
-@pytest.mark.skip(reason="Need to pass to hypothesis")
 def test_run_argolight_e_horizontal(argolight_e_horizontal):
     assert argolight_e_horizontal.run()
     assert argolight_e_horizontal.processed
 
 
-@pytest.mark.skip(reason="Need to pass to hypothesis")
 def test_run_argolight_e_vertical(argolight_e_vertical):
     assert argolight_e_vertical.run()
     assert argolight_e_vertical.processed
