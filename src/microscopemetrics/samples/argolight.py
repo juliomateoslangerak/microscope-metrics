@@ -175,9 +175,9 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
 
         distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
 
-        self.output.intensity_measurements = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
+        self.output.intensity_key_values = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
 
-        self.output.distance_measurements = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
+        self.output.distance_key_values = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
 
         self.output.spots_properties = mm_schema.TableAsDict(
             name="spots_properties",
