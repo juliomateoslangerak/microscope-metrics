@@ -91,7 +91,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
         for ch, ch_spot_props in enumerate(spots_properties):
             ch_df = DataFrame()
             ch_properties_kv = {}
-            ch_df["channel"] = [ch for _ in ch_spot_props]
+            ch_df["channel_nr"] = [ch for _ in ch_spot_props]
             ch_df["mask_labels"] = [p["label"] for p in ch_spot_props]
             ch_df["volume"] = [p["area"] for p in ch_spot_props]
             ch_df["roi_volume_units"] = "VOXEL"
@@ -105,7 +105,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             ch_df["roi_weighted_centroid_units"] = "PIXEL"
 
             # Key metrics for spots intensities
-            ch_properties_kv["channel"] = ch
+            ch_properties_kv["channel_nr"] = ch
             ch_properties_kv["nr_of_spots"] = len(ch_df)
             ch_properties_kv["intensity_max_spot"] = ch_df["integrated_intensity"].max().item()
             ch_properties_kv["intensity_max_spot_roi"] = (
@@ -240,7 +240,7 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
             do_angle_refinement=False,  # TODO: implement angle refinement
         )
         key_values = {
-            "channel": [c for c in range(image.shape[-1])],
+            "channel_nr": [c for c in range(image.shape[-1])],
             "rayleigh_resolution_pixels": resolution_values,
             "rayleigh_resolution_microns": [r * pixel_size for r in resolution_values if pixel_size is not None],
             "peak_position_A": [
