@@ -31,7 +31,7 @@ filterwarnings = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8.10 <3.12"
+python = ">=3.10.12 <3.12"
 numpy = "^1"
 scikit-image = "^0.21"
 scipy = "^1.10"
