@@ -1,8 +1,9 @@
 import numpy as np
-import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from microscopemetrics_schema import datamodel as mm_schema
+from microscopemetrics import SaturationError
 from microscopemetrics.samples import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
 
@@ -10,11 +11,12 @@ from microscopemetrics.strategies import strategies as st_mm
 @given(st_mm.st_psf_beads_dataset())
 @settings(max_examples=10)
 def test_psf_beads_analysis_instantiation(dataset):
-    assert isinstance(dataset["unprocessed_analysis"], psf_beads.PSFBeadsAnalysis)
-    assert dataset["unprocessed_analysis"].name
-    assert dataset["unprocessed_analysis"].description
-    assert dataset["unprocessed_analysis"].microscope
-    assert dataset["unprocessed_analysis"].input
+    dataset = dataset["unprocessed_dataset"]
+    assert isinstance(dataset, mm_schema.PSFBeadsDataset)
+    assert dataset.name
+    assert dataset.description
+    assert dataset.microscope
+    assert dataset.input
 
 
 @given(
@@ -29,10 +31,10 @@ def test_psf_beads_analysis_instantiation(dataset):
 )
 @settings(max_examples=10)
 def test_psf_beads_analysis_run(dataset):
-    assert not dataset["unprocessed_analysis"].processed
-    assert dataset["unprocessed_analysis"].run()
-    assert dataset["unprocessed_analysis"].processed
-    assert dataset["unprocessed_analysis"].output
+    dataset = dataset["unprocessed_dataset"]
+    assert not dataset.processed
+    assert psf_beads.analyse_psf_beads(dataset)
+    assert dataset.processed
 
 
 @given(
@@ -51,10 +53,9 @@ def test_psf_beads_analysis_run(dataset):
 )
 @settings(deadline=200000)
 def test_psf_beads_analysis_nr_valid_beads(dataset):
-    psf_beads_dataset = dataset["unprocessed_analysis"]
+    psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.run()
-    assert psf_beads_dataset.processed
+    psf_beads.analyse_psf_beads(psf_beads_dataset)
 
     expected = sum(len(im["valid_bead_positions"]) for im in expected_output.values())
 
@@ -78,10 +79,9 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 )
 @settings(deadline=200000)
 def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
-    psf_beads_dataset = dataset["unprocessed_analysis"]
+    psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.run()
-    assert psf_beads_dataset.processed
+    psf_beads.analyse_psf_beads(psf_beads_dataset)
 
     expected = sum(len(im["edge_bead_positions"]) for im in expected_output.values())
 
@@ -105,10 +105,9 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 )
 @settings(deadline=200000)
 def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
-    psf_beads_dataset = dataset["unprocessed_analysis"]
+    psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.run()
-    assert psf_beads_dataset.processed
+    psf_beads.analyse_psf_beads(psf_beads_dataset)
 
     expected = sum(len(im["out_of_focus_bead_positions"]) for im in expected_output.values())
 
@@ -141,10 +140,9 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 )
 @settings(deadline=200000)
 def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
-    psf_beads_dataset = dataset["unprocessed_analysis"]
+    psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.run()
-    assert psf_beads_dataset.processed
+    psf_beads.analyse_psf_beads(psf_beads_dataset)
 
     expected = sum(len(im["clustering_bead_positions"]) for im in expected_output.values())
 

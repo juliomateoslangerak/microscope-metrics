@@ -2,6 +2,7 @@ import pytest
 from hypothesis import given, note, settings
 from hypothesis import strategies as st
 
+from microscopemetrics_schema import datamodel as mm_schema
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import field_illumination
 from microscopemetrics.strategies import strategies as st_mm
@@ -10,20 +11,21 @@ from microscopemetrics.strategies import strategies as st_mm
 @given(st_mm.st_field_illumination_dataset())
 @settings(max_examples=10)
 def test_field_illumination_analysis_instantiation(dataset):
-    assert isinstance(dataset["unprocessed_analysis"], field_illumination.FieldIlluminationAnalysis)
-    assert dataset["unprocessed_analysis"].name
-    assert dataset["unprocessed_analysis"].description
-    assert dataset["unprocessed_analysis"].microscope
-    assert dataset["unprocessed_analysis"].input
+    dataset = dataset["unprocessed_dataset"]
+    assert isinstance(dataset, mm_schema.FieldIlluminationDataset)
+    assert dataset.name
+    assert dataset.description
+    assert dataset.microscope
+    assert dataset.input
 
 
 @given(st_mm.st_field_illumination_dataset())
 @settings(max_examples=10)
 def test_field_illumination_analysis_run(dataset):
-    assert not dataset["unprocessed_analysis"].processed
-    assert dataset["unprocessed_analysis"].run()
-    assert dataset["unprocessed_analysis"].processed
-    assert dataset["unprocessed_analysis"].output
+    dataset = dataset["unprocessed_dataset"]
+    assert not dataset.processed
+    assert field_illumination.analise_field_illumination(dataset)
+    assert dataset.processed
 
 
 @given(
@@ -35,16 +37,14 @@ def test_field_illumination_analysis_run(dataset):
     )
 )
 def test_field_illumination_analysis_centroids(dataset):
-    field_illumination_analysis = dataset["unprocessed_analysis"]
+    field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination_analysis.run()
-
-    assert field_illumination_analysis.processed
+    field_illumination.analise_field_illumination(field_illumination_dataset)
 
     measured_centroids = list(
         zip(
-            field_illumination_analysis.output.key_values.centroid_y_relative,
-            field_illumination_analysis.output.key_values.centroid_x_relative,
+            field_illumination_dataset.output.key_values.centroid_y_relative,
+            field_illumination_dataset.output.key_values.centroid_x_relative,
         )
     )
     expected_centroids = list(
@@ -56,9 +56,9 @@ def test_field_illumination_analysis_centroids(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"sigma: {field_illumination_analysis.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input.sigma}"
     )
 
     for measured_c, expected_c in zip(measured_centroids, expected_centroids):
@@ -75,16 +75,14 @@ def test_field_illumination_analysis_centroids(dataset):
     )
 )
 def test_field_illumination_analysis_centroids_weighted(dataset):
-    field_illumination_analysis = dataset["unprocessed_analysis"]
+    field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination_analysis.run()
-
-    assert field_illumination_analysis.processed
+    field_illumination.analise_field_illumination(field_illumination_dataset)
 
     measured_centroids_weighted = list(
         zip(
-            field_illumination_analysis.output.key_values.centroid_weighted_y_relative,
-            field_illumination_analysis.output.key_values.centroid_weighted_x_relative,
+            field_illumination_dataset.output.key_values.centroid_weighted_y_relative,
+            field_illumination_dataset.output.key_values.centroid_weighted_x_relative,
         )
     )
     expected_centroids = list(
@@ -96,9 +94,9 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"sigma: {field_illumination_analysis.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input.sigma}"
     )
 
     for measured_c_w, expected_c in zip(measured_centroids_weighted, expected_centroids):
@@ -108,16 +106,14 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
 
 @given(st_mm.st_field_illumination_dataset())
 def test_field_illumination_analysis_max_intensity_positions(dataset):
-    field_illumination_analysis = dataset["unprocessed_analysis"]
+    field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination_analysis.run()
-
-    assert field_illumination_analysis.processed
+    field_illumination.analise_field_illumination(field_illumination_dataset)
 
     measured_max_intensity_positions = list(
         zip(
-            field_illumination_analysis.output.key_values.max_intensity_pos_y_relative,
-            field_illumination_analysis.output.key_values.max_intensity_pos_x_relative,
+            field_illumination_dataset.output.key_values.max_intensity_pos_y_relative,
+            field_illumination_dataset.output.key_values.max_intensity_pos_x_relative,
         )
     )
     expected_centroids = list(
@@ -129,9 +125,9 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"sigma: {field_illumination_analysis.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input.sigma}"
     )
 
     for measured_m_i, expected_c in zip(measured_max_intensity_positions, expected_centroids):
@@ -141,16 +137,14 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
 
 @given(st_mm.st_field_illumination_dataset())
 def test_field_illumination_analysis_centroids_fitted(dataset):
-    field_illumination_analysis = dataset["unprocessed_analysis"]
+    field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination_analysis.run()
-
-    assert field_illumination_analysis.processed
+    field_illumination.analise_field_illumination(field_illumination_dataset)
 
     measured_centroids_fitted = list(
         zip(
-            field_illumination_analysis.output.key_values.centroid_fitted_y_relative,
-            field_illumination_analysis.output.key_values.centroid_fitted_x_relative,
+            field_illumination_dataset.output.key_values.centroid_fitted_y_relative,
+            field_illumination_dataset.output.key_values.centroid_fitted_x_relative,
         )
     )
     expected_centroids = list(
@@ -162,9 +156,9 @@ def test_field_illumination_analysis_centroids_fitted(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_analysis.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_analysis.input.saturation_threshold}"
-        f"sigma: {field_illumination_analysis.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input.sigma}"
     )
 
     for measured_m_i, expected_c in zip(measured_centroids_fitted, expected_centroids):
@@ -181,4 +175,5 @@ def test_field_illumination_analysis_centroids_fitted(dataset):
 )
 def test_field_illumination_analysis_raises_saturation_error(dataset):
     with pytest.raises(SaturationError):
-        assert dataset["unprocessed_analysis"].run()
+        dataset = dataset["unprocessed_dataset"]
+        field_illumination.analise_field_illumination(dataset)

@@ -161,12 +161,8 @@ def st_field_illumination_dataset(
     else:
         field_illumination_unprocessed_dataset.input.bit_depth = None
 
-    unprocessed_analysis = field_illumination.FieldIlluminationAnalysis(
-        **dataclasses.asdict(field_illumination_unprocessed_dataset)
-    )
-
     return {
-        "unprocessed_analysis": unprocessed_analysis,
+        "unprocessed_dataset": field_illumination_unprocessed_dataset,
         "expected_output": expected_output,
     }
 
@@ -184,7 +180,7 @@ def st_field_illumination_table(
     ]
     table = []
     for _ in range(nr_rows):
-        dataset = draw(st_field_illumination_dataset())["unprocessed_analysis"]
+        dataset = draw(st_field_illumination_dataset())["unprocessed_dataset"]
         dataset.run()
         if dataset.processed:
             key_values = {}
@@ -428,7 +424,7 @@ def st_psf_beads_dataset(
         [max(o["min_distance_y"], o["min_distance_x"]) for o in expected_output.values()]
     )
 
-    unprocessed_dataset = draw(
+    psf_beads_unprocessed_dataset = draw(
         st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
             dataset=st_mm_schema.st_mm_dataset(
                 target_class=mm_schema.PSFBeadsDataset,
@@ -441,6 +437,4 @@ def st_psf_beads_dataset(
         )
     )
 
-    unprocessed_analysis = psf_beads.PSFBeadsAnalysis(**dataclasses.asdict(unprocessed_dataset))
-
-    return {"unprocessed_analysis": unprocessed_analysis, "expected_output": expected_output}
+    return {"unprocessed_dataset": psf_beads_unprocessed_dataset, "expected_output": expected_output}

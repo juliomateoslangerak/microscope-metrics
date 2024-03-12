@@ -17,310 +17,8 @@ from microscopemetrics.analysis.tools import (
     compute_spots_properties,
     segment_image,
 )
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_byref
+from microscopemetrics.samples import logger, numpy_to_image_byref, validate_requirements
 from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
-
-
-class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
-    """This class handles the analysis of the Argolight sample pattern B"""
-
-    def run(self) -> bool:
-        self.validate_requirements()
-
-        # Check image shape
-        logger.info("Checking image shape...")
-        image = self.input.argolight_b_image.data
-        if len(image.shape) != 5:
-            logger.error("Image must be 5D")
-            return False
-
-        # Check image saturation
-        logger.info("Checking image saturation...")
-        saturated_channels = []
-        for c in range(image.shape[-1]):
-            if is_saturated(
-                channel=image[:, :, :, :, c],
-                threshold=self.input.saturation_threshold,
-                detector_bit_depth=self.input.bit_depth,
-            ):
-                logger.error(f"Channel {c} is saturated")
-                saturated_channels.append(c)
-        if len(saturated_channels):
-            logger.error(f"Channels {saturated_channels} are saturated")
-            return False
-
-        # Calculating the distance between spots in pixels with a security margin
-        min_distance = round(self.input.spots_distance * 0.3)
-
-        # Calculating the maximum tolerated distance in microns for the same spot in a different channels
-        max_distance = self.input.spots_distance * 0.4
-
-        labels = segment_image(
-            image=image,
-            min_distance=min_distance,
-            sigma=(self.input.sigma_z, self.input.sigma_y, self.input.sigma_x),
-            method="local_max",
-            low_corr_factors=self.input.lower_threshold_correction_factors,
-            high_corr_factors=self.input.upper_threshold_correction_factors,
-        )
-
-        self.output.spots_labels_image = numpy_to_image_byref(  # TODO: this should be a mask
-            array=labels,
-            name=f"{self.input.argolight_b_image.name}_spots_labels",
-            description=f"Spots labels of {self.input.argolight_b_image.image_url}",
-            image_url=self.input.argolight_b_image.image_url,
-            source_image_url=self.input.argolight_b_image.image_url,
-        )
-
-        spots_properties, spots_positions = compute_spots_properties(
-            image=image,
-            labels=labels,
-            remove_center_cross=self.input.remove_center_cross,
-        )
-
-        distances_df = compute_distances_matrix(
-            positions=spots_positions,
-            max_distance=max_distance,
-        )
-
-        properties_kv = []
-        properties_ls = []
-        distances_kv = []
-        spots_centroids = []
-
-        for ch, ch_spot_props in enumerate(spots_properties):
-            ch_df = DataFrame()
-            ch_properties_kv = {}
-            ch_df["channel"] = [ch for _ in ch_spot_props]
-            ch_df["mask_labels"] = [p["label"] for p in ch_spot_props]
-            ch_df["volume"] = [p["area"] for p in ch_spot_props]
-            ch_df["roi_volume_units"] = "VOXEL"
-            ch_df["max_intensity"] = [p["max_intensity"] for p in ch_spot_props]
-            ch_df["min_intensity"] = [p["min_intensity"] for p in ch_spot_props]
-            ch_df["mean_intensity"] = [p["mean_intensity"] for p in ch_spot_props]
-            ch_df["integrated_intensity"] = [p["integrated_intensity"] for p in ch_spot_props]
-            ch_df["z_weighted_centroid"] = [p["weighted_centroid"][0] for p in ch_spot_props]
-            ch_df["y_weighted_centroid"] = [p["weighted_centroid"][1] for p in ch_spot_props]
-            ch_df["x_weighted_centroid"] = [p["weighted_centroid"][2] for p in ch_spot_props]
-            ch_df["roi_weighted_centroid_units"] = "PIXEL"
-
-            # Key metrics for spots intensities
-            ch_properties_kv["channel"] = ch
-            ch_properties_kv["nr_of_spots"] = len(ch_df)
-            ch_properties_kv["intensity_max_spot"] = ch_df["integrated_intensity"].max().item()
-            ch_properties_kv["intensity_max_spot_roi"] = (
-                ch_df["integrated_intensity"].argmax().item()
-            )
-            ch_properties_kv["intensity_min_spot"] = ch_df["integrated_intensity"].min().item()
-            ch_properties_kv["intensity_min_spot_roi"] = (
-                ch_df["integrated_intensity"].argmin().item()
-            )
-            ch_properties_kv["mean_intensity"] = ch_df["integrated_intensity"].mean().item()
-            ch_properties_kv["median_intensity"] = ch_df["integrated_intensity"].median().item()
-            ch_properties_kv["std_mean_intensity"] = ch_df["integrated_intensity"].std().item()
-            ch_properties_kv["mad_mean_intensity"] = (
-                (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean()).abs().mean()
-            )
-            ch_properties_kv["min_max_intensity_ratio"] = (
-                ch_properties_kv["intensity_min_spot"] / ch_properties_kv["intensity_max_spot"]
-            )
-
-            properties_ls.append(ch_df)
-            properties_kv.append(ch_properties_kv)
-
-            channel_shapes = [
-                mm_schema.Point(
-                    label=str(p["label"]),
-                    x=p["weighted_centroid"][2].item(),
-                    y=p["weighted_centroid"][1].item(),
-                    z=p["weighted_centroid"][0].item(),
-                    c=ch,
-                    # TODO: put some color
-                )
-                for p in ch_spot_props
-            ]
-
-            spots_centroids.append(
-                mm_schema.Roi(
-                    label=f"Centroids_ch{ch:02}",
-                    image=self.input.argolight_b_image.image_url,
-                    shapes=channel_shapes,
-                )
-            )
-        properties_kv = {k: [i[k] for i in properties_kv] for k in properties_kv[0]}
-        properties_df = pd.concat(properties_ls)
-
-        for a, b in product(
-            distances_df.channel_a.explode().unique(),
-            distances_df.channel_b.explode().unique(),
-        ):
-            temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
-            a = int(a)
-            b = int(b)
-
-            pr_distances_kv = {
-                "channel_A": a,
-                "channel_B": b,
-                "mean_3d_dist": temp_df.dist_3d.mean(),
-                "median_3d_dist": temp_df.dist_3d.median(),
-                "std_3d_dist": temp_df.dist_3d.std(),
-                "mad_3d_dist": (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean(),
-                "mean_z_dist": temp_df.z_dist.mean(),
-                "median_z_dist": temp_df.z_dist.median(),
-                "std_z_dist": temp_df.z_dist.std(),
-                "mad_z_dist": (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean(),
-            }
-
-            distances_kv.append(pr_distances_kv)
-
-        distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
-
-        self.output.intensity_measurements = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
-
-        self.output.distance_measurements = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
-
-        self.output.spots_properties = mm_schema.TableAsDict(
-            name="spots_properties",
-            columns=[
-                mm_schema.Column(name=k, values=v)
-                for k, v in properties_df.to_dict(orient="list").items()
-            ],
-        )
-
-        self.output.spots_distances = mm_schema.TableAsDict(
-            name="spots_distances",
-            columns=[
-                mm_schema.Column(name=k, values=v)
-                for k, v in distances_df.to_dict(orient="list").items()
-            ],
-        )
-
-        self.output.spots_centroids = spots_centroids
-
-        self.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.processed = True
-
-        return True
-
-
-class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
-    """This class handles the analysis of the Argolight sample pattern E with lines along the X or Y axis"""
-
-    def run(self) -> bool:
-        self.validate_requirements()
-
-        # Check image shape
-        pass  # TODO: implement
-
-        # Check image saturation
-        pass  # TODO: implement
-
-        # Check for axis value
-        pass  # TODO: implement
-
-        image = self.input.argolight_e_image.data
-        image = image[0]  # if there is a time dimension, take the first one
-        axis = self.input.orientation_axis
-        pixel_size = self.input.argolight_e_image.voxel_size_x_micron
-        measured_band = self.input.measured_band
-
-        (
-            profiles,
-            z_slices,
-            peak_positions,
-            peak_heights,
-            peak_prominences,
-            resolution_values,
-            resolution_indexes,
-        ) = _compute_resolution(
-            image=image,
-            axis=axis,
-            measured_band=measured_band,
-            prominence=self.input.prominence_threshold,
-            do_angle_refinement=False,  # TODO: implement angle refinement
-        )
-        key_values = {
-            "channel": [c for c in range(image.shape[-1])],
-            "rayleigh_resolution_pixels": resolution_values,
-            "rayleigh_resolution_microns": [r * pixel_size for r in resolution_values if pixel_size is not None],
-            "peak_position_A": [
-                peak_positions[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
-            ],
-            "peak_position_B": [
-                peak_positions[ch][ind + 1].item() for ch, ind in enumerate(resolution_indexes)
-            ],
-            "peak_height_A": [
-                peak_heights[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
-            ],
-            "peak_height_B": [
-                peak_heights[ch][ind + 1].item() for ch, ind in enumerate(resolution_indexes)
-            ],
-            "peak_prominence_A": [
-                peak_prominences[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
-            ],
-            "peak_prominence_B": [
-                peak_prominences[ch][ind + 1].item() for ch, ind in enumerate(resolution_indexes)
-            ],
-            "focus_slice": z_slices,
-        }
-
-        out_tables = []
-        rois = []
-
-        # Populate tables and rois
-        for ch, profile in enumerate(profiles):
-            out_tables.append(_profile_to_columns(profile, ch))
-            shapes = []
-            pos_a, pos_b = (
-                key_values["peak_position_A"][ch],
-                key_values["peak_position_B"][ch],
-            )
-            for peak_index, peak in enumerate((pos_a, pos_b)):
-                # Measurements are taken at center of pixel, so we add .5 pixel to peak positions
-                if axis == 1:  # Y resolution -> horizontal rois
-                    axis_len = image.shape[2]
-                    x1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
-                    y1_pos = peak + 0.5
-                    x2_pos = (axis_len / 2) + (axis_len * measured_band / 2)
-                    y2_pos = peak + 0.5
-                elif axis == 2:  # X resolution -> vertical rois
-                    axis_len = image.shape[1]
-                    y1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
-                    x1_pos = peak + 0.5
-                    y2_pos = (axis_len / 2) + (axis_len * measured_band / 2)
-                    x2_pos = peak + 0.5
-
-                shapes.append(
-                    mm_schema.Line(
-                        label=f"ch{ch:02}_{peak_index}_peak",
-                        x1=x1_pos,
-                        y1=y1_pos,
-                        x2=x2_pos,
-                        y2=y2_pos,
-                        z=z_slices[ch],
-                        c=ch,
-                    )
-                )
-            rois.append(
-                mm_schema.Roi(
-                    label=f"ch{ch:02}_peaks",
-                    image=self.input.argolight_e_image.image_url,
-                    shapes=shapes,
-                )
-            )
-        self.output.peaks_rois = rois
-
-        self.output.key_measurements = mm_schema.ArgolightEKeyValues(**key_values)
-
-        self.output.intensity_profiles = [
-            mm_schema.TableAsDict(name=f"intensity_profiles_ch{c:02}", columns=out_tables[c])
-            for c in range(len(out_tables))
-        ]
-
-        self.processing_date = datetime.now().strftime("%Y-%m-%d")
-        self.processed = True
-
-        return True
 
 
 def _profile_to_columns(profile: ndarray, channel: int) -> List[Dict[str, Dict[str, List[float]]]]:
@@ -523,3 +221,300 @@ def _compute_resolution(
         resolution_values,
         resolution_indexes,
     )
+
+
+def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
+    validate_requirements()
+
+    # Check image shape
+    logger.info("Checking image shape...")
+    image = dataset.input.argolight_b_image.data
+    if len(image.shape) != 5:
+        logger.error("Image must be 5D")
+        return False
+
+    # Check image saturation
+    logger.info("Checking image saturation...")
+    saturated_channels = []
+    for c in range(image.shape[-1]):
+        if is_saturated(
+            channel=image[:, :, :, :, c],
+            threshold=dataset.input.saturation_threshold,
+            detector_bit_depth=dataset.input.bit_depth,
+        ):
+            logger.error(f"Channel {c} is saturated")
+            saturated_channels.append(c)
+    if len(saturated_channels):
+        logger.error(f"Channels {saturated_channels} are saturated")
+        return False
+
+    # Calculating the distance between spots in pixels with a security margin
+    min_distance = round(dataset.input.spots_distance * 0.3)
+
+    # Calculating the maximum tolerated distance in microns for the same spot in a different channels
+    max_distance = dataset.input.spots_distance * 0.4
+
+    labels = segment_image(
+        image=image,
+        min_distance=min_distance,
+        sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
+        method="local_max",
+        low_corr_factors=dataset.input.lower_threshold_correction_factors,
+        high_corr_factors=dataset.input.upper_threshold_correction_factors,
+    )
+
+    dataset.output.spots_labels_image = numpy_to_image_byref(  # TODO: this should be a mask
+        array=labels,
+        name=f"{dataset.input.argolight_b_image.name}_spots_labels",
+        description=f"Spots labels of {dataset.input.argolight_b_image.image_url}",
+        image_url=dataset.input.argolight_b_image.image_url,
+        source_image_url=dataset.input.argolight_b_image.image_url,
+    )
+
+    spots_properties, spots_positions = compute_spots_properties(
+        image=image,
+        labels=labels,
+        remove_center_cross=dataset.input.remove_center_cross,
+    )
+
+    distances_df = compute_distances_matrix(
+        positions=spots_positions,
+        max_distance=max_distance,
+    )
+
+    properties_kv = []
+    properties_ls = []
+    distances_kv = []
+    spots_centroids = []
+
+    for ch, ch_spot_props in enumerate(spots_properties):
+        ch_df = DataFrame()
+        ch_properties_kv = {}
+        ch_df["channel"] = [ch for _ in ch_spot_props]
+        ch_df["mask_labels"] = [p["label"] for p in ch_spot_props]
+        ch_df["volume"] = [p["area"] for p in ch_spot_props]
+        ch_df["roi_volume_units"] = "VOXEL"
+        ch_df["max_intensity"] = [p["max_intensity"] for p in ch_spot_props]
+        ch_df["min_intensity"] = [p["min_intensity"] for p in ch_spot_props]
+        ch_df["mean_intensity"] = [p["mean_intensity"] for p in ch_spot_props]
+        ch_df["integrated_intensity"] = [p["integrated_intensity"] for p in ch_spot_props]
+        ch_df["z_weighted_centroid"] = [p["weighted_centroid"][0] for p in ch_spot_props]
+        ch_df["y_weighted_centroid"] = [p["weighted_centroid"][1] for p in ch_spot_props]
+        ch_df["x_weighted_centroid"] = [p["weighted_centroid"][2] for p in ch_spot_props]
+        ch_df["roi_weighted_centroid_units"] = "PIXEL"
+
+        # Key metrics for spots intensities
+        ch_properties_kv["channel"] = ch
+        ch_properties_kv["nr_of_spots"] = len(ch_df)
+        ch_properties_kv["intensity_max_spot"] = ch_df["integrated_intensity"].max().item()
+        ch_properties_kv["intensity_max_spot_roi"] = (
+            ch_df["integrated_intensity"].argmax().item()
+        )
+        ch_properties_kv["intensity_min_spot"] = ch_df["integrated_intensity"].min().item()
+        ch_properties_kv["intensity_min_spot_roi"] = (
+            ch_df["integrated_intensity"].argmin().item()
+        )
+        ch_properties_kv["mean_intensity"] = ch_df["integrated_intensity"].mean().item()
+        ch_properties_kv["median_intensity"] = ch_df["integrated_intensity"].median().item()
+        ch_properties_kv["std_mean_intensity"] = ch_df["integrated_intensity"].std().item()
+        ch_properties_kv["mad_mean_intensity"] = (
+            (ch_df["integrated_intensity"] - ch_df["integrated_intensity"].mean()).abs().mean()
+        )
+        ch_properties_kv["min_max_intensity_ratio"] = (
+            ch_properties_kv["intensity_min_spot"] / ch_properties_kv["intensity_max_spot"]
+        )
+
+        properties_ls.append(ch_df)
+        properties_kv.append(ch_properties_kv)
+
+        channel_shapes = [
+            mm_schema.Point(
+                label=str(p["label"]),
+                x=p["weighted_centroid"][2].item(),
+                y=p["weighted_centroid"][1].item(),
+                z=p["weighted_centroid"][0].item(),
+                c=ch,
+                # TODO: put some color
+            )
+            for p in ch_spot_props
+        ]
+
+        spots_centroids.append(
+            mm_schema.Roi(
+                label=f"Centroids_ch{ch:02}",
+                image=dataset.input.argolight_b_image.image_url,
+                shapes=channel_shapes,
+            )
+        )
+    properties_kv = {k: [i[k] for i in properties_kv] for k in properties_kv[0]}
+    properties_df = pd.concat(properties_ls)
+
+    for a, b in product(
+        distances_df.channel_a.explode().unique(),
+        distances_df.channel_b.explode().unique(),
+    ):
+        temp_df = distances_df[(distances_df.channel_a == a) & (distances_df.channel_b == b)]
+        a = int(a)
+        b = int(b)
+
+        pr_distances_kv = {
+            "channel_A": a,
+            "channel_B": b,
+            "mean_3d_dist": temp_df.dist_3d.mean(),
+            "median_3d_dist": temp_df.dist_3d.median(),
+            "std_3d_dist": temp_df.dist_3d.std(),
+            "mad_3d_dist": (temp_df.dist_3d - temp_df.dist_3d.mean()).abs().mean(),
+            "mean_z_dist": temp_df.z_dist.mean(),
+            "median_z_dist": temp_df.z_dist.median(),
+            "std_z_dist": temp_df.z_dist.std(),
+            "mad_z_dist": (temp_df.z_dist - temp_df.z_dist.mean()).abs().mean(),
+        }
+
+        distances_kv.append(pr_distances_kv)
+
+    distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
+
+    dataset.output.intensity_measurements = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
+
+    dataset.output.distance_measurements = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
+
+    dataset.output.spots_properties = mm_schema.TableAsDict(
+        name="spots_properties",
+        columns=[
+            mm_schema.Column(name=k, values=v)
+            for k, v in properties_df.to_dict(orient="list").items()
+        ],
+    )
+
+    dataset.output.spots_distances = mm_schema.TableAsDict(
+        name="spots_distances",
+        columns=[
+            mm_schema.Column(name=k, values=v)
+            for k, v in distances_df.to_dict(orient="list").items()
+        ],
+    )
+
+    dataset.output.spots_centroids = spots_centroids
+
+    dataset.processing_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    dataset.processed = True
+
+    return True
+
+
+def analise_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
+    validate_requirements()
+
+    # Check image shape
+    pass  # TODO: implement
+
+    # Check image saturation
+    pass  # TODO: implement
+
+    # Check for axis value
+    pass  # TODO: implement
+
+    image = dataset.input.argolight_e_image.data
+    image = image[0]  # if there is a time dimension, take the first one
+    axis = dataset.input.orientation_axis
+    pixel_size = dataset.input.argolight_e_image.voxel_size_x_micron
+    measured_band = dataset.input.measured_band
+
+    (
+        profiles,
+        z_slices,
+        peak_positions,
+        peak_heights,
+        peak_prominences,
+        resolution_values,
+        resolution_indexes,
+    ) = _compute_resolution(
+        image=image,
+        axis=axis,
+        measured_band=measured_band,
+        prominence=dataset.input.prominence_threshold,
+        do_angle_refinement=False,  # TODO: implement angle refinement
+    )
+    key_values = {
+        "channel": [c for c in range(image.shape[-1])],
+        "rayleigh_resolution_pixels": resolution_values,
+        "rayleigh_resolution_microns": [r * pixel_size for r in resolution_values if pixel_size is not None],
+        "peak_position_A": [
+            peak_positions[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
+        ],
+        "peak_position_B": [
+            peak_positions[ch][ind + 1].item() for ch, ind in enumerate(resolution_indexes)
+        ],
+        "peak_height_A": [
+            peak_heights[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
+        ],
+        "peak_height_B": [
+            peak_heights[ch][ind + 1].item() for ch, ind in enumerate(resolution_indexes)
+        ],
+        "peak_prominence_A": [
+            peak_prominences[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
+        ],
+        "peak_prominence_B": [
+            peak_prominences[ch][ind + 1].item() for ch, ind in enumerate(resolution_indexes)
+        ],
+        "focus_slice": z_slices,
+    }
+
+    out_tables = []
+    rois = []
+
+    # Populate tables and rois
+    for ch, profile in enumerate(profiles):
+        out_tables.append(_profile_to_columns(profile, ch))
+        shapes = []
+        pos_a, pos_b = (
+            key_values["peak_position_A"][ch],
+            key_values["peak_position_B"][ch],
+        )
+        for peak_index, peak in enumerate((pos_a, pos_b)):
+            # Measurements are taken at center of pixel, so we add .5 pixel to peak positions
+            if axis == 1:  # Y resolution -> horizontal rois
+                axis_len = image.shape[2]
+                x1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
+                y1_pos = peak + 0.5
+                x2_pos = (axis_len / 2) + (axis_len * measured_band / 2)
+                y2_pos = peak + 0.5
+            elif axis == 2:  # X resolution -> vertical rois
+                axis_len = image.shape[1]
+                y1_pos = (axis_len / 2) - (axis_len * measured_band / 2)
+                x1_pos = peak + 0.5
+                y2_pos = (axis_len / 2) + (axis_len * measured_band / 2)
+                x2_pos = peak + 0.5
+
+            shapes.append(
+                mm_schema.Line(
+                    label=f"ch{ch:02}_{peak_index}_peak",
+                    x1=x1_pos,
+                    y1=y1_pos,
+                    x2=x2_pos,
+                    y2=y2_pos,
+                    z=z_slices[ch],
+                    c=ch,
+                )
+            )
+        rois.append(
+            mm_schema.Roi(
+                label=f"ch{ch:02}_peaks",
+                image=dataset.input.argolight_e_image.image_url,
+                shapes=shapes,
+            )
+        )
+    dataset.output.peaks_rois = rois
+
+    dataset.output.key_measurements = mm_schema.ArgolightEKeyValues(**key_values)
+
+    dataset.output.intensity_profiles = [
+        mm_schema.TableAsDict(name=f"intensity_profiles_ch{c:02}", columns=out_tables[c])
+        for c in range(len(out_tables))
+    ]
+
+    dataset.processing_date = datetime.now().strftime("%Y-%m-%d")
+    dataset.processed = True
+
+    return True
+
