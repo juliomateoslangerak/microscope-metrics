@@ -7,7 +7,6 @@ from microscopemetrics.samples import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
 
 
-@pytest.mark.instantiation
 @given(st_mm.st_psf_beads_dataset())
 @settings(max_examples=10)
 def test_psf_beads_analysis_instantiation(dataset):
@@ -18,7 +17,6 @@ def test_psf_beads_analysis_instantiation(dataset):
     assert dataset["unprocessed_analysis"].input
 
 
-@pytest.mark.run
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
@@ -37,7 +35,6 @@ def test_psf_beads_analysis_run(dataset):
     assert dataset["unprocessed_analysis"].output
 
 
-@pytest.mark.analysis
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
@@ -65,7 +62,6 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
         assert measured == expected
 
 
-@pytest.mark.analysis
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
@@ -93,7 +89,6 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
         assert measured == expected
 
 
-@pytest.mark.analysis
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(
@@ -121,7 +116,6 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
         assert measured == expected
 
 
-@pytest.mark.analysis
 @given(
     st_mm.st_psf_beads_dataset(
         psf_beads_test_data=st_mm.st_psf_beads_test_data(

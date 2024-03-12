@@ -7,7 +7,6 @@ from microscopemetrics.samples import field_illumination
 from microscopemetrics.strategies import strategies as st_mm
 
 
-@pytest.mark.instantiation
 @given(st_mm.st_field_illumination_dataset())
 @settings(max_examples=10)
 def test_field_illumination_analysis_instantiation(dataset):
@@ -18,7 +17,6 @@ def test_field_illumination_analysis_instantiation(dataset):
     assert dataset["unprocessed_analysis"].input
 
 
-@pytest.mark.run
 @given(st_mm.st_field_illumination_dataset())
 @settings(max_examples=10)
 def test_field_illumination_analysis_run(dataset):
@@ -28,7 +26,6 @@ def test_field_illumination_analysis_run(dataset):
     assert dataset["unprocessed_analysis"].output
 
 
-@pytest.mark.analysis
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
@@ -69,7 +66,6 @@ def test_field_illumination_analysis_centroids(dataset):
         assert measured_c[1] == pytest.approx(expected_c[1], abs=0.2)
 
 
-@pytest.mark.analysis
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
@@ -110,7 +106,6 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
         assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.2)
 
 
-@pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
 def test_field_illumination_analysis_max_intensity_positions(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
@@ -144,7 +139,6 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
 
 
-@pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
 def test_field_illumination_analysis_centroids_fitted(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
@@ -178,7 +172,6 @@ def test_field_illumination_analysis_centroids_fitted(dataset):
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
 
 
-@pytest.mark.errors
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
