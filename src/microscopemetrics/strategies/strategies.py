@@ -417,7 +417,7 @@ def st_psf_beads_test_data(
 
         image = np.expand_dims(image, 0)
 
-        output["image"].append(image)
+        output["images"].append(image)
         output["valid_bead_positions"].append(valid_bead_positions)
         output["edge_bead_positions"].append(edge_beads_positions)
         output["out_of_focus_bead_positions"].append(out_of_focus_beads_positions)
