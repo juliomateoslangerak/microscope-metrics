@@ -10,7 +10,7 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_mm_image
+from microscopemetrics.samples import logger, numpy_to_mm_image, validate_requirements
 from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
 
 
@@ -327,94 +327,91 @@ def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
     return {k: [i[k] for i in properties] for k in properties[0]}
 
 
-class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixin):
-    """This analysis creates a report on field illumination homogeneity based on input images"""
+def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
+    validate_requirements()
 
-    def run(self) -> bool:
-        self.validate_requirements()
+    # for image in self.input.field_illumination_image:
 
-        # for image in self.input.field_illumination_image:
+    # Check image shape
+    logger.info("Checking image shape...")
+    image = dataset.input.field_illumination_image.data
+    if len(image.shape) != 5:
+        logger.error("Image must be 5D")
+        return False
+    if image.shape[0] != 1 or image.shape[1] != 1:
+        logger.warning(
+            "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
+        )
+    # For the analysis we are using only the first z and time-point
+    image = image[0, 0, :, :, :].reshape((image.shape[2], image.shape[3], image.shape[4]))
 
-        # Check image shape
-        logger.info("Checking image shape...")
-        image = self.input.field_illumination_image.data
-        if len(image.shape) != 5:
-            logger.error("Image must be 5D")
-            return False
-        if image.shape[0] != 1 or image.shape[1] != 1:
-            logger.warning(
-                "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
+    # Check image saturation
+    logger.info("Checking image saturation...")
+    saturated_channels = []
+    for c in range(image.shape[2]):
+        if is_saturated(
+            channel=image[:, :, c],
+            threshold=dataset.input.saturation_threshold,
+            detector_bit_depth=dataset.input.bit_depth,
+        ):
+            logger.error(f"Channel {c} is saturated")
+            saturated_channels.append(c)
+    if len(saturated_channels):
+        logger.error(f"Channels {saturated_channels} are saturated")
+        raise SaturationError(f"Channels {saturated_channels} are saturated")
+
+    dataset.output.key_values = mm_schema.FieldIlluminationKeyValues(
+        **_image_properties(
+            image=image,
+            corner_fraction=dataset.input.corner_fraction,
+            sigma=dataset.input.sigma,
+        )
+    )
+
+    dataset.output.intensity_map = numpy_to_mm_image(
+        array=_image_intensity_map(image=image, map_size=dataset.input.intensity_map_size),
+        name=f"{dataset.input.field_illumination_image.name}_intensity_map",
+        description=f"Intensity map of {dataset.input.field_illumination_image.name}",
+        source_images=dataset.input.field_illumination_image,
+    )
+
+    dataset.output.intensity_profiles = mm_schema.TableAsDict(
+        name="intensity_profiles", columns=_image_line_profile(image, profile_size=255)
+    )
+
+    dataset.output.roi_profiles = mm_schema.Roi(
+        label="Profile ROIs",
+        description="ROIs used to compute the intensity profiles",
+        image=dataset.input.field_illumination_image.image_url,
+        shapes=_line_profile_shapes(image),
+    )
+
+    dataset.output.roi_corners = mm_schema.Roi(
+        label="Corner ROIs",
+        description="ROIs used to compute the corner intensities",
+        image=dataset.input.field_illumination_image.image_url,
+        shapes=_corner_shapes(image, dataset.input.corner_fraction),
+    )
+
+    dataset.output.roi_centroids_weighted = mm_schema.Roi(
+        label="Weighted Centroids ROIs",
+        description="Point ROI marking the weighted centroids of the max intensity regions",
+        image=dataset.input.field_illumination_image.image_url,
+        shapes=[
+            mm_schema.Point(
+                label=f"ch{c:02}_center",
+                y=dataset.output.key_values.centroid_weighted_y[c],
+                x=dataset.output.key_values.centroid_weighted_x[c],
+                c=c,
+                stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                stroke_width=5,
             )
-        # For the analysis we are using only the first z and time-point
-        image = image[0, 0, :, :, :].reshape((image.shape[2], image.shape[3], image.shape[4]))
+            for c in range(image.shape[2])
+        ],
+    )
 
-        # Check image saturation
-        logger.info("Checking image saturation...")
-        saturated_channels = []
-        for c in range(image.shape[2]):
-            if is_saturated(
-                channel=image[:, :, c],
-                threshold=self.input.saturation_threshold,
-                detector_bit_depth=self.input.bit_depth,
-            ):
-                logger.error(f"Channel {c} is saturated")
-                saturated_channels.append(c)
-        if len(saturated_channels):
-            logger.error(f"Channels {saturated_channels} are saturated")
-            raise SaturationError(f"Channels {saturated_channels} are saturated")
+    dataset.processing_datetime = datetime.now()
+    dataset.processed = True
 
-        self.output.key_values = mm_schema.FieldIlluminationKeyValues(
-            **_image_properties(
-                image=image,
-                corner_fraction=self.input.corner_fraction,
-                sigma=self.input.sigma,
-            )
-        )
-
-        self.output.intensity_map = numpy_to_mm_image(
-            array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
-            name=f"{self.input.field_illumination_image.name}_intensity_map",
-            description=f"Intensity map of {self.input.field_illumination_image.name}",
-            source_images=self.input.field_illumination_image,
-        )
-
-        self.output.intensity_profiles = mm_schema.TableAsDict(
-            name="intensity_profiles", columns=_image_line_profile(image, profile_size=255)
-        )
-
-        self.output.roi_profiles = mm_schema.Roi(
-            label="Profile ROIs",
-            description="ROIs used to compute the intensity profiles",
-            image=self.input.field_illumination_image.image_url,
-            shapes=_line_profile_shapes(image),
-        )
-
-        self.output.roi_corners = mm_schema.Roi(
-            label="Corner ROIs",
-            description="ROIs used to compute the corner intensities",
-            image=self.input.field_illumination_image.image_url,
-            shapes=_corner_shapes(image, self.input.corner_fraction),
-        )
-
-        self.output.roi_centroids_weighted = mm_schema.Roi(
-            label="Weighted Centroids ROIs",
-            description="Point ROI marking the weighted centroids of the max intensity regions",
-            image=self.input.field_illumination_image.image_url,
-            shapes=[
-                mm_schema.Point(
-                    label=f"ch{c:02}_center",
-                    y=self.output.key_values.centroid_weighted_y[c],
-                    x=self.output.key_values.centroid_weighted_x[c],
-                    c=c,
-                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                    stroke_width=5,
-                )
-                for c in range(image.shape[2])
-            ],
-        )
-
-        self.processing_datetime = datetime.now()
-        self.processed = True
-
-        return True
+    return True
