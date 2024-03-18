@@ -116,7 +116,7 @@ def st_field_illumination_test_data(
             )
 
             if do_noise:
-                # The noise on a 1.0 intensity image is too strong so we rescale the image to
+                # The noise on a 1.0 intensity image is too strong, so we rescale the image to
                 # the defined signal and then rescale it back to the target intensity
                 ch_signal = draw(signal)
                 channel = channel * ch_signal
@@ -217,7 +217,7 @@ def st_field_illumination_table(
 def st_psf_beads_test_data(
     draw,
     nr_images=st.integers(min_value=1, max_value=3),
-    # We want an odd number of slices so we can have a center slice
+    # We want an odd number of slices, so we can have a center slice
     z_image_shape=st.integers(min_value=51, max_value=71).filter(lambda x: x % 2 != 0),
     y_image_shape=st.integers(min_value=512, max_value=1024),
     x_image_shape=st.integers(min_value=512, max_value=1024),
