@@ -30,7 +30,7 @@ def test_field_illumination_analysis_run(dataset):
 
 @given(
     st_mm.st_field_illumination_dataset(
-        expected_output=st_mm.st_field_illumination_test_data(
+        test_data=st_mm.st_field_illumination_test_data(
             center_y_relative=st.floats(min_value=-0.0, max_value=0.6),
             center_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
@@ -68,7 +68,7 @@ def test_field_illumination_analysis_centers_geometric(dataset):
 
 @given(
     st_mm.st_field_illumination_dataset(
-        expected_output=st_mm.st_field_illumination_test_data(
+        test_data=st_mm.st_field_illumination_test_data(
             center_y_relative=st.floats(min_value=-0.0, max_value=0.6),
             center_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
@@ -168,7 +168,7 @@ def test_field_illumination_analysis_centers_fitted(dataset):
 
 @given(
     st_mm.st_field_illumination_dataset(
-        expected_output=st_mm.st_field_illumination_test_data(
+        test_data=st_mm.st_field_illumination_test_data(
             target_min_intensity=st.just(1.5),
         )
     )

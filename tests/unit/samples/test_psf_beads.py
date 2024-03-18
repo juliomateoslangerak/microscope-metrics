@@ -1,8 +1,8 @@
 import numpy as np
 from hypothesis import given, settings
 from hypothesis import strategies as st
-
 from microscopemetrics_schema import datamodel as mm_schema
+
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
@@ -19,16 +19,7 @@ def test_psf_beads_analysis_instantiation(dataset):
     assert dataset.input
 
 
-@given(
-    st_mm.st_psf_beads_dataset(
-        psf_beads_test_data=st_mm.st_psf_beads_test_data(
-            z_image_shape=st.just(61),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
-            c_image_shape=st.just(3),
-        )
-    )
-)
+@given(st_mm.st_psf_beads_dataset())
 @settings(max_examples=10)
 def test_psf_beads_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
@@ -39,7 +30,7 @@ def test_psf_beads_analysis_run(dataset):
 
 @given(
     st_mm.st_psf_beads_dataset(
-        psf_beads_test_data=st_mm.st_psf_beads_test_data(
+        test_data=st_mm.st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -65,7 +56,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 
 @given(
     st_mm.st_psf_beads_dataset(
-        psf_beads_test_data=st_mm.st_psf_beads_test_data(
+        test_data=st_mm.st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -91,7 +82,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 
 @given(
     st_mm.st_psf_beads_dataset(
-        psf_beads_test_data=st_mm.st_psf_beads_test_data(
+        test_data=st_mm.st_psf_beads_test_data(
             z_image_shape=st.just(71),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -117,7 +108,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 
 @given(
     st_mm.st_psf_beads_dataset(
-        psf_beads_test_data=st_mm.st_psf_beads_test_data(
+        test_data=st_mm.st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
