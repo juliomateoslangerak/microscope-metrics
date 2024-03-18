@@ -17,13 +17,19 @@ from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics import samples as mm_samples
-from microscopemetrics.samples import argolight, field_illumination, psf_beads
+from microscopemetrics.samples import (
+    argolight,
+    field_illumination,
+    numpy_to_mm_image,
+    psf_beads,
+)
 
 
 # Strategies for Field Illumination
 @st.composite
 def st_field_illumination_test_data(
     draw,
+    nr_images=st.integers(min_value=1, max_value=3),
     y_image_shape=st.integers(min_value=512, max_value=1024),
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
@@ -32,14 +38,23 @@ def st_field_illumination_test_data(
     do_noise=st.just(True),
     target_min_intensity=st.floats(min_value=0.1, max_value=0.45),
     target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
-    centroid_y_relative=st.floats(min_value=-0.8, max_value=0.8),
-    centroid_x_relative=st.floats(min_value=-0.8, max_value=0.8),
+    center_y_relative=st.floats(min_value=-0.8, max_value=0.8),
+    center_x_relative=st.floats(min_value=-0.8, max_value=0.8),
     dispersion=st.floats(min_value=0.5, max_value=1.0),
 ):
-    """Generate a field illumination image."""
+    output = {
+        "images": [],
+        "centers_generated_y_relative": [],
+        "centers_generated_x_relative": [],
+        "target_min_intensities": [],
+        "target_max_intensities": [],
+        "dispersions": [],
+        "do_noise": [],
+        "signals": [],
+    }
+
     y_image_shape = draw(y_image_shape)
     x_image_shape = draw(x_image_shape)
-    c_image_shape = draw(c_image_shape)
 
     do_noise = draw(do_noise)
 
@@ -51,85 +66,87 @@ def st_field_illumination_test_data(
     else:
         raise ValueError("Unsupported datatype")
 
-    # Generate the image as float64
-    image = np.zeros(shape=(y_image_shape, x_image_shape, c_image_shape), dtype="float64")
+    for image_nr in range(draw(nr_images)):
+        c_shape = draw(c_image_shape)
+        # Generate the image as float64
+        image = np.zeros(shape=(y_image_shape, x_image_shape, c_shape), dtype="float64")
 
-    image_target_min_intensities = []
-    image_target_max_intensities = []
-    centroids_generated_y_relative = []
-    centroids_generated_x_relative = []
-    image_dispersions = []
-    image_signals = []
+        image_target_min_intensities = []
+        image_target_max_intensities = []
+        centers_generated_y_relative = []
+        centers_generated_x_relative = []
+        image_dispersions = []
+        image_signals = []
 
-    for ch in range(c_image_shape):
-        ch_target_min_intensity = draw(target_min_intensity)
-        ch_target_max_intensity = draw(target_max_intensity)
+        for ch in range(c_shape):
+            ch_target_min_intensity = draw(target_min_intensity)
+            ch_target_max_intensity = draw(target_max_intensity)
 
-        # if the dtype is uint8, the difference between the min and max intensity should be less than 0.5
-        # otherwise, with only a few intensity levels, the detection will not be accurate. It is anyway a very
-        # unlikely scenario in a real world situation
-        if dtype == np.uint8:
-            assume((ch_target_max_intensity - ch_target_min_intensity) > 0.7)
+            # if the dtype is uint8, the difference between the min and max intensity should be less than 0.5
+            # otherwise, with only a few intensity levels, the detection will not be accurate. It is anyway a very
+            # unlikely scenario in a real world situation
+            if dtype == np.uint8:
+                assume((ch_target_max_intensity - ch_target_min_intensity) > 0.7)
 
-        image_target_min_intensities.append(ch_target_min_intensity)
-        image_target_max_intensities.append(ch_target_max_intensity)
+            image_target_min_intensities.append(ch_target_min_intensity)
+            image_target_max_intensities.append(ch_target_max_intensity)
 
-        ch_y_center_rel_offset = draw(centroid_y_relative)
-        ch_x_center_rel_offset = draw(centroid_x_relative)
-        centroids_generated_y_relative.append(ch_y_center_rel_offset)
-        centroids_generated_x_relative.append(ch_x_center_rel_offset)
+            ch_y_center_rel_offset = draw(center_y_relative)
+            ch_x_center_rel_offset = draw(center_x_relative)
+            centers_generated_y_relative.append(ch_y_center_rel_offset)
+            centers_generated_x_relative.append(ch_x_center_rel_offset)
 
-        ch_dispersion = draw(dispersion)
-        image_dispersions.append(ch_dispersion)
+            ch_dispersion = draw(dispersion)
+            image_dispersions.append(ch_dispersion)
 
-        # Generate the channel as float64
-        channel = np.zeros(shape=(y_image_shape, x_image_shape), dtype="float64")
-        channel[
-            int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2)),
-            int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2)),
-        ] = 1.0
+            # Generate the channel as float64
+            channel = np.zeros(shape=(y_image_shape, x_image_shape), dtype="float64")
+            channel[
+                int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2)),
+                int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2)),
+            ] = 1.0
 
-        channel = skimage_gaussian(
-            channel,
-            sigma=max(channel.shape) * ch_dispersion,
-            mode="constant",
-            cval=0.0,
-            preserve_range=True,
-        )
+            channel = skimage_gaussian(
+                channel,
+                sigma=max(channel.shape) * ch_dispersion,
+                mode="constant",
+                cval=0.0,
+                preserve_range=True,
+            )
 
-        # Normalize channel intensity to be between ch_target_min_intensity and ch_target_max_intensity
-        # Saturation point is at 1.0 when we rescale later to the target dtype
-        channel = skimage_rescale_intensity(
-            channel, out_range=(ch_target_min_intensity, ch_target_max_intensity)
-        )
+            # Normalize channel intensity to be between ch_target_min_intensity and ch_target_max_intensity
+            # Saturation point is at 1.0 when we rescale later to the target dtype
+            channel = skimage_rescale_intensity(
+                channel, out_range=(ch_target_min_intensity, ch_target_max_intensity)
+            )
 
-        if do_noise:
-            # The noise on a 1.0 intensity image is too strong so we rescale the image to
-            # the defined signal and then rescale it back to the target intensity
-            ch_signal = draw(signal)
-            channel = channel * ch_signal
-            channel = skimage_random_noise(channel, mode="poisson", clip=False)
-            channel = channel / ch_signal
-            image_signals.append(ch_signal)
+            if do_noise:
+                # The noise on a 1.0 intensity image is too strong so we rescale the image to
+                # the defined signal and then rescale it back to the target intensity
+                ch_signal = draw(signal)
+                channel = channel * ch_signal
+                channel = skimage_random_noise(channel, mode="poisson", clip=False)
+                channel = channel / ch_signal
+                image_signals.append(ch_signal)
 
-        image[:, :, ch] = channel
+            image[:, :, ch] = channel
 
-    # Rescale to the target dtype
-    image = np.clip(image, None, 1)
-    image = image * max_value
-    image = image.astype(dtype)
-    image = np.expand_dims(image, (0, 1))
+        # Rescale to the target dtype
+        image = np.clip(image, None, 1)
+        image = image * max_value
+        image = image.astype(dtype)
+        image = np.expand_dims(image, (0, 1))
 
-    return {
-        "image": image,
-        "centroid_generated_y_relative": centroids_generated_y_relative,
-        "centroid_generated_x_relative": centroids_generated_x_relative,
-        "target_min_intensities": image_target_min_intensities,
-        "target_max_intensities": image_target_max_intensities,
-        "dispersions": image_dispersions,
-        "do_noise": do_noise,
-        "signals": image_signals,
-    }
+        output["images"].append(image)
+        output["centers_generated_y_relative"].append(centers_generated_y_relative)
+        output["centers_generated_x_relative"].append(centers_generated_x_relative)
+        output["target_min_intensities"].append(image_target_min_intensities)
+        output["target_max_intensities"].append(image_target_max_intensities)
+        output["dispersions"].append(image_dispersions)
+        output["do_noise"].append(do_noise)
+        output["signals"].append(image_signals)
+
+    return output
 
 
 @st.composite
@@ -139,21 +156,27 @@ def st_field_illumination_dataset(
         dataset=st_mm_schema.st_mm_dataset(
             target_class=mm_schema.FieldIlluminationDataset,
             processed=st.just(False),
-            input=st_mm_schema.st_mm_field_illumination_input(
-                field_illumination_image=st_mm_schema.st_mm_image_as_numpy()
-            ),
+            input=st_mm_schema.st_mm_field_illumination_input(),
         )
     ),
     expected_output=st_field_illumination_test_data(),
 ):
     expected_output = draw(expected_output)
     field_illumination_unprocessed_dataset = draw(unprocessed_dataset)
-    field_illumination_unprocessed_dataset.input.field_illumination_image.data = draw(
-        st.just(expected_output.pop("image"))
-    )
+
+    field_illumination_unprocessed_dataset.input.field_illumination_image = [
+        numpy_to_mm_image(image, name=f"FI_image_{i}")
+        for i, image in enumerate(expected_output.pop("images"))
+    ]
 
     # Setting the bit depth to the data type of the image
-    image_dtype = field_illumination_unprocessed_dataset.input.field_illumination_image.data.dtype
+    image_dtype = {
+        a.array_data.dtype
+        for a in field_illumination_unprocessed_dataset.input.field_illumination_image
+    }
+    if len(image_dtype) != 1:
+        raise ValueError("All images should have the same data type")
+    image_dtype = image_dtype.pop()
     if np.issubdtype(image_dtype, np.integer):
         field_illumination_unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
     elif np.issubdtype(image_dtype, np.floating):
@@ -161,12 +184,8 @@ def st_field_illumination_dataset(
     else:
         field_illumination_unprocessed_dataset.input.bit_depth = None
 
-    unprocessed_analysis = field_illumination.FieldIlluminationAnalysis(
-        **dataclasses.asdict(field_illumination_unprocessed_dataset)
-    )
-
     return {
-        "unprocessed_analysis": unprocessed_analysis,
+        "unprocessed_analysis": field_illumination_unprocessed_dataset,
         "expected_output": expected_output,
     }
 
@@ -420,7 +439,7 @@ def st_psf_beads_dataset(
         test_data = draw(psf_beads_test_data)
         test_data["nr_input_images"] = nr_input_images
         test_data["nr_channels"] = test_data["image"].shape[-1]
-        image = draw(st_mm_schema.st_mm_image_as_numpy(data=test_data.pop("image")))
+        image = draw(st_mm_schema.st_mm_image(data=test_data.pop("image")))
         psf_beads_images[image.image_url] = image
         expected_output[image.image_url] = test_data
 

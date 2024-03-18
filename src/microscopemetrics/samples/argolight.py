@@ -17,7 +17,7 @@ from microscopemetrics.analysis.tools import (
     compute_spots_properties,
     segment_image,
 )
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_byref
+from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_mm_image
 from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
 
 
@@ -64,7 +64,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             high_corr_factors=self.input.upper_threshold_correction_factors,
         )
 
-        self.output.spots_labels_image = numpy_to_image_byref(  # TODO: this should be a mask
+        self.output.spots_labels_image = numpy_to_mm_image(  # TODO: this should be a mask
             array=labels,
             name=f"{self.input.argolight_b_image.name}_spots_labels",
             description=f"Spots labels of {self.input.argolight_b_image.image_url}",
@@ -91,7 +91,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
         for ch, ch_spot_props in enumerate(spots_properties):
             ch_df = DataFrame()
             ch_properties_kv = {}
-            ch_df["channel"] = [ch for _ in ch_spot_props]
+            ch_df["channel_nr"] = [ch for _ in ch_spot_props]
             ch_df["mask_labels"] = [p["label"] for p in ch_spot_props]
             ch_df["volume"] = [p["area"] for p in ch_spot_props]
             ch_df["roi_volume_units"] = "VOXEL"
@@ -105,7 +105,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             ch_df["roi_weighted_centroid_units"] = "PIXEL"
 
             # Key metrics for spots intensities
-            ch_properties_kv["channel"] = ch
+            ch_properties_kv["channel_nr"] = ch
             ch_properties_kv["nr_of_spots"] = len(ch_df)
             ch_properties_kv["intensity_max_spot"] = ch_df["integrated_intensity"].max().item()
             ch_properties_kv["intensity_max_spot_roi"] = (
@@ -175,9 +175,9 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
 
         distances_kv = {k: [i[k] for i in distances_kv] for k in distances_kv[0]}
 
-        self.output.intensity_measurements = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
+        self.output.intensity_key_values = mm_schema.ArgolightBIntensityKeyValues(**properties_kv)
 
-        self.output.distance_measurements = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
+        self.output.distance_key_values = mm_schema.ArgolightBDistanceKeyValues(**distances_kv)
 
         self.output.spots_properties = mm_schema.TableAsDict(
             name="spots_properties",
@@ -240,9 +240,11 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
             do_angle_refinement=False,  # TODO: implement angle refinement
         )
         key_values = {
-            "channel": [c for c in range(image.shape[-1])],
+            "channel_nr": [c for c in range(image.shape[-1])],
             "rayleigh_resolution_pixels": resolution_values,
-            "rayleigh_resolution_microns": [r * pixel_size for r in resolution_values if pixel_size is not None],
+            "rayleigh_resolution_microns": [
+                r * pixel_size for r in resolution_values if pixel_size is not None
+            ],
             "peak_position_A": [
                 peak_positions[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
             ],

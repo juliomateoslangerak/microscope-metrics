@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from microscopemetrics.samples import argolight, numpy_to_image_byref
+from microscopemetrics.samples import argolight, numpy_to_mm_image
 from tests.test_utilities import get_file
 
 
@@ -16,12 +16,10 @@ def argolight_b():
         description="a description",
         microscope="1234",
         input={
-            "argolight_b_image": numpy_to_image_byref(
+            "argolight_b_image": numpy_to_mm_image(
                 array=data,
                 name="image_name",
                 description="image_description",
-                image_url=image_url,
-                source_image_url=image_url,
             ),
             "spots_distance": 40,
         },
@@ -42,12 +40,10 @@ def argolight_e_horizontal():
         description="a description",
         microscope="1234",
         input={
-            "argolight_e_image": numpy_to_image_byref(
+            "argolight_e_image": numpy_to_mm_image(
                 array=data,
                 name="image_name",
                 description="image_description",
-                image_url=image_url,
-                source_image_url=image_url,
             ),
             "orientation_axis": 2,
         },
@@ -67,12 +63,10 @@ def argolight_e_vertical():
         description="a description",
         microscope="1234",
         input={
-            "argolight_e_image": numpy_to_image_byref(
+            "argolight_e_image": numpy_to_mm_image(
                 array=data,
                 name="image_name",
                 description="image_description",
-                image_url=image_url,
-                source_image_url=image_url,
             ),
             "orientation_axis": 1,
         },
@@ -82,19 +76,19 @@ def argolight_e_vertical():
     return analysis
 
 
-@pytest.mark.skip(reason="Need to pass to hypothesis")
+@pytest.mark.skip(reason="This test is not yet implemented using hypothesis")
 def test_run_argolight_b(argolight_b):
     assert argolight_b.run()
     assert argolight_b.processed
 
 
-@pytest.mark.skip(reason="Need to pass to hypothesis")
+@pytest.mark.skip(reason="This test is not yet implemented using hypothesis")
 def test_run_argolight_e_horizontal(argolight_e_horizontal):
     assert argolight_e_horizontal.run()
     assert argolight_e_horizontal.processed
 
 
-@pytest.mark.skip(reason="Need to pass to hypothesis")
+@pytest.mark.skip(reason="This test is not yet implemented using hypothesis")
 def test_run_argolight_e_vertical(argolight_e_vertical):
     assert argolight_e_vertical.run()
     assert argolight_e_vertical.processed

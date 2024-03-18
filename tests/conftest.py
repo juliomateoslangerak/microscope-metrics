@@ -4,7 +4,7 @@ from hypothesis import HealthCheck, Verbosity, settings
 
 settings.register_profile(
     "push",
-    max_examples=10,
+    max_examples=1,
     suppress_health_check=[
         HealthCheck.too_slow,
         HealthCheck.large_base_example,

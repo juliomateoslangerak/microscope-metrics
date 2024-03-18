@@ -12,7 +12,7 @@ from microscopemetrics.samples import (
     AnalysisMixin,
     dict_to_table_inlined,
     logger,
-    numpy_to_image_byref,
+    numpy_to_mm_image,
 )
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
@@ -687,7 +687,7 @@ class PSFBeadsAnalysis(mm_schema.PSFBeadsDataset, AnalysisMixin):
                 for i, bead in enumerate(bead_crops[image_label][ch]):
                     output_bead_crops[
                         f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}"
-                    ] = numpy_to_image_byref(
+                    ] = numpy_to_mm_image(
                         array=np.expand_dims(bead, axis=(0, 4)),
                         image_url=f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}",
                         name=f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}",
