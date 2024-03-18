@@ -10,7 +10,7 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_inlined
+from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_mm_image
 from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
 
 
@@ -333,6 +333,8 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
     def run(self) -> bool:
         self.validate_requirements()
 
+        # for image in self.input.field_illumination_image:
+
         # Check image shape
         logger.info("Checking image shape...")
         image = self.input.field_illumination_image.data
@@ -369,12 +371,11 @@ class FieldIlluminationAnalysis(mm_schema.FieldIlluminationDataset, AnalysisMixi
             )
         )
 
-        self.output.intensity_map = numpy_to_image_inlined(
+        self.output.intensity_map = numpy_to_mm_image(
             array=_image_intensity_map(image=image, map_size=self.input.intensity_map_size),
             name=f"{self.input.field_illumination_image.name}_intensity_map",
             description=f"Intensity map of {self.input.field_illumination_image.name}",
-            image_url=self.input.field_illumination_image.image_url,
-            source_image_url=self.input.field_illumination_image.source_image_url,
+            source_images=self.input.field_illumination_image,
         )
 
         self.output.intensity_profiles = mm_schema.TableAsDict(

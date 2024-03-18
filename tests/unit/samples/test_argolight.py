@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from microscopemetrics.samples import argolight, numpy_to_image_byref
+from microscopemetrics.samples import argolight, numpy_to_mm_image
 from tests.test_utilities import get_file
 
 
@@ -16,12 +16,10 @@ def argolight_b():
         description="a description",
         microscope="1234",
         input={
-            "argolight_b_image": numpy_to_image_byref(
+            "argolight_b_image": numpy_to_mm_image(
                 array=data,
                 name="image_name",
                 description="image_description",
-                image_url=image_url,
-                source_image_url=image_url,
             ),
             "spots_distance": 40,
         },
@@ -42,12 +40,10 @@ def argolight_e_horizontal():
         description="a description",
         microscope="1234",
         input={
-            "argolight_e_image": numpy_to_image_byref(
+            "argolight_e_image": numpy_to_mm_image(
                 array=data,
                 name="image_name",
                 description="image_description",
-                image_url=image_url,
-                source_image_url=image_url,
             ),
             "orientation_axis": 2,
         },
@@ -67,12 +63,10 @@ def argolight_e_vertical():
         description="a description",
         microscope="1234",
         input={
-            "argolight_e_image": numpy_to_image_byref(
+            "argolight_e_image": numpy_to_mm_image(
                 array=data,
                 name="image_name",
                 description="image_description",
-                image_url=image_url,
-                source_image_url=image_url,
             ),
             "orientation_axis": 1,
         },

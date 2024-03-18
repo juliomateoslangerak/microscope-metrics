@@ -33,107 +33,132 @@ def register_progression_analysis(cls):
 logger = logging.getLogger(__name__)
 
 
-def numpy_to_image_byref(
+def _get_references(
+    objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]]
+) -> List[mm_schema.DataReference]:
+    """Get the references of a metrics object or a list of metrics objects"""
+    if isinstance(objects, mm_schema.MetricsObject):
+        return [
+            mm_schema.DataReference(
+                data_uri=objects.data_uri,
+                omero_host=objects.omero_host,
+                omero_port=objects.omero_port,
+                omero_object_type=objects.omero_object_type,
+                omero_object_id=objects.omero_object_id,
+            )
+        ]
+    elif isinstance(objects, list(mm_schema.MetricsObject)):
+        return [
+            mm_schema.DataReference(
+                data_uri=obj.data_uri,
+                omero_host=obj.omero_host,
+                omero_port=obj.omero_port,
+                omero_object_type=obj.omero_object_type,
+                omero_object_id=obj.omero_object_id,
+            )
+            for obj in objects
+        ]
+    else:
+        raise ValueError("Input should be a metrics object or a list of metrics objects")
+
+
+def numpy_to_mm_image(
     array: np.ndarray,
     name: str = None,
     description: str = None,
-    image_url: str = None,
-    source_image_url: Union[str, List[str]] = None,
-) -> mm_schema.ImageAsNumpy:
+    source_images: List[mm_schema.Image] = None,
+) -> mm_schema.Image:
     """Converts a numpy array with dimensions order tzyxc to an image by reference (not inlined)"""
     if array.ndim == 5:
-        return mm_schema.ImageAsNumpy(
-            name=name,
-            description=description,
-            image_url=image_url,
-            source_image_url=source_image_url,
-            data=array,
-            shape_t=array.shape[0],
-            shape_z=array.shape[1],
-            shape_y=array.shape[2],
-            shape_x=array.shape[3],
-            shape_c=array.shape[4],
-        )
+        shape_t, shape_z, shape_y, shape_x, shape_c = array.shape
     elif array.ndim == 2:
-        return mm_schema.ImageAsNumpy(
-            name=name,
-            description=description,
-            image_url=image_url,
-            source_image_url=source_image_url,
-            data=array,
-            shape_y=array.shape[0],
-            shape_x=array.shape[1],
-        )
+        shape_y, shape_x = array.shape
+        shape_t, shape_z, shape_c = 1, 1, 1
     else:
         raise NotImplementedError(
             f"Array of dimension {array.ndim} is not supported by this function. Image has to have either 5 or 2 dimensions"
         )
 
+    if source_images is not None:
+        source_images = _get_references(source_images)
 
-def numpy_to_mask_inlined(
-    array: np.ndarray,
-    name: str = None,
-    description: str = None,
-    image_url: str = None,
-    source_image_url: Union[str, List[str]] = None,
-) -> mm_schema.ImageMask:
-    """Converts a bool numpy array with dimensions order yx to an inlined mask"""
-    if array.ndim != 2:
-        raise ValueError("Input array should be 2D")
-    if array.dtype != bool and array.dtype == np.uint8:
-        try:
-            array = array.astype(bool)
-        except ValueError:
-            raise ValueError("Input array could not be casted to type bool")
-    if array.dtype != bool:
-        raise ValueError("Input array should be of type bool")
-
-    return mm_schema.ImageMask(
+    return mm_schema.Image(
         name=name,
         description=description,
-        image_url=image_url,
-        source_image_url=source_image_url,
-        data=array.flatten().tolist(),
-        shape_y=array.shape[0],
-        shape_x=array.shape[1],
+        source_images=source_images,
+        array_data=array,
+        shape_t=shape_t,
+        shape_z=shape_z,
+        shape_y=shape_y,
+        shape_x=shape_x,
+        shape_c=shape_c,
     )
 
 
-def numpy_to_image_inlined(
-    array: np.ndarray,
-    name: str = None,
-    description: str = None,
-    image_url: str = None,
-    source_image_url: Union[str, List[str]] = None,
-) -> mm_schema.ImageInline:
-    """Converts a numpy array with dimensions order tzyxc or yx to an inlined image"""
-    if array.ndim == 5:
-        return mm_schema.Image5D(
-            name=name,
-            description=description,
-            image_url=image_url,
-            source_image_url=source_image_url,
-            data=array.flatten().tolist(),
-            shape_t=array.shape[0],
-            shape_z=array.shape[1],
-            shape_y=array.shape[2],
-            shape_x=array.shape[3],
-            shape_c=array.shape[4],
-        )
-    elif array.ndim == 2:
-        return mm_schema.Image2D(
-            name=name,
-            description=description,
-            image_url=image_url,
-            source_image_url=source_image_url,
-            data=array.flatten().tolist(),
-            shape_y=array.shape[0],
-            shape_x=array.shape[1],
-        )
-    else:
-        raise NotImplementedError(
-            f"Array of dimension {array.ndim} is not supported by this function"
-        )
+# def numpy_to_mask_inlined(
+#     array: np.ndarray,
+#     name: str = None,
+#     description: str = None,
+#     image_url: str = None,
+#     source_image_url: Union[str, List[str]] = None,
+# ) -> mm_schema.ImageMask:
+#     """Converts a bool numpy array with dimensions order yx to an inlined mask"""
+#     if array.ndim != 2:
+#         raise ValueError("Input array should be 2D")
+#     if array.dtype != bool and array.dtype == np.uint8:
+#         try:
+#             array = array.astype(bool)
+#         except ValueError:
+#             raise ValueError("Input array could not be casted to type bool")
+#     if array.dtype != bool:
+#         raise ValueError("Input array should be of type bool")
+#
+#     return mm_schema.ImageMask(
+#         name=name,
+#         description=description,
+#         image_url=image_url,
+#         source_image_url=source_image_url,
+#         data=array.flatten().tolist(),
+#         shape_y=array.shape[0],
+#         shape_x=array.shape[1],
+#     )
+#
+#
+# def numpy_to_image_inlined(
+#     array: np.ndarray,
+#     name: str = None,
+#     description: str = None,
+#     image_url: str = None,
+#     source_image_url: Union[str, List[str]] = None,
+# ) -> mm_schema.ImageInline:
+#     """Converts a numpy array with dimensions order tzyxc or yx to an inlined image"""
+#     if array.ndim == 5:
+#         return mm_schema.Image5D(
+#             name=name,
+#             description=description,
+#             image_url=image_url,
+#             source_image_url=source_image_url,
+#             data=array.flatten().tolist(),
+#             shape_t=array.shape[0],
+#             shape_z=array.shape[1],
+#             shape_y=array.shape[2],
+#             shape_x=array.shape[3],
+#             shape_c=array.shape[4],
+#         )
+#     elif array.ndim == 2:
+#         return mm_schema.Image2D(
+#             name=name,
+#             description=description,
+#             image_url=image_url,
+#             source_image_url=source_image_url,
+#             data=array.flatten().tolist(),
+#             shape_y=array.shape[0],
+#             shape_x=array.shape[1],
+#         )
+#     else:
+#         raise NotImplementedError(
+#             f"Array of dimension {array.ndim} is not supported by this function"
+#         )
 
 
 def dict_to_table_inlined(

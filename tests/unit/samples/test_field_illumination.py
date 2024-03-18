@@ -32,28 +32,28 @@ def test_field_illumination_analysis_run(dataset):
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
-            centroid_y_relative=st.floats(min_value=-0.0, max_value=0.6),
-            centroid_x_relative=st.floats(min_value=-0.0, max_value=0.6),
+            center_y_relative=st.floats(min_value=-0.0, max_value=0.6),
+            center_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
     )
 )
-def test_field_illumination_analysis_centroids(dataset):
+def test_field_illumination_analysis_centers_geometric(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
     field_illumination_analysis.run()
 
     assert field_illumination_analysis.processed
 
-    measured_centroids = list(
+    measured_centers = list(
         zip(
-            field_illumination_analysis.output.key_values.centroid_y_relative,
-            field_illumination_analysis.output.key_values.centroid_x_relative,
+            field_illumination_analysis.output.key_values.center_geometric_y_relative,
+            field_illumination_analysis.output.key_values.center_geometric_x_relative,
         )
     )
-    expected_centroids = list(
+    expected_centers = list(
         zip(
-            expected_output["centroid_generated_y_relative"],
-            expected_output["centroid_generated_x_relative"],
+            expected_output["centers_generated_y_relative"],
+            expected_output["centers_generated_x_relative"],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -64,7 +64,7 @@ def test_field_illumination_analysis_centroids(dataset):
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
-    for measured_c, expected_c in zip(measured_centroids, expected_centroids):
+    for measured_c, expected_c in zip(measured_centers, expected_centers):
         assert measured_c[0] == pytest.approx(expected_c[0], abs=0.2)
         assert measured_c[1] == pytest.approx(expected_c[1], abs=0.2)
 
@@ -73,28 +73,28 @@ def test_field_illumination_analysis_centroids(dataset):
 @given(
     st_mm.st_field_illumination_dataset(
         expected_output=st_mm.st_field_illumination_test_data(
-            centroid_y_relative=st.floats(min_value=-0.0, max_value=0.6),
-            centroid_x_relative=st.floats(min_value=-0.0, max_value=0.6),
+            center_y_relative=st.floats(min_value=-0.0, max_value=0.6),
+            center_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
     )
 )
-def test_field_illumination_analysis_centroids_weighted(dataset):
+def test_field_illumination_analysis_centers_of_mass(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
     field_illumination_analysis.run()
 
     assert field_illumination_analysis.processed
 
-    measured_centroids_weighted = list(
+    measured_centers_weighted = list(
         zip(
-            field_illumination_analysis.output.key_values.centroid_weighted_y_relative,
-            field_illumination_analysis.output.key_values.centroid_weighted_x_relative,
+            field_illumination_analysis.output.key_values.center_of_mass_y_relative,
+            field_illumination_analysis.output.key_values.center_of_mass_x_relative,
         )
     )
-    expected_centroids = list(
+    expected_centers = list(
         zip(
-            expected_output["centroid_generated_y_relative"],
-            expected_output["centroid_generated_x_relative"],
+            expected_output["centers_generated_y_relative"],
+            expected_output["centers_generated_x_relative"],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -105,7 +105,7 @@ def test_field_illumination_analysis_centroids_weighted(dataset):
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
-    for measured_c_w, expected_c in zip(measured_centroids_weighted, expected_centroids):
+    for measured_c_w, expected_c in zip(measured_centers_weighted, expected_centers):
         assert measured_c_w[0] == pytest.approx(expected_c[0], abs=0.2)
         assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.2)
 
@@ -125,10 +125,10 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
             field_illumination_analysis.output.key_values.max_intensity_pos_x_relative,
         )
     )
-    expected_centroids = list(
+    expected_centers = list(
         zip(
-            expected_output["centroid_generated_y_relative"],
-            expected_output["centroid_generated_x_relative"],
+            expected_output["centers_generated_y_relative"],
+            expected_output["centers_generated_x_relative"],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -139,30 +139,30 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
-    for measured_m_i, expected_c in zip(measured_max_intensity_positions, expected_centroids):
+    for measured_m_i, expected_c in zip(measured_max_intensity_positions, expected_centers):
         assert measured_m_i[0] == pytest.approx(expected_c[0], abs=0.05)
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
 
 
 @pytest.mark.analysis
 @given(st_mm.st_field_illumination_dataset())
-def test_field_illumination_analysis_centroids_fitted(dataset):
+def test_field_illumination_analysis_centers_fitted(dataset):
     field_illumination_analysis = dataset["unprocessed_analysis"]
     expected_output = dataset["expected_output"]
     field_illumination_analysis.run()
 
     assert field_illumination_analysis.processed
 
-    measured_centroids_fitted = list(
+    measured_centers_fitted = list(
         zip(
-            field_illumination_analysis.output.key_values.centroid_fitted_y_relative,
-            field_illumination_analysis.output.key_values.centroid_fitted_x_relative,
+            field_illumination_analysis.output.key_values.center_fitted_y_relative,
+            field_illumination_analysis.output.key_values.center_fitted_x_relative,
         )
     )
-    expected_centroids = list(
+    expected_centers = list(
         zip(
-            expected_output["centroid_generated_y_relative"],
-            expected_output["centroid_generated_x_relative"],
+            expected_output["centers_generated_y_relative"],
+            expected_output["centers_generated_x_relative"],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -173,7 +173,7 @@ def test_field_illumination_analysis_centroids_fitted(dataset):
         f"sigma: {field_illumination_analysis.input.sigma}"
     )
 
-    for measured_m_i, expected_c in zip(measured_centroids_fitted, expected_centroids):
+    for measured_m_i, expected_c in zip(measured_centers_fitted, expected_centers):
         assert measured_m_i[0] == pytest.approx(expected_c[0], abs=0.05)
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
 

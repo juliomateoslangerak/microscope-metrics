@@ -17,7 +17,7 @@ from microscopemetrics.analysis.tools import (
     compute_spots_properties,
     segment_image,
 )
-from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_image_byref
+from microscopemetrics.samples import AnalysisMixin, logger, numpy_to_mm_image
 from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
 
 
@@ -64,7 +64,7 @@ class ArgolightBAnalysis(mm_schema.ArgolightBDataset, AnalysisMixin):
             high_corr_factors=self.input.upper_threshold_correction_factors,
         )
 
-        self.output.spots_labels_image = numpy_to_image_byref(  # TODO: this should be a mask
+        self.output.spots_labels_image = numpy_to_mm_image(  # TODO: this should be a mask
             array=labels,
             name=f"{self.input.argolight_b_image.name}_spots_labels",
             description=f"Spots labels of {self.input.argolight_b_image.image_url}",
@@ -242,7 +242,9 @@ class ArgolightEAnalysis(mm_schema.ArgolightEDataset, AnalysisMixin):
         key_values = {
             "channel_nr": [c for c in range(image.shape[-1])],
             "rayleigh_resolution_pixels": resolution_values,
-            "rayleigh_resolution_microns": [r * pixel_size for r in resolution_values if pixel_size is not None],
+            "rayleigh_resolution_microns": [
+                r * pixel_size for r in resolution_values if pixel_size is not None
+            ],
             "peak_position_A": [
                 peak_positions[ch][ind].item() for ch, ind in enumerate(resolution_indexes)
             ],
