@@ -125,7 +125,7 @@ def _line_profile_shapes(image: np.ndarray):
     stroke_color = {"r": 0, "g": 0, "b": 255, "alpha": 200}
     return [
         mm_schema.Line(
-            label="leftTop_to_rightBottom",
+            name="leftTop_to_rightBottom",
             x1=0,
             y1=0,
             x2=image.shape[-2],
