@@ -95,21 +95,21 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
         2d np.ndarray representing the values of the chosen line of pixels for each channel.
     """
     profile_coordinates = {
-        "leftTop_to_rightBottom": ((0, 0), (image.shape[1], image.shape[0])),
-        "leftBottom_to_rightTop": ((0, image.shape[0]), (image.shape[1], 0)),
+        "leftTop_to_rightBottom": ((0, 0), (image.shape[-2], image.shape[-3])),
+        "leftBottom_to_rightTop": ((0, image.shape[-3]), (image.shape[-2], 0)),
         "center_horizontal": (
-            (0, image.shape[0] // 2),
-            (image.shape[1], image.shape[0] // 2),
+            (0, image.shape[-3] // 2),
+            (image.shape[-2], image.shape[-3] // 2),
         ),
         "center_vertical": (
-            (image.shape[1] // 2, 0),
-            (image.shape[1] // 2, image.shape[0]),
+            (image.shape[-2] // 2, 0),
+            (image.shape[-2] // 2, image.shape[-3]),
         ),
     }
     output = {}
     for profile_name, (start, end) in profile_coordinates.items():
-        profiles = np.zeros((image.shape[2], 255))
-        for c in range(image.shape[2]):
+        profiles = np.zeros((image.shape[-1], 255))
+        for c in range(image.shape[-1]):
             profiles[c, :] = _channel_line_profile(
                 np.squeeze(image[0, 0, :, :, c]), start, end, profile_size
             )
@@ -164,7 +164,7 @@ def _c_shape(name, x, y, size, s_col):
 
 
 def _corner_shapes(image: np.ndarray, corner_fraction: float):
-    cfp = int(corner_fraction * (image.shape[0] + image.shape[1]) / 2)
+    cfp = int(corner_fraction * (image.shape[-3] + image.shape[-2]) / 2)
     cr_y = int((image.shape[-3] - cfp) / 2)
     cr_x = int((image.shape[-2] - cfp) / 2)
     stroke_color = {"r": 0, "g": 255, "b": 0, "alpha": 200}
@@ -172,12 +172,12 @@ def _corner_shapes(image: np.ndarray, corner_fraction: float):
     return [
         _c_shape("top_left", x=0, y=0, size=cfp, s_col=stroke_color),
         _c_shape("top_center", x=cr_x, y=0, size=cfp, s_col=stroke_color),
-        _c_shape("top_right", x=image.shape[1] - cfp, y=0, size=cfp, s_col=stroke_color),
+        _c_shape("top_right", x=image.shape[-2] - cfp, y=0, size=cfp, s_col=stroke_color),
         _c_shape("middle_left", x=0, y=cr_y, size=cfp, s_col=stroke_color),
         _c_shape("middle_center", x=cr_x, y=cr_y, size=cfp, s_col=stroke_color),
-        _c_shape("middle_right", x=image.shape[1] - cfp, y=cr_y, size=cfp, s_col=stroke_color),
-        _c_shape("bottom_left", x=0, y=image.shape[0] - cfp, size=cfp, s_col=stroke_color),
-        _c_shape("bottom_center", x=cr_x, y=image.shape[0] - cfp, size=cfp, s_col=stroke_color),
+        _c_shape("middle_right", x=image.shape[-2] - cfp, y=cr_y, size=cfp, s_col=stroke_color),
+        _c_shape("bottom_left", x=0, y=image.shape[-3] - cfp, size=cfp, s_col=stroke_color),
+        _c_shape("bottom_center", x=cr_x, y=image.shape[-3] - cfp, size=cfp, s_col=stroke_color),
         _c_shape(
             "bottom_right",
             y=image.shape[-3] - cfp,
