@@ -10,7 +10,13 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
-from microscopemetrics.samples import logger, numpy_to_mm_image, dict_to_table_inlined, validate_requirements, get_references
+from microscopemetrics.samples import (
+    dict_to_table_inlined,
+    get_references,
+    logger,
+    numpy_to_mm_image,
+    validate_requirements,
+)
 from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
 
 
@@ -49,7 +55,8 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
         3d np.ndarray representing the intensity map of the chosen image.
     """
     output = [
-        _channel_intensity_map(np.squeeze(image[0, 0, :, :, c]), map_size) for c in range(image.shape[-1])
+        _channel_intensity_map(np.squeeze(image[0, 0, :, :, c]), map_size)
+        for c in range(image.shape[-1])
     ]
     output = np.stack(output, axis=2)
 
@@ -114,8 +121,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
                 np.squeeze(image[0, 0, :, :, c]), start, end, profile_size
             )
         output = output | {
-            f"ch{c:02}_{profile_name}": profiles[c].tolist()
-            for c in range(image.shape[-1])
+            f"ch{c:02}_{profile_name}": profiles[c].tolist() for c in range(image.shape[-1])
         }
 
     return output
@@ -175,9 +181,21 @@ def _corner_shapes(image: np.ndarray, corner_fraction: float):
         _c_shape("top_right", x=image.shape[-2] - cfp, y=0, size=cfp, s_col=stroke_color),
         _c_shape("middle_left", x=0, y=cr_y, size=cfp, s_col=stroke_color),
         _c_shape("middle_center", x=cr_x, y=cr_y, size=cfp, s_col=stroke_color),
-        _c_shape("middle_right", x=image.shape[-2] - cfp, y=cr_y, size=cfp, s_col=stroke_color),
+        _c_shape(
+            "middle_right",
+            x=image.shape[-2] - cfp,
+            y=cr_y,
+            size=cfp,
+            s_col=stroke_color,
+        ),
         _c_shape("bottom_left", x=0, y=image.shape[-3] - cfp, size=cfp, s_col=stroke_color),
-        _c_shape("bottom_center", x=cr_x, y=image.shape[-3] - cfp, size=cfp, s_col=stroke_color),
+        _c_shape(
+            "bottom_center",
+            x=cr_x,
+            y=image.shape[-3] - cfp,
+            size=cfp,
+            s_col=stroke_color,
+        ),
         _c_shape(
             "bottom_right",
             y=image.shape[-3] - cfp,
@@ -229,11 +247,9 @@ def _channel_max_intensity_properties(
         "center_region_intensity_fraction": center_region_intensity_fraction,
         "center_region_area_fraction": center_region_area_fraction,
         "center_of_mass_y": properties[-2].centroid[0],
-        "center_of_mass_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2)
-        - 1,
+        "center_of_mass_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
         "center_of_mass_x": properties[-2].centroid[1],
-        "center_of_mass_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2)
-        - 1,
+        "center_of_mass_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
         "center_of_mass_distance_relative": hypot(
             properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
             properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
@@ -256,11 +272,9 @@ def _channel_max_intensity_properties(
         ),
         "max_intensity": properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid[0],
-        "max_intensity_pos_y_relative": properties[-1].centroid[0] / (channel.shape[0] / 2)
-        - 1,
+        "max_intensity_pos_y_relative": properties[-1].centroid[0] / (channel.shape[0] / 2) - 1,
         "max_intensity_pos_x": properties[-1].centroid[1],
-        "max_intensity_pos_x_relative": properties[-1].centroid[1] / (channel.shape[1] / 2)
-        - 1,
+        "max_intensity_pos_x_relative": properties[-1].centroid[1] / (channel.shape[1] / 2) - 1,
         "max_intensity_distance_relative": hypot(
             properties[-1].centroid[0] / (channel.shape[0] / 2) - 1,
             properties[-1].centroid[1] / (channel.shape[1] / 2) - 1,
@@ -322,7 +336,9 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
         for c in range(image_data.shape[-1]):
             channel_properties = {"channel_name": image.channel_series.values[c].name}
             channel_properties.update(_channel_max_intensity_properties(image_data[:, :, c], sigma))
-            channel_properties.update(_channel_corner_properties(image_data[:, :, c], corner_fraction))
+            channel_properties.update(
+                _channel_corner_properties(image_data[:, :, c], corner_fraction)
+            )
             properties.append(channel_properties)
 
     return {k: [i[k] for i in properties] for k in properties[0]}
@@ -339,8 +355,10 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             logger.info("Checking duplicate channel names...")
             for channel in image.channel_series.values:
                 if channel.name in channel_names:
-                    logger.error(f"Channel name {channel.name} is not unique. "
-                                 "We cannot average field illumination between images from the same channel.")
+                    logger.error(
+                        f"Channel name {channel.name} is not unique. "
+                        "We cannot average field illumination between images from the same channel."
+                    )
                     return False
                 channel_names.append(channel.name)
 
@@ -369,7 +387,6 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             logger.error(f"Channels {saturated_channels} are saturated")
             raise SaturationError(f"Channels {saturated_channels} are saturated")
 
-
     key_values = mm_schema.FieldIlluminationKeyValues(
         **_image_properties(
             images=dataset.input.field_illumination_image,
@@ -380,7 +397,9 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
 
     intensity_maps = [
         numpy_to_mm_image(
-            array=_image_intensity_map(image=image.array_data, map_size=dataset.input.intensity_map_size),
+            array=_image_intensity_map(
+                image=image.array_data, map_size=dataset.input.intensity_map_size
+            ),
             name=f"{image.name}_intensity_map",
             description=f"Intensity map of {image.name}",
             source_images=image,
@@ -533,7 +552,6 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     )
 
     dataset.output = output
-    dataset.processing_datetime = datetime.now()
     dataset.processed = True
 
     return True

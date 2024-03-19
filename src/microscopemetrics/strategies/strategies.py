@@ -153,7 +153,11 @@ def st_field_illumination_dataset(
     field_illumination_unprocessed_dataset = draw(unprocessed_dataset)
 
     field_illumination_unprocessed_dataset.input.field_illumination_image = [
-        numpy_to_mm_image(image, name=f"FI_image_{i}")
+        numpy_to_mm_image(
+            array=image,
+            name=f"FI_image_{i}",
+            channel_names=[f"Channel_{i}{j}" for j in range(image.shape[-1])],
+        )
         for i, image in enumerate(test_data.pop("images"))
     ]
 
@@ -266,7 +270,9 @@ def st_psf_beads_test_data(
         _nr_clustering_beads = draw(nr_clustering_beads)
         # We want at least one bead and not too many beads
         assume(
-            20 > (_nr_valid_beads + _nr_edge_beads + _nr_out_of_focus_beads + _nr_clustering_beads) > 0
+            20
+            > (_nr_valid_beads + _nr_edge_beads + _nr_out_of_focus_beads + _nr_clustering_beads)
+            > 0
         )
 
         _signal = draw(signal)
@@ -287,7 +293,8 @@ def st_psf_beads_test_data(
 
         # Generate the image as float64
         image = np.zeros(
-            shape=(z_image_shape, y_image_shape, x_image_shape, c_image_shape), dtype="float32"
+            shape=(z_image_shape, y_image_shape, x_image_shape, c_image_shape),
+            dtype="float32",
         )
 
         non_edge_beads_positions = []
@@ -302,23 +309,28 @@ def st_psf_beads_test_data(
         # 2. Generate the edge beads in the edge of the image making sure that they are not too close to the valid beads
         # 3. Gradually remove out_of_focus_beads and clustering_beads from those not in the edge
         while len(non_edge_beads_positions) < (
-                _nr_valid_beads + _nr_out_of_focus_beads + _nr_clustering_beads
+            _nr_valid_beads + _nr_out_of_focus_beads + _nr_clustering_beads
         ):
             z_pos = z_image_shape // 2
             y_pos = draw(
                 st.integers(
-                    min_value=_min_distance_y + 2, max_value=y_image_shape - _min_distance_y - 2
+                    min_value=_min_distance_y + 2,
+                    max_value=y_image_shape - _min_distance_y - 2,
                 )
             )
             x_pos = draw(
                 st.integers(
-                    min_value=_min_distance_x + 2, max_value=x_image_shape - _min_distance_x - 2
+                    min_value=_min_distance_x + 2,
+                    max_value=x_image_shape - _min_distance_x - 2,
                 )
             )
             if not non_edge_beads_positions:
                 non_edge_beads_positions.append((z_pos, y_pos, x_pos))
             for pos in non_edge_beads_positions:
-                if abs(pos[1] - y_pos) <= _min_distance_y and abs(pos[2] - x_pos) <= _min_distance_x:
+                if (
+                    abs(pos[1] - y_pos) <= _min_distance_y
+                    and abs(pos[2] - x_pos) <= _min_distance_x
+                ):
                     break
                 else:
                     continue
@@ -348,7 +360,10 @@ def st_psf_beads_test_data(
             if not edge_beads_positions:
                 edge_beads_positions.append((z_pos, y_pos, x_pos))
             for pos in edge_beads_positions:
-                if abs(pos[1] - y_pos) <= _min_distance_y and abs(pos[2] - x_pos) <= _min_distance_x:
+                if (
+                    abs(pos[1] - y_pos) <= _min_distance_y
+                    and abs(pos[2] - x_pos) <= _min_distance_x
+                ):
                     break
                 else:
                     continue
@@ -397,7 +412,11 @@ def st_psf_beads_test_data(
         for ch in range(c_image_shape):
             sigma_correction = 1 + ch * 0.1
             applied_sigmas.append(
-                (_sigma_z * sigma_correction, _sigma_y * sigma_correction, _sigma_x * sigma_correction)
+                (
+                    _sigma_z * sigma_correction,
+                    _sigma_y * sigma_correction,
+                    _sigma_x * sigma_correction,
+                )
             )
             image[:, :, :, ch] = skimage_gaussian(
                 image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True

@@ -40,12 +40,12 @@ def get_references(
     """Get the references of a metrics object or a list of metrics objects"""
     if isinstance(objects, mm_schema.MetricsObject):
         return mm_schema.DataReference(
-                data_uri=objects.data_uri,
-                omero_host=objects.omero_host,
-                omero_port=objects.omero_port,
-                omero_object_type=objects.omero_object_type,
-                omero_object_id=objects.omero_object_id,
-            )
+            data_uri=objects.data_uri,
+            omero_host=objects.omero_host,
+            omero_port=objects.omero_port,
+            omero_object_type=objects.omero_object_type,
+            omero_object_id=objects.omero_object_id,
+        )
 
     elif isinstance(objects, list):
         return [get_references(obj) for obj in objects]
@@ -77,34 +77,34 @@ def numpy_to_mm_image(
     if source_images is not None:
         source_images = get_references(source_images)
 
-    if channel_names is not None:
-        if len(channel_names) != shape_c:
-            raise ValueError(
-                "The number of channel names should be equal to the number of channels in the image"
-            )
-    if channel_descriptions is not None:
-        if len(channel_descriptions) != shape_c:
-            raise ValueError(
-                "The number of channel descriptions should be equal to the number of channels in the image"
-            )
-    if excitation_wavelengths_nm is not None:
-        if len(excitation_wavelengths_nm) != shape_c:
-            raise ValueError(
-                "The number of excitation wavelengths should be equal to the number of channels in the image"
-            )
-    if emission_wavelengths_nm is not None:
-        if len(emission_wavelengths_nm) != shape_c:
-            raise ValueError(
-                "The number of emission wavelengths should be equal to the number of channels in the image"
-            )
+    if channel_names is not None and len(channel_names) != shape_c:
+        raise ValueError(
+            "The number of channel names should be equal to the number of channels in the image"
+        )
+    if channel_descriptions is not None and len(channel_descriptions) != shape_c:
+        raise ValueError(
+            "The number of channel descriptions should be equal to the number of channels in the image"
+        )
+    if excitation_wavelengths_nm is not None and len(excitation_wavelengths_nm) != shape_c:
+        raise ValueError(
+            "The number of excitation wavelengths should be equal to the number of channels in the image"
+        )
+    if emission_wavelengths_nm is not None and len(emission_wavelengths_nm) != shape_c:
+        raise ValueError(
+            "The number of emission wavelengths should be equal to the number of channels in the image"
+        )
 
     channels = []
     for i in range(shape_c):
         channel = mm_schema.Channel(
             name=channel_names[i] if channel_names is not None else None,
             description=channel_descriptions[i] if channel_descriptions is not None else None,
-            excitation_wavelength_nm=excitation_wavelengths_nm[i] if excitation_wavelengths_nm is not None else None,
-            emission_wavelength_nm=emission_wavelengths_nm[i] if emission_wavelengths_nm is not None else None,
+            excitation_wavelength_nm=excitation_wavelengths_nm[i]
+            if excitation_wavelengths_nm is not None
+            else None,
+            emission_wavelength_nm=emission_wavelengths_nm[i]
+            if emission_wavelengths_nm is not None
+            else None,
         )
         channels.append(channel)
 
@@ -214,9 +214,12 @@ def dict_to_table_inlined(
                 name=name,
                 description=table_description,
                 column_series=mm_schema.ColumnSeries(
-                    columns=[mm_schema.Column(name=n, description=d) for n, d in zip(dictionary, column_description)],
+                    columns=[
+                        mm_schema.Column(name=n, description=d)
+                        for n, d in zip(dictionary, column_description)
+                    ],
                 ),
-                table_data=dictionary
+                table_data=dictionary,
             )
         except KeyError as e:
             logger.error(
@@ -230,7 +233,7 @@ def dict_to_table_inlined(
             column_series=mm_schema.ColumnSeries(
                 columns=[mm_schema.Column(name=n) for n in dictionary]
             ),
-            table_data=dictionary
+            table_data=dictionary,
         )
 
     return output_table
