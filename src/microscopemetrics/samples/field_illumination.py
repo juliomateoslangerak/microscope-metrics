@@ -106,17 +106,17 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
             (image.shape[1] // 2, image.shape[0]),
         ),
     }
-    output = []
+    output = {}
     for profile_name, (start, end) in profile_coordinates.items():
         profiles = np.zeros((image.shape[2], 255))
         for c in range(image.shape[2]):
             profiles[c, :] = _channel_line_profile(
                 np.squeeze(image[0, 0, :, :, c]), start, end, profile_size
             )
-        output = output + [
-            {f"ch{c:02}_{profile_name}": {"values": profiles[c].tolist()}}
-            for c in range(image.shape[2])
-        ]
+        output = output | {
+            f"ch{c:02}_{profile_name}": profiles[c].tolist()
+            for c in range(image.shape[-1])
+        }
 
     return output
 
@@ -299,14 +299,14 @@ def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> d
     }
 
 
-def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
+def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sigma: float):
     """
-    given an image in a 3d np.ndarray format (yxc), this function return intensities for the corner and central regions
+    given FI input images, this function return intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
     Parameters
     ----------
-    image : np.ndarray
-        image on a 2d np.ndarray in yxc format.
+    images : list[mm_schema.Image]
+        input images from the field illumination dataset.
     Returns
     -------
     profiles_statistics : dict
@@ -315,13 +315,14 @@ def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
         Dictionary values will be lists in case of multiple channels.
     """
     properties = []
-    for c in range(image.shape[2]):
-        channel_properties = {"channel_nr": c}
-        channel_properties.update(_channel_max_intensity_properties(image[:, :, c], sigma))
-        channel_properties.update(_channel_corner_properties(image[:, :, c], corner_fraction))
-        if image.shape[2] == 1:
-            return channel_properties
-        else:
+    for image in images:
+        # For the analysis we are using only the first z and time-point
+        image_data = image.array_data[0, 0, :, :, :]
+
+        for c in range(image_data.shape[-1]):
+            channel_properties = {"channel_name": image.channel_series.values[c].name}
+            channel_properties.update(_channel_max_intensity_properties(image_data[:, :, c], sigma))
+            channel_properties.update(_channel_corner_properties(image_data[:, :, c], corner_fraction))
             properties.append(channel_properties)
 
     return {k: [i[k] for i in properties] for k in properties[0]}
@@ -330,87 +331,208 @@ def _image_properties(image: np.ndarray, corner_fraction: float, sigma: float):
 def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
     validate_requirements()
 
-    # for image in self.input.field_illumination_image:
+    channel_names = []
+    for image in dataset.input.field_illumination_image:
+        # We want to verify that the input images all have different channel names
+        # As it does not make sense to average file illumination between images from the same channel
+        if image.channel_series is not None:
+            logger.info("Checking duplicate channel names...")
+            for channel in image.channel_series.values:
+                if channel.name in channel_names:
+                    logger.error(f"Channel name {channel.name} is not unique. "
+                                 "We cannot average field illumination between images from the same channel.")
+                    return False
+                channel_names.append(channel.name)
 
-    # Check image shape
-    logger.info("Checking image shape...")
-    image = dataset.input.field_illumination_image.data
-    if len(image.shape) != 5:
-        logger.error("Image must be 5D")
-        return False
-    if image.shape[0] != 1 or image.shape[1] != 1:
-        logger.warning(
-            "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
-        )
-    # For the analysis we are using only the first z and time-point
-    image = image[0, 0, :, :, :].reshape((image.shape[2], image.shape[3], image.shape[4]))
+        # Check image shape
+        logger.info("Checking image shape...")
+        if len(image.array_data.shape) != 5:
+            logger.error("Image must be 5D")
+            return False
+        if image.array_data.shape[0] != 1 or image.array_data.shape[1] != 1:
+            logger.warning(
+                "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
+            )
 
-    # Check image saturation
-    logger.info("Checking image saturation...")
-    saturated_channels = []
-    for c in range(image.shape[2]):
-        if is_saturated(
-            channel=image[:, :, c],
-            threshold=dataset.input.saturation_threshold,
-            detector_bit_depth=dataset.input.bit_depth,
-        ):
-            logger.error(f"Channel {c} is saturated")
-            saturated_channels.append(c)
-    if len(saturated_channels):
-        logger.error(f"Channels {saturated_channels} are saturated")
-        raise SaturationError(f"Channels {saturated_channels} are saturated")
+        # Check image saturation
+        logger.info("Checking image saturation...")
+        saturated_channels = []
+        for c in range(image.array_data.shape[-1]):
+            if is_saturated(
+                channel=image.array_data[..., c],
+                threshold=dataset.input.saturation_threshold,
+                detector_bit_depth=dataset.input.bit_depth,
+            ):
+                logger.error(f"Channel {c} is saturated")
+                saturated_channels.append(c)
+        if len(saturated_channels):
+            logger.error(f"Channels {saturated_channels} are saturated")
+            raise SaturationError(f"Channels {saturated_channels} are saturated")
 
-    dataset.output.key_values = mm_schema.FieldIlluminationKeyValues(
+
+    key_values = mm_schema.FieldIlluminationKeyValues(
         **_image_properties(
-            image=image,
+            images=dataset.input.field_illumination_image,
             corner_fraction=dataset.input.corner_fraction,
             sigma=dataset.input.sigma,
         )
     )
 
-    dataset.output.intensity_map = numpy_to_mm_image(
-        array=_image_intensity_map(image=image, map_size=dataset.input.intensity_map_size),
-        name=f"{dataset.input.field_illumination_image.name}_intensity_map",
-        description=f"Intensity map of {dataset.input.field_illumination_image.name}",
-        source_images=dataset.input.field_illumination_image,
+    intensity_maps = [
+        numpy_to_mm_image(
+            array=_image_intensity_map(image=image.array_data, map_size=dataset.input.intensity_map_size),
+            name=f"{image.name}_intensity_map",
+            description=f"Intensity map of {image.name}",
+            source_images=image,
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    intensity_profiles = [
+        dict_to_table_inlined(
+            dictionary=_image_line_profile(image.array_data, profile_size=255),
+            name=f"{image.name}_intensity_profiles",
+            table_description=f"Intensity profiles of {image.name}",
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    roi_profiles = [
+        mm_schema.Roi(
+            name="Profile ROIs",
+            description="ROIs used to compute the intensity profiles",
+            linked_objects=get_references(image),
+            lines=_line_profile_shapes(image.array_data),
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    roi_corners = [
+        mm_schema.Roi(
+            name="Corner ROIs",
+            description="ROIs used to compute the corner intensities",
+            linked_objects=get_references(image),
+            rectangles=_corner_shapes(image.array_data, dataset.input.corner_fraction),
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    roi_centers_of_mass = [
+        mm_schema.Roi(
+            name="Centers of mass ROIs",
+            description="Point ROI marking the centroids of the max intensity regions",
+            linked_objects=get_references(image),
+            points=[
+                mm_schema.Point(
+                    name=f"ch{c:02}_center",
+                    y=key_values.center_of_mass_y[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    x=key_values.center_of_mass_x[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    c=c,
+                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    stroke_width=5,
+                )
+                for c in range(image.array_data.shape[2])
+            ],
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    roi_centers_geometric = [
+        mm_schema.Roi(
+            name="Geometric centers ROIs",
+            description="Point ROI marking the centroids of the max intensity regions",
+            linked_objects=get_references(image),
+            points=[
+                mm_schema.Point(
+                    name=f"ch{c:02}_center",
+                    y=key_values.center_geometric_y[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    x=key_values.center_geometric_x[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    c=c,
+                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    stroke_width=5,
+                )
+                for c in range(image.array_data.shape[2])
+            ],
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    roi_centers_fitted = [
+        mm_schema.Roi(
+            name="Fitted centers ROIs",
+            description="Point ROI marking the centroids of the max intensity regions",
+            linked_objects=get_references(image),
+            points=[
+                mm_schema.Point(
+                    name=f"ch{c:02}_center",
+                    y=key_values.center_fitted_y[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    x=key_values.center_fitted_x[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    c=c,
+                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    stroke_width=5,
+                )
+                for c in range(image.array_data.shape[2])
+            ],
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    roi_centers_max_intensity = [
+        mm_schema.Roi(
+            name="Max intensity ROIs",
+            description="Point ROI marking the centroids of the max intensity regions",
+            linked_objects=get_references(image),
+            points=[
+                mm_schema.Point(
+                    name=f"ch{c:02}_center",
+                    y=key_values.max_intensity_pos_y[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    x=key_values.max_intensity_pos_x[
+                        key_values.channel_name.index(image.channel_series.values[c].name)
+                    ],
+                    c=c,
+                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    stroke_width=5,
+                )
+                for c in range(image.array_data.shape[2])
+            ],
+        )
+        for image in dataset.input.field_illumination_image
+    ]
+
+    output = mm_schema.FieldIlluminationOutput(
+        processing_application="microscopemetrics",
+        processing_version="0.1.0",
+        processing_datetime=datetime.now(),
+        key_values=key_values,
+        intensity_maps=intensity_maps,
+        intensity_profiles=intensity_profiles,
+        roi_profiles=roi_profiles,
+        roi_corners=roi_corners,
+        roi_centers_of_mass=roi_centers_of_mass,
+        roi_centers_geometric=roi_centers_geometric,
+        roi_centers_fitted=roi_centers_fitted,
+        roi_centers_max_intensity=roi_centers_max_intensity,
     )
 
-    dataset.output.intensity_profiles = mm_schema.TableAsDict(
-        name="intensity_profiles", columns=_image_line_profile(image, profile_size=255)
-    )
-
-    dataset.output.roi_profiles = mm_schema.Roi(
-        label="Profile ROIs",
-        description="ROIs used to compute the intensity profiles",
-        image=dataset.input.field_illumination_image.image_url,
-        shapes=_line_profile_shapes(image),
-    )
-
-    dataset.output.roi_corners = mm_schema.Roi(
-        label="Corner ROIs",
-        description="ROIs used to compute the corner intensities",
-        image=dataset.input.field_illumination_image.image_url,
-        shapes=_corner_shapes(image, dataset.input.corner_fraction),
-    )
-
-    dataset.output.roi_centroids_weighted = mm_schema.Roi(
-        label="Weighted Centroids ROIs",
-        description="Point ROI marking the weighted centroids of the max intensity regions",
-        image=dataset.input.field_illumination_image.image_url,
-        shapes=[
-            mm_schema.Point(
-                label=f"ch{c:02}_center",
-                y=dataset.output.key_values.centroid_weighted_y[c],
-                x=dataset.output.key_values.centroid_weighted_x[c],
-                c=c,
-                stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                stroke_width=5,
-            )
-            for c in range(image.shape[2])
-        ],
-    )
-
+    dataset.output = output
     dataset.processing_datetime = datetime.now()
     dataset.processed = True
 

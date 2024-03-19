@@ -260,27 +260,27 @@ def st_psf_beads_test_data(
     dtype = draw(dtype)
 
     for image_nr in range(draw(nr_images)):
-        nr_valid_beads = draw(nr_valid_beads)
-        nr_edge_beads = draw(nr_edge_beads)
-        nr_out_of_focus_beads = draw(nr_out_of_focus_beads)
-        nr_clustering_beads = draw(nr_clustering_beads)
+        _nr_valid_beads = draw(nr_valid_beads)
+        _nr_edge_beads = draw(nr_edge_beads)
+        _nr_out_of_focus_beads = draw(nr_out_of_focus_beads)
+        _nr_clustering_beads = draw(nr_clustering_beads)
         # We want at least one bead and not too many beads
         assume(
-            20 > (nr_valid_beads + nr_edge_beads + nr_out_of_focus_beads + nr_clustering_beads) > 0
+            20 > (_nr_valid_beads + _nr_edge_beads + _nr_out_of_focus_beads + _nr_clustering_beads) > 0
         )
 
-        signal = draw(signal)
-        target_min_intensity = draw(target_min_intensity)
-        target_max_intensity = draw(target_max_intensity)
+        _signal = draw(signal)
+        _target_min_intensity = draw(target_min_intensity)
+        _target_max_intensity = draw(target_max_intensity)
 
-        sigma_z = draw(sigma_z)
-        sigma_y = draw(sigma_y)
-        sigma_x = draw(sigma_x)
+        _sigma_z = draw(sigma_z)
+        _sigma_y = draw(sigma_y)
+        _sigma_x = draw(sigma_x)
         applied_sigmas = []
 
-        min_distance_z = draw(min_distance) // 4
-        min_distance_y = draw(min_distance)
-        min_distance_x = draw(min_distance)
+        _min_distance_z = draw(min_distance) // 4
+        _min_distance_y = draw(min_distance)
+        _min_distance_x = draw(min_distance)
 
         # We do not want images that are too elongated
         assume(0.5 < (x_image_shape / y_image_shape) < 2)
@@ -302,45 +302,45 @@ def st_psf_beads_test_data(
         # 2. Generate the edge beads in the edge of the image making sure that they are not too close to the valid beads
         # 3. Gradually remove out_of_focus_beads and clustering_beads from those not in the edge
         while len(non_edge_beads_positions) < (
-            nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads
+                _nr_valid_beads + _nr_out_of_focus_beads + _nr_clustering_beads
         ):
             z_pos = z_image_shape // 2
             y_pos = draw(
                 st.integers(
-                    min_value=min_distance_y + 2, max_value=y_image_shape - min_distance_y - 2
+                    min_value=_min_distance_y + 2, max_value=y_image_shape - _min_distance_y - 2
                 )
             )
             x_pos = draw(
                 st.integers(
-                    min_value=min_distance_x + 2, max_value=x_image_shape - min_distance_x - 2
+                    min_value=_min_distance_x + 2, max_value=x_image_shape - _min_distance_x - 2
                 )
             )
             if not non_edge_beads_positions:
                 non_edge_beads_positions.append((z_pos, y_pos, x_pos))
             for pos in non_edge_beads_positions:
-                if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
+                if abs(pos[1] - y_pos) <= _min_distance_y and abs(pos[2] - x_pos) <= _min_distance_x:
                     break
                 else:
                     continue
             else:
                 non_edge_beads_positions.append((z_pos, y_pos, x_pos))
 
-        while len(edge_beads_positions) < nr_edge_beads:
+        while len(edge_beads_positions) < _nr_edge_beads:
             z_pos = z_image_shape // 2
             y_pos = draw(
                 st.one_of(
-                    st.integers(min_value=5, max_value=int(min_distance_y / 2) - 2),
+                    st.integers(min_value=5, max_value=int(_min_distance_y / 2) - 2),
                     st.integers(
-                        min_value=y_image_shape - int(min_distance_y / 2) + 2,
+                        min_value=y_image_shape - int(_min_distance_y / 2) + 2,
                         max_value=y_image_shape - 5,
                     ),
                 )
             )
             x_pos = draw(
                 st.one_of(
-                    st.integers(min_value=5, max_value=int(min_distance_x / 2) - 2),
+                    st.integers(min_value=5, max_value=int(_min_distance_x / 2) - 2),
                     st.integers(
-                        min_value=x_image_shape - int(min_distance_x / 2) + 2,
+                        min_value=x_image_shape - int(_min_distance_x / 2) + 2,
                         max_value=x_image_shape - 5,
                     ),
                 )
@@ -348,21 +348,21 @@ def st_psf_beads_test_data(
             if not edge_beads_positions:
                 edge_beads_positions.append((z_pos, y_pos, x_pos))
             for pos in edge_beads_positions:
-                if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
+                if abs(pos[1] - y_pos) <= _min_distance_y and abs(pos[2] - x_pos) <= _min_distance_x:
                     break
                 else:
                     continue
             else:
                 edge_beads_positions.append((z_pos, y_pos, x_pos))
 
-        for _ in range(nr_out_of_focus_beads):
+        for _ in range(_nr_out_of_focus_beads):
             pos = non_edge_beads_positions.pop()
             pos = (
                 draw(
                     st.one_of(
-                        st.integers(min_value=3, max_value=min_distance_z - 2),
+                        st.integers(min_value=3, max_value=_min_distance_z - 2),
                         st.integers(
-                            min_value=z_image_shape - min_distance_z + 2,
+                            min_value=z_image_shape - _min_distance_z + 2,
                             max_value=z_image_shape - 4,
                         ),
                     )
@@ -372,32 +372,32 @@ def st_psf_beads_test_data(
             )
             out_of_focus_beads_positions.append(pos)
 
-        for _ in range(nr_clustering_beads):
+        for _ in range(_nr_clustering_beads):
             pos_1 = non_edge_beads_positions.pop()
             pos_2 = (
                 pos_1[0],
                 pos_1[1] + draw(st.sampled_from([-1, 1])),
                 pos_1[2] + draw(st.sampled_from([-1, 1])),
             )
-            image[pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(signal * 1.5, signal / 10)
-            image[pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(signal * 1.5, signal / 10)
+            image[pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(_signal * 1.5, _signal / 10)
+            image[pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(_signal * 1.5, _signal / 10)
             clustering_beads_positions.append(
                 (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
             )
 
         for pos in edge_beads_positions:
-            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            image[pos[0], pos[1], pos[2], :] = np.random.normal(_signal, _signal / 50)
         for pos in non_edge_beads_positions:
-            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            image[pos[0], pos[1], pos[2], :] = np.random.normal(_signal, _signal / 50)
             valid_bead_positions = non_edge_beads_positions
         for pos in out_of_focus_beads_positions:
-            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            image[pos[0], pos[1], pos[2], :] = np.random.normal(_signal, _signal / 50)
 
         # Apply a gaussian filter to the image
         for ch in range(c_image_shape):
             sigma_correction = 1 + ch * 0.1
             applied_sigmas.append(
-                (sigma_z * sigma_correction, sigma_y * sigma_correction, sigma_x * sigma_correction)
+                (_sigma_z * sigma_correction, _sigma_y * sigma_correction, _sigma_x * sigma_correction)
             )
             image[:, :, :, ch] = skimage_gaussian(
                 image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
@@ -409,8 +409,8 @@ def st_psf_beads_test_data(
 
         image = skimage_rescale_intensity(
             image,
-            in_range=(0.0, signal / 20),
-            out_range=(target_min_intensity, target_max_intensity),
+            in_range=(0.0, _signal / 20),
+            out_range=(_target_min_intensity, _target_max_intensity),
         )
 
         image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
@@ -423,10 +423,10 @@ def st_psf_beads_test_data(
         output["out_of_focus_bead_positions"].append(out_of_focus_beads_positions)
         output["clustering_bead_positions"].append(clustering_beads_positions)
         output["applied_sigmas"].append(applied_sigmas)
-        output["min_distance_z"].append(min_distance_z)
-        output["min_distance_y"].append(min_distance_y)
-        output["min_distance_x"].append(min_distance_x)
-        output["signal"].append(signal)
+        output["min_distance_z"].append(_min_distance_z)
+        output["min_distance_y"].append(_min_distance_y)
+        output["min_distance_x"].append(_min_distance_x)
+        output["signal"].append(_signal)
         output["do_noise"].append(do_noise)
 
     return output
