@@ -214,11 +214,9 @@ def dict_to_table_inlined(
                 name=name,
                 description=table_description,
                 column_series=mm_schema.ColumnSeries(
-                    columns=[
-                        {k: {"values": dictionary[k], "description": column_description[k]}}
-                        for k in dictionary
-                    ],
-                )
+                    columns=[mm_schema.Column(name=n, description=d) for n, d in zip(dictionary, column_description)],
+                ),
+                table_data=dictionary
             )
         except KeyError as e:
             logger.error(
@@ -230,8 +228,9 @@ def dict_to_table_inlined(
             name=name,
             description=table_description,
             column_series=mm_schema.ColumnSeries(
-                columns=[{k: {"values": dictionary[k]}} for k in dictionary]
-            )
+                columns=[mm_schema.Column(name=n) for n in dictionary]
+            ),
+            table_data=dictionary
         )
 
     return output_table
