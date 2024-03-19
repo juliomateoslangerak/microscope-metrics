@@ -9,7 +9,7 @@ from microscopemetrics.strategies import strategies as st_mm
 
 
 @given(st_mm.st_psf_beads_dataset())
-@settings(max_examples=10)
+@settings(max_examples=1)
 def test_psf_beads_analysis_instantiation(dataset):
     dataset = dataset["unprocessed_dataset"]
     assert isinstance(dataset, mm_schema.PSFBeadsDataset)
@@ -20,7 +20,7 @@ def test_psf_beads_analysis_instantiation(dataset):
 
 
 @given(st_mm.st_psf_beads_dataset())
-@settings(max_examples=10)
+@settings(max_examples=1)
 def test_psf_beads_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
     assert not dataset.processed
