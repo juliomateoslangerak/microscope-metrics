@@ -86,7 +86,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
     Parameters
     ----------
     image : np.ndarray.
-        image on a 3d np.ndarray format yxc.
+        image on a 5d np.ndarray format tzyxc.
     profile_size : int
         size of the intensity profile.
     Returns
