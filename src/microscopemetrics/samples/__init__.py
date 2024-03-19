@@ -68,6 +68,10 @@ def numpy_to_mm_image(
     name: str = None,
     description: str = None,
     source_images: List[mm_schema.Image] = None,
+    channel_names: List[str] = None,
+    channel_descriptions: List[str] = None,
+    excitation_wavelengths_nm: List[float] = None,
+    emission_wavelengths_nm: List[float] = None,
 ) -> mm_schema.Image:
     """Converts a numpy array with dimensions order tzyxc to an image by reference (not inlined)"""
     if array.ndim == 5:
@@ -81,7 +85,38 @@ def numpy_to_mm_image(
         )
 
     if source_images is not None:
-        source_images = _get_references(source_images)
+        source_images = get_references(source_images)
+
+    if channel_names is not None:
+        if len(channel_names) != shape_c:
+            raise ValueError(
+                "The number of channel names should be equal to the number of channels in the image"
+            )
+    if channel_descriptions is not None:
+        if len(channel_descriptions) != shape_c:
+            raise ValueError(
+                "The number of channel descriptions should be equal to the number of channels in the image"
+            )
+    if excitation_wavelengths_nm is not None:
+        if len(excitation_wavelengths_nm) != shape_c:
+            raise ValueError(
+                "The number of excitation wavelengths should be equal to the number of channels in the image"
+            )
+    if emission_wavelengths_nm is not None:
+        if len(emission_wavelengths_nm) != shape_c:
+            raise ValueError(
+                "The number of emission wavelengths should be equal to the number of channels in the image"
+            )
+
+    channels = []
+    for i in range(shape_c):
+        channel = mm_schema.Channel(
+            name=channel_names[i] if channel_names is not None else None,
+            description=channel_descriptions[i] if channel_descriptions is not None else None,
+            excitation_wavelength_nm=excitation_wavelengths_nm[i] if excitation_wavelengths_nm is not None else None,
+            emission_wavelength_nm=emission_wavelengths_nm[i] if emission_wavelengths_nm is not None else None,
+        )
+        channels.append(channel)
 
     return mm_schema.Image(
         name=name,
@@ -93,6 +128,7 @@ def numpy_to_mm_image(
         shape_y=shape_y,
         shape_x=shape_x,
         shape_c=shape_c,
+        channel_series=mm_schema.ChannelSeries(values=channels),
     )
 
 
