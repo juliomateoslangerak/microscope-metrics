@@ -231,8 +231,6 @@ def _channel_max_intensity_properties(
         "center_of_mass_y": properties[-2].centroid[0],
         "center_of_mass_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2)
         - 1,
-        "centroid_weighted_x": properties[-2].centroid_weighted[1],
-        "centroid_weighted_x_relative": properties[-2].centroid_weighted[1] / (channel.shape[1] / 2)
         "center_of_mass_x": properties[-2].centroid[1],
         "center_of_mass_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2)
         - 1,
