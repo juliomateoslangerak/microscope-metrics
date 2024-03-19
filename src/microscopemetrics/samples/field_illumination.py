@@ -49,7 +49,7 @@ def _image_intensity_map(image: np.ndarray, map_size: int):
         3d np.ndarray representing the intensity map of the chosen image.
     """
     output = [
-        _channel_intensity_map(np.squeeze(image[:, :, c]), map_size) for c in range(image.shape[2])
+        _channel_intensity_map(np.squeeze(image[0, 0, :, :, c]), map_size) for c in range(image.shape[-1])
     ]
     output = np.stack(output, axis=2)
 
@@ -111,7 +111,7 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
         profiles = np.zeros((image.shape[2], 255))
         for c in range(image.shape[2]):
             profiles[c, :] = _channel_line_profile(
-                np.squeeze(image[:, :, c]), start, end, profile_size
+                np.squeeze(image[0, 0, :, :, c]), start, end, profile_size
             )
         output = output + [
             {f"ch{c:02}_{profile_name}": {"values": profiles[c].tolist()}}
@@ -128,45 +128,45 @@ def _line_profile_shapes(image: np.ndarray):
             label="leftTop_to_rightBottom",
             x1=0,
             y1=0,
-            x2=image.shape[1],
-            y2=image.shape[0],
+            x2=image.shape[-2],
+            y2=image.shape[-3],
             stroke_color=stroke_color,
         ),
         mm_schema.Line(
-            label="leftBottom_to_rightTop",
+            name="leftBottom_to_rightTop",
             x1=0,
-            y1=image.shape[0],
-            x2=image.shape[1],
+            y1=image.shape[-2],
+            x2=image.shape[-3],
             y2=0,
             stroke_color=stroke_color,
         ),
         mm_schema.Line(
-            label="center_horizontal",
+            name="center_horizontal",
             x1=0,
-            y1=image.shape[0] // 2,
-            x2=image.shape[1],
-            y2=image.shape[0] // 2,
+            y1=image.shape[-3] // 2,
+            x2=image.shape[-2],
+            y2=image.shape[-3] // 2,
             stroke_color=stroke_color,
         ),
         mm_schema.Line(
-            label="center_vertical",
-            x1=image.shape[1] // 2,
+            name="center_vertical",
+            x1=image.shape[-2] // 2,
             y1=0,
-            x2=image.shape[1] // 2,
-            y2=image.shape[0],
+            x2=image.shape[-2] // 2,
+            y2=image.shape[-3],
             stroke_color=stroke_color,
         ),
     ]
 
 
-def _c_shape(label, x, y, size, s_col):
-    return mm_schema.Rectangle(label=label, x=x, y=y, w=size, h=size, stroke_color=s_col)
+def _c_shape(name, x, y, size, s_col):
+    return mm_schema.Rectangle(name=name, x=x, y=y, w=size, h=size, stroke_color=s_col)
 
 
 def _corner_shapes(image: np.ndarray, corner_fraction: float):
     cfp = int(corner_fraction * (image.shape[0] + image.shape[1]) / 2)
-    cr_y = int((image.shape[0] - cfp) / 2)
-    cr_x = int((image.shape[1] - cfp) / 2)
+    cr_y = int((image.shape[-3] - cfp) / 2)
+    cr_x = int((image.shape[-2] - cfp) / 2)
     stroke_color = {"r": 0, "g": 255, "b": 0, "alpha": 200}
 
     return [
@@ -180,8 +180,8 @@ def _corner_shapes(image: np.ndarray, corner_fraction: float):
         _c_shape("bottom_center", x=cr_x, y=image.shape[0] - cfp, size=cfp, s_col=stroke_color),
         _c_shape(
             "bottom_right",
-            x=image.shape[1] - cfp,
-            y=image.shape[0] - cfp,
+            y=image.shape[-3] - cfp,
+            x=image.shape[-2] - cfp,
             size=cfp,
             s_col=stroke_color,
         ),
@@ -222,48 +222,50 @@ def _channel_max_intensity_properties(
         center_region_intensity_fraction = 1 / (n_bins - 1)
 
     # Fitting the intensity profile to a gaussian
-    _, _, _, centroid_fitted_y = fit_gaussian(np.max(channel, axis=1))
-    _, _, _, centroid_fitted_x = fit_gaussian(np.max(channel, axis=0))
+    _, _, _, center_fitted_y = fit_gaussian(np.max(channel, axis=1))
+    _, _, _, center_fitted_x = fit_gaussian(np.max(channel, axis=0))
 
     return {
         "center_region_intensity_fraction": center_region_intensity_fraction,
         "center_region_area_fraction": center_region_area_fraction,
-        "centroid_weighted_y": properties[-2].centroid_weighted[0],
-        "centroid_weighted_y_relative": properties[-2].centroid_weighted[0] / (channel.shape[0] / 2)
+        "center_of_mass_y": properties[-2].centroid[0],
+        "center_of_mass_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2)
         - 1,
         "centroid_weighted_x": properties[-2].centroid_weighted[1],
         "centroid_weighted_x_relative": properties[-2].centroid_weighted[1] / (channel.shape[1] / 2)
+        "center_of_mass_x": properties[-2].centroid[1],
+        "center_of_mass_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2)
         - 1,
-        "centroid_weighted_distance_relative": hypot(
-            properties[-2].centroid_weighted[0] / (channel.shape[0] / 2) - 1,
-            properties[-2].centroid_weighted[1] / (channel.shape[1] / 2) - 1,
-        ),
-        "centroid_y": properties[-2].centroid[0],
-        "centroid_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
-        "centroid_x": properties[-2].centroid[1],
-        "centroid_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
-        "centroid_distance_relative": hypot(
+        "center_of_mass_distance_relative": hypot(
             properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
             properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
         ),
-        "centroid_fitted_y": centroid_fitted_y,
-        "centroid_fitted_y_relative": centroid_fitted_y / (channel.shape[0] / 2) - 1,
-        "centroid_fitted_x": centroid_fitted_x,
-        "centroid_fitted_x_relative": centroid_fitted_x / (channel.shape[1] / 2) - 1,
-        "centroid_fitted_distance_relative": hypot(
-            centroid_fitted_y / (channel.shape[0] / 2) - 1,
-            centroid_fitted_x / (channel.shape[1] / 2) - 1,
+        "center_geometric_y": properties[-2].centroid[0],
+        "center_geometric_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
+        "center_geometric_x": properties[-2].centroid[1],
+        "center_geometric_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
+        "center_geometric_distance_relative": hypot(
+            properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
+            properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
+        ),
+        "center_fitted_y": center_fitted_y,
+        "center_fitted_y_relative": center_fitted_y / (channel.shape[0] / 2) - 1,
+        "center_fitted_x": center_fitted_x,
+        "center_fitted_x_relative": center_fitted_x / (channel.shape[1] / 2) - 1,
+        "center_fitted_distance_relative": hypot(
+            center_fitted_y / (channel.shape[0] / 2) - 1,
+            center_fitted_x / (channel.shape[1] / 2) - 1,
         ),
         "max_intensity": properties[-2].intensity_max,
-        "max_intensity_pos_y": properties[-1].centroid_weighted[0],
-        "max_intensity_pos_y_relative": properties[-1].centroid_weighted[0] / (channel.shape[0] / 2)
+        "max_intensity_pos_y": properties[-1].centroid[0],
+        "max_intensity_pos_y_relative": properties[-1].centroid[0] / (channel.shape[0] / 2)
         - 1,
-        "max_intensity_pos_x": properties[-1].centroid_weighted[1],
-        "max_intensity_pos_x_relative": properties[-1].centroid_weighted[1] / (channel.shape[1] / 2)
+        "max_intensity_pos_x": properties[-1].centroid[1],
+        "max_intensity_pos_x_relative": properties[-1].centroid[1] / (channel.shape[1] / 2)
         - 1,
         "max_intensity_distance_relative": hypot(
-            properties[-1].centroid_weighted[0] / (channel.shape[0] / 2) - 1,
-            properties[-1].centroid_weighted[1] / (channel.shape[1] / 2) - 1,
+            properties[-1].centroid[0] / (channel.shape[0] / 2) - 1,
+            properties[-1].centroid[1] / (channel.shape[1] / 2) - 1,
         ),
     }
 
