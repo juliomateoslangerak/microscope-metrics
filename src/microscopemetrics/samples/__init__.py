@@ -34,31 +34,21 @@ logger = logging.getLogger(__name__)
 # TODO: work on the loggers
 
 
-def _get_references(
-    objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]]
+def get_references(
+    objects: Union[mm_schema.MetricsObject, list[mm_schema.MetricsObject]]
 ) -> List[mm_schema.DataReference]:
     """Get the references of a metrics object or a list of metrics objects"""
     if isinstance(objects, mm_schema.MetricsObject):
-        return [
-            mm_schema.DataReference(
+        return mm_schema.DataReference(
                 data_uri=objects.data_uri,
                 omero_host=objects.omero_host,
                 omero_port=objects.omero_port,
                 omero_object_type=objects.omero_object_type,
                 omero_object_id=objects.omero_object_id,
             )
-        ]
-    elif isinstance(objects, list(mm_schema.MetricsObject)):
-        return [
-            mm_schema.DataReference(
-                data_uri=obj.data_uri,
-                omero_host=obj.omero_host,
-                omero_port=obj.omero_port,
-                omero_object_type=obj.omero_object_type,
-                omero_object_id=obj.omero_object_id,
-            )
-            for obj in objects
-        ]
+
+    elif isinstance(objects, list):
+        return [get_references(obj) for obj in objects]
     else:
         raise ValueError("Input should be a metrics object or a list of metrics objects")
 
@@ -220,13 +210,15 @@ def dict_to_table_inlined(
 
     if column_description is not None:
         try:
-            output_table = mm_schema.TableAsDict(
+            output_table = mm_schema.Table(
                 name=name,
                 description=table_description,
-                columns=[
-                    {k: {"values": dictionary[k], "description": column_description[k]}}
-                    for k in dictionary
-                ],
+                column_series=mm_schema.ColumnSeries(
+                    columns=[
+                        {k: {"values": dictionary[k], "description": column_description[k]}}
+                        for k in dictionary
+                    ],
+                )
             )
         except KeyError as e:
             logger.error(
@@ -234,10 +226,12 @@ def dict_to_table_inlined(
             )
             raise e
     else:
-        output_table = mm_schema.TableAsDict(
+        output_table = mm_schema.Table(
             name=name,
             description=table_description,
-            columns=[{k: {"values": dictionary[k]}} for k in dictionary],
+            column_series=mm_schema.ColumnSeries(
+                columns=[{k: {"values": dictionary[k]}} for k in dictionary]
+            )
         )
 
     return output_table
