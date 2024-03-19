@@ -10,7 +10,7 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
-from microscopemetrics.samples import logger, numpy_to_mm_image, validate_requirements
+from microscopemetrics.samples import logger, numpy_to_mm_image, dict_to_table_inlined, validate_requirements, get_references
 from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
 
 
