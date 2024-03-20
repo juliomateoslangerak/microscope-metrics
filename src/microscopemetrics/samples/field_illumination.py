@@ -452,7 +452,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[2])
+                for c in range(image.array_data.shape[-1])
             ],
         )
         for image in dataset.input.field_illumination_image
@@ -477,7 +477,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[2])
+                for c in range(image.array_data.shape[-1])
             ],
         )
         for image in dataset.input.field_illumination_image
@@ -502,7 +502,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[2])
+                for c in range(image.array_data.shape[-1])
             ],
         )
         for image in dataset.input.field_illumination_image
@@ -527,13 +527,13 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[2])
+                for c in range(image.array_data.shape[-1])
             ],
         )
         for image in dataset.input.field_illumination_image
     ]
 
-    output = mm_schema.FieldIlluminationOutput(
+    dataset.output = mm_schema.FieldIlluminationOutput(
         processing_application="microscopemetrics",
         processing_version="0.1.0",
         processing_datetime=datetime.now(),
