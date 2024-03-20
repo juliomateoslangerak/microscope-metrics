@@ -514,7 +514,7 @@ def _generate_profiles_table(
         all(not ch_profiles for ch_profiles in raw_profiles[image_name])
         for image_name in raw_profiles
     ):
-        logger.error(f"No profiles for axis {axis_names[axis]} available. No table generated.")
+        logger.warning(f"No profiles for axis {axis_names[axis]} available. No table generated.")
         return None
 
     profiles = {}
