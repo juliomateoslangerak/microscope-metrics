@@ -663,7 +663,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     # Populate output
     output_bead_crops = {}
     bead_properties = {
-        "image_label": [],
         "image_name": [],
         "channel_nr": [],
         "bead_nr": [],
