@@ -42,7 +42,6 @@ def test_psf_beads_analysis_run(dataset):
         )
     )
 )
-@settings(deadline=200000)
 def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
@@ -68,7 +67,6 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
         )
     )
 )
-@settings(deadline=200000)
 def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
@@ -94,7 +92,6 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
         )
     )
 )
-@settings(deadline=200000)
 def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
