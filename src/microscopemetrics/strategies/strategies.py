@@ -460,13 +460,13 @@ def st_psf_beads_dataset(
     test_data = draw(test_data)
     psf_beads_unprocessed_dataset = draw(unprocessed_dataset)
 
-    psf_beads_unprocessed_dataset.input.psf_beads_image = [
+    psf_beads_unprocessed_dataset.input.psf_beads_images = [
         numpy_to_mm_image(image, name=f"PSF_image_{i}")
         for i, image in enumerate(test_data.pop("images"))
     ]
 
     # Setting the bit depth to the data type of the image
-    image_dtype = {a.array_data.dtype for a in psf_beads_unprocessed_dataset.input.psf_beads_image}
+    image_dtype = {a.array_data.dtype for a in psf_beads_unprocessed_dataset.input.psf_beads_images}
     if len(image_dtype) != 1:
         raise ValueError("All images should have the same data type")
     image_dtype = image_dtype.pop()

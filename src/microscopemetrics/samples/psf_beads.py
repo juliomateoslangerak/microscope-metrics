@@ -439,32 +439,17 @@ def _generate_center_roi(
     stroke_width,
     positions_filter=None,
 ):
-    rois = {}
+    rois = []
 
     # TODO: add a condition to not create the ROI if no beads are found?
-    for image_label, input_image in dataset.input.psf_beads_images.items():
-        shapes = {}
-        for ch in range(input_image.data.shape[-1]):
+    for input_image in dataset.input.psf_beads_images:
+        points = []
+        for ch in range(input_image.array_data.shape[-1]):
             if positions_filter is None:
-                for i, pos in enumerate(positions[image_label][ch]):
-                    shapes[f"ch{ch:02d}_b{i:02d}"] = mm_schema.Point(
-                        label=f"ch{ch:02d}_b{i:02d}",
-                        z=pos[0],
-                        y=pos[1],
-                        x=pos[2],
-                        c=ch,
-                        stroke_color=mm_schema.Color(
-                            r=color[0], g=color[1], b=color[2], alpha=color[3]
-                        ),
-                        stroke_width=stroke_width,
-                    )
-            else:
-                for i, (pos, is_filtered) in enumerate(
-                    zip(positions[image_label][ch], positions_filter[image_label][ch])
-                ):
-                    if is_filtered:
-                        shapes[f"ch{ch:02d}_b{i:02d}"] = mm_schema.Point(
-                            label=f"ch{ch:02d}_b{i:02d}",
+                for i, pos in enumerate(positions[input_image.name][ch]):
+                    points.append(
+                        mm_schema.Point(
+                            name=f"ch{ch:02d}_b{i:02d}",
                             z=pos[0],
                             y=pos[1],
                             x=pos[2],
@@ -474,12 +459,32 @@ def _generate_center_roi(
                             ),
                             stroke_width=stroke_width,
                         )
-        label = f"{root_name}_{image_label}"
-        rois[label] = mm_schema.RoiMassCenters(
-            label=label,
-            description=f"{root_name} in image {image_label}",
-            image=image_label,
-            shapes=shapes,
+                    )
+            else:
+                for i, (pos, is_filtered) in enumerate(
+                    zip(positions[input_image.name][ch], positions_filter[input_image.name][ch])
+                ):
+                    if is_filtered:
+                        points.append(
+                            mm_schema.Point(
+                                name=f"ch{ch:02d}_b{i:02d}",
+                                z=pos[0],
+                                y=pos[1],
+                                x=pos[2],
+                                c=ch,
+                                stroke_color=mm_schema.Color(
+                                    r=color[0], g=color[1], b=color[2], alpha=color[3]
+                                ),
+                                stroke_width=stroke_width,
+                            )
+                        )
+        rois.append(
+            mm_schema.Roi(
+                name=f"{root_name}_{input_image.name}",
+                description=f"{root_name} in image {input_image.name}",
+                linked_objects=get_references(input_image),
+                points=points,
+            )
         )
 
     return rois
@@ -498,8 +503,8 @@ def _generate_profiles_table(
         )
 
     if any(
-        len(raw_profiles[image_label]) != len(fitted_profiles[image_label])
-        for image_label in raw_profiles
+        len(raw_profiles[image_name]) != len(fitted_profiles[image_name])
+        for image_name in raw_profiles
     ):
         logger.error(
             f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of profiles. Raising error."
@@ -509,28 +514,28 @@ def _generate_profiles_table(
         )
 
     if all(
-        all(not ch_profiles for ch_profiles in raw_profiles[image_label])
-        for image_label in raw_profiles
+        all(not ch_profiles for ch_profiles in raw_profiles[image_name])
+        for image_name in raw_profiles
     ):
         logger.error(f"No profiles for axis {axis_names[axis]} available. No table generated.")
         return None
 
     profiles = {}
     descriptions = {}
-    for image_label in dataset.input.psf_beads_images.keys():
-        for ch in range(dataset.input.psf_beads_images[image_label].data.shape[-1]):
+    for image_name in dataset.input.psf_beads_images.keys():
+        for ch in range(dataset.input.psf_beads_images[image_name].data.shape[-1]):
             for i, (raw, fitted) in enumerate(
-                zip(raw_profiles[image_label][ch], fitted_profiles[image_label][ch])
+                zip(raw_profiles[image_name][ch], fitted_profiles[image_name][ch])
             ):
-                profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
+                profiles[f"{image_name}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
                 descriptions[
-                    f"{image_label}_ch_{ch:02d}_bead_{i:02d}_raw"
-                ] = f"Bead {i:02d} in channel {ch} of image {image_label} raw profile in {axis_names[axis]} axis"
+                    f"{image_name}_ch_{ch:02d}_bead_{i:02d}_raw"
+                ] = f"Bead {i:02d} in channel {ch} of image {image_name} raw profile in {axis_names[axis]} axis"
 
-                profiles[f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[axis].tolist()
+                profiles[f"{image_name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[axis].tolist()
                 descriptions[
-                    f"{image_label}_ch_{ch:02d}_bead_{i:02d}_fitted"
-                ] = f"Bead {i:02d} in channel {ch} of image {image_label} fitted profile in {axis_names[axis]} axis"
+                    f"{image_name}_ch_{ch:02d}_bead_{i:02d}_fitted"
+                ] = f"Bead {i:02d} in channel {ch} of image {image_name} fitted profile in {axis_names[axis]} axis"
 
     return dict_to_table_inlined(
         name=f"bead_profiles_{axis_names[axis]}",
@@ -604,47 +609,47 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         raise SaturationError(f"Channels {saturated_channels} are saturated")
 
     # Main image loop
-    for image_label, image in images.items():
-        logger.info(f"Processing image {image_label}...")
+    for image_name, image in images.items():
+        logger.info(f"Processing image {image_name}...")
         image_output = _process_image(
             image=image,
             sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
             fitting_rss_threshold=fitting_rss_threshold,
-            voxel_size_micron=voxel_sizes_micron[image_label],
+            voxel_size_micron=voxel_sizes_micron[image_name],
         )
         logger.info(
-            f"Image {image_label} processed:"
+            f"Image {image_name} processed:"
             f"    {len(image_output['bead_positions'])} beads found"
             f"    {len(image_output['discarded_positions_self_proximity'])} beads discarded for being to close to each other"
             f"    {len(image_output['discarded_positions_lateral_edge'])} beads discarded for being to close to the edge"
             f"    {len(image_output['bead_considered_axial_edge'])} beads considered as to close to the top or bottom of the image"
         )
 
-        bead_crops[image_label] = image_output["bead_images"]
-        bead_positions[image_label] = image_output["bead_positions"]
-        bead_profiles[image_label] = image_output["bead_profiles"]
-        bead_fitted_profiles[image_label] = image_output["bead_fitted_profiles"]
-        bead_rsss[image_label] = image_output["bead_rsss"]
-        bead_fwhms[image_label] = image_output["bead_fwhms"]
-        bead_fwhms_micron[image_label] = image_output["bead_fwhms_micron"]
-        discarded_positions_self_proximity[image_label] = image_output[
+        bead_crops[image_name] = image_output["bead_images"]
+        bead_positions[image_name] = image_output["bead_positions"]
+        bead_profiles[image_name] = image_output["bead_profiles"]
+        bead_fitted_profiles[image_name] = image_output["bead_fitted_profiles"]
+        bead_rsss[image_name] = image_output["bead_rsss"]
+        bead_fwhms[image_name] = image_output["bead_fwhms"]
+        bead_fwhms_micron[image_name] = image_output["bead_fwhms_micron"]
+        discarded_positions_self_proximity[image_name] = image_output[
             "discarded_positions_self_proximity"
         ]
-        discarded_positions_lateral_edge[image_label] = image_output[
+        discarded_positions_lateral_edge[image_name] = image_output[
             "discarded_positions_lateral_edge"
         ]
-        bead_considered_axial_edge[image_label] = image_output["bead_considered_axial_edge"]
-        bead_considered_bad_z_fit[image_label] = [
+        bead_considered_axial_edge[image_name] = image_output["bead_considered_axial_edge"]
+        bead_considered_bad_z_fit[image_name] = [
             [b_rss[0] > fitting_rss_threshold for b_rss in ch_rss]
             for ch_rss in image_output["bead_rsss"]
         ]
-        bead_considered_bad_y_fit[image_label] = [
+        bead_considered_bad_y_fit[image_name] = [
             [b_rss[1] > fitting_rss_threshold for b_rss in ch_rss]
             for ch_rss in image_output["bead_rsss"]
         ]
-        bead_considered_bad_x_fit[image_label] = [
+        bead_considered_bad_x_fit[image_name] = [
             [b_rss[2] > fitting_rss_threshold for b_rss in ch_rss]
             for ch_rss in image_output["bead_rsss"]
         ]
@@ -700,7 +705,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                     array=np.expand_dims(bead, axis=(0, 4)),
                     name=f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}",
                     description=f"Bead crop for bead nr {i}, on channel {ch}, image {input_image.name}",
-                    source_images=get_references(input_image),
+                    source_images=input_image,
                 )
 
                 # Append data to beads table
@@ -867,7 +872,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         bead_x_profiles=bead_x_profiles,
     )
 
-    dataset.output = output
     dataset.processed = True
 
     return True
