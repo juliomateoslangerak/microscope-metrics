@@ -47,7 +47,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(len(im["valid_bead_positions"]) for im in expected_output.values())
+    expected = sum(len(im_vbp) for im_vbp in expected_output["valid_bead_positions"])
 
     for measured in psf_beads_dataset.output.key_values.nr_of_beads_analyzed:
         assert measured == expected
@@ -72,7 +72,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(len(im["edge_bead_positions"]) for im in expected_output.values())
+    expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
 
     for measured in psf_beads_dataset.output.key_values.nr_of_beads_discarded_lateral_edge:
         assert measured == expected
@@ -97,7 +97,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(len(im["out_of_focus_bead_positions"]) for im in expected_output.values())
+    expected = sum(len(im_ofbp) for im_ofbp in expected_output["out_of_focus_bead_positions"])
 
     for measured in psf_beads_dataset.output.key_values.nr_of_beads_considered_axial_edge:
         assert measured == expected
@@ -132,7 +132,7 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(len(img_cp) for img_cp in expected_output["clustering_bead_positions"])
+    expected = sum(len(img_cbp) for img_cbp in expected_output["clustering_bead_positions"])
 
     for measured in psf_beads_dataset.output.key_values.nr_of_beads_considered_intensity_outlier:
         assert measured == expected
