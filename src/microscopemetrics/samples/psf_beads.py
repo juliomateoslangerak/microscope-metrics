@@ -364,6 +364,9 @@ def _process_image(
     fitting_rss_threshold: float,
     voxel_size_micron: Tuple[float, float, float],
 ) -> Dict[str, Any]:
+    # Remove the time dimension
+    image = image[0, ...]
+
     # Some images (e.g. OMX-3D-SIM) may contain negative values.
     image = np.clip(image, a_min=0, a_max=None)
 
@@ -442,11 +445,11 @@ def _generate_center_roi(
     rois = []
 
     # TODO: add a condition to not create the ROI if no beads are found?
-    for input_image in dataset.input.psf_beads_images:
+    for image in dataset.input.psf_beads_images:
         points = []
-        for ch in range(input_image.array_data.shape[-1]):
+        for ch in range(image.array_data.shape[-1]):
             if positions_filter is None:
-                for i, pos in enumerate(positions[input_image.name][ch]):
+                for i, pos in enumerate(positions[image.name][ch]):
                     points.append(
                         mm_schema.Point(
                             name=f"ch{ch:02d}_b{i:02d}",
@@ -462,7 +465,7 @@ def _generate_center_roi(
                     )
             else:
                 for i, (pos, is_filtered) in enumerate(
-                    zip(positions[input_image.name][ch], positions_filter[input_image.name][ch])
+                    zip(positions[image.name][ch], positions_filter[image.name][ch])
                 ):
                     if is_filtered:
                         points.append(
@@ -480,9 +483,9 @@ def _generate_center_roi(
                         )
         rois.append(
             mm_schema.Roi(
-                name=f"{root_name}_{input_image.name}",
-                description=f"{root_name} in image {input_image.name}",
-                linked_objects=get_references(input_image),
+                name=f"{root_name}_{image.name}",
+                description=f"{root_name} in image {image.name}",
+                linked_objects=get_references(image),
                 points=points,
             )
         )
@@ -522,20 +525,20 @@ def _generate_profiles_table(
 
     profiles = {}
     descriptions = {}
-    for image_name in dataset.input.psf_beads_images.keys():
-        for ch in range(dataset.input.psf_beads_images[image_name].data.shape[-1]):
+    for image in dataset.input.psf_beads_images:
+        for ch in range(image.array_data.shape[-1]):
             for i, (raw, fitted) in enumerate(
-                zip(raw_profiles[image_name][ch], fitted_profiles[image_name][ch])
+                zip(raw_profiles[image.name][ch], fitted_profiles[image.name][ch])
             ):
-                profiles[f"{image_name}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
+                profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
                 descriptions[
-                    f"{image_name}_ch_{ch:02d}_bead_{i:02d}_raw"
-                ] = f"Bead {i:02d} in channel {ch} of image {image_name} raw profile in {axis_names[axis]} axis"
+                    f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"
+                ] = f"Bead {i:02d} in channel {ch} of image {image.name} raw profile in {axis_names[axis]} axis"
 
-                profiles[f"{image_name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[axis].tolist()
+                profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[axis].tolist()
                 descriptions[
-                    f"{image_name}_ch_{ch:02d}_bead_{i:02d}_fitted"
-                ] = f"Bead {i:02d} in channel {ch} of image {image_name} fitted profile in {axis_names[axis]} axis"
+                    f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"
+                ] = f"Bead {i:02d} in channel {ch} of image {image.name} fitted profile in {axis_names[axis]} axis"
 
     return dict_to_table_inlined(
         name=f"bead_profiles_{axis_names[axis]}",
@@ -608,48 +611,48 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         logger.error(f"Channels {saturated_channels} are saturated")
         raise SaturationError(f"Channels {saturated_channels} are saturated")
 
-    # Main image loop
-    for image_name, image in images.items():
-        logger.info(f"Processing image {image_name}...")
+    # Second loop main image analysis
+    for image in dataset.input.psf_beads_images:
+        logger.info(f"Processing image {image.name}...")
         image_output = _process_image(
-            image=image,
+            image=image.array_data,
             sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
             fitting_rss_threshold=fitting_rss_threshold,
-            voxel_size_micron=voxel_sizes_micron[image_name],
+            voxel_size_micron=voxel_sizes_micron[image.name],
         )
         logger.info(
-            f"Image {image_name} processed:"
+            f"Image {image.name} processed:"
             f"    {len(image_output['bead_positions'])} beads found"
             f"    {len(image_output['discarded_positions_self_proximity'])} beads discarded for being to close to each other"
             f"    {len(image_output['discarded_positions_lateral_edge'])} beads discarded for being to close to the edge"
             f"    {len(image_output['bead_considered_axial_edge'])} beads considered as to close to the top or bottom of the image"
         )
 
-        bead_crops[image_name] = image_output["bead_images"]
-        bead_positions[image_name] = image_output["bead_positions"]
-        bead_profiles[image_name] = image_output["bead_profiles"]
-        bead_fitted_profiles[image_name] = image_output["bead_fitted_profiles"]
-        bead_rsss[image_name] = image_output["bead_rsss"]
-        bead_fwhms[image_name] = image_output["bead_fwhms"]
-        bead_fwhms_micron[image_name] = image_output["bead_fwhms_micron"]
-        discarded_positions_self_proximity[image_name] = image_output[
+        bead_crops[image.name] = image_output["bead_images"]
+        bead_positions[image.name] = image_output["bead_positions"]
+        bead_profiles[image.name] = image_output["bead_profiles"]
+        bead_fitted_profiles[image.name] = image_output["bead_fitted_profiles"]
+        bead_rsss[image.name] = image_output["bead_rsss"]
+        bead_fwhms[image.name] = image_output["bead_fwhms"]
+        bead_fwhms_micron[image.name] = image_output["bead_fwhms_micron"]
+        discarded_positions_self_proximity[image.name] = image_output[
             "discarded_positions_self_proximity"
         ]
-        discarded_positions_lateral_edge[image_name] = image_output[
+        discarded_positions_lateral_edge[image.name] = image_output[
             "discarded_positions_lateral_edge"
         ]
-        bead_considered_axial_edge[image_name] = image_output["bead_considered_axial_edge"]
-        bead_considered_bad_z_fit[image_name] = [
+        bead_considered_axial_edge[image.name] = image_output["bead_considered_axial_edge"]
+        bead_considered_bad_z_fit[image.name] = [
             [b_rss[0] > fitting_rss_threshold for b_rss in ch_rss]
             for ch_rss in image_output["bead_rsss"]
         ]
-        bead_considered_bad_y_fit[image_name] = [
+        bead_considered_bad_y_fit[image.name] = [
             [b_rss[1] > fitting_rss_threshold for b_rss in ch_rss]
             for ch_rss in image_output["bead_rsss"]
         ]
-        bead_considered_bad_x_fit[image_name] = [
+        bead_considered_bad_x_fit[image.name] = [
             [b_rss[2] > fitting_rss_threshold for b_rss in ch_rss]
             for ch_rss in image_output["bead_rsss"]
         ]
@@ -694,72 +697,73 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         "considered_axial_edge": [],
     }
 
-    for input_image in dataset.input.psf_beads_images:
+    # Third loop to populate bead properties
+    for image in dataset.input.psf_beads_images:
         # Image linked information
-        for ch in range(input_image.array_data.shape[-1]):
+        for ch in range(image.array_data.shape[-1]):
             # Channel linked information
-            for i, bead in enumerate(bead_crops[input_image.name][ch]):
+            for i, bead in enumerate(bead_crops[image.name][ch]):
                 output_bead_crops[
-                    f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}"
+                    f"{image.name}_ch_{ch:02d}_bead_{i:02d}"
                 ] = numpy_to_mm_image(
                     array=np.expand_dims(bead, axis=(0, 4)),
-                    name=f"{input_image.name}_ch_{ch:02d}_bead_{i:02d}",
-                    description=f"Bead crop for bead nr {i}, on channel {ch}, image {input_image.name}",
-                    source_images=input_image,
+                    name=f"{image.name}_ch_{ch:02d}_bead_{i:02d}",
+                    description=f"Bead crop for bead nr {i}, on channel {ch}, image {image.name}",
+                    source_images=image,
                 )
 
                 # Append data to beads table
-                bead_properties["image_name"].append(input_image.name)
+                bead_properties["image_name"].append(image.name)
                 bead_properties["channel_nr"].append(ch)
                 bead_properties["bead_nr"].append(i)
                 bead_properties["intensity_max"].append(bead.max())
                 bead_properties["min_intensity_min"].append(bead.min())
                 bead_properties["intensity_std"].append(bead.std())
                 bead_properties["intensity_robust_z_score"].append(
-                    bead_robust_z_scores[input_image.name][ch][i]
+                    bead_robust_z_scores[image.name][ch][i]
                 )
                 bead_properties["considered_intensity_outlier"].append(
-                    bead_considered_intensity_outlier[input_image.name][ch][i]
+                    bead_considered_intensity_outlier[image.name][ch][i]
                 )
-                bead_properties["z_centroid"].append(bead_positions[input_image.name][ch][i][0])
-                bead_properties["y_centroid"].append(bead_positions[input_image.name][ch][i][1])
-                bead_properties["x_centroid"].append(bead_positions[input_image.name][ch][i][2])
-                bead_properties["z_fit_rss"].append(bead_rsss[input_image.name][ch][i][0])
-                bead_properties["y_fit_rss"].append(bead_rsss[input_image.name][ch][i][1])
-                bead_properties["x_fit_rss"].append(bead_rsss[input_image.name][ch][i][2])
+                bead_properties["z_centroid"].append(bead_positions[image.name][ch][i][0])
+                bead_properties["y_centroid"].append(bead_positions[image.name][ch][i][1])
+                bead_properties["x_centroid"].append(bead_positions[image.name][ch][i][2])
+                bead_properties["z_fit_rss"].append(bead_rsss[image.name][ch][i][0])
+                bead_properties["y_fit_rss"].append(bead_rsss[image.name][ch][i][1])
+                bead_properties["x_fit_rss"].append(bead_rsss[image.name][ch][i][2])
                 bead_properties["considered_bad_z_fit"].append(
-                    bead_rsss[input_image.name][ch][i][0] > fitting_rss_threshold
+                    bead_rsss[image.name][ch][i][0] > fitting_rss_threshold
                 )
                 bead_properties["considered_bad_y_fit"].append(
-                    bead_rsss[input_image.name][ch][i][1] > fitting_rss_threshold
+                    bead_rsss[image.name][ch][i][1] > fitting_rss_threshold
                 )
                 bead_properties["considered_bad_x_fit"].append(
-                    bead_rsss[input_image.name][ch][i][2] > fitting_rss_threshold
+                    bead_rsss[image.name][ch][i][2] > fitting_rss_threshold
                 )
-                bead_properties["z_fwhm"].append(bead_fwhms[input_image.name][ch][i][0])
-                bead_properties["y_fwhm"].append(bead_fwhms[input_image.name][ch][i][1])
-                bead_properties["x_fwhm"].append(bead_fwhms[input_image.name][ch][i][2])
+                bead_properties["z_fwhm"].append(bead_fwhms[image.name][ch][i][0])
+                bead_properties["y_fwhm"].append(bead_fwhms[image.name][ch][i][1])
+                bead_properties["x_fwhm"].append(bead_fwhms[image.name][ch][i][2])
                 bead_properties["fwhm_lateral_asymmetry_ratio"].append(
                     max(
-                        bead_fwhms[input_image.name][ch][i][1],
-                        bead_fwhms[input_image.name][ch][i][2],
+                        bead_fwhms[image.name][ch][i][1],
+                        bead_fwhms[image.name][ch][i][2],
                     )
                     / min(
-                        bead_fwhms[input_image.name][ch][i][1],
-                        bead_fwhms[input_image.name][ch][i][2],
+                        bead_fwhms[image.name][ch][i][1],
+                        bead_fwhms[image.name][ch][i][2],
                     )
                 )
                 bead_properties["z_fwhm_micron"].append(
-                    bead_fwhms_micron[input_image.name][ch][i][0]
+                    bead_fwhms_micron[image.name][ch][i][0]
                 )
                 bead_properties["y_fwhm_micron"].append(
-                    bead_fwhms_micron[input_image.name][ch][i][1]
+                    bead_fwhms_micron[image.name][ch][i][1]
                 )
                 bead_properties["x_fwhm_micron"].append(
-                    bead_fwhms_micron[input_image.name][ch][i][2]
+                    bead_fwhms_micron[image.name][ch][i][2]
                 )
                 bead_properties["considered_axial_edge"].append(
-                    bead_considered_axial_edge[input_image.name][ch][i]
+                    bead_considered_axial_edge[image.name][ch][i]
                 )
 
     analyzed_bead_centers = _generate_center_roi(
