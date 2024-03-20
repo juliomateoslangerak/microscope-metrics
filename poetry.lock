@@ -1158,13 +1158,13 @@ socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "hypothesis"
-version = "6.99.8"
+version = "6.99.9"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "hypothesis-6.99.8-py3-none-any.whl", hash = "sha256:8b5175a906c0a11967c3a04eeb17c42b4b395cacd02a246ce926613189a14279"},
-    {file = "hypothesis-6.99.8.tar.gz", hash = "sha256:1274abcc12137645a1bcb8453063060cf38f949a90b31d08bea45e1818e05b8b"},
+    {file = "hypothesis-6.99.9-py3-none-any.whl", hash = "sha256:1b19bca587d8ead95875d30a38f38211d5a8de72f4df86953cc6fc060aff740e"},
+    {file = "hypothesis-6.99.9.tar.gz", hash = "sha256:b4a0f683a3a3a682b898758313e61b2b463775d5bb0875ef48e4920cec2d4cec"},
 ]
 
 [package.dependencies]
@@ -1685,13 +1685,13 @@ test = ["ipykernel", "pre-commit", "pytest (<8)", "pytest-cov", "pytest-timeout"
 
 [[package]]
 name = "jupyter-events"
-version = "0.9.1"
+version = "0.10.0"
 description = "Jupyter Event System library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jupyter_events-0.9.1-py3-none-any.whl", hash = "sha256:e51f43d2c25c2ddf02d7f7a5045f71fc1d5cb5ad04ef6db20da961c077654b9b"},
-    {file = "jupyter_events-0.9.1.tar.gz", hash = "sha256:a52e86f59eb317ee71ff2d7500c94b963b8a24f0b7a1517e2e653e24258e15c7"},
+    {file = "jupyter_events-0.10.0-py3-none-any.whl", hash = "sha256:4b72130875e59d57716d327ea70d3ebc3af1944d3717e5a498b8a06c6c159960"},
+    {file = "jupyter_events-0.10.0.tar.gz", hash = "sha256:670b8229d3cc882ec782144ed22e0d29e1c2d639263f92ca8383e66682845e22"},
 ]
 
 [package.dependencies]
@@ -2009,13 +2009,13 @@ test = ["pytest (>=7.4)", "pytest-cov (>=4.1)"]
 
 [[package]]
 name = "linkml-runtime"
-version = "1.7.2"
+version = "1.7.3"
 description = "Runtime environment for LinkML, the Linked open data modeling language"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "linkml_runtime-1.7.2-py3-none-any.whl", hash = "sha256:45087530e6c89ec426be0e07a2b936f1b8f72f95caa9e8be347aeb934bf96e57"},
-    {file = "linkml_runtime-1.7.2.tar.gz", hash = "sha256:216f5b6511ae1b11a5ba1a69f19fb729c06bc5bdbf7232ffd3149b2e03e1604c"},
+    {file = "linkml_runtime-1.7.3-py3-none-any.whl", hash = "sha256:4bcec8bbca5924000a0d46ffbc40e36802559ea60969a2a6d17960476c366f20"},
+    {file = "linkml_runtime-1.7.3.tar.gz", hash = "sha256:613ba2c3b01871800142ee74a0115af8ef810a01e3ed153754ccb709ad5ffe41"},
 ]
 
 [package.dependencies]
@@ -2183,7 +2183,7 @@ docs = []
 type = "git"
 url = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"
 reference = "dev"
-resolved_reference = "e4103faa21bea739ffc8c1c12291b0376640a5ac"
+resolved_reference = "5fb44f3ec0182474c01504e9ad48d2796e39c25c"
 
 [[package]]
 name = "mistune"
@@ -2789,13 +2789,13 @@ files = [
 
 [[package]]
 name = "poetry-plugin-export"
-version = "1.7.0"
+version = "1.7.1"
 description = "Poetry plugin to export the dependencies to various formats"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "poetry_plugin_export-1.7.0-py3-none-any.whl", hash = "sha256:2283b28e0209f9f9598c6fe44f30586ec91329ea1558f908708261e0516bf427"},
-    {file = "poetry_plugin_export-1.7.0.tar.gz", hash = "sha256:e73f207fc0e08c2f59ead82cbe39ef259b351a318d5c0bddcec13990bcd324a7"},
+    {file = "poetry_plugin_export-1.7.1-py3-none-any.whl", hash = "sha256:b2258e53ae0d369a73806f957ed0e726eb95c571a0ce8b1f273da686528cc1da"},
+    {file = "poetry_plugin_export-1.7.1.tar.gz", hash = "sha256:cf62cfb6218a904290ba6db3bc1a24aa076d10f81c48c6e48b2ded430131e22e"},
 ]
 
 [package.dependencies]
