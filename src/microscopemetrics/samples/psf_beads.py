@@ -569,7 +569,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_considered_bad_y_fit = {}
     bead_considered_bad_x_fit = {}
 
-    # Prepare data
+    # First loop to prepare data
     for image in dataset.input.psf_beads_images:
         images[image.name] = image.array_data[0, ...]
 
