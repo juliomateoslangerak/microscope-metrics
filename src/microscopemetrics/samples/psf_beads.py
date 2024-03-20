@@ -498,9 +498,6 @@ def _generate_profiles_table(
 ):
     axis_names = ["z", "y", "x"]
     if len(raw_profiles) != len(fitted_profiles):
-        logger.error(
-            f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of images. Raising error."
-        )
         raise ValueError(
             f"Raw and fitted profiles for axis {axis_names[axis]} must have the same image length"
         )
@@ -509,9 +506,6 @@ def _generate_profiles_table(
         len(raw_profiles[image_name]) != len(fitted_profiles[image_name])
         for image_name in raw_profiles
     ):
-        logger.error(
-            f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of profiles. Raising error."
-        )
         raise ValueError(
             f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of profiles."
         )
