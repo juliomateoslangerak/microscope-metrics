@@ -548,7 +548,6 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         roi_centers_max_intensity=roi_centers_max_intensity,
     )
 
-    dataset.output = output
     dataset.processed = True
 
     return True
