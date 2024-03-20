@@ -49,8 +49,8 @@ def test_field_illumination_analysis_centers_geometric(dataset):
     )
     expected_centers = list(
         zip(
-            expected_output["centers_generated_y_relative"],
-            expected_output["centers_generated_x_relative"],
+            [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
+            [e_c for im in expected_output["centers_generated_x_relative"] for e_c in im],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -87,8 +87,8 @@ def test_field_illumination_analysis_centers_of_mass(dataset):
     )
     expected_centers = list(
         zip(
-            expected_output["centers_generated_y_relative"],
-            expected_output["centers_generated_x_relative"],
+            [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
+            [e_c for im in expected_output["centers_generated_x_relative"] for e_c in im],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -118,8 +118,8 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
     )
     expected_centers = list(
         zip(
-            expected_output["centers_generated_y_relative"],
-            expected_output["centers_generated_x_relative"],
+            [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
+            [e_c for im in expected_output["centers_generated_x_relative"] for e_c in im],
         )
     )
     note(f"Expected output: {expected_output}")
@@ -149,8 +149,8 @@ def test_field_illumination_analysis_centers_fitted(dataset):
     )
     expected_centers = list(
         zip(
-            expected_output["centers_generated_y_relative"],
-            expected_output["centers_generated_x_relative"],
+            [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
+            [e_c for im in expected_output["centers_generated_x_relative"] for e_c in im],
         )
     )
     note(f"Expected output: {expected_output}")
