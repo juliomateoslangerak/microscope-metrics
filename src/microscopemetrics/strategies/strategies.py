@@ -26,6 +26,85 @@ from microscopemetrics.samples import (
 
 
 # Strategies for Field Illumination
+def _gen_field_illumination_channel(
+    y_shape: int,
+    x_shape: int,
+    y_center_rel_offset: float,
+    x_center_rel_offset: float,
+    dispersion: float,
+    target_min_intensity: float,
+    target_max_intensity: float,
+    do_noise: bool,
+    signal: int,
+):
+    # Generate the channel as float64
+    channel = np.zeros(shape=(y_shape, x_shape), dtype="float64")
+    channel[
+        int(channel.shape[0] * (0.5 + y_center_rel_offset / 2)),
+        int(channel.shape[1] * (0.5 + x_center_rel_offset / 2)),
+    ] = 1.0
+
+    channel = skimage_gaussian(
+        channel,
+        sigma=max(channel.shape) * dispersion,
+        mode="constant",
+        cval=0.0,
+        preserve_range=True,
+    )
+
+    # Normalize channel intensity to be between target_min_intensity and target_max_intensity
+    # Saturation point is at 1.0 when we rescale later to the target dtype
+    channel = skimage_rescale_intensity(
+        channel, out_range=(target_min_intensity, target_max_intensity)
+    )
+
+    if do_noise:
+        # The noise on a 1.0 intensity image is too strong, so we rescale the image to
+        # the defined signal and then rescale it back to the target intensity
+        channel = channel * signal
+        channel = skimage_random_noise(channel, mode="poisson", clip=False)
+        channel = channel / signal
+
+    return channel
+
+
+def _gen_field_illumination_image(
+    y_shape: int,
+    x_shape: int,
+    c_shape: list[int],
+    y_center_rel_offset: list[float],
+    x_center_rel_offset: list[float],
+    dispersion: list[float],
+    target_min_intensity: list[float],
+    target_max_intensity: list[float],
+    do_noise: bool,
+    signal: list[int],
+    dtype: np.dtype,
+):
+    # Generate the image as float64
+    image = np.zeros(shape=(y_shape, x_shape, c_shape), dtype="float64")
+
+    for ch in range(c_shape):
+        image[:, :, ch] = _gen_field_illumination_channel(
+            y_shape=y_shape,
+            x_shape=x_shape,
+            y_center_rel_offset=y_center_rel_offset[ch],
+            x_center_rel_offset=x_center_rel_offset[ch],
+            dispersion=dispersion[ch],
+            target_min_intensity=target_min_intensity[ch],
+            target_max_intensity=target_max_intensity[ch],
+            do_noise=do_noise,
+            signal=signal[ch],
+        )
+
+    # Rescale to the target dtype
+    image = np.clip(image, None, 1)
+    image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
+    image = np.expand_dims(image, (0, 1))
+
+    return image
+
+
 @st.composite
 def st_field_illumination_test_data(
     draw,
@@ -62,9 +141,7 @@ def st_field_illumination_test_data(
 
     for image_nr in range(draw(nr_images)):
         # We want a different number of channels for each image
-        c_shape = draw(c_image_shape)
-        # Generate the image as float64
-        image = np.zeros(shape=(y_image_shape, x_image_shape, c_shape), dtype="float64")
+        _c_image_shape = draw(c_image_shape)
 
         image_target_min_intensities = []
         image_target_max_intensities = []
@@ -73,16 +150,14 @@ def st_field_illumination_test_data(
         image_dispersions = []
         image_signals = []
 
-        for ch in range(c_shape):
+        for ch in range(_c_image_shape):
             ch_target_min_intensity = draw(target_min_intensity)
             ch_target_max_intensity = draw(target_max_intensity)
-
             # if the dtype is uint8, the difference between the min and max intensity should be less than 0.5
             # otherwise, with only a few intensity levels, the detection will not be accurate. It is anyway a very
             # unlikely scenario in a real world situation
             if dtype == np.uint8:
                 assume((ch_target_max_intensity - ch_target_min_intensity) > 0.7)
-
             image_target_min_intensities.append(ch_target_min_intensity)
             image_target_max_intensities.append(ch_target_max_intensity)
 
@@ -94,42 +169,22 @@ def st_field_illumination_test_data(
             ch_dispersion = draw(dispersion)
             image_dispersions.append(ch_dispersion)
 
-            # Generate the channel as float64
-            channel = np.zeros(shape=(y_image_shape, x_image_shape), dtype="float64")
-            channel[
-                int(channel.shape[0] * (0.5 + ch_y_center_rel_offset / 2)),
-                int(channel.shape[1] * (0.5 + ch_x_center_rel_offset / 2)),
-            ] = 1.0
+            ch_signal = draw(signal)
+            image_signals.append(ch_signal)
 
-            channel = skimage_gaussian(
-                channel,
-                sigma=max(channel.shape) * ch_dispersion,
-                mode="constant",
-                cval=0.0,
-                preserve_range=True,
-            )
-
-            # Normalize channel intensity to be between ch_target_min_intensity and ch_target_max_intensity
-            # Saturation point is at 1.0 when we rescale later to the target dtype
-            channel = skimage_rescale_intensity(
-                channel, out_range=(ch_target_min_intensity, ch_target_max_intensity)
-            )
-
-            if do_noise:
-                # The noise on a 1.0 intensity image is too strong, so we rescale the image to
-                # the defined signal and then rescale it back to the target intensity
-                ch_signal = draw(signal)
-                channel = channel * ch_signal
-                channel = skimage_random_noise(channel, mode="poisson", clip=False)
-                channel = channel / ch_signal
-                image_signals.append(ch_signal)
-
-            image[:, :, ch] = channel
-
-        # Rescale to the target dtype
-        image = np.clip(image, None, 1)
-        image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
-        image = np.expand_dims(image, (0, 1))
+        image = _gen_field_illumination_image(
+            y_shape=y_image_shape,
+            x_shape=x_image_shape,
+            c_shape=_c_image_shape,
+            y_center_rel_offset=centers_generated_y_relative,
+            x_center_rel_offset=centers_generated_x_relative,
+            dispersion=image_dispersions,
+            target_min_intensity=image_target_min_intensities,
+            target_max_intensity=image_target_max_intensities,
+            do_noise=do_noise,
+            signal=image_signals,
+            dtype=dtype,
+        )
 
         output["images"].append(image)
         output["centers_generated_y_relative"].append(centers_generated_y_relative)
