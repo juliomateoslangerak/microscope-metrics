@@ -426,15 +426,12 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for image in dataset.input.field_illumination_image
     ]
 
-    roi_corners = [
-        mm_schema.Roi(
-            name="Corner ROIs",
-            description="ROIs used to compute the corner intensities",
-            linked_objects=get_references(image),
-            rectangles=_corner_shapes(image.array_data, dataset.input.corner_fraction),
-        )
-        for image in dataset.input.field_illumination_image
-    ]
+    roi_corners = mm_schema.Roi(
+        name="Corner ROIs",
+        description="ROIs used to compute the corner intensities",
+        linked_objects=get_references(dataset.input.field_illumination_image),
+        rectangles=_corner_shapes(image.array_data, dataset.input.corner_fraction),
+    )
 
     roi_centers_of_mass = [
         mm_schema.Roi(
