@@ -132,7 +132,7 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(len(im["clustering_bead_positions"]) for im in expected_output.values())
+    expected = sum(len(img_cp) for img_cp in expected_output["clustering_bead_positions"])
 
     for measured in psf_beads_dataset.output.key_values.nr_of_beads_considered_intensity_outlier:
         assert measured == expected
