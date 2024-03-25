@@ -334,7 +334,7 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
         image_data = image.array_data[0, 0, :, :, :]
 
         for c in range(image_data.shape[-1]):
-            channel_properties = {"channel_name": image.channel_series.values[c].name}
+            channel_properties = {"channel_name": image.channel_series.channels[c].name}
             channel_properties.update(_channel_max_intensity_properties(image_data[:, :, c], sigma))
             channel_properties.update(
                 _channel_corner_properties(image_data[:, :, c], corner_fraction)
@@ -353,7 +353,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         # As it does not make sense to average file illumination between images from the same channel
         if image.channel_series is not None:
             logger.info("Checking duplicate channel names...")
-            for channel in image.channel_series.values:
+            for channel in image.channel_series.channels:
                 if channel.name in channel_names:
                     logger.error(
                         f"Channel name {channel.name} is not unique. "
@@ -442,10 +442,10 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
                     y=key_values.center_of_mass_y[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     x=key_values.center_of_mass_x[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -467,10 +467,10 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
                     y=key_values.center_geometric_y[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     x=key_values.center_geometric_x[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -492,10 +492,10 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
                     y=key_values.center_fitted_y[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     x=key_values.center_fitted_x[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -517,10 +517,10 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
                     y=key_values.max_intensity_pos_y[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     x=key_values.max_intensity_pos_x[
-                        key_values.channel_name.index(image.channel_series.values[c].name)
+                        key_values.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
