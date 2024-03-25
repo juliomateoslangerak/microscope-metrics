@@ -139,7 +139,7 @@ def st_field_illumination_test_data(
 
     dtype = draw(dtype)
 
-    for image_nr in range(draw(nr_images)):
+    for _ in range(draw(nr_images)):
         # We want a different number of channels for each image
         _c_image_shape = draw(c_image_shape)
 
@@ -150,7 +150,7 @@ def st_field_illumination_test_data(
         image_dispersions = []
         image_signals = []
 
-        for ch in range(_c_image_shape):
+        for _ in range(_c_image_shape):
             ch_target_min_intensity = draw(target_min_intensity)
             ch_target_max_intensity = draw(target_max_intensity)
             # if the dtype is uint8, the difference between the min and max intensity should be less than 0.5
