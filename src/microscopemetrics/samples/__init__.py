@@ -118,7 +118,7 @@ def numpy_to_mm_image(
         shape_y=shape_y,
         shape_x=shape_x,
         shape_c=shape_c,
-        channel_series=mm_schema.ChannelSeries(values=channels),
+        channel_series=mm_schema.ChannelSeries(channels=channels),
     )
 
 
