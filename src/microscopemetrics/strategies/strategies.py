@@ -292,10 +292,10 @@ def _gen_psf_beads_image(
     sigma_z: float,
     sigma_y: float,
     sigma_x: float,
-    target_min_intensity: list[float],
-    target_max_intensity: list[float],
+    target_min_intensity: float,
+    target_max_intensity: float,
     do_noise: bool,
-    signal: list[int],
+    signal: int,
     dtype: np.dtype,
 ):
     # Generate the image as float64
