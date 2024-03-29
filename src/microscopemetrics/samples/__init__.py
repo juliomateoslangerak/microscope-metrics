@@ -1,7 +1,7 @@
 # Main samples module defining the sample superclass
-
 import logging
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Dict, List, Union
 
 import microscopemetrics_schema.datamodel as mm_schema
@@ -59,6 +59,7 @@ def numpy_to_mm_image(
     name: str = None,
     description: str = None,
     source_images: List[mm_schema.Image] = None,
+    acquisition_datetime: str = None,
     channel_names: List[str] = None,
     channel_descriptions: List[str] = None,
     excitation_wavelengths_nm: List[float] = None,
@@ -76,7 +77,15 @@ def numpy_to_mm_image(
         )
 
     if source_images is not None:
-        source_images = get_references(source_images)
+        source_images_refs = get_references(source_images)
+    else:
+        source_images_refs = None
+
+    if acquisition_datetime is None:
+        if len(source_images) == 1:
+            acquisition_datetime = source_images[0].acquisition_datetime
+        else:
+            acquisition_datetime = datetime.now().isoformat()
 
     if channel_names is not None and len(channel_names) != shape_c:
         raise ValueError(
@@ -112,13 +121,14 @@ def numpy_to_mm_image(
     return mm_schema.Image(
         name=name,
         description=description,
-        source_images=source_images,
+        source_images=source_images_refs,
         array_data=array,
         shape_t=shape_t,
         shape_z=shape_z,
         shape_y=shape_y,
         shape_x=shape_x,
         shape_c=shape_c,
+        acquisition_datetime=acquisition_datetime,
         channel_series=mm_schema.ChannelSeries(channels=channels),
     )
 
