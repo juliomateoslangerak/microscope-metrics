@@ -82,7 +82,7 @@ def numpy_to_mm_image(
         source_images_refs = None
 
     if acquisition_datetime is None:
-        if len(source_images) == 1:
+        if source_images is not None and len(source_images) == 1:
             acquisition_datetime = source_images[0].acquisition_datetime
         else:
             acquisition_datetime = datetime.now().isoformat()
