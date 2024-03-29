@@ -41,9 +41,10 @@ def get_references(
     if isinstance(objects, mm_schema.MetricsObject):
         return mm_schema.DataReference(
             data_uri=objects.data_uri,
-            omero_host=objects.omero_host,
-            omero_port=objects.omero_port,
-            omero_object_type=objects.omero_object_type,
+            # HACK: This is a temporary fix to get the first element of the tuple
+            omero_host=objects.omero_host[0],
+            omero_port=objects.omero_port[0],
+            omero_object_type=objects.omero_object_type[0],
             omero_object_id=objects.omero_object_id,
         )
 
