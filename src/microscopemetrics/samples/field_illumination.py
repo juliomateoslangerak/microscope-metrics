@@ -402,7 +402,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             ),
             name=f"{image.name}_intensity_map",
             description=f"Intensity map of {image.name}",
-            source_images=image,
+            source_images=get_references(image),
         )
         for image in dataset.input.field_illumination_image
     ]

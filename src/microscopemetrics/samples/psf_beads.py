@@ -701,7 +701,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                         array=np.expand_dims(bead, axis=(0, 4)),
                         name=f"{image.name}_ch_{ch:02d}_bead_{i:02d}",
                         description=f"Bead crop for bead nr {i}, on channel {ch}, image {image.name}",
-                        source_images=image,
+                        source_images=get_references(image),
                     )
                 )
 
@@ -746,15 +746,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                         bead_fwhms[image.name][ch][i][2],
                     )
                 )
-                bead_properties["z_fwhm_micron"].append(
-                    bead_fwhms_micron[image.name][ch][i][0]
-                )
-                bead_properties["y_fwhm_micron"].append(
-                    bead_fwhms_micron[image.name][ch][i][1]
-                )
-                bead_properties["x_fwhm_micron"].append(
-                    bead_fwhms_micron[image.name][ch][i][2]
-                )
+                bead_properties["z_fwhm_micron"].append(bead_fwhms_micron[image.name][ch][i][0])
+                bead_properties["y_fwhm_micron"].append(bead_fwhms_micron[image.name][ch][i][1])
+                bead_properties["x_fwhm_micron"].append(bead_fwhms_micron[image.name][ch][i][2])
                 bead_properties["considered_axial_edge"].append(
                     bead_considered_axial_edge[image.name][ch][i]
                 )
