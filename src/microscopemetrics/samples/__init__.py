@@ -34,24 +34,24 @@ logger = logging.getLogger(__name__)
 # TODO: work on the loggers
 
 
-def get_references(
-    objects: Union[mm_schema.MetricsObject, list[mm_schema.MetricsObject]]
-) -> List[mm_schema.DataReference]:
-    """Get the references of a metrics object or a list of metrics objects"""
-    if isinstance(objects, mm_schema.MetricsObject):
-        return mm_schema.DataReference(
-            data_uri=objects.data_uri,
-            # HACK: This is a temporary fix to get the first element of the tuple
-            omero_host=objects.omero_host[0],
-            omero_port=objects.omero_port[0],
-            omero_object_type=objects.omero_object_type[0],
-            omero_object_id=objects.omero_object_id,
-        )
-
-    elif isinstance(objects, list):
-        return [get_references(obj) for obj in objects]
-    else:
-        raise ValueError("Input should be a metrics object or a list of metrics objects")
+# def get_references(
+#     objects: Union[mm_schema.MetricsObject, list[mm_schema.MetricsObject]]
+# ) -> List[mm_schema.DataReference]:
+#     """Get the references of a metrics object or a list of metrics objects"""
+#     if isinstance(objects, mm_schema.MetricsObject):
+#         return mm_schema.DataReference(
+#             data_uri=objects.data_uri,
+#             # HACK: This is a temporary fix to get the first element of the tuple
+#             omero_host=objects.omero_host[0],
+#             omero_port=objects.omero_port[0],
+#             omero_object_type=objects.omero_object_type[0],
+#             omero_object_id=objects.omero_object_id,
+#         )
+#
+#     elif isinstance(objects, list):
+#         return [get_references(obj) for obj in objects]
+#     else:
+#         raise ValueError("Input should be a metrics object or a list of metrics objects")
 
 
 def numpy_to_mm_image(
@@ -77,7 +77,7 @@ def numpy_to_mm_image(
         )
 
     if source_images is not None:
-        source_images_refs = get_references(source_images)
+        source_images_refs = [i.data_reference for i in source_images]
     else:
         source_images_refs = None
 
