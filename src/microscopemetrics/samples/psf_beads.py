@@ -11,7 +11,6 @@ from skimage.filters import gaussian
 from microscopemetrics import FittingError, SaturationError
 from microscopemetrics.samples import (
     dict_to_table_inlined,
-    get_references,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -485,7 +484,7 @@ def _generate_center_roi(
             mm_schema.Roi(
                 name=f"{root_name}_{image.name}",
                 description=f"{root_name} in image {image.name}",
-                linked_objects=get_references(image),
+                linked_references=image.data_reference,
                 points=points,
             )
         )
@@ -746,15 +745,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                         bead_fwhms[image.name][ch][i][2],
                     )
                 )
-                bead_properties["z_fwhm_micron"].append(
-                    bead_fwhms_micron[image.name][ch][i][0]
-                )
-                bead_properties["y_fwhm_micron"].append(
-                    bead_fwhms_micron[image.name][ch][i][1]
-                )
-                bead_properties["x_fwhm_micron"].append(
-                    bead_fwhms_micron[image.name][ch][i][2]
-                )
+                bead_properties["z_fwhm_micron"].append(bead_fwhms_micron[image.name][ch][i][0])
+                bead_properties["y_fwhm_micron"].append(bead_fwhms_micron[image.name][ch][i][1])
+                bead_properties["x_fwhm_micron"].append(bead_fwhms_micron[image.name][ch][i][2])
                 bead_properties["considered_axial_edge"].append(
                     bead_considered_axial_edge[image.name][ch][i]
                 )

@@ -12,7 +12,6 @@ from skimage.measure import regionprops
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import (
     dict_to_table_inlined,
-    get_references,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -420,7 +419,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         mm_schema.Roi(
             name="Profile ROIs",
             description="ROIs used to compute the intensity profiles",
-            linked_objects=get_references(image),
+            linked_references=image.data_reference,
             lines=_line_profile_shapes(image.array_data),
         )
         for image in dataset.input.field_illumination_image
@@ -429,7 +428,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     roi_corners = mm_schema.Roi(
         name="Corner ROIs",
         description="ROIs used to compute the corner intensities",
-        linked_objects=get_references(dataset.input.field_illumination_image),
+        linked_references=[i.data_reference for i in dataset.input.field_illumination_image],
         rectangles=_corner_shapes(image.array_data, dataset.input.corner_fraction),
     )
 
@@ -437,7 +436,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         mm_schema.Roi(
             name="Centers of mass ROIs",
             description="Point ROI marking the centroids of the max intensity regions",
-            linked_objects=get_references(image),
+            linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
@@ -462,7 +461,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         mm_schema.Roi(
             name="Geometric centers ROIs",
             description="Point ROI marking the centroids of the max intensity regions",
-            linked_objects=get_references(image),
+            linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
@@ -487,7 +486,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         mm_schema.Roi(
             name="Fitted centers ROIs",
             description="Point ROI marking the centroids of the max intensity regions",
-            linked_objects=get_references(image),
+            linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
@@ -512,7 +511,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         mm_schema.Roi(
             name="Max intensity ROIs",
             description="Point ROI marking the centroids of the max intensity regions",
-            linked_objects=get_references(image),
+            linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
