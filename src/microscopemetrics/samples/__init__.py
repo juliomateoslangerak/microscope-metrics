@@ -76,8 +76,10 @@ def numpy_to_mm_image(
             f"Array of dimension {array.ndim} is not supported by this function. Image has to have either 5 or 2 dimensions"
         )
 
-    if source_images is not None:
-        source_images_refs = [i.data_reference for i in source_images]
+    if source_images:
+        source_images_refs = [
+            i.data_reference for i in source_images if i.data_reference is not None
+        ]
     else:
         source_images_refs = None
 

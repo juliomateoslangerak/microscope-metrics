@@ -700,7 +700,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                         array=np.expand_dims(bead, axis=(0, 4)),
                         name=f"{image.name}_ch_{ch:02d}_bead_{i:02d}",
                         description=f"Bead crop for bead nr {i}, on channel {ch}, image {image.name}",
-                        source_images=image,
+                        source_images=[image],
                     )
                 )
 
