@@ -33,10 +33,9 @@ def _channel_intensity_map(channel: np.ndarray, map_size: int):
     intensity_map : np.ndarray
         2d np.ndarray representing the intensity map of the chosen channel.
     """
-    channel = rescale_intensity(channel, in_range=(0, channel.max()), out_range=(0, 1))
+    channel = rescale_intensity(channel, in_range=(0, channel.max()))
     zoom_factor = map_size / max(channel.shape)
-    intensity_map = scipy.ndimage.zoom(channel, zoom_factor)
-    return intensity_map.astype(np.float32)
+    return scipy.ndimage.zoom(channel, zoom_factor)
 
 
 def _image_intensity_map(image: np.ndarray, map_size: int):
