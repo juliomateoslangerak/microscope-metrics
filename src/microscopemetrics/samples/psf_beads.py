@@ -233,12 +233,13 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
 
     if all(sigma):
         logger.debug(f"Applying Gaussian filter with sigma {sigma}")
-        channel = gaussian(image=channel, sigma=sigma, preserve_range=True)
+        channel_gauss = gaussian(image=channel, sigma=sigma)
     else:
         logger.debug("No Gaussian filter applied")
+        channel_gauss = channel
 
     # Find bead centers
-    positions_all = peak_local_max(image=channel, threshold_rel=0.2)
+    positions_all = peak_local_max(image=channel_gauss, threshold_rel=0.2)
 
     # Find beads min distance filtered
     # We need to remove the beads that are close to each other before the
@@ -246,10 +247,10 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
     # are close to each other but far from the edge. If an edge bead is
     # removed, the other bead that was close to it will be kept.
     positions_proximity_filtered = peak_local_max(
-        image=channel, threshold_rel=0.2, min_distance=int(min_distance)
+        image=channel_gauss, threshold_rel=0.2, min_distance=int(min_distance)
     )
     positions_proximity_edge_filtered = peak_local_max(
-        image=channel,
+        image=channel_gauss,
         threshold_rel=0.2,
         min_distance=int(min_distance),
         exclude_border=(1, int(min_distance // 2), int(min_distance // 2)),
