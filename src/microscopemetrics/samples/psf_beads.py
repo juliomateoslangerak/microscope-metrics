@@ -215,7 +215,7 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
         x_fwhm_micron = None
 
     considered_axial_edge = (
-        z_center_pos - z_profile[0] < z_fwhm * 4 or z_profile[-1] - z_center_pos < z_fwhm * 4
+        z_center_pos < z_fwhm * 4 or z_profile.shape[0] - z_center_pos < z_fwhm * 4
     )
 
     return (
