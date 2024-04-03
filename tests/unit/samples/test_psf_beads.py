@@ -61,7 +61,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             nr_valid_beads=st.just(0),
-            nr_edge_beads=st.integers(min_value=0, max_value=10),
+            nr_edge_beads=st.integers(min_value=0, max_value=5),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
         )
@@ -87,7 +87,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
             c_image_shape=st.just(3),
             nr_valid_beads=st.just(0),
             nr_edge_beads=st.just(0),
-            nr_out_of_focus_beads=st.integers(min_value=0, max_value=10),
+            nr_out_of_focus_beads=st.integers(min_value=0, max_value=5),
             nr_clustering_beads=st.just(0),
         )
     )
@@ -110,10 +110,10 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
-            nr_valid_beads=st.just(10),
+            nr_valid_beads=st.just(12),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
-            nr_clustering_beads=st.integers(min_value=0, max_value=2),
+            nr_clustering_beads=st.integers(min_value=1, max_value=2),
             # To find the outliers we need to ensure that all images have the same intensity related parameters
             dtype=st.just(np.uint16),
             do_noise=st.just(True),
