@@ -6,6 +6,7 @@ from typing import Dict, List, Union
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
+import pandas as pd
 
 # We are defining some global dictionaries to register the different analysis types
 IMAGE_ANALYSIS_REGISTRY = {}
@@ -201,11 +202,32 @@ def numpy_to_mm_image(
 #         )
 
 
-def dict_to_table_inlined(
-    dictionary: Dict[str, list],
+def _create_table(
+    data: Union[Dict[str, list], pd.DataFrame],
+    name: str,
+    description: str = None,
+    column_descriptions: dict[str, str] = None,
+) -> mm_schema.Table:
+    if column_descriptions is not None:
+        column_series = [
+            mm_schema.Column(name=n, description=d) for n, d in column_descriptions.items()
+        ]
+    else:
+        column_series = [mm_schema.Column(name=n) for n in data.columns]
+
+    return mm_schema.Table(
+        name=name,
+        description=description,
+        column_series=column_series,
+        table_data=data,
+    )
+
+
+def dict_to_table(
+    dictionary: dict[str, list],
     name: str,
     table_description: str = None,
-    column_description: Dict[str, str] = None,
+    column_description: dict[str, str] = None,
 ) -> mm_schema.Table:
     """Converts a dictionary to a microscope-metrics inlined table"""
     if not dictionary:
@@ -223,33 +245,38 @@ def dict_to_table_inlined(
 
     if column_description is not None:
         try:
-            output_table = mm_schema.Table(
+            output_table = _create_table(
                 name=name,
                 description=table_description,
-                column_series=mm_schema.ColumnSeries(
-                    columns=[
-                        mm_schema.Column(name=n, description=d)
-                        for n, d in zip(dictionary, column_description)
-                    ],
-                ),
-                table_data=dictionary,
+                column_descriptions=[
+                    mm_schema.Column(name=n, description=d)
+                    for n, d in zip(dictionary, column_description)
+                ],
+                data=dictionary,
             )
         except KeyError as e:
             logger.error(
                 f"Table {name} could not be created. Verify that all columns have a description"
             )
-            raise e
+            return None
     else:
-        output_table = mm_schema.Table(
+        output_table = _create_table(
             name=name,
             description=table_description,
-            column_series=mm_schema.ColumnSeries(
-                columns=[mm_schema.Column(name=n) for n in dictionary]
-            ),
-            table_data=dictionary,
+            column_descriptions=[mm_schema.Column(name=n) for n in dictionary],
+            data=dictionary,
         )
 
     return output_table
+
+
+def df_to_table(
+    dataframe: pd.DataFrame,
+    name: str,
+    table_description: str = None,
+    column_description: Dict[str, str] = None,
+) -> mm_schema.Table:
+    pass
 
 
 def validate_requirements() -> bool:

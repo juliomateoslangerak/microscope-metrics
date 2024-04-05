@@ -10,7 +10,7 @@ from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
 from microscopemetrics.samples import (
-    dict_to_table_inlined,
+    dict_to_table,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -534,7 +534,7 @@ def _generate_profiles_table(
                     f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"
                 ] = f"Bead {i:02d} in channel {ch} of image {image.name} fitted profile in {axis_names[axis]} axis"
 
-    return dict_to_table_inlined(
+    return dict_to_table(
         name=f"bead_profiles_{axis_names[axis]}",
         dictionary=profiles,
         table_description=f"Bead profiles in {axis_names[axis]} axis",
@@ -821,7 +821,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             discarded_positions_lateral_edge=discarded_positions_lateral_edge,
         )
     )
-    bead_properties = dict_to_table_inlined(bead_properties, "bead_properties")
+    bead_properties = dict_to_table(bead_properties, "bead_properties")
     bead_z_profiles = _generate_profiles_table(
         dataset=dataset,
         axis=0,

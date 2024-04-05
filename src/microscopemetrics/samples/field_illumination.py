@@ -11,7 +11,7 @@ from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import (
-    dict_to_table_inlined,
+    dict_to_table,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -406,7 +406,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     ]
 
     intensity_profiles = [
-        dict_to_table_inlined(
+        dict_to_table(
             dictionary=_image_line_profile(image.array_data, profile_size=255),
             name=f"{image.name}_intensity_profiles",
             table_description=f"Intensity profiles of {image.name}",
