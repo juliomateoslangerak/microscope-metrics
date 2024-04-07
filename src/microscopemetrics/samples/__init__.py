@@ -203,22 +203,28 @@ def numpy_to_mm_image(
 
 
 def _create_table(
-    data: Union[Dict[str, list], pd.DataFrame],
+    data: Union[dict[str, list], pd.DataFrame],
     name: str,
     description: str = None,
     column_descriptions: dict[str, str] = None,
 ) -> mm_schema.Table:
+    if not data:
+        logger.error(f"Table {name} could not created as there is no data")
+        return None
+
     if column_descriptions is not None:
-        column_series = [
-            mm_schema.Column(name=n, description=d) for n, d in column_descriptions.items()
-        ]
+        columns = [mm_schema.Column(name=n, description=d) for n, d in column_descriptions.items()]
+    elif isinstance(data, dict):
+        columns = [mm_schema.Column(name=n) for n in data.keys()]
+    elif isinstance(data, pd.DataFrame):
+        columns = [mm_schema.Column(name=n) for n in data.columns]
     else:
-        column_series = [mm_schema.Column(name=n) for n in data.columns]
+        raise ValueError("Data should be either a dictionary or a pandas dataframe")
 
     return mm_schema.Table(
         name=name,
         description=description,
-        column_series=column_series,
+        column_series=mm_schema.ColumnSeries(columns=columns),
         table_data=data,
     )
 
@@ -226,14 +232,10 @@ def _create_table(
 def dict_to_table(
     dictionary: dict[str, list],
     name: str,
-    table_description: str = None,
-    column_description: dict[str, str] = None,
+    description: str = None,
+    column_descriptions: dict[str, str] = None,
 ) -> mm_schema.Table:
-    """Converts a dictionary to a microscope-metrics inlined table"""
-    if not dictionary:
-        logger.error(f"Table {name} could not created as there are no columns")
-        raise ValueError(f"Table {name} should have at least one column")
-
+    """Converts a dictionary to a microscope-metrics table"""
     if any(len(dictionary[k]) != len(dictionary[list(dictionary)[0]]) for k in dictionary):
         logger.error(f"Table {name} could not created as the columns have different lengths")
         raise ValueError(
@@ -243,40 +245,27 @@ def dict_to_table(
     if not all(dictionary[k] for k in dictionary):
         logger.warning(f"Table {name} was created empty. All the column values are empty")
 
-    if column_description is not None:
-        try:
-            output_table = _create_table(
-                name=name,
-                description=table_description,
-                column_descriptions=[
-                    mm_schema.Column(name=n, description=d)
-                    for n, d in zip(dictionary, column_description)
-                ],
-                data=dictionary,
-            )
-        except KeyError as e:
-            logger.error(
-                f"Table {name} could not be created. Verify that all columns have a description"
-            )
-            return None
-    else:
-        output_table = _create_table(
-            name=name,
-            description=table_description,
-            column_descriptions=[mm_schema.Column(name=n) for n in dictionary],
-            data=dictionary,
-        )
-
-    return output_table
+    return _create_table(
+        name=name,
+        description=description,
+        column_descriptions=column_descriptions,
+        data=dictionary,
+    )
 
 
 def df_to_table(
     dataframe: pd.DataFrame,
     name: str,
-    table_description: str = None,
-    column_description: Dict[str, str] = None,
+    description: str = None,
+    column_descriptions: Dict[str, str] = None,
 ) -> mm_schema.Table:
-    pass
+    """Converts a df to a microscope-metrics table"""
+    return _create_table(
+        name=name,
+        description=description,
+        column_descriptions=column_descriptions,
+        data=dataframe,
+    )
 
 
 def validate_requirements() -> bool:

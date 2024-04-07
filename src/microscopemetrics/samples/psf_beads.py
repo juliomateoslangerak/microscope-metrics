@@ -537,8 +537,8 @@ def _generate_profiles_table(
     return dict_to_table(
         name=f"bead_profiles_{axis_names[axis]}",
         dictionary=profiles,
-        table_description=f"Bead profiles in {axis_names[axis]} axis",
-        column_description=descriptions,
+        description=f"Bead profiles in {axis_names[axis]} axis",
+        column_descriptions=descriptions,
     )
 
 

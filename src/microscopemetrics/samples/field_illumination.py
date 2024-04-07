@@ -409,7 +409,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         dict_to_table(
             dictionary=_image_line_profile(image.array_data, profile_size=255),
             name=f"{image.name}_intensity_profiles",
-            table_description=f"Intensity profiles of {image.name}",
+            description=f"Intensity profiles of {image.name}",
         )
         for image in dataset.input.field_illumination_image
     ]
