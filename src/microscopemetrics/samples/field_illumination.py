@@ -386,6 +386,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             raise SaturationError(f"Channels {saturated_channels} are saturated")
 
     key_values = mm_schema.FieldIlluminationKeyValues(
+        # TODO: give name and description to the key values
         **_image_properties(
             images=dataset.input.field_illumination_image,
             corner_fraction=dataset.input.corner_fraction,

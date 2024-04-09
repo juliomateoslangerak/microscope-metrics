@@ -815,6 +815,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         positions_filter=bead_considered_bad_x_fit,
     )
     key_values = mm_schema.PSFBeadsKeyValues(
+        # TODO: give name and description to the key values
         **_generate_key_values(
             bead_properties_df=pd.DataFrame(bead_properties),
             discarded_positions_self_proximity=discarded_positions_self_proximity,
