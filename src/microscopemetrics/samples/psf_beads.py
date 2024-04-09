@@ -136,37 +136,55 @@ def _generate_key_values(
         .tolist(),
         "resolution_mean_fwhm_z_microns": bead_properties_df.groupby("channel_nr")["z_fwhm_micron"]
         .mean()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["z_fwhm_micron"].isnull().all()
+        else None,
         "resolution_median_fwhm_z_microns": bead_properties_df.groupby("channel_nr")[
             "z_fwhm_micron"
         ]
         .median()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["z_fwhm_micron"].isnull().all()
+        else None,
         "resolution_std_fwhm_z_microns": bead_properties_df.groupby("channel_nr")["z_fwhm_micron"]
         .std()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["z_fwhm_micron"].isnull().all()
+        else None,
         "resolution_mean_fwhm_y_microns": bead_properties_df.groupby("channel_nr")["y_fwhm_micron"]
         .mean()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["y_fwhm_micron"].isnull().all()
+        else None,
         "resolution_median_fwhm_y_microns": bead_properties_df.groupby("channel_nr")[
             "y_fwhm_micron"
         ]
         .median()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["y_fwhm_micron"].isnull().all()
+        else None,
         "resolution_std_fwhm_y_microns": bead_properties_df.groupby("channel_nr")["y_fwhm_micron"]
         .std()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["y_fwhm_micron"].isnull().all()
+        else None,
         "resolution_mean_fwhm_x_microns": bead_properties_df.groupby("channel_nr")["x_fwhm_micron"]
         .mean()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["x_fwhm_micron"].isnull().all()
+        else None,
         "resolution_median_fwhm_x_microns": bead_properties_df.groupby("channel_nr")[
             "x_fwhm_micron"
         ]
         .median()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["x_fwhm_micron"].isnull().all()
+        else None,
         "resolution_std_fwhm_x_microns": bead_properties_df.groupby("channel_nr")["x_fwhm_micron"]
         .std()
-        .tolist(),
+        .tolist()
+        if not bead_properties_df["x_fwhm_micron"].isnull().all()
+        else None,
         "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df.groupby("channel_nr")[
             "fwhm_lateral_asymmetry_ratio"
         ]
