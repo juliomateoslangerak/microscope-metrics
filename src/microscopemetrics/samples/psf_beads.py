@@ -98,15 +98,15 @@ def _generate_key_values(
         ]
         .apply(lambda x: (x == True).sum())
         .tolist(),
-        "fit_rss_z_mean": bead_properties_df.groupby("channel_nr")["z_fit_rss"].mean().tolist(),
-        "fit_rss_z_median": bead_properties_df.groupby("channel_nr")["z_fit_rss"].median().tolist(),
-        "fit_rss_z_std": bead_properties_df.groupby("channel_nr")["z_fit_rss"].std().tolist(),
-        "fit_rss_y_mean": bead_properties_df.groupby("channel_nr")["y_fit_rss"].mean().tolist(),
-        "fit_rss_y_median": bead_properties_df.groupby("channel_nr")["y_fit_rss"].median().tolist(),
-        "fit_rss_y_std": bead_properties_df.groupby("channel_nr")["y_fit_rss"].std().tolist(),
-        "fit_rss_x_mean": bead_properties_df.groupby("channel_nr")["x_fit_rss"].mean().tolist(),
-        "fit_rss_x_median": bead_properties_df.groupby("channel_nr")["x_fit_rss"].median().tolist(),
-        "fit_rss_x_std": bead_properties_df.groupby("channel_nr")["x_fit_rss"].std().tolist(),
+        "fit_r2_z_mean": bead_properties_df.groupby("channel_nr")["z_fit_r2"].mean().tolist(),
+        "fit_r2_z_median": bead_properties_df.groupby("channel_nr")["z_fit_r2"].median().tolist(),
+        "fit_r2_z_std": bead_properties_df.groupby("channel_nr")["z_fit_r2"].std().tolist(),
+        "fit_r2_y_mean": bead_properties_df.groupby("channel_nr")["y_fit_r2"].mean().tolist(),
+        "fit_r2_y_median": bead_properties_df.groupby("channel_nr")["y_fit_r2"].median().tolist(),
+        "fit_r2_y_std": bead_properties_df.groupby("channel_nr")["y_fit_r2"].std().tolist(),
+        "fit_r2_x_mean": bead_properties_df.groupby("channel_nr")["x_fit_r2"].mean().tolist(),
+        "fit_r2_x_median": bead_properties_df.groupby("channel_nr")["x_fit_r2"].median().tolist(),
+        "fit_r2_x_std": bead_properties_df.groupby("channel_nr")["x_fit_r2"].std().tolist(),
         "resolution_mean_fwhm_z_pixels": bead_properties_df.groupby("channel_nr")["z_fwhm"]
         .mean()
         .tolist(),
@@ -134,57 +134,51 @@ def _generate_key_values(
         "resolution_std_fwhm_x_pixels": bead_properties_df.groupby("channel_nr")["x_fwhm"]
         .std()
         .tolist(),
-        "resolution_mean_fwhm_z_microns": bead_properties_df.groupby("channel_nr")["z_fwhm_micron"]
-        .mean()
-        .tolist()
-        if not bead_properties_df["z_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_median_fwhm_z_microns": bead_properties_df.groupby("channel_nr")[
-            "z_fwhm_micron"
-        ]
-        .median()
-        .tolist()
-        if not bead_properties_df["z_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_std_fwhm_z_microns": bead_properties_df.groupby("channel_nr")["z_fwhm_micron"]
-        .std()
-        .tolist()
-        if not bead_properties_df["z_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_mean_fwhm_y_microns": bead_properties_df.groupby("channel_nr")["y_fwhm_micron"]
-        .mean()
-        .tolist()
-        if not bead_properties_df["y_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_median_fwhm_y_microns": bead_properties_df.groupby("channel_nr")[
-            "y_fwhm_micron"
-        ]
-        .median()
-        .tolist()
-        if not bead_properties_df["y_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_std_fwhm_y_microns": bead_properties_df.groupby("channel_nr")["y_fwhm_micron"]
-        .std()
-        .tolist()
-        if not bead_properties_df["y_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_mean_fwhm_x_microns": bead_properties_df.groupby("channel_nr")["x_fwhm_micron"]
-        .mean()
-        .tolist()
-        if not bead_properties_df["x_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_median_fwhm_x_microns": bead_properties_df.groupby("channel_nr")[
-            "x_fwhm_micron"
-        ]
-        .median()
-        .tolist()
-        if not bead_properties_df["x_fwhm_micron"].isnull().all()
-        else None,
-        "resolution_std_fwhm_x_microns": bead_properties_df.groupby("channel_nr")["x_fwhm_micron"]
-        .std()
-        .tolist()
-        if not bead_properties_df["x_fwhm_micron"].isnull().all()
-        else None,
+        "resolution_mean_fwhm_z_microns": (
+            bead_properties_df.groupby("channel_nr")["z_fwhm_micron"].mean().tolist()
+            if not bead_properties_df["z_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_median_fwhm_z_microns": (
+            bead_properties_df.groupby("channel_nr")["z_fwhm_micron"].median().tolist()
+            if not bead_properties_df["z_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_std_fwhm_z_microns": (
+            bead_properties_df.groupby("channel_nr")["z_fwhm_micron"].std().tolist()
+            if not bead_properties_df["z_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_mean_fwhm_y_microns": (
+            bead_properties_df.groupby("channel_nr")["y_fwhm_micron"].mean().tolist()
+            if not bead_properties_df["y_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_median_fwhm_y_microns": (
+            bead_properties_df.groupby("channel_nr")["y_fwhm_micron"].median().tolist()
+            if not bead_properties_df["y_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_std_fwhm_y_microns": (
+            bead_properties_df.groupby("channel_nr")["y_fwhm_micron"].std().tolist()
+            if not bead_properties_df["y_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_mean_fwhm_x_microns": (
+            bead_properties_df.groupby("channel_nr")["x_fwhm_micron"].mean().tolist()
+            if not bead_properties_df["x_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_median_fwhm_x_microns": (
+            bead_properties_df.groupby("channel_nr")["x_fwhm_micron"].median().tolist()
+            if not bead_properties_df["x_fwhm_micron"].isnull().all()
+            else None
+        ),
+        "resolution_std_fwhm_x_microns": (
+            bead_properties_df.groupby("channel_nr")["x_fwhm_micron"].std().tolist()
+            if not bead_properties_df["x_fwhm_micron"].isnull().all()
+            else None
+        ),
         "resolution_mean_fwhm_lateral_asymmetry_ratio": bead_properties_df.groupby("channel_nr")[
             "fwhm_lateral_asymmetry_ratio"
         ]
@@ -219,9 +213,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
     x_profile = np.squeeze(bead[z_focus, y_focus, :])
 
     # Fitting the profiles
-    z_fitted_profile, z_rss, z_fwhm, z_center_pos = fit_airy(z_profile)
-    y_fitted_profile, y_rss, y_fwhm, y_center_pos = fit_airy(y_profile)
-    x_fitted_profile, x_rss, x_fwhm, x_center_pos = fit_airy(x_profile)
+    z_fitted_profile, z_r2, z_fwhm, z_center_pos = fit_airy(z_profile)
+    y_fitted_profile, y_r2, y_fwhm, y_center_pos = fit_airy(y_profile)
+    x_fitted_profile, x_r2, x_fwhm, x_center_pos = fit_airy(x_profile)
 
     if all(voxel_size_micron):
         z_fwhm_micron = z_fwhm * voxel_size_micron[0]
@@ -239,7 +233,7 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
     return (
         (z_profile, y_profile, x_profile),
         (z_fitted_profile, y_fitted_profile, x_fitted_profile),
-        (z_rss, y_rss, x_rss),
+        (z_r2, y_r2, x_r2),
         (z_fwhm, y_fwhm, x_fwhm),
         (z_fwhm_micron, y_fwhm_micron, x_fwhm_micron),
         considered_axial_edge,
@@ -324,7 +318,7 @@ def _process_channel(
     sigma: Tuple[float, float, float],
     min_bead_distance: float,
     snr_threshold: float,
-    fitting_rss_threshold: float,
+    fitting_r2_threshold: float,
     voxel_size_micron: Tuple[float, float, float],
 ) -> Tuple:
     (
@@ -340,19 +334,19 @@ def _process_channel(
 
     bead_profiles = []
     bead_fitted_profiles = []
-    bead_rsss = []
+    bead_r2 = []
     bead_fwhms = []
     bead_fwhms_micron = []
     considered_axial_edge = []
 
     for bead, pos in zip(beads, bead_positions):
         try:
-            bpr, fpr, rss, fwhm, fwhm_micron, ax_edge = _process_bead(
+            bpr, fpr, r2, fwhm, fwhm_micron, ax_edge = _process_bead(
                 bead=bead, voxel_size_micron=voxel_size_micron
             )
             bead_profiles.append(bpr)
             bead_fitted_profiles.append(fpr)
-            bead_rsss.append(rss)
+            bead_r2.append(r2)
             bead_fwhms.append(fwhm)
             bead_fwhms_micron.append(fwhm_micron)
             considered_axial_edge.append(ax_edge)
@@ -365,7 +359,7 @@ def _process_channel(
         bead_positions,
         bead_profiles,
         bead_fitted_profiles,
-        bead_rsss,
+        bead_r2,
         bead_fwhms,
         bead_fwhms_micron,
         discarded_self_proximity_positions,
@@ -379,7 +373,7 @@ def _process_image(
     sigma: Tuple[float, float, float],
     min_bead_distance: float,
     snr_threshold: float,
-    fitting_rss_threshold: float,
+    fitting_r2_threshold: float,
     voxel_size_micron: Tuple[float, float, float],
 ) -> Dict[str, Any]:
     # Remove the time dimension
@@ -394,7 +388,7 @@ def _process_image(
     bead_positions = []
     bead_profiles = []
     bead_fitted_profiles = []
-    bead_rsss = []
+    bead_r2 = []
     bead_fwhms = []
     bead_fwhms_micron = []
     discarded_positions_self_proximity = []
@@ -407,7 +401,7 @@ def _process_image(
             ch_bead_positions,
             ch_bead_profiles,
             ch_bead_fitted_profiles,
-            ch_bead_rsss,
+            ch_bead_r2,
             ch_bead_fwhms,
             ch_bead_fwhms_micron,
             ch_disc_prox_positions,
@@ -418,7 +412,7 @@ def _process_image(
             sigma=sigma,
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
-            fitting_rss_threshold=fitting_rss_threshold,
+            fitting_r2_threshold=fitting_r2_threshold,
             voxel_size_micron=voxel_size_micron,
         )
 
@@ -426,7 +420,7 @@ def _process_image(
         bead_positions.append(ch_bead_positions)
         bead_profiles.append(ch_bead_profiles)
         bead_fitted_profiles.append(ch_bead_fitted_profiles)
-        bead_rsss.append(ch_bead_rsss)
+        bead_r2.append(ch_bead_r2)
         bead_fwhms.append(ch_bead_fwhms)
         bead_fwhms_micron.append(ch_bead_fwhms_micron)
         discarded_positions_self_proximity.append(ch_disc_prox_positions)
@@ -438,7 +432,7 @@ def _process_image(
         "bead_positions": bead_positions,
         "bead_profiles": bead_profiles,
         "bead_fitted_profiles": bead_fitted_profiles,
-        "bead_rsss": bead_rsss,
+        "bead_r2": bead_r2,
         "bead_fwhms": bead_fwhms,
         "bead_fwhms_micron": bead_fwhms_micron,
         "discarded_positions_self_proximity": discarded_positions_self_proximity,
@@ -543,14 +537,14 @@ def _generate_profiles_table(
                 zip(raw_profiles[image.name][ch], fitted_profiles[image.name][ch])
             ):
                 profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
-                descriptions[
-                    f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"
-                ] = f"Bead {i:02d} in channel {ch} of image {image.name} raw profile in {axis_names[axis]} axis"
+                descriptions[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = (
+                    f"Bead {i:02d} in channel {ch} of image {image.name} raw profile in {axis_names[axis]} axis"
+                )
 
                 profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[axis].tolist()
-                descriptions[
-                    f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"
-                ] = f"Bead {i:02d} in channel {ch} of image {image.name} fitted profile in {axis_names[axis]} axis"
+                descriptions[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = (
+                    f"Bead {i:02d} in channel {ch} of image {image.name} fitted profile in {axis_names[axis]} axis"
+                )
 
     return dict_to_table(
         name=f"bead_profiles_{axis_names[axis]}",
@@ -569,7 +563,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     voxel_sizes_micron = {}
     min_bead_distance = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input.snr_threshold
-    fitting_rss_threshold = dataset.input.fitting_rss_threshold
+    fitting_r2_threshold = dataset.input.fitting_r2_threshold
 
     # Containers for output data
     saturated_channels = {}
@@ -577,7 +571,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_positions = {}
     bead_profiles = {}
     bead_fitted_profiles = {}
-    bead_rsss = {}
+    bead_r2 = {}
     bead_fwhms = {}
     bead_fwhms_micron = {}
     discarded_positions_self_proximity = {}
@@ -631,7 +625,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
-            fitting_rss_threshold=fitting_rss_threshold,
+            fitting_r2_threshold=fitting_r2_threshold,
             voxel_size_micron=voxel_sizes_micron[image.name],
         )
         logger.info(
@@ -646,7 +640,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         bead_positions[image.name] = image_output["bead_positions"]
         bead_profiles[image.name] = image_output["bead_profiles"]
         bead_fitted_profiles[image.name] = image_output["bead_fitted_profiles"]
-        bead_rsss[image.name] = image_output["bead_rsss"]
+        bead_r2[image.name] = image_output["bead_r2"]
         bead_fwhms[image.name] = image_output["bead_fwhms"]
         bead_fwhms_micron[image.name] = image_output["bead_fwhms_micron"]
         discarded_positions_self_proximity[image.name] = image_output[
@@ -657,16 +651,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         ]
         bead_considered_axial_edge[image.name] = image_output["bead_considered_axial_edge"]
         bead_considered_bad_z_fit[image.name] = [
-            [b_rss[0] > fitting_rss_threshold for b_rss in ch_rss]
-            for ch_rss in image_output["bead_rsss"]
+            [b_r2[0] > fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
         ]
         bead_considered_bad_y_fit[image.name] = [
-            [b_rss[1] > fitting_rss_threshold for b_rss in ch_rss]
-            for ch_rss in image_output["bead_rsss"]
+            [b_r2[1] > fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
         ]
         bead_considered_bad_x_fit[image.name] = [
-            [b_rss[2] > fitting_rss_threshold for b_rss in ch_rss]
-            for ch_rss in image_output["bead_rsss"]
+            [b_r2[2] > fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
         ]
 
     # Validate bead intensity
@@ -692,9 +683,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         "z_centroid": [],
         "y_centroid": [],
         "x_centroid": [],
-        "z_fit_rss": [],
-        "y_fit_rss": [],
-        "x_fit_rss": [],
+        "z_fit_r2": [],
+        "y_fit_r2": [],
+        "x_fit_r2": [],
         "considered_bad_z_fit": [],
         "considered_bad_y_fit": [],
         "considered_bad_x_fit": [],
@@ -739,17 +730,17 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                 bead_properties["z_centroid"].append(bead_positions[image.name][ch][i][0])
                 bead_properties["y_centroid"].append(bead_positions[image.name][ch][i][1])
                 bead_properties["x_centroid"].append(bead_positions[image.name][ch][i][2])
-                bead_properties["z_fit_rss"].append(bead_rsss[image.name][ch][i][0])
-                bead_properties["y_fit_rss"].append(bead_rsss[image.name][ch][i][1])
-                bead_properties["x_fit_rss"].append(bead_rsss[image.name][ch][i][2])
+                bead_properties["z_fit_r2"].append(bead_r2[image.name][ch][i][0])
+                bead_properties["y_fit_r2"].append(bead_r2[image.name][ch][i][1])
+                bead_properties["x_fit_r2"].append(bead_r2[image.name][ch][i][2])
                 bead_properties["considered_bad_z_fit"].append(
-                    bead_rsss[image.name][ch][i][0] > fitting_rss_threshold
+                    bead_r2[image.name][ch][i][0] > fitting_r2_threshold
                 )
                 bead_properties["considered_bad_y_fit"].append(
-                    bead_rsss[image.name][ch][i][1] > fitting_rss_threshold
+                    bead_r2[image.name][ch][i][1] > fitting_r2_threshold
                 )
                 bead_properties["considered_bad_x_fit"].append(
-                    bead_rsss[image.name][ch][i][2] > fitting_rss_threshold
+                    bead_r2[image.name][ch][i][2] > fitting_r2_threshold
                 )
                 bead_properties["z_fwhm"].append(bead_fwhms[image.name][ch][i][0])
                 bead_properties["y_fwhm"].append(bead_fwhms[image.name][ch][i][1])
