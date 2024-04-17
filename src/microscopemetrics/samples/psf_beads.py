@@ -651,13 +651,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         ]
         bead_considered_axial_edge[image.name] = image_output["bead_considered_axial_edge"]
         bead_considered_bad_z_fit[image.name] = [
-            [b_r2[0] > fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
+            [b_r2[0] < fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
         ]
         bead_considered_bad_y_fit[image.name] = [
-            [b_r2[1] > fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
+            [b_r2[1] < fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
         ]
         bead_considered_bad_x_fit[image.name] = [
-            [b_r2[2] > fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
+            [b_r2[2] < fitting_r2_threshold for b_r2 in ch_r2] for ch_r2 in image_output["bead_r2"]
         ]
 
     # Validate bead intensity
