@@ -300,8 +300,8 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
     bead_images = [
         channel[
             :,
-            (pos[1] - int(min_distance // 2)) : (pos[1] + int(min_distance // 2)),
-            (pos[2] - int(min_distance // 2)) : (pos[2] + int(min_distance // 2)),
+            (pos[1] - int(min_distance // 2)) : (pos[1] + int(min_distance // 2) + 1),
+            (pos[2] - int(min_distance // 2)) : (pos[2] + int(min_distance // 2) + 1),
         ]
         for pos in valid_positions
     ]
