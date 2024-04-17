@@ -75,6 +75,7 @@ def fit_gaussian(profile, guess=None):
 
 
 def fit_airy(profile, guess=None):
+    profile = (profile - profile.min()) / (profile.max() - profile.min())
     if guess is None:
         guess = [profile.argmax(), 4 * profile.max()]
     x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
