@@ -734,13 +734,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                 bead_properties["y_fit_r2"].append(bead_r2[image.name][ch][i][1])
                 bead_properties["x_fit_r2"].append(bead_r2[image.name][ch][i][2])
                 bead_properties["considered_bad_z_fit"].append(
-                    bead_r2[image.name][ch][i][0] > fitting_r2_threshold
+                    bead_considered_bad_z_fit[image.name][ch][i]
                 )
                 bead_properties["considered_bad_y_fit"].append(
-                    bead_r2[image.name][ch][i][1] > fitting_r2_threshold
+                    bead_considered_bad_y_fit[image.name][ch][i]
                 )
                 bead_properties["considered_bad_x_fit"].append(
-                    bead_r2[image.name][ch][i][2] > fitting_r2_threshold
+                    bead_considered_bad_x_fit[image.name][ch][i]
                 )
                 bead_properties["z_fwhm"].append(bead_fwhms[image.name][ch][i][0])
                 bead_properties["y_fwhm"].append(bead_fwhms[image.name][ch][i][1])
