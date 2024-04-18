@@ -461,38 +461,41 @@ def _generate_center_roi(
         points = []
         for ch in range(image.array_data.shape[-1]):
             if positions_filter is None:
-                for i, pos in enumerate(positions[image.name][ch]):
-                    points.append(
-                        mm_schema.Point(
-                            name=f"ch{ch:02d}_b{i:02d}",
-                            z=pos[0],
-                            y=pos[1],
-                            x=pos[2],
-                            c=ch,
-                            stroke_color=mm_schema.Color(
-                                r=color[0], g=color[1], b=color[2], alpha=color[3]
-                            ),
-                            stroke_width=stroke_width,
+                points.extend(
+                    mm_schema.Point(
+                        name=f"ch{ch:02d}_b{i:02d}",
+                        z=pos[0],
+                        y=pos[1],
+                        x=pos[2],
+                        c=ch,
+                        stroke_color=mm_schema.Color(
+                            r=color[0], g=color[1], b=color[2], alpha=color[3]
+                        ),
+                        stroke_width=stroke_width,
+                    )
+                    for i, pos in enumerate(positions[image.name][ch])
+                )
+            else:
+                points.extend(
+                    mm_schema.Point(
+                        name=f"ch{ch:02d}_b{i:02d}",
+                        z=pos[0],
+                        y=pos[1],
+                        x=pos[2],
+                        c=ch,
+                        stroke_color=mm_schema.Color(
+                            r=color[0], g=color[1], b=color[2], alpha=color[3]
+                        ),
+                        stroke_width=stroke_width,
+                    )
+                    for i, (pos, is_filtered) in enumerate(
+                        zip(
+                            positions[image.name][ch],
+                            positions_filter[image.name][ch],
                         )
                     )
-            else:
-                for i, (pos, is_filtered) in enumerate(
-                    zip(positions[image.name][ch], positions_filter[image.name][ch])
-                ):
-                    if is_filtered:
-                        points.append(
-                            mm_schema.Point(
-                                name=f"ch{ch:02d}_b{i:02d}",
-                                z=pos[0],
-                                y=pos[1],
-                                x=pos[2],
-                                c=ch,
-                                stroke_color=mm_schema.Color(
-                                    r=color[0], g=color[1], b=color[2], alpha=color[3]
-                                ),
-                                stroke_width=stroke_width,
-                            )
-                        )
+                    if is_filtered
+                )
         rois.append(
             mm_schema.Roi(
                 name=f"{root_name}_{image.name}",
