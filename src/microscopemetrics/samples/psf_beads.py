@@ -250,8 +250,11 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
         logger.debug("No Gaussian filter applied")
         channel_gauss = channel
 
+    # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
+    channel_gauss_mip = np.max(channel_gauss, axis=0)
+
     # Find bead centers
-    positions_all = peak_local_max(image=channel_gauss, threshold_rel=0.2)
+    positions_all = peak_local_max(image=channel_gauss_mip, threshold_rel=0.2)
 
     # Find beads min distance filtered
     # We need to remove the beads that are close to each other before the
@@ -259,16 +262,16 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
     # are close to each other but far from the edge. If an edge bead is
     # removed, the other bead that was close to it will be kept.
     positions_proximity_filtered = peak_local_max(
-        image=channel_gauss, threshold_rel=0.2, min_distance=int(min_distance)
+        image=channel_gauss_mip, threshold_rel=0.2, min_distance=int(min_distance), p_norm=2
     )
     positions_proximity_edge_filtered = peak_local_max(
-        image=channel_gauss,
+        image=channel_gauss_mip,
         threshold_rel=0.2,
         min_distance=int(min_distance),
-        exclude_border=(1, int(min_distance // 2), int(min_distance // 2)),
+        exclude_border=(int(min_distance // 2), int(min_distance // 2)),
         p_norm=2,
     )
-
+    # TODO: lateral discarded contain also axial discarded
     # Convert arrays to sets for easier comparison
     positions_all_set = set(map(tuple, positions_all))
     positions_proximity_filtered_set = set(map(tuple, positions_proximity_filtered))
@@ -292,10 +295,16 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
         f"Beads discarded for being to close to each other: {len(discarded_positions_proximity_set)}"
     )
 
-    # Convert back to numpy arrays
-    valid_positions = np.array(list(valid_positions_set))
-    discarded_positions_proximity = np.array(list(discarded_positions_proximity_set))
-    discarded_positions_edge = np.array(list(discarded_positions_edge_set))
+    # Convert back to numpy arrays adding the z dimension
+    valid_positions = np.array(
+        [[int(channel_gauss[:, y, x].argmax()), y, x] for y, x in valid_positions_set]
+    )
+    discarded_positions_proximity = np.array(
+        [[int(channel_gauss[:, y, x].argmax()), y, x] for y, x in discarded_positions_proximity_set]
+    )
+    discarded_positions_edge = np.array(
+        [[int(channel_gauss[:, y, x].argmax()), y, x] for y, x in discarded_positions_edge_set]
+    )
 
     bead_images = [
         channel[
