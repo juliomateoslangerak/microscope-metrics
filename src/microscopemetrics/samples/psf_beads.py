@@ -465,8 +465,8 @@ def _generate_center_roi(
                     mm_schema.Point(
                         name=f"ch{ch:02d}_b{i:02d}",
                         z=pos[0],
-                        y=pos[1],
-                        x=pos[2],
+                        y=pos[1] + 0.5,  # Rois are centered on the voxel
+                        x=pos[2] + 0.5,
                         c=ch,
                         stroke_color=mm_schema.Color(
                             r=color[0], g=color[1], b=color[2], alpha=color[3]
@@ -480,8 +480,8 @@ def _generate_center_roi(
                     mm_schema.Point(
                         name=f"ch{ch:02d}_b{i:02d}",
                         z=pos[0],
-                        y=pos[1],
-                        x=pos[2],
+                        y=pos[1] + 0.5,  # Rois are centered on the voxel
+                        x=pos[2] + 0.5,
                         c=ch,
                         stroke_color=mm_schema.Color(
                             r=color[0], g=color[1], b=color[2], alpha=color[3]
