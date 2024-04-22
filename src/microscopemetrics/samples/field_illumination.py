@@ -19,47 +19,21 @@ from microscopemetrics.samples import (
 from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
 
 
-def _channel_intensity_map(channel: np.ndarray, map_size: int):
+def _get_center_region_mask(channel: np.ndarray, fraction: float = 0.1) -> np.ndarray:
     """
-    Compute the intensity map of a channel
+    Compute the mask of the center region of a channel
     Parameters
     ----------
     channel : np.array.
         image on a 2d np.ndarray format.
-    map_size : int
-        size of the intensity map along its longest axis.
     Returns
     -------
-    intensity_map : np.ndarray
-        2d np.ndarray representing the intensity map of the chosen channel.
+    center_region_mask : np.ndarray
+        2d bool np.ndarray representing the center region of the chosen channel.
     """
-    channel = rescale_intensity(channel, in_range=(0, channel.max()))
-    zoom_factor = map_size / max(channel.shape)
-    return scipy.ndimage.zoom(channel, zoom_factor)
-
-
-def _image_intensity_map(image: np.ndarray, map_size: int):
-    """
-    Compute the intensity map of an image
-    Parameters
-    ----------
-    image : np.ndarray.
-        image on a 3d np.ndarray format yxc.
-    map_size : int
-        size of the intensity map on its longest axis.
-    Returns
-    -------
-    intensity_map : np.ndarray
-        3d np.ndarray representing the intensity map of the chosen image.
-    """
-    output = [
-        _channel_intensity_map(np.squeeze(image[0, 0, :, :, c]), map_size)
-        for c in range(image.shape[-1])
-    ]
-    output = np.stack(output, axis=2)
-
-    # We want to return a 5d array (adding z and t) for compatibility with the rest of the code
-    return np.expand_dims(output, axis=(0, 1))
+    channel = rescale_intensity(channel, in_range=(0, channel.max()), out_range=(0.0, 1.0))
+    mask = channel > (1 - fraction)
+    return mask
 
 
 def _channel_line_profile(
@@ -394,18 +368,6 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         )
     )
 
-    intensity_maps = [
-        numpy_to_mm_image(
-            array=_image_intensity_map(
-                image=image.array_data, map_size=dataset.input.intensity_map_size
-            ),
-            name=f"{image.name}_intensity_map",
-            description=f"Intensity map of {image.name}",
-            source_images=[image],
-        )
-        for image in dataset.input.field_illumination_image
-    ]
-
     intensity_profiles = [
         dict_to_table(
             dictionary=_image_line_profile(image.array_data, profile_size=255),
@@ -536,12 +498,29 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for image in dataset.input.field_illumination_image
     ]
 
+    roi_center_region = mm_schema.Roi(
+        name="Center region ROIs",
+        description="Mask ROIs marking the center region of the image",
+        linked_references=image.data_reference,
+        masks=[
+            mm_schema.Mask(
+                name=f"ch{c:02}_center_region",
+                x=0,
+                y=0,
+                c=c,
+                mask=numpy_to_mm_image(
+                    array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
+                ),
+            )
+            for c in range(image.array_data.shape[-1])
+        ],
+    )
+
     dataset.output = mm_schema.FieldIlluminationOutput(
         processing_application="microscopemetrics",
         processing_version="0.1.0",
         processing_datetime=datetime.now(),
         key_values=key_values,
-        intensity_maps=intensity_maps,
         intensity_profiles=intensity_profiles,
         roi_profiles=roi_profiles,
         roi_corners=roi_corners,
@@ -549,6 +528,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         roi_centers_geometric=roi_centers_geometric,
         roi_centers_fitted=roi_centers_fitted,
         roi_centers_max_intensity=roi_centers_max_intensity,
+        roi_center_region=roi_center_region,
     )
 
     dataset.processed = True
