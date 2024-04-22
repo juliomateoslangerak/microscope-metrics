@@ -139,8 +139,8 @@ def _line_profile_shapes(image: np.ndarray):
         mm_schema.Line(
             name="leftBottom_to_rightTop",
             x1=0,
-            y1=image.shape[-2],
-            x2=image.shape[-3],
+            y1=image.shape[-3],
+            x2=image.shape[-2],
             y2=0,
             stroke_color=stroke_color,
         ),
