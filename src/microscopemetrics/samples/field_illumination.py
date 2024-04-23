@@ -498,24 +498,27 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for image in dataset.input.field_illumination_image
     ]
 
-    roi_center_region = mm_schema.Roi(
-        name="Center region ROIs",
-        description="Mask ROIs marking the center region of the image",
-        linked_references=image.data_reference,
-        masks=[
-            mm_schema.Mask(
-                name=f"ch{c:02}_center_region",
-                x=0,
-                y=0,
-                c=c,
-                mask=numpy_to_mm_image(
-                    array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
-                ),
-                fill_color={"r": 255, "g": 200, "b": 60, "alpha": 128},
-            )
-            for c in range(image.array_data.shape[-1])
-        ],
-    )
+    roi_center_region = [
+        mm_schema.Roi(
+            name="Center region ROIs",
+            description="Mask ROIs marking the center region of the image",
+            linked_references=image.data_reference,
+            masks=[
+                mm_schema.Mask(
+                    name=f"ch{c:02}_center_region",
+                    x=0,
+                    y=0,
+                    c=c,
+                    mask=numpy_to_mm_image(
+                        array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
+                    ),
+                    fill_color={"r": 255, "g": 200, "b": 60, "alpha": 128},
+                )
+                for c in range(image.array_data.shape[-1])
+            ],
+        )
+        for image in dataset.input.field_illumination_image
+    ]
 
     dataset.output = mm_schema.FieldIlluminationOutput(
         processing_application="microscopemetrics",
