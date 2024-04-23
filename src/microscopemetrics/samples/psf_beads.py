@@ -458,7 +458,6 @@ def _generate_center_roi(
 ):
     rois = []
 
-    # TODO: add a condition to not create the ROI if no beads are found?
     for image in dataset.input.psf_beads_images:
         points = []
         for ch in range(image.array_data.shape[-1]):
@@ -498,14 +497,15 @@ def _generate_center_roi(
                     )
                     if is_filtered
                 )
-        rois.append(
-            mm_schema.Roi(
-                name=f"{root_name}_{image.name}",
-                description=f"{root_name} in image {image.name}",
-                linked_references=image.data_reference,
-                points=points,
+        if points:
+            rois.append(
+                mm_schema.Roi(
+                    name=f"{root_name}_{image.name}",
+                    description=f"{root_name} in image {image.name}",
+                    linked_references=image.data_reference,
+                    points=points,
+                )
             )
-        )
 
     return rois
 
