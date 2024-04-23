@@ -193,7 +193,6 @@ def _generate_key_values(
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float]):
     # Find the strongest sections to generate profiles
-    # TODO: We should use the center of the bead image for x and y, for the z we should do the fit first
     z_max = np.max(bead, axis=(1, 2))
     z_focus = np.argmax(z_max)
     y_max = np.max(bead, axis=(0, 2))
