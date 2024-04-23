@@ -4,17 +4,11 @@ from typing import Any, Dict, Tuple
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.samples import (
-    dict_to_table,
-    logger,
-    numpy_to_mm_image,
-    validate_requirements,
-)
+from microscopemetrics.samples import dict_to_table, logger, validate_requirements
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
