@@ -829,12 +829,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         positions_filter=bead_considered_bad_x_fit,
     )
     key_values = mm_schema.PSFBeadsKeyValues(
-        # TODO: give name and description to the key values
+        name="bead_key_values",
+        description="Averaged key measurements for all valid beads in the dataset.",
         **_generate_key_values(
             bead_properties_df=pd.DataFrame(bead_properties),
             discarded_positions_self_proximity=discarded_positions_self_proximity,
             discarded_positions_lateral_edge=discarded_positions_lateral_edge,
-        )
+        ),
     )
     bead_properties = dict_to_table(bead_properties, "bead_properties")
     bead_z_profiles = _generate_profiles_table(
