@@ -675,7 +675,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     )
 
     # Populate output
-    output_bead_crops = []
     bead_properties = {
         "image_name": [],
         "channel_nr": [],
@@ -710,15 +709,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         for ch in range(image.array_data.shape[-1]):
             # Channel linked information
             for i, bead in enumerate(bead_crops[image.name][ch]):
-                output_bead_crops.append(
-                    numpy_to_mm_image(
-                        array=np.expand_dims(bead, axis=(0, 4)),
-                        name=f"{image.name}_ch_{ch:02d}_bead_{i:02d}",
-                        description=f"Bead crop for bead nr {i}, on channel {ch}, image {image.name}",
-                        source_images=[image],
-                    )
-                )
-
                 # Append data to beads table
                 bead_properties["image_name"].append(image.name)
                 bead_properties["channel_nr"].append(ch)
@@ -861,7 +851,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         processing_application="microscopemetrics",
         processing_version="0.1.0",
         processing_datetime=datetime.now(),
-        bead_crops=output_bead_crops,
         analyzed_bead_centers=analyzed_bead_centers,
         discarded_bead_centers_lateral_edge=discarded_bead_centers_lateral_edge,
         discarded_bead_centers_self_proximity=discarded_bead_centers_self_proximity,
