@@ -511,6 +511,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 mask=numpy_to_mm_image(
                     array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
                 ),
+                fill_color={"r": 255, "g": 200, "b": 60, "alpha": 128},
             )
             for c in range(image.array_data.shape[-1])
         ],
