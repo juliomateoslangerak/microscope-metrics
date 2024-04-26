@@ -55,27 +55,40 @@ def fit_gaussian(profile, guess=None):
     if guess is None:
         guess = [profile.min(), profile.max(), profile.argmax(), 0.8]
     x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
-    popt, pcov, infodict, mesgstr, ier = curve_fit(
+    popt, pcov, infodict, mesg, ier = curve_fit(
         f=gaussian_fun, xdata=x, ydata=profile, p0=guess, maxfev=5000, full_output=True
     )
+
+    if ier not in [1, 2, 3, 4]:
+        warnings.warn(f"No gaussian fit found. Reason: {mesg}")
 
     fitted_profile = gaussian_fun(x, popt[0], popt[1], popt[2], popt[3])
     fwhm = popt[3] * 2.35482
 
-    # Calculate the fit quality
-    rss = infodict["fvec"].sum()
+    # Calculate the fit quality using the coefficient of determination (R^2)
+    y_mean = np.mean(profile)
+    sst = np.sum((profile - y_mean) ** 2)
+    ssr = np.sum((profile - fitted_profile) ** 2)
+    cd_r2 = 1 - (ssr / sst)
 
-    return fitted_profile, rss, fwhm, popt[2]
+    return fitted_profile, cd_r2, fwhm, popt[2]
 
 
 def fit_airy(profile, guess=None):
+    profile = (profile - profile.min()) / (profile.max() - profile.min())
     if guess is None:
         guess = [profile.argmax(), 4 * profile.max()]
     x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
-    popt, pcov = curve_fit(f=airy_fun, xdata=x, ydata=profile, p0=guess)
+    popt, pcov, infodict, mesg, ier = curve_fit(
+        f=airy_fun, xdata=x, ydata=profile, p0=guess, full_output=True
+    )
+
+    if ier not in [1, 2, 3, 4]:
+        warnings.warn(f"No airy fit found. Reason: {mesg}")
 
     fitted_profile = airy_fun(x, popt[0], popt[1])
 
+    # Calculate the FWHM
     def _f(d):
         return airy_fun(d, popt[0], popt[1]) - (fitted_profile.max() - fitted_profile.min()) / 2
 
@@ -83,11 +96,13 @@ def fit_airy(profile, guess=None):
     v = fsolve(_f, guess)
     fwhm = abs(v[1] - v[0])
 
-    # Calculate the fit quality
-    residuals = profile - fitted_profile
-    rss = np.sum(residuals**2)
+    # Calculate the fit quality using the coefficient of determination (R^2)
+    y_mean = np.mean(profile)
+    sst = np.sum((profile - y_mean) ** 2)
+    ssr = np.sum((profile - fitted_profile) ** 2)
+    cd_r2 = 1 - (ssr / sst)
 
-    return fitted_profile, rss, fwhm, popt[0]
+    return fitted_profile, cd_r2, fwhm, popt[0]
 
 
 def multi_airy_fun(x: ndarray, *params) -> ndarray:
