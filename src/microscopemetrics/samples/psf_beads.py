@@ -205,6 +205,11 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
     y_profile = np.squeeze(bead[z_focus, :, x_focus])
     x_profile = np.squeeze(bead[z_focus, y_focus, :])
 
+    # Normalize the profiles and subtract the background
+    z_profile = (z_profile - z_profile.min()) / (z_profile.max() - z_profile.min())
+    y_profile = (y_profile - y_profile.min()) / (y_profile.max() - y_profile.min())
+    x_profile = (x_profile - x_profile.min()) / (x_profile.max() - x_profile.min())
+
     # Fitting the profiles
     z_fitted_profile, z_r2, z_fwhm, z_center_pos = fit_airy(z_profile)
     y_fitted_profile, y_r2, y_fwhm, y_center_pos = fit_airy(y_profile)
