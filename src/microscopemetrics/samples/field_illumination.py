@@ -40,7 +40,8 @@ def _channel_line_profile(
     channel: np.ndarray, start: Tuple[int, int], end: Tuple[int, int], profile_size: int
 ) -> np.ndarray:
     """
-    Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation
+    Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation. The mode used is
+    'nearest' to avoid edge artifacts.
     Parameters
     ----------
     channel : np.array.
@@ -56,7 +57,11 @@ def _channel_line_profile(
     """
     x, y = np.linspace(start[0], end[0], profile_size), np.linspace(start[1], end[1], profile_size)
 
-    return scipy.ndimage.map_coordinates(channel, np.vstack((x, y)))
+    return scipy.ndimage.map_coordinates(
+        input=channel,
+        coordinates=np.vstack((x, y)),
+        mode="nearest",
+    )
 
 
 def _image_line_profile(image: np.ndarray, profile_size: int):
