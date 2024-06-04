@@ -304,7 +304,7 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
         [[int(channel_gauss[:, y, x].argmax()), y, x] for y, x in discarded_positions_edge_set]
     )
 
-    bead_images = [
+    valid_bead_images = [
         channel[
             :,
             (pos[1] - int(min_distance // 2)) : (pos[1] + int(min_distance // 2) + 1),
@@ -312,8 +312,9 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
         ]
         for pos in valid_positions
     ]
+
     return (
-        bead_images,
+        valid_bead_images,
         valid_positions,
         discarded_positions_proximity,
         discarded_positions_edge,
