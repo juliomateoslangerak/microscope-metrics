@@ -50,9 +50,9 @@ def _generate_key_measurements(
         "intensity_max",
         "intensity_min",
         "intensity_std",
-        "z_fit_r2",
-        "y_fit_r2",
-        "x_fit_r2",
+        "fit_r2_z",
+        "fit_r2_y",
+        "fit_r2_x",
         "fwhm_pixel_z",
         "fwhm_pixel_y",
         "fwhm_pixel_x",
@@ -68,9 +68,9 @@ def _generate_key_measurements(
         "considered_lateral_edge",
         "considered_axial_edge",
         "considered_intensity_outlier",
-        "considered_bad_z_fit",
-        "considered_bad_y_fit",
-        "considered_bad_x_fit",
+        "considered_bad_fit_z",
+        "considered_bad_fit_y",
+        "considered_bad_fit_x",
     ]
     # We aggregate counts for each channel on beads according to their status
     channel_counts = (
@@ -295,15 +295,15 @@ def _process_channel(
     bead_positions = bead_positions.assign(
         considered_axial_edge=pd.Series(dtype=bool),
         considered_intensity_outlier=pd.Series(dtype=bool),
-        considered_bad_z_fit=pd.Series(dtype=bool),
-        considered_bad_y_fit=pd.Series(dtype=bool),
-        considered_bad_x_fit=pd.Series(dtype=bool),
+        considered_bad_fit_z=pd.Series(dtype=bool),
+        considered_bad_fit_y=pd.Series(dtype=bool),
+        considered_bad_fit_x=pd.Series(dtype=bool),
         intensity_max=pd.Series(dtype=float),
         intensity_min=pd.Series(dtype=float),
         intensity_std=pd.Series(dtype=float),
-        z_fit_r2=pd.Series(dtype=float),
-        y_fit_r2=pd.Series(dtype=float),
-        x_fit_r2=pd.Series(dtype=float),
+        fit_r2_z=pd.Series(dtype=float),
+        fit_r2_y=pd.Series(dtype=float),
+        fit_r2_x=pd.Series(dtype=float),
         fwhm_pixel_z=pd.Series(dtype=float),
         fwhm_pixel_y=pd.Series(dtype=float),
         fwhm_pixel_x=pd.Series(dtype=float),
@@ -331,12 +331,12 @@ def _process_channel(
             bead_positions.at[i, "intensity_max"] = intensity_max
             bead_positions.at[i, "intensity_min"] = intensity_min
             bead_positions.at[i, "intensity_std"] = intensity_std
-            bead_positions.at[i, "z_fit_r2"] = r2[0]
-            bead_positions.at[i, "y_fit_r2"] = r2[1]
-            bead_positions.at[i, "x_fit_r2"] = r2[2]
-            bead_positions.at[i, "considered_bad_z_fit"] = r2[0] < fitting_r2_threshold
-            bead_positions.at[i, "considered_bad_y_fit"] = r2[1] < fitting_r2_threshold
-            bead_positions.at[i, "considered_bad_x_fit"] = r2[2] < fitting_r2_threshold
+            bead_positions.at[i, "fit_r2_z"] = r2[0]
+            bead_positions.at[i, "fit_r2_y"] = r2[1]
+            bead_positions.at[i, "fit_r2_x"] = r2[2]
+            bead_positions.at[i, "considered_bad_fit_z"] = r2[0] < fitting_r2_threshold
+            bead_positions.at[i, "considered_bad_fit_y"] = r2[1] < fitting_r2_threshold
+            bead_positions.at[i, "considered_bad_fit_x"] = r2[2] < fitting_r2_threshold
             bead_positions.at[i, "fwhm_pixel_z"] = fwhm[0]
             bead_positions.at[i, "fwhm_pixel_y"] = fwhm[1]
             bead_positions.at[i, "fwhm_pixel_x"] = fwhm[2]
@@ -353,9 +353,9 @@ def _process_channel(
             )
             raise e
 
-    bead_positions["considered_bad_z_fit"] = bead_positions["considered_bad_z_fit"].astype(bool)
-    bead_positions["considered_bad_y_fit"] = bead_positions["considered_bad_y_fit"].astype(bool)
-    bead_positions["considered_bad_x_fit"] = bead_positions["considered_bad_x_fit"].astype(bool)
+    bead_positions["considered_bad_fit_z"] = bead_positions["considered_bad_fit_z"].astype(bool)
+    bead_positions["considered_bad_fit_y"] = bead_positions["considered_bad_fit_y"].astype(bool)
+    bead_positions["considered_bad_fit_x"] = bead_positions["considered_bad_fit_x"].astype(bool)
 
     _calculate_bead_intensity_outliers(
         bead_positions, robust_z_score_threshold=intensity_robust_z_score_threshold
@@ -627,21 +627,21 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     )
     considered_bead_centers_z_fit_quality = _generate_center_roi(
         dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_z_fit],
+        positions=bead_properties[bead_properties.considered_bad_fit_z],
         root_name="considered_bead_centroids_z_fit_quality",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
     considered_bead_centers_y_fit_quality = _generate_center_roi(
         dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_y_fit],
+        positions=bead_properties[bead_properties.considered_bad_fit_y],
         root_name="considered_bead_centroids_y_fit_quality",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
     considered_bead_centers_x_fit_quality = _generate_center_roi(
         dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_x_fit],
+        positions=bead_properties[bead_properties.considered_bad_fit_x],
         root_name="considered_bead_centroids_x_fit_quality",
         color=(0, 0, 255, 100),
         stroke_width=4,
