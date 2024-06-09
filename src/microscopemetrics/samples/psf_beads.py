@@ -12,6 +12,92 @@ from microscopemetrics.samples import dict_to_table, logger, validate_requiremen
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
+def _average_beads(beads: list[np.ndarray]) -> np.ndarray:
+    """
+    This function takes a list of 3D point spread function bead arrays and averages them to generate a single psf bead.
+    It does so by:
+    1. Normalizing the intensities into a float32 0-1 range
+    2. Increasing the resolution of the beads through interpolation by a factor of 4
+    3. Aligning the beads into a common reference frame. It does so using cross correlation
+    4. Averaging the beads
+    """
+    # We first create an fake psf image to align the beads to
+    centre_psf = np.zeros(beads[0].shape, dtype=np.float32)
+    centre_psf[tuple(dim // 2 for dim in centre_psf.shape)] = 1
+    centre_psf = gaussian(centre_psf, sigma=1, preserve_range=True)
+
+    # Normalize the intensities
+    beads = [(bead.astype(np.float32) - bead.min()) / bead.max() for bead in beads]
+
+    # Align the beads
+    correlations = [signal.correlate(centre_psf, bead, mode="same") for bead in beads]
+    shifts = [
+        np.unravel_index(np.argmax(correlation), correlation.shape) for correlation in correlations
+    ]
+
+    # Increase the resolution of the beads
+    hr_beads = [ndimage.zoom(bead, 4, order=1) for bead in beads]
+
+
+import numpy as np
+from scipy.optimize import least_squares
+
+
+def gaussian_3d(x, y, z, xo, yo, zo, sigma_x, sigma_y, sigma_z, offset):
+    """Returns the 3D Gaussian function with a fixed amplitude of 1.0."""
+    amplitude = 1.0
+    g = offset + amplitude * np.exp(
+        -(
+            ((x - xo) ** 2) / (2 * sigma_x**2)
+            + ((y - yo) ** 2) / (2 * sigma_y**2)
+            + ((z - zo) ** 2) / (2 * sigma_z**2)
+        )
+    )
+    return g.ravel()
+
+
+def fit_gaussian_3d(data):
+    """Fits a 3D Gaussian to the data and returns the fit parameters."""
+    # Generate the x, y, z coordinate arrays
+    x = np.arange(data.shape[0])
+    y = np.arange(data.shape[1])
+    z = np.arange(data.shape[2])
+    x, y, z = np.meshgrid(x, y, z, indexing="ij")
+
+    # Initial guess for the parameters
+    xo, yo, zo = np.array(data.shape) / 2
+    sigma_x = sigma_y = sigma_z = np.std(data)
+    offset = np.min(data)
+    initial_guess = (xo, yo, zo, sigma_x, sigma_y, sigma_z, offset)
+
+    # Fit the 3D Gaussian
+    def error_function(params):
+        return gaussian_3d(x, y, z, *params) - data.ravel()
+
+    result = least_squares(error_function, initial_guess)
+
+    return result.x
+
+
+def calculate_shift(data):
+    """Calculates the shift of the 3D Gaussian from the center."""
+    params = fit_gaussian_3d(data)
+    xo, yo, zo, sigma_x, sigma_y, sigma_z, offset = params
+
+    # The shift from the center
+    center = np.array(data.shape) / 2
+    shift = np.array([xo, yo, zo]) - center
+
+    return shift
+
+
+# Example usage:
+# Replace 'data' with your actual 3D numpy array
+data = np.random.rand(10, 10, 10)  # Example data
+shift = calculate_shift(data)
+print("Shift of the Gaussian:", shift)
+
+
 def _calculate_bead_intensity_outliers(
     bead_positions: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
@@ -289,6 +375,9 @@ def _process_channel(
         sigma=sigma,
         min_distance=min_bead_distance,
     )
+
+    # TODO: activate this when average beads are working
+    #  average_bead = _average_beads(beads)
 
     bead_profiles = []
     bead_fitted_profiles = []
