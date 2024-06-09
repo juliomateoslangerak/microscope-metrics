@@ -9,7 +9,12 @@ from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.samples import dict_to_table, logger, validate_requirements
+from microscopemetrics.samples import (
+    df_to_table,
+    dict_to_table,
+    logger,
+    validate_requirements,
+)
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
@@ -741,9 +746,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         description="Averaged key measurements for all beads considered valid in the dataset.",
         **_generate_key_measurements(
             bead_properties_df=bead_properties,
-        ),
+        ).to_dict("list"),
     )
-    bead_properties = dict_to_table(bead_properties, "bead_properties")
+    bead_properties = df_to_table(bead_properties, "bead_properties")
     bead_z_profiles = _generate_profiles_table(
         dataset=dataset,
         axis=0,
