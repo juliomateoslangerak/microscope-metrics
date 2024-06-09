@@ -112,12 +112,12 @@ def numpy_to_mm_image(
         channel = mm_schema.Channel(
             name=channel_names[i] if channel_names is not None else None,
             description=channel_descriptions[i] if channel_descriptions is not None else None,
-            excitation_wavelength_nm=excitation_wavelengths_nm[i]
-            if excitation_wavelengths_nm is not None
-            else None,
-            emission_wavelength_nm=emission_wavelengths_nm[i]
-            if emission_wavelengths_nm is not None
-            else None,
+            excitation_wavelength_nm=(
+                excitation_wavelengths_nm[i] if excitation_wavelengths_nm is not None else None
+            ),
+            emission_wavelength_nm=(
+                emission_wavelengths_nm[i] if emission_wavelengths_nm is not None else None
+            ),
         )
         channels.append(channel)
 
@@ -208,7 +208,7 @@ def _create_table(
     description: str = None,
     column_descriptions: dict[str, str] = None,
 ) -> mm_schema.Table:
-    if not data:
+    if len(data) == 0:
         logger.error(f"Table {name} could not created as there is no data")
         return None
 
