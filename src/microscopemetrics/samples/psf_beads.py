@@ -183,7 +183,7 @@ def _generate_key_measurements(
         "_".join(col).strip() for col in channel_measurements.columns.values
     ]
 
-    return pd.merge(channel_counts, channel_measurements, on=["channel_nr"])
+    return pd.merge(channel_counts, channel_measurements, on=["channel_nr"]).reset_index()
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float]):
