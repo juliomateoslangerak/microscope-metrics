@@ -4,6 +4,7 @@ from typing import Any, Dict, Tuple
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
+from scipy import ndimage, signal
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
