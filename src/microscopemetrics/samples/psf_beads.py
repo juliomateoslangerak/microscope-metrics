@@ -18,6 +18,13 @@ from microscopemetrics.samples import (
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
+def _add_upper_level(df: pd.DataFrame, new_level: str, level_name: str):
+    new_columns = pd.MultiIndex.from_tuples(
+        [(new_level, *col) for col in df.columns], names=[level_name] + list(df.columns.names)
+    )
+    df.columns = new_columns
+
+
 def _average_beads(beads: list[np.ndarray]) -> np.ndarray:
     """
     This function takes a list of 3D point spread function bead arrays and averages them to generate a single psf bead.
