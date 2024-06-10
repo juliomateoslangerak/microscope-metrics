@@ -579,6 +579,11 @@ def _generate_profiles_table(
         logger.warning(f"No profiles for axis {axis_names[axis]} available. No table generated.")
         return None
 
+    max_length = max(
+        len(bead[axis]) for image in raw_profiles.values() for channel in image for bead in channel
+    )
+    fill_value = None
+
     profiles = {}
     descriptions = {}
     for image in dataset.input.psf_beads_images:
@@ -586,6 +591,9 @@ def _generate_profiles_table(
             for i, (raw, fitted) in enumerate(
                 zip(raw_profiles[image.name][ch], fitted_profiles[image.name][ch])
             ):
+                if len(raw[axis]) < max_length:
+                    raw[axis] += [fill_value] * (max_length - len(raw))
+                    fitted[axis] += [fill_value] * (max_length - len(fitted))
                 profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
                 descriptions[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = (
                     f"Bead {i:02d} in channel {ch} of image {image.name} raw profile in {axis_names[axis]} axis"
