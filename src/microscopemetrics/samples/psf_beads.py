@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any, Dict, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
