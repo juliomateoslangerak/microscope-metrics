@@ -212,14 +212,20 @@ def _create_table(
         logger.error(f"Table {name} could not created as there is no data")
         return None
 
-    if column_descriptions is not None:
-        columns = [mm_schema.Column(name=n, description=d) for n, d in column_descriptions.items()]
-    elif isinstance(data, dict):
-        columns = [mm_schema.Column(name=n) for n in data.keys()]
+    # TODO: Add values to columns
+    if isinstance(data, dict):
+        columns = [mm_schema.Column(name=n) for n, v in data.items()]
     elif isinstance(data, pd.DataFrame):
         columns = [mm_schema.Column(name=n) for n in data.columns]
     else:
         raise ValueError("Data should be either a dictionary or a pandas dataframe")
+
+    if column_descriptions is not None:
+        for column in columns:
+            try:
+                column.description = column_descriptions[column.name]
+            except KeyError:
+                logger.warning(f"Column {column.name} does not have a description")
 
     return mm_schema.Table(
         name=name,
