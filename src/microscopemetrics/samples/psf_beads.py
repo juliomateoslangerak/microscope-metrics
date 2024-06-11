@@ -9,12 +9,7 @@ from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.samples import (
-    df_to_table,
-    dict_to_table,
-    logger,
-    validate_requirements,
-)
+from microscopemetrics.samples import df_to_table, logger, validate_requirements
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
@@ -193,16 +188,21 @@ def _generate_key_measurements(
         "considered_bad_fit_y",
         "considered_bad_fit_x",
     ]
+
+    reindex_bead_properties_df = bead_properties_df.reset_index()
+
     # We aggregate counts for each channel on beads according to their status
     channel_counts = (
-        bead_properties_df[count_aggregation_columns].groupby("channel_nr").agg(["sum"])
+        reindex_bead_properties_df[count_aggregation_columns].groupby("channel_nr").agg(["sum"])
     )
     channel_counts.columns = [
         "_".join((col[0], "count")).strip() for col in channel_counts.columns.values
     ]
 
     # We aggregate measurements for each channel only on beads considered valid
-    valid_bead_properties_df = bead_properties_df[bead_properties_df.considered_valid]
+    valid_bead_properties_df = reindex_bead_properties_df[
+        reindex_bead_properties_df.considered_valid
+    ]
     channel_measurements = (
         valid_bead_properties_df[measurement_aggregation_columns]
         .groupby("channel_nr")
@@ -212,10 +212,10 @@ def _generate_key_measurements(
         "_".join(col).strip() for col in channel_measurements.columns.values
     ]
 
-    return pd.merge(channel_counts, channel_measurements, on=["channel_nr"]).reset_index()
+    return pd.merge(channel_counts, channel_measurements, how="outer", on=["channel_nr"])
 
 
-def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float]):
+def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float]):
     # Find the strongest sections to generate profiles
     z_max = np.max(bead, axis=(1, 2))
     z_focus = np.argmax(z_max)
@@ -256,9 +256,28 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
     intensity_min = bead.min()
     intensity_std = bead.std()
 
+    # Pack the profiles and fitted profiles into pd.DataFrames
+    profiles_z = pd.DataFrame(
+        {"r": z_profile, "f": z_fitted_profile},
+    )
+    profiles_z.columns = pd.MultiIndex.from_product(
+        [["z"], ["raw", "fitted"]], names=["axis", "profile_type"]
+    )
+    profiles_y = pd.DataFrame(
+        {"r": y_profile, "f": y_fitted_profile},
+    )
+    profiles_y.columns = pd.MultiIndex.from_product(
+        [["y"], ["raw", "fitted"]], names=["axis", "profile_type"]
+    )
+    profiles_x = pd.DataFrame(
+        {"r": x_profile, "f": x_fitted_profile},
+    )
+    profiles_x.columns = pd.MultiIndex.from_product(
+        [["x"], ["raw", "fitted"]], names=["axis", "profile_type"]
+    )
+
     return (
-        (z_profile, y_profile, x_profile),
-        (z_fitted_profile, y_fitted_profile, x_fitted_profile),
+        (profiles_z, profiles_y, profiles_x),
         (z_r2, y_r2, x_r2),
         (z_fwhm, y_fwhm, x_fwhm),
         (z_fwhm_micron, y_fwhm_micron, x_fwhm_micron),
@@ -269,8 +288,20 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: Tuple[float, float, float
     )
 
 
-def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_distance: float):
-    logger.debug(f"Finding beads in channel of shape {channel.shape}")
+def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_distance: float):
+    def filter_positions(
+        pos_df: pd.DataFrame, filter_pos: np.ndarray, column_name: str, set_value: bool
+    ):
+        if column_name not in pos_df.columns:
+            pos_df[column_name] = pd.Series(dtype=bool)
+            pos_df[column_name] = not set_value
+        filter_df = pd.DataFrame(filter_pos, columns=["center_y", "center_x"])
+        merged_df = pd.merge(
+            pos_df, filter_df, on=["center_y", "center_x"], how="left", indicator=True
+        )
+        pos_df.loc[merged_df["_merge"] == "both", column_name] = set_value
+
+    logger.debug(f"Finding beads in channel...")
 
     if all(sigma):
         logger.debug(f"Applying Gaussian filter with sigma {sigma}")
@@ -284,124 +315,73 @@ def _find_beads(channel: np.ndarray, sigma: Tuple[float, float, float], min_dist
 
     # Find bead centers
     positions_all = peak_local_max(image=channel_gauss_mip, threshold_rel=0.2)
-
-    # Find beads min distance filtered
-    # We need to remove the beads that are close to each other before the
-    # ones that are close to the edge in order to avoid keeping beads that
-    # are close to each other but far from the edge. If an edge bead is
-    # removed, the other bead that was close to it will be kept.
-    positions_proximity_filtered = peak_local_max(
-        image=channel_gauss_mip, threshold_rel=0.2, min_distance=int(min_distance), p_norm=2
+    positions_df = pd.DataFrame(
+        positions_all,
+        columns=["center_y", "center_x"],
+        index=pd.Index(range(len(positions_all)), name="bead_id"),
     )
+    positions_df["center_z"] = positions_df.apply(
+        lambda row: int(channel_gauss[:, row["center_y"], row["center_x"]].argmax()), axis=1
+    )
+
     positions_proximity_edge_filtered = peak_local_max(
         image=channel_gauss_mip,
         threshold_rel=0.2,
         min_distance=int(min_distance),
-        exclude_border=(int(min_distance // 2), int(min_distance // 2)),
+        exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
         p_norm=2,
     )
-    # TODO: lateral considered contain also axial considered
-    # Convert arrays to sets for easier comparison
-    positions_all_set = set(map(tuple, positions_all))
-    positions_proximity_filtered_set = set(map(tuple, positions_proximity_filtered))
-    positions_proximity_edge_filtered_set = set(map(tuple, positions_proximity_edge_filtered))
-    positions_edge_filtered_set = (
-        positions_proximity_filtered_set & positions_proximity_edge_filtered_set
+    positions_proximity_filtered = peak_local_max(
+        image=channel_gauss_mip, threshold_rel=0.2, min_distance=int(min_distance), p_norm=2
     )
 
-    considered_valid_positions_set = positions_proximity_edge_filtered_set
-    considered_positions_proximity_set = positions_all_set - positions_proximity_filtered_set
-    considered_positions_edge_set = positions_all_set - positions_edge_filtered_set
-    considered_positions_set = positions_all_set - positions_proximity_edge_filtered_set
+    # The good beads -> considered_valid = True
+    filter_positions(positions_df, positions_proximity_edge_filtered, "considered_valid", True)
+    # The beads that are not close to each other -> considered_self_proximity = False
+    filter_positions(positions_df, positions_proximity_filtered, "considered_self_proximity", True)
+    # The beads that are not close to the edge or not close to each other ->
+    # considered_lateral_edge = False & considered_self_proximity = False
+    filter_positions(
+        positions_df, positions_proximity_edge_filtered, "considered_lateral_edge", False
+    )
+    filter_positions(
+        positions_df, positions_proximity_edge_filtered, "considered_self_proximity", True
+    )
 
     logger.debug(f"Beads found: {len(positions_all)}")
-    logger.debug(f"Beads kept for analysis: {len(considered_valid_positions_set)}")
-    logger.debug(f"Beads considered: {len(considered_positions_set)}")
+    logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
     logger.debug(
-        f"Beads considered for being to close to the edge: {len(considered_positions_edge_set)}"
+        f"Beads considered for being to close to the edge: {positions_df['considered_lateral_edge'].sum()}"
     )
     logger.debug(
-        f"Beads considered for being to close to each other: {len(considered_positions_proximity_set)}"
+        f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
-
-    # Convert pandas dataframes adding the z dimension
-    considered_valid_positions = pd.DataFrame(
-        [
-            [int(channel_gauss[:, y, x].argmax()), y, x, True, False, False]
-            for y, x in considered_valid_positions_set
-        ],
-        columns=[
-            "z_centroid",
-            "y_centroid",
-            "x_centroid",
-            "considered_valid",
-            "considered_self_proximity",
-            "considered_lateral_edge",
-        ],
-    )
-    considered_positions_proximity = pd.DataFrame(
-        [
-            [int(channel_gauss[:, y, x].argmax()), y, x, False, True, False]
-            for y, x in considered_positions_proximity_set
-        ],
-        columns=[
-            "z_centroid",
-            "y_centroid",
-            "x_centroid",
-            "considered_valid",
-            "considered_self_proximity",
-            "considered_lateral_edge",
-        ],
-    )
-    considered_positions_edge = pd.DataFrame(
-        [
-            [int(channel_gauss[:, y, x].argmax()), y, x, False, False, True]
-            for y, x in considered_positions_edge_set
-        ],
-        columns=[
-            "z_centroid",
-            "y_centroid",
-            "x_centroid",
-            "considered_valid",
-            "considered_self_proximity",
-            "considered_lateral_edge",
-        ],
-    )
-    positions = pd.concat(
-        [considered_valid_positions, considered_positions_proximity, considered_positions_edge],
-        ignore_index=True,
-    )
-    # We need to convert those considered_x columns to boolean types
-    positions["considered_valid"] = positions["considered_valid"].astype(bool)
-    positions["considered_self_proximity"] = positions["considered_self_proximity"].astype(bool)
-    positions["considered_lateral_edge"] = positions["considered_lateral_edge"].astype(bool)
-    positions.insert(loc=0, column="bead_id", value=positions.index)
 
     bead_images = [
         channel[
             :,
-            (pos["y_centroid"] - int(min_distance // 2)) : (
-                pos["y_centroid"] + int(min_distance // 2) + 1
+            max(0, (pos["center_y"] - int(min_distance // 2))) : min(
+                channel.shape[1], (pos["center_y"] + int(min_distance // 2) + 1)
             ),
-            (pos["x_centroid"] - int(min_distance // 2)) : (
-                pos["x_centroid"] + int(min_distance // 2) + 1
+            max(0, (pos["center_x"] - int(min_distance // 2))) : min(
+                channel.shape[2], (pos["center_x"] + int(min_distance // 2) + 1)
             ),
         ]
-        for _, pos in positions.iterrows()
+        for _, pos in positions_df.iterrows()
     ]
 
-    return (bead_images, positions)
+    return bead_images, positions_df
 
 
 def _process_channel(
     channel: np.ndarray,
-    sigma: Tuple[float, float, float],
+    sigma: tuple[float, float, float],
     min_bead_distance: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
-    voxel_size_micron: Tuple[float, float, float],
-) -> Tuple:
+    voxel_size_micron: tuple[float, float, float],
+) -> tuple:
     (
         beads,
         bead_positions,
@@ -414,8 +394,9 @@ def _process_channel(
     # TODO: activate this when average beads are working
     #  average_bead = _average_beads(beads)
 
-    bead_profiles = []
-    bead_fitted_profiles = []
+    bead_profiles_z = []
+    bead_profiles_y = []
+    bead_profiles_x = []
     bead_positions = bead_positions.assign(
         considered_axial_edge=pd.Series(dtype=bool),
         considered_intensity_outlier=pd.Series(dtype=bool),
@@ -440,8 +421,7 @@ def _process_channel(
     for i, bead in enumerate(beads):
         try:
             (
-                bpr,
-                fpr,
+                (profiles_z, profiles_y, profiles_x),
                 r2,
                 fwhm,
                 fwhm_micron,
@@ -450,8 +430,12 @@ def _process_channel(
                 intensity_min,
                 intensity_std,
             ) = _process_bead(bead=bead, voxel_size_micron=voxel_size_micron)
-            bead_profiles.append(bpr)
-            bead_fitted_profiles.append(fpr)
+            _add_column_name_level(profiles_z, "bead_id", i)
+            bead_profiles_z.append(profiles_z)
+            _add_column_name_level(profiles_y, "bead_id", i)
+            bead_profiles_y.append(profiles_y)
+            _add_column_name_level(profiles_x, "bead_id", i)
+            bead_profiles_x.append(profiles_x)
             bead_positions.at[i, "intensity_max"] = intensity_max
             bead_positions.at[i, "intensity_min"] = intensity_min
             bead_positions.at[i, "intensity_std"] = intensity_std
@@ -473,7 +457,7 @@ def _process_channel(
             bead_positions.at[i, "considered_axial_edge"] = bool(ax_edge)
         except FittingError as e:
             logger.error(
-                f"Could not fit bead at position: x:{bead_positions.at[i, 'x_centroid']}, y:{bead_positions.at[i, 'y_centroid']}: {e}"
+                f"Could not fit bead at position: x:{bead_positions.at[i, 'center_x']}, y:{bead_positions.at[i, 'center_y']}: {e}"
             )
             raise e
 
@@ -485,22 +469,21 @@ def _process_channel(
         bead_positions, robust_z_score_threshold=intensity_robust_z_score_threshold
     )
 
-    return (
-        beads,
-        bead_positions,
-        bead_profiles,
-        bead_fitted_profiles,
-    )
+    bead_profiles_z = pd.concat(bead_profiles_z, axis=1)
+    bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
+    bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
+
+    return (beads, bead_positions, (bead_profiles_z, bead_profiles_y, bead_profiles_x))
 
 
 def _process_image(
     image: np.ndarray,
-    sigma: Tuple[float, float, float],
+    sigma: tuple[float, float, float],
     min_bead_distance: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
-    voxel_size_micron: Tuple[float, float, float],
+    voxel_size_micron: tuple[float, float, float],
 ) -> tuple:
     # Remove the time dimension
     image = image[0, ...]
@@ -512,15 +495,15 @@ def _process_image(
 
     bead_images = []
     bead_positions = []
-    bead_profiles = []
-    bead_fitted_profiles = []
+    bead_profiles_z = []
+    bead_profiles_y = []
+    bead_profiles_x = []
 
     for ch in range(nr_channels):
         (
             ch_bead_images,
             ch_bead_positions,
-            ch_bead_profiles,
-            ch_bead_fitted_profiles,
+            (ch_bead_profiles_z, ch_bead_profiles_y, ch_bead_profiles_x),
         ) = _process_channel(
             channel=image[..., ch],
             sigma=sigma,
@@ -531,16 +514,24 @@ def _process_image(
             voxel_size_micron=voxel_size_micron,
         )
 
-        ch_bead_positions.insert(loc=0, column="channel_nr", value=ch)
-
         bead_images.append(ch_bead_images)
+
+        _add_row_index_level(ch_bead_positions, "channel_nr", ch)
         bead_positions.append(ch_bead_positions)
-        bead_profiles.append(ch_bead_profiles)
-        bead_fitted_profiles.append(ch_bead_fitted_profiles)
 
-    bead_positions = pd.concat(bead_positions, ignore_index=True)
+        _add_column_name_level(ch_bead_profiles_z, "channel_nr", ch)
+        bead_profiles_z.append(ch_bead_profiles_z)
+        _add_column_name_level(ch_bead_profiles_y, "channel_nr", ch)
+        bead_profiles_y.append(ch_bead_profiles_y)
+        _add_column_name_level(ch_bead_profiles_x, "channel_nr", ch)
+        bead_profiles_x.append(ch_bead_profiles_x)
 
-    return bead_images, bead_positions, bead_profiles, bead_fitted_profiles
+    bead_positions = pd.concat(bead_positions)
+    bead_profiles_z = pd.concat(bead_profiles_z, axis=1)
+    bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
+    bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
+
+    return bead_images, bead_positions, (bead_profiles_z, bead_profiles_y, bead_profiles_x)
 
 
 def _estimate_min_bead_distance(dataset: mm_schema.PSFBeadsDataset) -> float:
@@ -558,15 +549,19 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input.psf_beads_images:
+        if positions.empty or image.name not in positions.index.get_level_values("image_name"):
+            continue
         points = []
-        for _, row in positions[positions["image_name"] == image.name].iterrows():
+        for index, row in positions.xs(image.name, level="image_name").iterrows():
             points.append(
                 mm_schema.Point(
-                    name=f"ch{row['channel_nr']:02d}_b{row['bead_id']:02d}",
-                    z=row["z_centroid"],
-                    y=row["y_centroid"] + 0.5,  # Rois are centered on the voxel
-                    x=row["x_centroid"] + 0.5,
-                    c=row["channel_nr"],
+                    name=_concatenate_index_levels(
+                        index_names=positions.index.names[1:], index_values=index
+                    ),
+                    z=row["center_z"],
+                    y=row["center_y"] + 0.5,  # Rois are centered on the voxel
+                    x=row["center_x"] + 0.5,
+                    c=index[positions.index.names[1:].index("channel_nr")],
                     stroke_color=mm_schema.Color(
                         r=color[0], g=color[1], b=color[2], alpha=color[3]
                     ),
@@ -587,60 +582,6 @@ def _generate_center_roi(
     return rois
 
 
-def _generate_profiles_table(
-    dataset: mm_schema.PSFBeadsDataset, axis, raw_profiles, fitted_profiles
-):
-    axis_names = ["z", "y", "x"]
-    if len(raw_profiles) != len(fitted_profiles):
-        raise ValueError(
-            f"Raw and fitted profiles for axis {axis_names[axis]} must have the same image length"
-        )
-
-    if any(
-        len(raw_profiles[image_name]) != len(fitted_profiles[image_name])
-        for image_name in raw_profiles
-    ):
-        raise ValueError(
-            f"Raw and fitted profiles for axis {axis_names[axis]} must have the same number of profiles."
-        )
-
-    if all(not any(raw_profiles[image_name]) for image_name in raw_profiles):
-        logger.warning(f"No profiles for axis {axis_names[axis]} available. No table generated.")
-        return None
-
-    max_length = max(
-        len(bead[axis]) for image in raw_profiles.values() for channel in image for bead in channel
-    )
-    fill_value = None
-
-    profiles = {}
-    descriptions = {}
-    for image in dataset.input.psf_beads_images:
-        for ch in range(image.array_data.shape[-1]):
-            for i, (raw, fitted) in enumerate(
-                zip(raw_profiles[image.name][ch], fitted_profiles[image.name][ch])
-            ):
-                if len(raw[axis]) < max_length:
-                    raw[axis] += [fill_value] * (max_length - len(raw))
-                    fitted[axis] += [fill_value] * (max_length - len(fitted))
-                profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = raw[axis].tolist()
-                descriptions[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_raw"] = (
-                    f"Bead {i:02d} in channel {ch} of image {image.name} raw profile in {axis_names[axis]} axis"
-                )
-
-                profiles[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = fitted[axis].tolist()
-                descriptions[f"{image.name}_ch_{ch:02d}_bead_{i:02d}_fitted"] = (
-                    f"Bead {i:02d} in channel {ch} of image {image.name} fitted profile in {axis_names[axis]} axis"
-                )
-
-    return dict_to_table(
-        name=f"bead_profiles_{axis_names[axis]}",
-        dictionary=profiles,
-        description=f"Bead profiles in {axis_names[axis]} axis",
-        column_descriptions=descriptions,
-    )
-
-
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     validate_requirements()
     # TODO: Implement Nyquist validation??
@@ -656,8 +597,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     saturated_channels = {}
     bead_crops = {}
     bead_properties = []
-    bead_profiles = {}
-    bead_fitted_profiles = {}
+    bead_profiles_z = []
+    bead_profiles_y = []
+    bead_profiles_x = []
 
     # First loop to prepare data
     for image in dataset.input.psf_beads_images:
@@ -698,7 +640,11 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     # Second loop main image analysis
     for image in dataset.input.psf_beads_images:
         logger.info(f"Processing image {image.name}...")
-        _, image_bead_properties, image_bead_profiles, image_bead_fitted_profiles = _process_image(
+        (
+            _,
+            image_bead_properties_df,
+            (image_bead_profiles_z_df, image_bead_profiles_y_df, image_bead_profiles_x_df),
+        ) = _process_image(
             image=image.array_data,
             sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
             min_bead_distance=min_bead_distance,
@@ -708,73 +654,85 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             voxel_size_micron=voxel_sizes_micron[image.name],
         )
         logger.info(
-            f"Image {image.name} processed:"
-            f"    {len(image_bead_properties)} beads found"
-            f"    {len(image_bead_properties[image_bead_properties['considered_self_proximity']])} beads considered for being to close to each other"
-            f"    {len(image_bead_properties[image_bead_properties['considered_lateral_edge']])} beads considered for being to close to the edge"
-            f"    {len(image_bead_properties[image_bead_properties['considered_axial_edge']])} beads considered as to close to the top or bottom of the image"
+            f"Image {image.name} processed."
+            f"    {image_bead_properties_df.considered_valid.sum()} beads considered valid."
+            f"    {image_bead_properties_df.considered_lateral_edge.sum()} beads considered lateral edge."
+            f"    {image_bead_properties_df.considered_self_proximity.sum()} beads considered self proximity."
+            f"    {image_bead_properties_df.considered_axial_edge.sum()} beads considered axial edge."
+            f"    {image_bead_properties_df.considered_intensity_outlier.sum()} beads considered intensity outlier."
+            f"    {image_bead_properties_df.considered_bad_fit_z.sum()} beads considered bad fit in z."
+            f"    {image_bead_properties_df.considered_bad_fit_y.sum()} beads considered bad fit in y."
+            f"    {image_bead_properties_df.considered_bad_fit_x.sum()} beads considered bad fit in x."
         )
 
-        image_bead_properties.insert(loc=0, column="image_name", value=image.name)
-        bead_properties.append(image_bead_properties)
-        bead_profiles[image.name] = image_bead_profiles
-        bead_fitted_profiles[image.name] = image_bead_fitted_profiles
+        _add_row_index_level(image_bead_properties_df, "image_name", image.name)
+        bead_properties.append(image_bead_properties_df)
 
-    bead_properties = pd.concat(bead_properties, ignore_index=True)
+        _add_column_name_level(image_bead_profiles_z_df, "image_name", image.name)
+        bead_profiles_z.append(image_bead_profiles_z_df)
+        _add_column_name_level(image_bead_profiles_y_df, "image_name", image.name)
+        bead_profiles_y.append(image_bead_profiles_y_df)
+        _add_column_name_level(image_bead_profiles_x_df, "image_name", image.name)
+        bead_profiles_x.append(image_bead_profiles_x_df)
 
-    analyzed_bead_centers = _generate_center_roi(
+    bead_properties = pd.concat(bead_properties)
+    bead_profiles_z = pd.concat(bead_profiles_z, axis=1)
+    bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
+    bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
+
+    considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_valid],
-        root_name="analyzed_bead_centroids",
+        root_name="considered_valid_bead_centers",
         color=(0, 255, 0, 100),
         stroke_width=8,
     )
-    considered_bead_centers_lateral_edge = _generate_center_roi(
+    considered_lateral_edge_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_lateral_edge],
-        root_name="considered_bead_centroids_lateral_edge",
+        root_name="considered_lateral_edge_bead_centers",
         color=(255, 0, 0, 100),
         stroke_width=4,
     )
-    considered_bead_centers_self_proximity = _generate_center_roi(
+    considered_self_proximity_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_self_proximity],
-        root_name="considered_bead_centroids_self_proximity",
+        root_name="considered_self_proximity_bead_centers",
         color=(255, 0, 0, 100),
         stroke_width=4,
     )
-    considered_bead_centers_axial_edge = _generate_center_roi(
+    considered_axial_edge_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_axial_edge],
-        root_name="considered_bead_centroids_axial_edge",
+        root_name="considered_axial_edge_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
-    considered_bead_centers_intensity_outlier = _generate_center_roi(
+    considered_intensity_outlier_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_intensity_outlier],
-        root_name="considered_bead_centroids_intensity_outlier",
+        root_name="considered_intensity_outlier_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
-    considered_bead_centers_z_fit_quality = _generate_center_roi(
+    considered_bad_fit_z_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_bad_fit_z],
-        root_name="considered_bead_centroids_z_fit_quality",
+        root_name="considered_bad_fit_z_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
-    considered_bead_centers_y_fit_quality = _generate_center_roi(
+    considered_bad_fit_y_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_bad_fit_y],
-        root_name="considered_bead_centroids_y_fit_quality",
+        root_name="considered_bad_fit_y_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
-    considered_bead_centers_x_fit_quality = _generate_center_roi(
+    considered_bad_fit_x_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_bad_fit_x],
-        root_name="considered_bead_centroids_x_fit_quality",
+        root_name="considered_bad_fit_x_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
@@ -786,42 +744,27 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         ).to_dict("list"),
     )
     bead_properties = df_to_table(bead_properties, "bead_properties")
-    bead_z_profiles = _generate_profiles_table(
-        dataset=dataset,
-        axis=0,
-        raw_profiles=bead_profiles,
-        fitted_profiles=bead_fitted_profiles,
-    )
-    bead_y_profiles = _generate_profiles_table(
-        dataset=dataset,
-        axis=1,
-        raw_profiles=bead_profiles,
-        fitted_profiles=bead_fitted_profiles,
-    )
-    bead_x_profiles = _generate_profiles_table(
-        dataset=dataset,
-        axis=2,
-        raw_profiles=bead_profiles,
-        fitted_profiles=bead_fitted_profiles,
-    )
+    bead_profiles_z = df_to_table(bead_profiles_z, "bead_profiles_z")
+    bead_profiles_y = df_to_table(bead_profiles_y, "bead_profiles_y")
+    bead_profiles_x = df_to_table(bead_profiles_x, "bead_profiles_x")
 
     dataset.output = mm_schema.PSFBeadsOutput(
         processing_application="microscopemetrics",
         processing_version="0.1.0",
         processing_datetime=datetime.now(),
-        analyzed_bead_centers=analyzed_bead_centers,
-        considered_bead_centers_lateral_edge=considered_bead_centers_lateral_edge,
-        considered_bead_centers_self_proximity=considered_bead_centers_self_proximity,
-        considered_bead_centers_axial_edge=considered_bead_centers_axial_edge,
-        considered_bead_centers_intensity_outlier=considered_bead_centers_intensity_outlier,
-        considered_bead_centers_z_fit_quality=considered_bead_centers_z_fit_quality,
-        considered_bead_centers_y_fit_quality=considered_bead_centers_y_fit_quality,
-        considered_bead_centers_x_fit_quality=considered_bead_centers_x_fit_quality,
+        analyzed_bead_centers=considered_valid_bead_centers,
+        considered_bead_centers_lateral_edge=considered_lateral_edge_bead_centers,
+        considered_bead_centers_self_proximity=considered_self_proximity_bead_centers,
+        considered_bead_centers_axial_edge=considered_axial_edge_bead_centers,
+        considered_bead_centers_intensity_outlier=considered_intensity_outlier_bead_centers,
+        considered_bead_centers_z_fit_quality=considered_bad_fit_z_bead_centers,
+        considered_bead_centers_y_fit_quality=considered_bad_fit_y_bead_centers,
+        considered_bead_centers_x_fit_quality=considered_bad_fit_x_bead_centers,
         key_measurements=key_measurements,
         bead_properties=bead_properties,
-        bead_z_profiles=bead_z_profiles,
-        bead_y_profiles=bead_y_profiles,
-        bead_x_profiles=bead_x_profiles,
+        bead_z_profiles=bead_profiles_z,
+        bead_y_profiles=bead_profiles_y,
+        bead_x_profiles=bead_profiles_x,
     )
 
     dataset.processed = True
