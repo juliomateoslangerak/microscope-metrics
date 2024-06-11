@@ -18,11 +18,39 @@ from microscopemetrics.samples import (
 from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
-def _add_upper_level(df: pd.DataFrame, new_level: str, level_name: str):
-    new_columns = pd.MultiIndex.from_tuples(
-        [(new_level, *col) for col in df.columns], names=[level_name] + list(df.columns.names)
-    )
+def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
+    # Check if the DataFrame has a MultiIndex or a single-level index
+    if isinstance(df.columns, pd.MultiIndex):
+        new_columns = pd.MultiIndex.from_tuples(
+            [(level_value, *col) for col in df.columns], names=[level_name] + list(df.columns.names)
+        )
+    else:
+        new_columns = pd.MultiIndex.from_tuples(
+            [(level_value, col) for col in df.columns], names=[level_name, df.columns.name]
+        )
     df.columns = new_columns
+
+
+def _add_row_index_level(df: pd.DataFrame, level_name: str, level_value: str):
+    # Check if the DataFrame has a MultiIndex or a single-level index
+    if isinstance(df.index, pd.MultiIndex):
+        new_index = pd.MultiIndex.from_tuples(
+            [(level_value, *row) for row in df.index], names=[level_name] + list(df.index.names)
+        )
+    else:
+        new_index = pd.MultiIndex.from_tuples(
+            [(level_value, row) for row in df.index], names=[level_name, df.index.name]
+        )
+    df.index = new_index
+
+
+def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{level_value}_"):
+    concatenated_str = "".join(
+        pattern.format(level_name=level_name, level_value=level_value)
+        for level_name, level_value in zip(index_names, index_values)
+    )
+
+    return concatenated_str.rstrip("_")
 
 
 def _average_beads(beads: list[np.ndarray]) -> np.ndarray:
