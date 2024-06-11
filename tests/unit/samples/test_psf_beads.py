@@ -2,10 +2,32 @@ import numpy as np
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
+from scipy import ndimage
+from skimage.filters import gaussian
 
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
+
+
+@given(
+    # shift_z=st.floats(min_value=0.1, max_value=0.49),
+    # shift_y=st.floats(min_value=0.1, max_value=0.49),
+    # shift_x=st.floats(min_value=0.1, max_value=0.49),
+    shift_z=st.just(3),
+    shift_y=st.just(3),
+    shift_x=st.just(3),
+)
+def test_calculate_shifts(shift_z, shift_y, shift_x):
+    shifted_array = np.zeros((61, 21, 21), dtype=np.float32)
+    shifted_array[30, 10, 10] = 10
+    shifted_array = gaussian(shifted_array, sigma=1.5, preserve_range=True)
+    shifted_array = ndimage.shift(
+        shifted_array, (shift_z, shift_y, shift_x), mode="nearest", order=1
+    )
+    calculated_shifts = psf_beads._calculate_shift(shifted_array)
+
+    assert np.isclose(calculated_shifts[0], shift_z, atol=0.01)
 
 
 @given(st_mm.st_psf_beads_dataset())
