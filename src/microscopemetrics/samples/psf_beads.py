@@ -4,6 +4,7 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from scipy import ndimage, signal
+from scipy.optimize import least_squares
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
@@ -79,10 +80,6 @@ def _average_beads(beads: list[np.ndarray]) -> np.ndarray:
     hr_beads = [ndimage.zoom(bead, 4, order=1) for bead in beads]
 
 
-import numpy as np
-from scipy.optimize import least_squares
-
-
 def gaussian_3d(x, y, z, xo, yo, zo, sigma_x, sigma_y, sigma_z, offset):
     """Returns the 3D Gaussian function with a fixed amplitude of 1.0."""
     amplitude = 1.0
@@ -126,9 +123,7 @@ def calculate_shift(data):
 
     # The shift from the center
     center = np.array(data.shape) / 2
-    shift = np.array([xo, yo, zo]) - center
-
-    return shift
+    return np.array([xo, yo, zo]) - center
 
 
 # Example usage:
