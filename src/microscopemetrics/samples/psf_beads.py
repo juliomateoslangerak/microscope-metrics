@@ -14,7 +14,6 @@ from microscopemetrics.utilities.utilities import fit_airy, is_saturated
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
-    # Check if the DataFrame has a MultiIndex or a single-level index
     if isinstance(df.columns, pd.MultiIndex):
         new_columns = pd.MultiIndex.from_tuples(
             [(level_value, *col) for col in df.columns], names=[level_name] + list(df.columns.names)
@@ -27,7 +26,6 @@ def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
 
 
 def _add_row_index_level(df: pd.DataFrame, level_name: str, level_value: str):
-    # Check if the DataFrame has a MultiIndex or a single-level index
     if isinstance(df.index, pd.MultiIndex):
         new_index = pd.MultiIndex.from_tuples(
             [(level_value, *row) for row in df.index], names=[level_name] + list(df.index.names)
