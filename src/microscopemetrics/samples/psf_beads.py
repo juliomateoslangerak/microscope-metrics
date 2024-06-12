@@ -10,7 +10,7 @@ from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
 from microscopemetrics.samples import df_to_table, logger, validate_requirements
-from microscopemetrics.utilities.utilities import fit_airy, is_saturated
+from microscopemetrics.utilities.utilities import fit_airy, fit_gaussian, is_saturated
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
@@ -48,82 +48,44 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
 
 def _average_beads(beads: list[np.ndarray]) -> np.ndarray:
     """
-    This function takes a list of 3D point spread function bead arrays and averages them to generate a single psf bead.
-    It does so by:
-    1. Normalizing the intensities into a float32 0-1 range
-    2. Increasing the resolution of the beads through interpolation by a factor of 4
-    3. Aligning the beads into a common reference frame. It does so using cross correlation
-    4. Averaging the beads
+    Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
-    # We first create an fake psf image to align the beads to
-    centre_psf = np.zeros(beads[0].shape, dtype=np.float32)
-    centre_psf[tuple(dim // 2 for dim in centre_psf.shape)] = 1
-    centre_psf = gaussian(centre_psf, sigma=1, preserve_range=True)
-
-    # Normalize the intensities
-    beads = [(bead.astype(np.float32) - bead.min()) / bead.max() for bead in beads]
-
-    # Align the beads
-    correlations = [signal.correlate(centre_psf, bead, mode="same") for bead in beads]
-    shifts = [
-        np.unravel_index(np.argmax(correlation), correlation.shape) for correlation in correlations
+    aligned_beads = [
+        ndimage.shift(b, _find_bead_shifts(b), mode="nearest", order=1) for b in beads
     ]
 
-    # Increase the resolution of the beads
-    hr_beads = [ndimage.zoom(bead, 4, order=1) for bead in beads]
+    return np.mean(aligned_beads, axis=0)
 
 
-def gaussian_3d(x, y, z, xo, yo, zo, sigma_x, sigma_y, sigma_z, offset):
-    """Returns the 3D Gaussian function with a fixed amplitude of 1.0."""
-    amplitude = 1.0
-    g = offset + amplitude * np.exp(
-        -(
-            ((x - xo) ** 2) / (2 * sigma_x**2)
-            + ((y - yo) ** 2) / (2 * sigma_y**2)
-            + ((z - zo) ** 2) / (2 * sigma_z**2)
-        )
-    )
-    return g.ravel()
+def _find_bead_shifts(data1, data2=None):
+    """Cross-correlates two 2D or 3D arrays and returns the shifts.
+    If a second array is not provided, a Gaussian is used as a reference."""
+    if data2 is None:
+        data2 = np.zeros_like(data1)
+        slices = []
+        for dim in data2.shape:
+            if dim % 2 == 0:
+                slices.append(slice(dim // 2))
+            else:
+                slices.append(slice(dim // 2, dim // 2 + 1))
+        data2[tuple(slices)] = 1
+        data2 = gaussian(data2, sigma=1, preserve_range=True)
 
+    if data1.ndim != data2.ndim:
+        raise ValueError("Data1 and Data2 must have the same number of dimensions.")
 
-def fit_gaussian_3d(data):
-    """Fits a 3D Gaussian to the data and returns the fit parameters."""
-    # Generate the x, y, z coordinate arrays
-    x = np.arange(data.shape[0])
-    y = np.arange(data.shape[1])
-    z = np.arange(data.shape[2])
-    x, y, z = np.meshgrid(x, y, z, indexing="ij")
+    corr_arr = signal.correlate(data1, data2, mode="same")
 
-    # Initial guess for the parameters
-    xo, yo, zo = np.array(data.shape) / 2
-    sigma_x = sigma_y = sigma_z = np.std(data)
-    offset = np.min(data)
-    initial_guess = (xo, yo, zo, sigma_x, sigma_y, sigma_z, offset)
+    profiles = []
+    max_pos = np.unravel_index(np.argmax(corr_arr), corr_arr.shape)
+    for dim in range(corr_arr.ndim):
+        pos_slices = [slice(pos, pos + 1) for pos in max_pos]
+        pos_slices[dim] = slice(None)
+        profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
 
-    # Fit the 3D Gaussian
-    def error_function(params):
-        return gaussian_3d(x, y, z, *params) - data.ravel()
+    shifts = tuple(fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for dim, profile in enumerate(profiles))
 
-    result = least_squares(error_function, initial_guess)
-
-    return result.x
-
-
-def calculate_shift(data):
-    """Calculates the shift of the 3D Gaussian from the center."""
-    params = fit_gaussian_3d(data)
-    xo, yo, zo, sigma_x, sigma_y, sigma_z, offset = params
-
-    # The shift from the center
-    center = np.array(data.shape) / 2
-    return np.array([xo, yo, zo]) - center
-
-
-# Example usage:
-# Replace 'data' with your actual 3D numpy array
-data = np.random.rand(10, 10, 10)  # Example data
-shift = calculate_shift(data)
-print("Shift of the Gaussian:", shift)
+    return shifts
 
 
 def _calculate_bead_intensity_outliers(
@@ -389,8 +351,7 @@ def _process_channel(
         min_distance=min_bead_distance,
     )
 
-    # TODO: activate this when average beads are working
-    #  average_bead = _average_beads(beads)
+    average_bead = _average_beads(beads)
 
     bead_profiles_z = []
     bead_profiles_y = []

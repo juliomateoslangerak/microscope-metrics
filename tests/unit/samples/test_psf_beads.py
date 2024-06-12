@@ -1,33 +1,89 @@
+import random
+
 import numpy as np
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
 from scipy import ndimage
 from skimage.filters import gaussian
+from skimage.util import random_noise as skimage_random_noise
+from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
+from microscopemetrics.utilities.utilities import fit_gaussian
 
 
 @given(
-    # shift_z=st.floats(min_value=0.1, max_value=0.49),
-    # shift_y=st.floats(min_value=0.1, max_value=0.49),
-    # shift_x=st.floats(min_value=0.1, max_value=0.49),
-    shift_z=st.just(3),
-    shift_y=st.just(3),
-    shift_x=st.just(3),
+    shift_z=st.floats(min_value=.01, max_value=.49),
+    shift_y=st.floats(min_value=.01, max_value=.49),
+    shift_x=st.floats(min_value=.01, max_value=.49),
 )
-def test_calculate_shifts(shift_z, shift_y, shift_x):
+def test_cross_correlate(shift_z, shift_y, shift_x):
     shifted_array = np.zeros((61, 21, 21), dtype=np.float32)
-    shifted_array[30, 10, 10] = 10
+    shifted_array[30, 10, 10] = 1
     shifted_array = gaussian(shifted_array, sigma=1.5, preserve_range=True)
     shifted_array = ndimage.shift(
         shifted_array, (shift_z, shift_y, shift_x), mode="nearest", order=1
     )
-    calculated_shifts = psf_beads._calculate_shift(shifted_array)
+    calculated_corr = psf_beads._find_bead_shifts(shifted_array)
 
-    assert np.isclose(calculated_shifts[0], shift_z, atol=0.01)
+    assert calculated_corr[0] == pytest.approx(shift_z, abs=0.01)
+    assert calculated_corr[1] == pytest.approx(shift_y, abs=0.01)
+    assert calculated_corr[2] == pytest.approx(shift_x, abs=0.01)
+
+
+@given(
+    shifts=st.lists(
+        st.tuples(
+            st.floats(min_value=.01, max_value=.49),
+            st.floats(min_value=.01, max_value=.49),
+            st.floats(min_value=.01, max_value=.49),
+        )
+        , min_size=3, max_size=10),
+    signal=st.integers(min_value=10, max_value=1000),
+    sigma_axial=st.floats(min_value=1.0, max_value=3.0),
+    sigma_lateral=st.floats(min_value=1.0, max_value=2.0),
+)
+def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
+    beads = []
+    ref_bead = np.zeros((61, 21, 21), dtype=np.float32)
+    ref_bead[30, 10, 10] = signal
+    ref_bead = gaussian(ref_bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True)
+    ref_bead = skimage_random_noise(ref_bead, mode="poisson", clip=False)
+
+    for i, shift in enumerate(shifts):
+        bead = np.zeros((61, 21, 21), dtype=np.float32)
+        bead[30, 10, 10] = signal
+        bead = ndimage.shift(
+            bead,
+            shift,
+            mode="nearest",
+            order=1
+        )
+        bead = gaussian(bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True)
+        bead = skimage_random_noise(bead, mode="poisson", clip=False)
+        beads.append(bead)
+
+    averaged_bead = psf_beads._average_beads(beads)
+
+    averaged_profile_z = np.squeeze(averaged_bead[:, 10, 10])
+    averaged_profile_y = np.squeeze(averaged_bead[30, :, 10])
+    averaged_profile_x = np.squeeze(averaged_bead[30, :, 10])
+
+    averaged_sigma_z = fit_gaussian(averaged_profile_z)[3][3]
+    averaged_sigma_y = fit_gaussian(averaged_profile_y)[3][3]
+    averaged_sigma_x = fit_gaussian(averaged_profile_x)[3][3]
+
+    ref_sigma_z = fit_gaussian(np.squeeze(ref_bead[:, 10, 10]))[3][3]
+    ref_sigma_y = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
+    ref_sigma_x = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
+
+    assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.1)
+    assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.1)
+    assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.1)
 
 
 @given(st_mm.st_psf_beads_dataset())
