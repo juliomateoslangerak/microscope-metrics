@@ -447,7 +447,7 @@ def st_psf_beads_test_data(
     sigma_z=st.floats(min_value=0.9, max_value=1.5),
     sigma_x=st.floats(min_value=0.9, max_value=1.5),
     sigma_y=st.floats(min_value=0.9, max_value=1.5),
-    min_distance=st.just(25),
+    min_distance=st.just(20),
     nr_valid_beads=st.integers(min_value=1, max_value=10),
     nr_edge_beads=st.integers(min_value=0, max_value=3),
     nr_out_of_focus_beads=st.integers(min_value=0, max_value=3),
