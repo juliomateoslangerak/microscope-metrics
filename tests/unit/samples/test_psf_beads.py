@@ -35,7 +35,7 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     )
     ref_bead = skimage_random_noise(ref_bead, mode="poisson", clip=False)
 
-    for i, shift in enumerate(shifts):
+    for shift in shifts:
         bead = np.zeros((61, 21, 21), dtype=np.int16)
         bead[30, 10, 10] = signal
         bead = ndimage.shift(bead, shift, mode="nearest", order=1)
