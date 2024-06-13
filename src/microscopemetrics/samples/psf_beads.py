@@ -278,6 +278,30 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
 
     # Find bead centers
     positions_all = peak_local_max(image=channel_gauss_mip, threshold_rel=0.2)
+    positions_all_not_proximity_not_edge = peak_local_max(
+        image=channel_gauss_mip,
+        threshold_rel=0.2,
+        min_distance=int(min_distance),
+        exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
+        p_norm=2,
+    )
+    positions_all_not_proximity = peak_local_max(
+        image=channel_gauss_mip,
+        threshold_rel=0.2,
+        min_distance=int(min_distance),
+        exclude_border=False,
+        p_norm=2,
+    )
+
+    # We convert the arrays into sets to perform easier to follow filtering logic
+    positions_all = set(map(tuple, positions_all))
+    positions_all_not_proximity_not_edge = set(map(tuple, positions_all_not_proximity_not_edge))
+    positions_all_not_proximity = set(map(tuple, positions_all_not_proximity))
+
+    # positions_proximity_edge = positions_all - positions_all_not_proximity_not_edge
+    positions_edge = positions_all_not_proximity - positions_all_not_proximity_not_edge
+    positions_proximity = positions_all - positions_all_not_proximity
+
     positions_df = pd.DataFrame(
         positions_all,
         columns=["center_y", "center_x"],
@@ -288,37 +312,15 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
         axis=1,
     )
 
-    positions_proximity_edge_filtered = peak_local_max(
-        image=channel_gauss_mip,
-        threshold_rel=0.2,
-        min_distance=int(min_distance),
-        exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
-        p_norm=2,
+    positions_df["considered_valid"] = positions_df.apply(
+        lambda row: (row["center_y"], row["center_x"]) in positions_all_not_proximity_not_edge,
+        axis=1,
     )
-    positions_proximity_filtered = peak_local_max(
-        image=channel_gauss_mip,
-        threshold_rel=0.2,
-        min_distance=int(min_distance),
-        p_norm=2,
+    positions_df["considered_self_proximity"] = positions_df.apply(
+        lambda row: (row["center_y"], row["center_x"]) in positions_proximity, axis=1
     )
-
-    # The good beads -> considered_valid = True
-    filter_positions(positions_df, positions_proximity_edge_filtered, "considered_valid", True)
-    # The beads that are not close to each other -> considered_self_proximity = False
-    filter_positions(positions_df, positions_proximity_filtered, "considered_self_proximity", True)
-    # The beads that are not close to the edge or not close to each other ->
-    # considered_lateral_edge = False & considered_self_proximity = False
-    filter_positions(
-        positions_df,
-        positions_proximity_edge_filtered,
-        "considered_lateral_edge",
-        False,
-    )
-    filter_positions(
-        positions_df,
-        positions_proximity_edge_filtered,
-        "considered_self_proximity",
-        True,
+    positions_df["considered_lateral_edge"] = positions_df.apply(
+        lambda row: (row["center_y"], row["center_x"]) in positions_edge, axis=1
     )
 
     logger.debug(f"Beads found: {len(positions_all)}")
