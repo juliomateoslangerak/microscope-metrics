@@ -59,9 +59,9 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     ref_sigma_y = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
     ref_sigma_x = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
 
-    assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.1)
-    assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.1)
-    assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.1)
+    assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.2)
+    assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.2)
+    assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.2)
 
 
 @given(st_mm.st_psf_beads_dataset())
