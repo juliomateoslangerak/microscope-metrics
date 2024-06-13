@@ -4,7 +4,6 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from scipy import ndimage, signal
-from scipy.optimize import least_squares
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
@@ -16,11 +15,13 @@ from microscopemetrics.utilities.utilities import fit_airy, fit_gaussian, is_sat
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
     if isinstance(df.columns, pd.MultiIndex):
         new_columns = pd.MultiIndex.from_tuples(
-            [(level_value, *col) for col in df.columns], names=[level_name] + list(df.columns.names)
+            [(level_value, *col) for col in df.columns],
+            names=[level_name] + list(df.columns.names),
         )
     else:
         new_columns = pd.MultiIndex.from_tuples(
-            [(level_value, col) for col in df.columns], names=[level_name, df.columns.name]
+            [(level_value, col) for col in df.columns],
+            names=[level_name, df.columns.name],
         )
     df.columns = new_columns
 
@@ -28,7 +29,8 @@ def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
 def _add_row_index_level(df: pd.DataFrame, level_name: str, level_value: str):
     if isinstance(df.index, pd.MultiIndex):
         new_index = pd.MultiIndex.from_tuples(
-            [(level_value, *row) for row in df.index], names=[level_name] + list(df.index.names)
+            [(level_value, *row) for row in df.index],
+            names=[level_name] + list(df.index.names),
         )
     else:
         new_index = pd.MultiIndex.from_tuples(
@@ -50,9 +52,12 @@ def _average_beads(beads: list[np.ndarray]) -> np.ndarray:
     """
     Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
-    aligned_beads = [
-        ndimage.shift(b, _find_bead_shifts(b), mode="nearest", order=1) for b in beads
-    ]
+    if len(beads) < 2:
+        logger.warning("Less than 2 beads to average. Skipping averaging.")
+        return None
+
+    logger.info(f"Averaging {len(beads)} beads")
+    aligned_beads = [ndimage.shift(b, _find_bead_shifts(b), mode="nearest", order=1) for b in beads]
 
     return np.mean(aligned_beads, axis=0)
 
@@ -83,7 +88,9 @@ def _find_bead_shifts(data1, data2=None):
         pos_slices[dim] = slice(None)
         profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
 
-    shifts = tuple(fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for dim, profile in enumerate(profiles))
+    shifts = tuple(
+        fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for dim, profile in enumerate(profiles)
+    )
 
     return shifts
 
@@ -281,7 +288,8 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
         index=pd.Index(range(len(positions_all)), name="bead_id"),
     )
     positions_df["center_z"] = positions_df.apply(
-        lambda row: int(channel_gauss[:, row["center_y"], row["center_x"]].argmax()), axis=1
+        lambda row: int(channel_gauss[:, row["center_y"], row["center_x"]].argmax()),
+        axis=1,
     )
 
     positions_proximity_edge_filtered = peak_local_max(
@@ -292,7 +300,10 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
         p_norm=2,
     )
     positions_proximity_filtered = peak_local_max(
-        image=channel_gauss_mip, threshold_rel=0.2, min_distance=int(min_distance), p_norm=2
+        image=channel_gauss_mip,
+        threshold_rel=0.2,
+        min_distance=int(min_distance),
+        p_norm=2,
     )
 
     # The good beads -> considered_valid = True
@@ -302,10 +313,16 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     # The beads that are not close to the edge or not close to each other ->
     # considered_lateral_edge = False & considered_self_proximity = False
     filter_positions(
-        positions_df, positions_proximity_edge_filtered, "considered_lateral_edge", False
+        positions_df,
+        positions_proximity_edge_filtered,
+        "considered_lateral_edge",
+        False,
     )
     filter_positions(
-        positions_df, positions_proximity_edge_filtered, "considered_self_proximity", True
+        positions_df,
+        positions_proximity_edge_filtered,
+        "considered_self_proximity",
+        True,
     )
 
     logger.debug(f"Beads found: {len(positions_all)}")
@@ -351,7 +368,9 @@ def _process_channel(
         min_distance=min_bead_distance,
     )
 
-    average_bead = _average_beads(beads)
+    average_bead = _average_beads(
+        [bead for bead, valid in zip(beads, bead_positions["considered_valid"]) if valid]
+    )
 
     bead_profiles_z = []
     bead_profiles_y = []
@@ -490,7 +509,11 @@ def _process_image(
     bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
     bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
 
-    return bead_images, bead_positions, (bead_profiles_z, bead_profiles_y, bead_profiles_x)
+    return (
+        bead_images,
+        bead_positions,
+        (bead_profiles_z, bead_profiles_y, bead_profiles_x),
+    )
 
 
 def _estimate_min_bead_distance(dataset: mm_schema.PSFBeadsDataset) -> float:
@@ -602,7 +625,11 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         (
             _,
             image_bead_properties_df,
-            (image_bead_profiles_z_df, image_bead_profiles_y_df, image_bead_profiles_x_df),
+            (
+                image_bead_profiles_z_df,
+                image_bead_profiles_y_df,
+                image_bead_profiles_x_df,
+            ),
         ) = _process_image(
             image=image.array_data,
             sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),

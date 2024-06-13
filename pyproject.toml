@@ -30,6 +30,9 @@ filterwarnings = [
     "ignore:.*urllib3 v2 only supports OpenSSL.*:Warning",
 ]
 
+[tool.isort]
+profile = "black"
+
 [tool.poetry.dependencies]
 python = ">=3.10.12 <3.12"
 numpy = "^1"

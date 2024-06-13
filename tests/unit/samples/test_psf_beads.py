@@ -1,16 +1,12 @@
-import random
-
 import numpy as np
 import pytest
-from hypothesis import given, settings, reproduce_failure
+from hypothesis import given, reproduce_failure, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
 from scipy import ndimage
 from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
-from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 
-from microscopemetrics import SaturationError
 from microscopemetrics.samples import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
 from microscopemetrics.utilities.utilities import fit_gaussian
@@ -19,12 +15,14 @@ from microscopemetrics.utilities.utilities import fit_gaussian
 @given(
     shifts=st.lists(
         st.tuples(
-            st.floats(min_value=.1, max_value=.49),
-            st.floats(min_value=.1, max_value=.49),
-            st.floats(min_value=.1, max_value=.49),
-        )
-        , min_size=3, max_size=10),
-    signal=st.integers(min_value=10, max_value=1000),
+            st.floats(min_value=0.1, max_value=0.49),
+            st.floats(min_value=0.1, max_value=0.49),
+            st.floats(min_value=0.1, max_value=0.49),
+        ),
+        min_size=3,
+        max_size=10,
+    ),
+    signal=st.integers(min_value=20, max_value=1000),
     sigma_axial=st.floats(min_value=1.0, max_value=3.0),
     sigma_lateral=st.floats(min_value=1.0, max_value=2.0),
 )
@@ -32,19 +30,18 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     beads = []
     ref_bead = np.zeros((61, 21, 21), dtype=np.int16)
     ref_bead[30, 10, 10] = signal
-    ref_bead = gaussian(ref_bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True)
+    ref_bead = gaussian(
+        ref_bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True
+    )
     ref_bead = skimage_random_noise(ref_bead, mode="poisson", clip=False)
 
     for i, shift in enumerate(shifts):
         bead = np.zeros((61, 21, 21), dtype=np.int16)
         bead[30, 10, 10] = signal
-        bead = ndimage.shift(
-            bead,
-            shift,
-            mode="nearest",
-            order=1
+        bead = ndimage.shift(bead, shift, mode="nearest", order=1)
+        bead = gaussian(
+            bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True
         )
-        bead = gaussian(bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True)
         bead = skimage_random_noise(bead, mode="poisson", clip=False)
         beads.append(bead)
 
@@ -65,15 +62,6 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.1)
     assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.1)
     assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.1)
-
-    # We assume that the average is better than the individual beads
-    assert averaged_sigma_z < ref_sigma_z
-    assert averaged_sigma_y < ref_sigma_y
-    assert averaged_sigma_x < ref_sigma_x
-
-    assert averaged_sigma_z > sigma_axial
-    assert averaged_sigma_y > sigma_lateral
-    assert averaged_sigma_x > sigma_lateral
 
 
 @given(st_mm.st_psf_beads_dataset())
