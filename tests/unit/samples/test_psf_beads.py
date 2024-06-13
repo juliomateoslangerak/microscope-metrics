@@ -29,36 +29,39 @@ from microscopemetrics.utilities.utilities import fit_gaussian
 )
 def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     beads = []
-    ref_bead = np.zeros((61, 21, 21), dtype=np.int16)
-    ref_bead[30, 10, 10] = signal
-    ref_bead = gaussian(
-        ref_bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True
-    )
-    ref_bead = skimage_random_noise(ref_bead, mode="poisson", clip=False)
+    ref_beads = []
 
     for shift in shifts:
+        # Reproducing acquisition flow:
+        # - bead real position shifted
+        # - bead is blurred by microscope PSF (gaussian?)
+        # - bead is noised by Poisson noise in the camera
+        # a replica is caught as reference before shifting
         bead = np.zeros((61, 21, 21), dtype=np.int16)
         bead[30, 10, 10] = signal
+        ref_bead = bead.copy()
         bead = ndimage.shift(bead, shift, mode="nearest", order=1)
         bead = gaussian(
             bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True
         )
+        ref_bead = gaussian(
+            ref_bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True
+        )
         bead = skimage_random_noise(bead, mode="poisson", clip=False)
+        ref_bead = skimage_random_noise(ref_bead, mode="poisson", clip=False)
         beads.append(bead)
+        ref_beads.append(ref_bead)
 
     averaged_bead = psf_beads._average_beads(beads)
+    ref_bead = np.mean(ref_beads, axis=0)
 
-    averaged_profile_z = np.squeeze(averaged_bead[:, 10, 10])
-    averaged_profile_y = np.squeeze(averaged_bead[30, :, 10])
-    averaged_profile_x = np.squeeze(averaged_bead[30, :, 10])
-
-    averaged_sigma_z = fit_gaussian(averaged_profile_z)[3][3]
-    averaged_sigma_y = fit_gaussian(averaged_profile_y)[3][3]
-    averaged_sigma_x = fit_gaussian(averaged_profile_x)[3][3]
+    averaged_sigma_z = fit_gaussian(np.squeeze(averaged_bead[:, 10, 10]))[3][3]
+    averaged_sigma_y = fit_gaussian(np.squeeze(averaged_bead[30, :, 10]))[3][3]
+    averaged_sigma_x = fit_gaussian(np.squeeze(averaged_bead[30, 10, :]))[3][3]
 
     ref_sigma_z = fit_gaussian(np.squeeze(ref_bead[:, 10, 10]))[3][3]
     ref_sigma_y = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
-    ref_sigma_x = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
+    ref_sigma_x = fit_gaussian(np.squeeze(ref_bead[30, 10, :]))[3][3]
 
     assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.2)
     assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.2)
