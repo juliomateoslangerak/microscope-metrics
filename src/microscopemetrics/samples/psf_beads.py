@@ -88,11 +88,7 @@ def _find_bead_shifts(data1, data2=None):
         pos_slices[dim] = slice(None)
         profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
 
-    shifts = tuple(
-        fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for dim, profile in enumerate(profiles)
-    )
-
-    return shifts
+    return tuple(fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for profile in profiles)
 
 
 def _calculate_bead_intensity_outliers(
@@ -268,7 +264,7 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
         )
         pos_df.loc[merged_df["_merge"] == "both", column_name] = set_value
 
-    logger.debug(f"Finding beads in channel...")
+    logger.debug("Finding beads in channel...")
 
     if all(sigma):
         logger.debug(f"Applying Gaussian filter with sigma {sigma}")
