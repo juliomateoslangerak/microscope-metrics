@@ -230,7 +230,7 @@ def _create_table(
     return mm_schema.Table(
         name=name,
         description=description,
-        column_series=mm_schema.ColumnSeries(columns=columns),
+        columns=columns,
         table_data=data,
     )
 
