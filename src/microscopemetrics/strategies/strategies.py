@@ -476,7 +476,7 @@ def st_psf_beads_test_data(
 
     dtype = draw(dtype)
 
-    min_distance_z = draw(min_distance) // 4
+    min_distance_z = draw(min_distance) // 2
     min_distance_y = draw(min_distance)
     min_distance_x = draw(min_distance)
 
