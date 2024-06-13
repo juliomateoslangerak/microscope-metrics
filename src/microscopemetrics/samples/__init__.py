@@ -214,9 +214,9 @@ def _create_table(
 
     # TODO: Add values to columns
     if isinstance(data, dict):
-        columns = [mm_schema.Column(name=n) for n, v in data.items()]
+        columns = [mm_schema.Column(name=n, values=v) for n, v in data.items()]
     elif isinstance(data, pd.DataFrame):
-        columns = [mm_schema.Column(name=n) for n in data.columns]
+        columns = [mm_schema.Column(name=n, values=data[n]) for n in data.columns]
     else:
         raise ValueError("Data should be either a dictionary or a pandas dataframe")
 
