@@ -3,6 +3,7 @@ import pytest
 from hypothesis import given, reproduce_failure, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
+from microscopemetrics_schema import strategies as st_mm_schema
 from scipy import ndimage
 from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
@@ -91,16 +92,26 @@ def test_psf_beads_analysis_run(dataset):
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
+            min_distance=st.just(20),
             nr_valid_beads=st.integers(min_value=0, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
-        )
+        ),
+        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+            dataset=st_mm_schema.st_mm_dataset(
+                input=st_mm_schema.st_mm_psf_beads_input(
+                    fitting_r2_threshold=st.just(0.8),  # TODO: Remove this?
+                )
+            )
+        ),
     )
 )
 def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
+    psf_beads_dataset.input.min_lateral_distance_factor = expected_output["min_distance_y"][0]
+
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
     expected = sum(len(im_vbp) for im_vbp in expected_output["valid_bead_positions"])
@@ -127,6 +138,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
+    psf_beads_dataset.input.min_lateral_distance_factor = expected_output["min_distance_y"][0]
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
 
