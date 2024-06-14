@@ -121,9 +121,7 @@ def _calculate_bead_intensity_outliers(
     ].astype(bool)
 
 
-def _generate_key_measurements(
-    bead_properties_df,
-):
+def _generate_key_measurements(bead_properties_df, average_bead_properties):
     measurement_aggregation_columns = [
         "channel_nr",
         "intensity_max",
@@ -367,10 +365,6 @@ def _process_channel(
         channel=channel,
         sigma=sigma,
         min_distance=min_bead_distance,
-    )
-
-    average_bead = _average_beads(
-        [bead for bead, valid in zip(beads, bead_positions["considered_valid"]) if valid]
     )
 
     bead_profiles_z = []
