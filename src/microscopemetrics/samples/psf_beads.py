@@ -444,11 +444,13 @@ def _process_channel(
     # We need to invalidate all the bad fits and outliers
     bead_properties["considered_valid"] = bead_properties.apply(
         lambda row: not any(
-            row["considered_axial_edge"],
-            row["considered_bad_fit_z"],
-            row["considered_bad_fit_y"],
-            row["considered_bad_fit_x"],
-            row["considered_intensity_outlier"],
+            [
+                row["considered_axial_edge"],
+                row["considered_bad_fit_z"],
+                row["considered_bad_fit_y"],
+                row["considered_bad_fit_x"],
+                row["considered_intensity_outlier"],
+            ]
         ),
         axis=1,
     )
