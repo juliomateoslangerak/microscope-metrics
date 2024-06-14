@@ -105,6 +105,7 @@ def test_psf_beads_analysis_run(dataset):
             dataset=st_mm_schema.st_mm_dataset(
                 input=st_mm_schema.st_mm_psf_beads_input(
                     fitting_r2_threshold=st.just(0.8),  # TODO: Remove this?
+                    intensity_robust_z_score_threshold=st.just(4.0),
                 )
             )
         ),
