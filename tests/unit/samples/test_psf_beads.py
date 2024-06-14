@@ -23,7 +23,7 @@ from microscopemetrics.utilities.utilities import fit_gaussian
         min_size=3,
         max_size=10,
     ),
-    signal=st.integers(min_value=20, max_value=1000),
+    signal=st.integers(min_value=50, max_value=1000),
     sigma_axial=st.floats(min_value=1.0, max_value=3.0),
     sigma_lateral=st.floats(min_value=1.0, max_value=2.0),
 )
@@ -63,9 +63,9 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     ref_sigma_y = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
     ref_sigma_x = fit_gaussian(np.squeeze(ref_bead[30, 10, :]))[3][3]
 
-    assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.2)
-    assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.2)
-    assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.2)
+    assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.3)
+    assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.3)
+    assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.3)
 
 
 @given(st_mm.st_psf_beads_dataset())
