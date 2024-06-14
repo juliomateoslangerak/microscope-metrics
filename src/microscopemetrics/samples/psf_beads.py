@@ -173,6 +173,20 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
         "_".join(col).strip() for col in channel_measurements.columns.values
     ]
 
+    for ch_nr, values in average_bead_properties.items():
+        channel_measurements.at[ch_nr, "average_bead_fit_r2_z"] = values["r2"][0]
+        channel_measurements.at[ch_nr, "average_bead_fit_r2_y"] = values["r2"][1]
+        channel_measurements.at[ch_nr, "average_bead_fit_r2_x"] = values["r2"][2]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_pixel_z"] = values["fwhm"][0]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_pixel_y"] = values["fwhm"][1]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_pixel_x"] = values["fwhm"][2]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_micron_z"] = values["fwhm_micron"][0]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_micron_y"] = values["fwhm_micron"][1]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_micron_x"] = values["fwhm_micron"][2]
+        channel_measurements.at[ch_nr, "average_bead_fwhm_lateral_asymmetry_ratio"] = values[
+            "fwhm_lateral_asymmetry_ratio"
+        ]
+
     return pd.merge(channel_counts, channel_measurements, how="outer", on=["channel_nr"])
 
 
@@ -679,14 +693,16 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     channel_beads = [[b for ch_b in im_b for b in ch_b] for im_b in zip(*beads.values())]
 
     # Before averaging any bead we need to verify that all voxel sizes are equal
-    if all(v_s == voxel_sizes_micron[0] for v_s in voxel_sizes_micron):
+    if len(set(voxel_sizes_micron.values())) == 1:
         average_beads = [_average_beads(ch_beads) for ch_beads in channel_beads]
-        average_beads_properties = [
-            _process_bead(av_bead, voxel_sizes_micron[0]) for av_bead in average_beads
-        ]
+        average_beads_properties = {
+            ch_nr: _process_bead(av_bead, list(voxel_sizes_micron.values())[0])
+            for ch_nr, av_bead in enumerate(average_beads)
+            if av_bead is not None
+        }
     else:
         logger.error("Voxel sizes are not equal among images. Skipping average bead calculation.")
-        average_beads_properties = []
+        average_beads_properties = {}
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
