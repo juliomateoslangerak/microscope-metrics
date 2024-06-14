@@ -585,7 +585,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Containers for output data
     saturated_channels = {}
-    bead_crops = {}
+    beads = {}
     bead_properties = []
     bead_profiles_z = []
     bead_profiles_y = []
@@ -659,7 +659,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             f"    {image_bead_properties_df.considered_bad_fit_x.sum()} beads considered bad fit in x."
         )
 
-        bead_crops[image.name] = image_beads
+        beads[image.name] = image_beads
 
         _add_row_index_level(image_bead_properties_df, "image_name", image.name)
         bead_properties.append(image_bead_properties_df)
@@ -676,7 +676,17 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
     bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
 
-    # TODO: Handle average beads here
+    channel_beads = [[b for ch_b in im_b for b in ch_b] for im_b in zip(*beads.values())]
+
+    # Before averaging any bead we need to verify that all voxel sizes are equal
+    if all(v_s == voxel_sizes_micron[0] for v_s in voxel_sizes_micron):
+        average_beads = [_average_beads(ch_beads) for ch_beads in channel_beads]
+        average_beads_properties = [
+            _process_bead(av_bead, voxel_sizes_micron[0]) for av_bead in average_beads
+        ]
+    else:
+        logger.error("Voxel sizes are not equal among images. Skipping average bead calculation.")
+        average_beads_properties = []
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
@@ -738,7 +748,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         name="psf_bead_key_measurements",
         description="Averaged key measurements for all beads considered valid in the dataset.",
         **_generate_key_measurements(
-            bead_properties_df=bead_properties, average_bead_properties=image_beads
+            bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
         ).to_dict("list"),
     )
     bead_properties = df_to_table(bead_properties, "bead_properties")
