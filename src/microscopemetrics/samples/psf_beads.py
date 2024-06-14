@@ -188,31 +188,33 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     x_focus = np.argmax(x_max)
 
     # Generate profiles
-    z_profile = np.squeeze(bead[:, y_focus, x_focus])
-    y_profile = np.squeeze(bead[z_focus, :, x_focus])
-    x_profile = np.squeeze(bead[z_focus, y_focus, :])
+    profile_z = np.squeeze(bead[:, y_focus, x_focus])
+    profile_y = np.squeeze(bead[z_focus, :, x_focus])
+    profile_x = np.squeeze(bead[z_focus, y_focus, :])
 
     # Normalize the profiles and subtract the background
-    z_profile = (z_profile - z_profile.min()) / (z_profile.max() - z_profile.min())
-    y_profile = (y_profile - y_profile.min()) / (y_profile.max() - y_profile.min())
-    x_profile = (x_profile - x_profile.min()) / (x_profile.max() - x_profile.min())
+    profile_z = (profile_z - profile_z.min()) / (profile_z.max() - profile_z.min())
+    profile_y = (profile_y - profile_y.min()) / (profile_y.max() - profile_y.min())
+    profile_x = (profile_x - profile_x.min()) / (profile_x.max() - profile_x.min())
 
     # Fitting the profiles
-    z_fitted_profile, z_r2, z_fwhm, (z_center_pos, _) = fit_airy(z_profile)
-    y_fitted_profile, y_r2, y_fwhm, (y_center_pos, _) = fit_airy(y_profile)
-    x_fitted_profile, x_r2, x_fwhm, (x_center_pos, _) = fit_airy(x_profile)
+    fitted_profile_z, r2_z, fwhm_z, (center_pos_z, _) = fit_airy(profile_z)
+    fitted_profile_y, r2_y, fwhm_y, (center_pos_y, _) = fit_airy(profile_y)
+    fitted_profile_x, r2_x, fwhm_x, (center_pos_x, _) = fit_airy(profile_x)
+
+    fwhm_lateral_asymmetry_ratio = max(fwhm_y, fwhm_x) / min(fwhm_y, fwhm_x)
 
     if all(voxel_size_micron):
-        z_fwhm_micron = z_fwhm * voxel_size_micron[0]
-        y_fwhm_micron = y_fwhm * voxel_size_micron[1]
-        x_fwhm_micron = x_fwhm * voxel_size_micron[2]
+        fwhm_micron_z = fwhm_z * voxel_size_micron[0]
+        fwhm_micron_y = fwhm_y * voxel_size_micron[1]
+        fwhm_micron_x = fwhm_x * voxel_size_micron[2]
     else:
-        z_fwhm_micron = None
-        y_fwhm_micron = None
-        x_fwhm_micron = None
+        fwhm_micron_z = None
+        fwhm_micron_y = None
+        fwhm_micron_x = None
 
     considered_axial_edge = (
-        z_center_pos < z_fwhm * 4 or z_profile.shape[0] - z_center_pos < z_fwhm * 4
+        center_pos_z < fwhm_z * 4 or profile_z.shape[0] - center_pos_z < fwhm_z * 4
     )
 
     intensity_max = bead.max()
@@ -221,34 +223,35 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
 
     # Pack the profiles and fitted profiles into pd.DataFrames
     profiles_z = pd.DataFrame(
-        {"r": z_profile, "f": z_fitted_profile},
+        {"r": profile_z, "f": fitted_profile_z},
     )
     profiles_z.columns = pd.MultiIndex.from_product(
         [["z"], ["raw", "fitted"]], names=["axis", "profile_type"]
     )
     profiles_y = pd.DataFrame(
-        {"r": y_profile, "f": y_fitted_profile},
+        {"r": profile_y, "f": fitted_profile_y},
     )
     profiles_y.columns = pd.MultiIndex.from_product(
         [["y"], ["raw", "fitted"]], names=["axis", "profile_type"]
     )
     profiles_x = pd.DataFrame(
-        {"r": x_profile, "f": x_fitted_profile},
+        {"r": profile_x, "f": fitted_profile_x},
     )
     profiles_x.columns = pd.MultiIndex.from_product(
         [["x"], ["raw", "fitted"]], names=["axis", "profile_type"]
     )
 
-    return (
-        (profiles_z, profiles_y, profiles_x),
-        (z_r2, y_r2, x_r2),
-        (z_fwhm, y_fwhm, x_fwhm),
-        (z_fwhm_micron, y_fwhm_micron, x_fwhm_micron),
-        considered_axial_edge,
-        intensity_max,
-        intensity_min,
-        intensity_std,
-    )
+    return {
+        "profiles": (profiles_z, profiles_y, profiles_x),
+        "r2": (r2_z, r2_y, r2_x),
+        "fwhm": (fwhm_z, fwhm_y, fwhm_x),
+        "fwhm_micron": (fwhm_micron_z, fwhm_micron_y, fwhm_micron_x),
+        "fwhm_lateral_asymmetry_ratio": fwhm_lateral_asymmetry_ratio,
+        "considered_axial_edge": considered_axial_edge,
+        "intensity_max": intensity_max,
+        "intensity_min": intensity_min,
+        "intensity_std": intensity_std,
+    }
 
 
 def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_distance: float):
@@ -359,7 +362,7 @@ def _process_channel(
 ) -> tuple:
     (
         beads,
-        bead_positions,
+        bead_properties,
     ) = _find_beads(
         channel=channel,
         sigma=sigma,
@@ -373,7 +376,7 @@ def _process_channel(
     bead_profiles_z = []
     bead_profiles_y = []
     bead_profiles_x = []
-    bead_positions = bead_positions.assign(
+    bead_properties = bead_properties.assign(
         considered_axial_edge=pd.Series(dtype=bool),
         considered_intensity_outlier=pd.Series(dtype=bool),
         considered_bad_fit_z=pd.Series(dtype=bool),
@@ -396,60 +399,71 @@ def _process_channel(
 
     for i, bead in enumerate(beads):
         try:
-            (
-                (profiles_z, profiles_y, profiles_x),
-                r2,
-                fwhm,
-                fwhm_micron,
-                ax_edge,
-                intensity_max,
-                intensity_min,
-                intensity_std,
-            ) = _process_bead(bead=bead, voxel_size_micron=voxel_size_micron)
-            _add_column_name_level(profiles_z, "bead_id", i)
-            bead_profiles_z.append(profiles_z)
-            _add_column_name_level(profiles_y, "bead_id", i)
-            bead_profiles_y.append(profiles_y)
-            _add_column_name_level(profiles_x, "bead_id", i)
-            bead_profiles_x.append(profiles_x)
-            bead_positions.at[i, "intensity_max"] = intensity_max
-            bead_positions.at[i, "intensity_min"] = intensity_min
-            bead_positions.at[i, "intensity_std"] = intensity_std
-            bead_positions.at[i, "fit_r2_z"] = r2[0]
-            bead_positions.at[i, "fit_r2_y"] = r2[1]
-            bead_positions.at[i, "fit_r2_x"] = r2[2]
-            bead_positions.at[i, "considered_bad_fit_z"] = r2[0] < fitting_r2_threshold
-            bead_positions.at[i, "considered_bad_fit_y"] = r2[1] < fitting_r2_threshold
-            bead_positions.at[i, "considered_bad_fit_x"] = r2[2] < fitting_r2_threshold
-            bead_positions.at[i, "fwhm_pixel_z"] = fwhm[0]
-            bead_positions.at[i, "fwhm_pixel_y"] = fwhm[1]
-            bead_positions.at[i, "fwhm_pixel_x"] = fwhm[2]
-            bead_positions.at[i, "fwhm_lateral_asymmetry_ratio"] = max(fwhm[1], fwhm[2]) / min(
-                fwhm[1], fwhm[2]
+            bead_data = _process_bead(bead=bead, voxel_size_micron=voxel_size_micron)
+            _add_column_name_level(bead_data["profiles"][0], "bead_id", i)
+            bead_profiles_z.append(bead_data["profiles"][0])
+            _add_column_name_level(bead_data["profiles"][1], "bead_id", i)
+            bead_profiles_y.append(bead_data["profiles"][1])
+            _add_column_name_level(bead_data["profiles"][2], "bead_id", i)
+            bead_profiles_x.append(bead_data["profiles"][2])
+            bead_properties.at[i, "intensity_max"] = bead_data["intensity_max"]
+            bead_properties.at[i, "intensity_min"] = bead_data["intensity_min"]
+            bead_properties.at[i, "intensity_std"] = bead_data["intensity_std"]
+            bead_properties.at[i, "fit_r2_z"] = bead_data["r2"][0]
+            bead_properties.at[i, "fit_r2_y"] = bead_data["r2"][1]
+            bead_properties.at[i, "fit_r2_x"] = bead_data["r2"][2]
+            bead_properties.at[i, "considered_bad_fit_z"] = (
+                bead_data["r2"][0] < fitting_r2_threshold
             )
-            bead_positions.at[i, "fwhm_micron_z"] = fwhm_micron[0]
-            bead_positions.at[i, "fwhm_micron_y"] = fwhm_micron[1]
-            bead_positions.at[i, "fwhm_micron_x"] = fwhm_micron[2]
-            bead_positions.at[i, "considered_axial_edge"] = bool(ax_edge)
+            bead_properties.at[i, "considered_bad_fit_y"] = (
+                bead_data["r2"][1] < fitting_r2_threshold
+            )
+            bead_properties.at[i, "considered_bad_fit_x"] = (
+                bead_data["r2"][2] < fitting_r2_threshold
+            )
+            bead_properties.at[i, "fwhm_pixel_z"] = bead_data["fwhm"][0]
+            bead_properties.at[i, "fwhm_pixel_y"] = bead_data["fwhm"][1]
+            bead_properties.at[i, "fwhm_pixel_x"] = bead_data["fwhm"][2]
+            bead_properties.at[i, "fwhm_lateral_asymmetry_ratio"] = bead_data[
+                "fwhm_lateral_asymmetry_ratio"
+            ]
+            bead_properties.at[i, "fwhm_micron_z"] = bead_data["fwhm_micron"][0]
+            bead_properties.at[i, "fwhm_micron_y"] = bead_data["fwhm_micron"][1]
+            bead_properties.at[i, "fwhm_micron_x"] = bead_data["fwhm_micron"][2]
+            bead_properties.at[i, "considered_axial_edge"] = bool(
+                bead_data["considered_axial_edge"]
+            )
         except FittingError as e:
             logger.error(
-                f"Could not fit bead at position: x:{bead_positions.at[i, 'center_x']}, y:{bead_positions.at[i, 'center_y']}: {e}"
+                f"Could not fit bead at position: x:{bead_properties.at[i, 'center_x']}, y:{bead_properties.at[i, 'center_y']}: {e}"
             )
             raise e
 
-    bead_positions["considered_bad_fit_z"] = bead_positions["considered_bad_fit_z"].astype(bool)
-    bead_positions["considered_bad_fit_y"] = bead_positions["considered_bad_fit_y"].astype(bool)
-    bead_positions["considered_bad_fit_x"] = bead_positions["considered_bad_fit_x"].astype(bool)
+    bead_properties["considered_bad_fit_z"] = bead_properties["considered_bad_fit_z"].astype(bool)
+    bead_properties["considered_bad_fit_y"] = bead_properties["considered_bad_fit_y"].astype(bool)
+    bead_properties["considered_bad_fit_x"] = bead_properties["considered_bad_fit_x"].astype(bool)
 
     _calculate_bead_intensity_outliers(
-        bead_positions, robust_z_score_threshold=intensity_robust_z_score_threshold
+        bead_properties, robust_z_score_threshold=intensity_robust_z_score_threshold
+    )
+
+    # We need to invalidate all the bad fits and outliers
+    bead_properties["considered_valid"] = bead_properties.apply(
+        lambda row: not any(
+            row["considered_axial_edge"],
+            row["considered_bad_fit_z"],
+            row["considered_bad_fit_y"],
+            row["considered_bad_fit_x"],
+            row["considered_intensity_outlier"],
+        ),
+        axis=1,
     )
 
     bead_profiles_z = pd.concat(bead_profiles_z, axis=1)
     bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
     bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
 
-    return (beads, bead_positions, (bead_profiles_z, bead_profiles_y, bead_profiles_x))
+    return beads, bead_properties, (bead_profiles_z, bead_profiles_y, bead_profiles_x)
 
 
 def _process_image(
@@ -469,7 +483,7 @@ def _process_image(
 
     nr_channels = image.shape[-1]
 
-    bead_images = []
+    beads = []
     bead_positions = []
     bead_profiles_z = []
     bead_profiles_y = []
@@ -477,7 +491,7 @@ def _process_image(
 
     for ch in range(nr_channels):
         (
-            ch_bead_images,
+            ch_beads,
             ch_bead_positions,
             (ch_bead_profiles_z, ch_bead_profiles_y, ch_bead_profiles_x),
         ) = _process_channel(
@@ -490,7 +504,7 @@ def _process_image(
             voxel_size_micron=voxel_size_micron,
         )
 
-        bead_images.append(ch_bead_images)
+        beads.append(ch_beads)
 
         _add_row_index_level(ch_bead_positions, "channel_nr", ch)
         bead_positions.append(ch_bead_positions)
@@ -508,7 +522,7 @@ def _process_image(
     bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
 
     return (
-        bead_images,
+        beads,
         bead_positions,
         (bead_profiles_z, bead_profiles_y, bead_profiles_x),
     )
@@ -621,7 +635,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     for image in dataset.input.psf_beads_images:
         logger.info(f"Processing image {image.name}...")
         (
-            _,
+            image_beads,
             image_bead_properties_df,
             (
                 image_bead_profiles_z_df,
@@ -649,6 +663,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             f"    {image_bead_properties_df.considered_bad_fit_x.sum()} beads considered bad fit in x."
         )
 
+        bead_crops[image.name] = image_beads
+
         _add_row_index_level(image_bead_properties_df, "image_name", image.name)
         bead_properties.append(image_bead_properties_df)
 
@@ -663,6 +679,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_profiles_z = pd.concat(bead_profiles_z, axis=1)
     bead_profiles_y = pd.concat(bead_profiles_y, axis=1)
     bead_profiles_x = pd.concat(bead_profiles_x, axis=1)
+
+    # TODO: Handle average beads here
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
@@ -724,7 +742,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         name="psf_bead_key_measurements",
         description="Averaged key measurements for all beads considered valid in the dataset.",
         **_generate_key_measurements(
-            bead_properties_df=bead_properties,
+            bead_properties_df=bead_properties, average_bead_properties=image_beads
         ).to_dict("list"),
     )
     bead_properties = df_to_table(bead_properties, "bead_properties")
