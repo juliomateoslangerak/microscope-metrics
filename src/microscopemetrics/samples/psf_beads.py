@@ -58,7 +58,9 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
     logger.info(f"Averaging {len(group)} beads")
 
     aligned_beads = [
-        ndimage.shift(b, _find_bead_shifts(b), mode="nearest", order=1) for b in group["beads"]
+        ndimage.shift(row.beads, _find_bead_shifts(row.beads), mode="nearest", order=1)
+        for row in group.itertuples()
+        if row.considered_valid
     ]
 
     return pd.Series(
