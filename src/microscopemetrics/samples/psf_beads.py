@@ -8,7 +8,12 @@ from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.samples import df_to_table, logger, validate_requirements
+from microscopemetrics.samples import (
+    df_to_table,
+    logger,
+    numpy_to_mm_image,
+    validate_requirements,
+)
 from microscopemetrics.utilities.utilities import fit_airy, fit_gaussian, is_saturated
 
 
@@ -53,8 +58,7 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
     Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
     if len(group) < 2:
-        logger.warning("Less than 2 beads to average. Skipping averaging.")
-        return None
+        logger.warning("Less than 2 beads to average.")
     logger.info(f"Averaging {len(group)} beads")
 
     aligned_beads = [
@@ -181,21 +185,7 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
         "_".join(col).strip() for col in channel_measurements.columns.values
     ]
 
-    for ch_nr, values in average_bead_properties.items():
-        channel_measurements.at[ch_nr, "average_bead_fit_r2_z"] = values["r2"][0]
-        channel_measurements.at[ch_nr, "average_bead_fit_r2_y"] = values["r2"][1]
-        channel_measurements.at[ch_nr, "average_bead_fit_r2_x"] = values["r2"][2]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_pixel_z"] = values["fwhm"][0]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_pixel_y"] = values["fwhm"][1]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_pixel_x"] = values["fwhm"][2]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_micron_z"] = values["fwhm_micron"][0]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_micron_y"] = values["fwhm_micron"][1]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_micron_x"] = values["fwhm_micron"][2]
-        channel_measurements.at[ch_nr, "average_bead_fwhm_lateral_asymmetry_ratio"] = values[
-            "fwhm_lateral_asymmetry_ratio"
-        ]
-
-    return pd.merge(channel_counts, channel_measurements, how="outer", on=["channel_nr"])
+    return pd.concat([channel_counts, channel_measurements, average_bead_properties], axis=1)
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float]):
@@ -569,19 +559,21 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Before averaging any bead we need to verify that all voxel sizes are equal
     if len(set(voxel_sizes_micron.values())) == 1:
-        # TODO: catch up here with pandization
         average_beads_properties = bead_properties.groupby("channel_nr").apply(_average_beads)
         average_beads_properties = average_beads_properties.join(
             average_beads_properties["average_bead"].apply(
                 lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
             )
         )
-
+        average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
     else:
         logger.error("Voxel sizes are not equal among images. Skipping average bead calculation.")
         average_beads_properties = None
 
-    # TODO: catch up here with pandization
+    key_measurements = _generate_key_measurements(
+        bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
+    )
+
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_valid],
@@ -638,12 +630,40 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
+
+    # TODO: get more metadata from the source images
+    average_bead = numpy_to_mm_image(
+        array=np.expand_dims(np.stack(key_measurements["average_bead"].values, axis=-1), axis=0),
+        name="average_bead",
+        description="Average bead image extracted from all the beads considered valid in the dataset.",
+        source_images=dataset.input.psf_beads_images,
+    )
+    key_measurements.drop("average_bead", axis=1, inplace=True)
+
+    # get profiles for each bead and for the average bead and drop those columns
+    profile_col_names = [
+        "profile_z",
+        "profile_z_fitted",
+        "profile_y",
+        "profile_y_fitted",
+        "profile_x",
+        "profile_x_fitted",
+    ]
+    indexing_col_names = ["image_name", "bead_id"]
+    new_column_prefixes = bead_properties[indexing_col_names].agg("_".join, axis=1)
+
+    profiles = pd.concat(
+        [
+            bead_properties[col].apply(pd.Series).add_prefix(f"{new_column_prefixes[i]}_{col}_")
+            for i, col in enumerate(profile_col_names)
+        ],
+        axis=1,
+    )
+
     key_measurements = mm_schema.PSFBeadsKeyMeasurements(
         name="psf_bead_key_measurements",
         description="Averaged key measurements for all beads considered valid in the dataset.",
-        **_generate_key_measurements(
-            bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
-        ).to_dict("list"),
+        **key_measurements.to_dict("list"),
     )
     bead_properties = df_to_table(bead_properties, "bead_properties")
     bead_profiles_z = df_to_table(bead_profiles_z, "bead_profiles_z")
