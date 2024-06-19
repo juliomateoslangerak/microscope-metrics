@@ -716,9 +716,10 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         considered_bead_centers_x_fit_quality=considered_bad_fit_x_bead_centers,
         key_measurements=key_measurements,
         bead_properties=bead_properties,
-        bead_z_profiles=bead_profiles_z,
-        bead_y_profiles=bead_profiles_y,
-        bead_x_profiles=bead_profiles_x,
+        bead_profiles_z=bead_profiles_z,
+        bead_profiles_y=bead_profiles_y,
+        bead_profiles_x=bead_profiles_x,
+        average_bead=average_bead,
     )
 
     dataset.processed = True
