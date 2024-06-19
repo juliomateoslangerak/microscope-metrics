@@ -385,6 +385,7 @@ def _process_channel(
     bead_properties["considered_valid"] = bead_properties.apply(
         lambda row: not any(
             [
+                row["considered_lateral_edge"],
                 row["considered_axial_edge"],
                 row["considered_bad_fit_z"],
                 row["considered_bad_fit_y"],
