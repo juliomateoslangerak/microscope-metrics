@@ -480,6 +480,26 @@ def _generate_center_roi(
     return rois
 
 
+def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
+    profile_col_names = [
+        f"profile_{axis}_raw",
+        f"profile_{axis}_fitted",
+    ]
+    indexing_col_names = ["image_name", "bead_id"]
+    profiles = {}
+    for index, row in bead_properties.iterrows():
+        if isinstance(index, (list, tuple)):
+            index_str = "_".join([str(i) for i in index])
+        else:
+            index_str = str(index)
+        for profile_name in profile_col_names:
+            profiles[f"{index_str}_{profile_name}"] = pd.Series(row[profile_name])
+
+    bead_properties.drop(columns=profile_col_names, inplace=True)
+
+    return pd.DataFrame(profiles)
+
+
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     validate_requirements()
     # TODO: Implement Nyquist validation??
@@ -493,11 +513,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Containers for output data
     saturated_channels = {}
-    beads = {}
     bead_properties = []
-    bead_profiles_z = []
-    bead_profiles_y = []
-    bead_profiles_x = []
 
     # First loop to prepare data
     for image in dataset.input.psf_beads_images:
@@ -571,7 +587,11 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         average_beads_properties = bead_properties.groupby("channel_nr").apply(_average_beads)
         average_beads_properties = average_beads_properties.join(
             average_beads_properties["average_bead"].apply(
-                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
+                lambda x: (
+                    pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
+                    if isinstance(x, np.ndarray)
+                    else pd.Series(None)
+                )
             )
         )
         average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
@@ -582,6 +602,14 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     key_measurements = _generate_key_measurements(
         bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
     )
+
+    bead_profiles_z = _extract_profiles(bead_properties, "z")
+    bead_profiles_y = _extract_profiles(bead_properties, "y")
+    bead_profiles_x = _extract_profiles(bead_properties, "x")
+
+    average_bead_profiles_z = _extract_profiles(key_measurements, "z")
+    average_bead_profiles_y = _extract_profiles(key_measurements, "y")
+    average_bead_profiles_x = _extract_profiles(key_measurements, "x")
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
@@ -642,32 +670,24 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # TODO: get more metadata from the source images
     average_bead = numpy_to_mm_image(
-        array=np.expand_dims(np.stack(key_measurements["average_bead"].values, axis=-1), axis=0),
+        array=np.expand_dims(
+            np.stack(
+                [c for c in average_beads_properties["average_bead"] if isinstance(c, np.ndarray)],
+                axis=-1,
+            ),
+            axis=0,
+        ),
         name="average_bead",
         description="Average bead image extracted from all the beads considered valid in the dataset.",
         source_images=dataset.input.psf_beads_images,
+        channel_names=[
+            f"Channel_{ch_nr}"
+            for ch_nr in average_beads_properties.index
+            if isinstance(average_beads_properties.at[ch_nr, "average_bead"], np.ndarray)
+        ],
     )
     key_measurements.drop("average_bead", axis=1, inplace=True)
-
-    # get profiles for each bead and for the average bead and drop those columns
-    profile_col_names = [
-        "profile_z",
-        "profile_z_fitted",
-        "profile_y",
-        "profile_y_fitted",
-        "profile_x",
-        "profile_x_fitted",
-    ]
-    indexing_col_names = ["image_name", "bead_id"]
-    new_column_prefixes = bead_properties[indexing_col_names].agg("_".join, axis=1)
-
-    profiles = pd.concat(
-        [
-            bead_properties[col].apply(pd.Series).add_prefix(f"{new_column_prefixes[i]}_{col}_")
-            for i, col in enumerate(profile_col_names)
-        ],
-        axis=1,
-    )
+    bead_properties.drop("beads", axis=1, inplace=True)
 
     key_measurements = mm_schema.PSFBeadsKeyMeasurements(
         name="psf_bead_key_measurements",
