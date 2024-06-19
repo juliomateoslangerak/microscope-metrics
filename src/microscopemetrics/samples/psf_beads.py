@@ -191,6 +191,7 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float]):
+    # TODO: This can be shortened
     # Find the strongest sections to generate profiles
     z_max = np.max(bead, axis=(1, 2))
     z_focus = np.argmax(z_max)
