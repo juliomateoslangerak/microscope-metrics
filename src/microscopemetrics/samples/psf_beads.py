@@ -64,7 +64,7 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
     ]
     if not aligned_beads:
         logger.warning("No valid beads to average.")
-        return None
+        return pd.Series({"average_bead": np.nan})
     if len(aligned_beads) < 2:
         logger.warning("Less than 2 beads to average.")
     logger.info(f"Averaging {len(aligned_beads)} beads")
@@ -193,6 +193,29 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float]):
+    if not isinstance(bead, np.ndarray) and np.isnan(bead):
+        return {
+            "profile_z_raw": np.nan,
+            "profile_z_fitted": np.nan,
+            "profile_y_raw": np.nan,
+            "profile_y_fitted": np.nan,
+            "profile_x_raw": np.nan,
+            "profile_x_fitted": np.nan,
+            "fit_r2_z": np.nan,
+            "fit_r2_y": np.nan,
+            "fit_r2_x": np.nan,
+            "fwhm_pixel_z": np.nan,
+            "fwhm_pixel_y": np.nan,
+            "fwhm_pixel_x": np.nan,
+            "fwhm_micron_z": np.nan,
+            "fwhm_micron_y": np.nan,
+            "fwhm_micron_x": np.nan,
+            "fwhm_lateral_asymmetry_ratio": np.nan,
+            "considered_axial_edge": np.nan,
+            "intensity_max": np.nan,
+            "intensity_min": np.nan,
+            "intensity_std": np.nan,
+        }
     # TODO: This can be shortened
     # Find the strongest sections to generate profiles
     z_max = np.max(bead, axis=(1, 2))
@@ -230,9 +253,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
         fwhm_micron_y = fwhm_y * voxel_size_micron[1]
         fwhm_micron_x = fwhm_x * voxel_size_micron[2]
     else:
-        fwhm_micron_z = None
-        fwhm_micron_y = None
-        fwhm_micron_x = None
+        fwhm_micron_z = np.nan
+        fwhm_micron_y = np.nan
+        fwhm_micron_x = np.nan
 
     considered_axial_edge = (
         center_pos_z < fwhm_z * 4 or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 4
@@ -590,11 +613,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         average_beads_properties = bead_properties.groupby("channel_nr").apply(_average_beads)
         average_beads_properties = average_beads_properties.join(
             average_beads_properties["average_bead"].apply(
-                lambda x: (
-                    pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
-                    if isinstance(x, np.ndarray)
-                    else pd.Series(None)
-                )
+                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
             )
         )
         average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
@@ -606,28 +625,35 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_profiles_y = _extract_profiles(bead_properties, "y")
     bead_profiles_x = _extract_profiles(bead_properties, "x")
 
-    average_bead_profiles_z = _extract_profiles(average_beads_properties, "z")
-    average_bead_profiles_y = _extract_profiles(average_beads_properties, "y")
-    average_bead_profiles_x = _extract_profiles(average_beads_properties, "x")
+    bead_profiles_z = bead_profiles_z.join(_extract_profiles(average_beads_properties, "z"))
+    bead_profiles_y = bead_profiles_y.join(_extract_profiles(average_beads_properties, "y"))
+    bead_profiles_x = bead_profiles_x.join(_extract_profiles(average_beads_properties, "x"))
 
     # TODO: get more metadata from the source images
-    average_bead = numpy_to_mm_image(
-        array=np.expand_dims(
-            np.stack(
-                [c for c in average_beads_properties["average_bead"] if isinstance(c, np.ndarray)],
-                axis=-1,
+    if any(isinstance(c, np.ndarray) for c in average_beads_properties["average_bead"]):
+        average_bead = numpy_to_mm_image(
+            array=np.expand_dims(
+                np.stack(
+                    [
+                        c
+                        for c in average_beads_properties["average_bead"]
+                        if isinstance(c, np.ndarray)
+                    ],
+                    axis=-1,
+                ),
+                axis=0,
             ),
-            axis=0,
-        ),
-        name="average_bead",
-        description="Average bead image extracted from all the beads considered valid in the dataset.",
-        source_images=dataset.input.psf_beads_images,
-        channel_names=[
-            f"Channel_{ch_nr}"
-            for ch_nr in average_beads_properties.index
-            if isinstance(average_beads_properties.at[ch_nr, "average_bead"], np.ndarray)
-        ],
-    )
+            name="average_bead",
+            description="Average bead image extracted from all the beads considered valid in the dataset.",
+            source_images=dataset.input.psf_beads_images,
+            channel_names=[
+                f"Channel_{ch_nr}"
+                for ch_nr in average_beads_properties.index
+                if isinstance(average_beads_properties.at[ch_nr, "average_bead"], np.ndarray)
+            ],
+        )
+    else:
+        average_bead = None
     average_beads_properties.drop("average_bead", axis=1, inplace=True)
     bead_properties.drop("beads", axis=1, inplace=True)
 
