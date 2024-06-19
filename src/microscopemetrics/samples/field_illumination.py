@@ -364,7 +364,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             logger.error(f"Channels {saturated_channels} are saturated")
             raise SaturationError(f"Channels {saturated_channels} are saturated")
 
-    key_values = mm_schema.FieldIlluminationKeyValues(
+    key_measurements = mm_schema.FieldIlluminationKeyMeasurements(
         # TODO: give name and description to the key values
         **_image_properties(
             images=dataset.input.field_illumination_image,
@@ -411,11 +411,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.center_of_mass_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.center_of_mass_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.center_of_mass_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.center_of_mass_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -436,11 +436,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.center_geometric_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.center_geometric_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.center_geometric_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.center_geometric_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -461,11 +461,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.center_fitted_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.center_fitted_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.center_fitted_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.center_fitted_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -486,11 +486,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.max_intensity_pos_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.max_intensity_pos_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.max_intensity_pos_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.max_intensity_pos_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -529,7 +529,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         processing_application="microscopemetrics",
         processing_version="0.1.0",
         processing_datetime=datetime.now(),
-        key_values=key_values,
+        key_measurements=key_measurements,
         intensity_profiles=intensity_profiles,
         roi_profiles=roi_profiles,
         roi_corners=roi_corners,
