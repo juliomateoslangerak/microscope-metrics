@@ -43,8 +43,8 @@ def test_field_illumination_analysis_centers_geometric(dataset):
 
     measured_centers = list(
         zip(
-            field_illumination_dataset.output.key_values.center_geometric_y_relative,
-            field_illumination_dataset.output.key_values.center_geometric_x_relative,
+            field_illumination_dataset.output.key_measurements.center_geometric_y_relative,
+            field_illumination_dataset.output.key_measurements.center_geometric_x_relative,
         )
     )
     expected_centers = list(
@@ -81,8 +81,8 @@ def test_field_illumination_analysis_centers_of_mass(dataset):
 
     measured_centers_weighted = list(
         zip(
-            field_illumination_dataset.output.key_values.center_of_mass_y_relative,
-            field_illumination_dataset.output.key_values.center_of_mass_x_relative,
+            field_illumination_dataset.output.key_measurements.center_of_mass_y_relative,
+            field_illumination_dataset.output.key_measurements.center_of_mass_x_relative,
         )
     )
     expected_centers = list(
@@ -112,8 +112,8 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
 
     measured_max_intensity_positions = list(
         zip(
-            field_illumination_dataset.output.key_values.max_intensity_pos_y_relative,
-            field_illumination_dataset.output.key_values.max_intensity_pos_x_relative,
+            field_illumination_dataset.output.key_measurements.max_intensity_pos_y_relative,
+            field_illumination_dataset.output.key_measurements.max_intensity_pos_x_relative,
         )
     )
     expected_centers = list(
@@ -143,8 +143,8 @@ def test_field_illumination_analysis_centers_fitted(dataset):
 
     measured_centers_fitted = list(
         zip(
-            field_illumination_dataset.output.key_values.center_fitted_y_relative,
-            field_illumination_dataset.output.key_values.center_fitted_x_relative,
+            field_illumination_dataset.output.key_measurements.center_fitted_y_relative,
+            field_illumination_dataset.output.key_measurements.center_fitted_x_relative,
         )
     )
     expected_centers = list(
