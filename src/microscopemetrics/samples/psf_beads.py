@@ -187,6 +187,8 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
         "_".join(col).strip() for col in channel_measurements.columns.values
     ]
 
+    average_bead_properties = average_bead_properties.add_prefix("average_bead_")
+
     return pd.concat([channel_counts, channel_measurements, average_bead_properties], axis=1)
 
 
