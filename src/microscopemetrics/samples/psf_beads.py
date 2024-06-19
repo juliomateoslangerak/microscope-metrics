@@ -57,15 +57,17 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
     """
     Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
-    if len(group) < 2:
-        logger.warning("Less than 2 beads to average.")
-    logger.info(f"Averaging {len(group)} beads")
-
     aligned_beads = [
         ndimage.shift(row.beads, _find_bead_shifts(row.beads), mode="nearest", order=1)
         for row in group.itertuples()
         if row.considered_valid
     ]
+    if not aligned_beads:
+        logger.warning("No valid beads to average.")
+        return None
+    if len(aligned_beads) < 2:
+        logger.warning("Less than 2 beads to average.")
+    logger.info(f"Averaging {len(aligned_beads)} beads")
 
     return pd.Series(
         {
