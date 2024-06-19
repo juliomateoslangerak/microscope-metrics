@@ -57,6 +57,9 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
     """
     Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
+    dtype = {bead.dtype for bead in group.beads}
+    if len(dtype) > 1:
+        raise ValueError("All beads must have the same dtype.")
     aligned_beads = [
         ndimage.shift(row.beads, _find_bead_shifts(row.beads), mode="nearest", order=1)
         for row in group.itertuples()
@@ -71,7 +74,7 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
 
     return pd.Series(
         {
-            "average_bead": np.mean(aligned_beads, axis=0),
+            "average_bead": np.mean(aligned_beads, axis=0).astype(dtype.pop()),
         }
     )
 
