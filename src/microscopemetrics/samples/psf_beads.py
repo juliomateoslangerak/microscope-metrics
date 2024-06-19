@@ -201,19 +201,25 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     x_focus = np.argmax(x_max)
 
     # Generate profiles
-    profile_z = np.squeeze(bead[:, y_focus, x_focus])
-    profile_y = np.squeeze(bead[z_focus, :, x_focus])
-    profile_x = np.squeeze(bead[z_focus, y_focus, :])
+    profile_z_raw = np.squeeze(bead[:, y_focus, x_focus])
+    profile_y_raw = np.squeeze(bead[z_focus, :, x_focus])
+    profile_x_raw = np.squeeze(bead[z_focus, y_focus, :])
 
     # Normalize the profiles and subtract the background
-    profile_z = (profile_z - profile_z.min()) / (profile_z.max() - profile_z.min())
-    profile_y = (profile_y - profile_y.min()) / (profile_y.max() - profile_y.min())
-    profile_x = (profile_x - profile_x.min()) / (profile_x.max() - profile_x.min())
+    profile_z_raw = (profile_z_raw - profile_z_raw.min()) / (
+        profile_z_raw.max() - profile_z_raw.min()
+    )
+    profile_y_raw = (profile_y_raw - profile_y_raw.min()) / (
+        profile_y_raw.max() - profile_y_raw.min()
+    )
+    profile_x_raw = (profile_x_raw - profile_x_raw.min()) / (
+        profile_x_raw.max() - profile_x_raw.min()
+    )
 
     # Fitting the profiles
-    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = fit_airy(profile_z)
-    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = fit_airy(profile_y)
-    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = fit_airy(profile_x)
+    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = fit_airy(profile_z_raw)
+    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = fit_airy(profile_y_raw)
+    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = fit_airy(profile_x_raw)
 
     fwhm_lateral_asymmetry_ratio = max(fwhm_y, fwhm_x) / min(fwhm_y, fwhm_x)
 
@@ -227,7 +233,7 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
         fwhm_micron_x = None
 
     considered_axial_edge = (
-        center_pos_z < fwhm_z * 4 or profile_z.shape[0] - center_pos_z < fwhm_z * 4
+        center_pos_z < fwhm_z * 4 or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 4
     )
 
     intensity_max = bead.max()
@@ -235,11 +241,11 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     intensity_std = bead.std()
 
     return {
-        "profile_z": profile_z,
+        "profile_z_raw": profile_z_raw,
         "profile_z_fitted": profile_z_fitted,
-        "profile_y": profile_y,
+        "profile_y_raw": profile_y_raw,
         "profile_y_fitted": profile_y_fitted,
-        "profile_x": profile_x,
+        "profile_x_raw": profile_x_raw,
         "profile_x_fitted": profile_x_fitted,
         "fit_r2_z": r2_z,
         "fit_r2_y": r2_y,
