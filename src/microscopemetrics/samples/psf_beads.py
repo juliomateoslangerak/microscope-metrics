@@ -601,17 +601,44 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         logger.error("Voxel sizes are not equal among images. Skipping average bead calculation.")
         average_beads_properties = None
 
-    key_measurements = _generate_key_measurements(
-        bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
-    )
-
     bead_profiles_z = _extract_profiles(bead_properties, "z")
     bead_profiles_y = _extract_profiles(bead_properties, "y")
     bead_profiles_x = _extract_profiles(bead_properties, "x")
 
-    average_bead_profiles_z = _extract_profiles(key_measurements, "z")
-    average_bead_profiles_y = _extract_profiles(key_measurements, "y")
-    average_bead_profiles_x = _extract_profiles(key_measurements, "x")
+    average_bead_profiles_z = _extract_profiles(average_beads_properties, "z")
+    average_bead_profiles_y = _extract_profiles(average_beads_properties, "y")
+    average_bead_profiles_x = _extract_profiles(average_beads_properties, "x")
+
+    # TODO: get more metadata from the source images
+    average_bead = numpy_to_mm_image(
+        array=np.expand_dims(
+            np.stack(
+                [c for c in average_beads_properties["average_bead"] if isinstance(c, np.ndarray)],
+                axis=-1,
+            ),
+            axis=0,
+        ),
+        name="average_bead",
+        description="Average bead image extracted from all the beads considered valid in the dataset.",
+        source_images=dataset.input.psf_beads_images,
+        channel_names=[
+            f"Channel_{ch_nr}"
+            for ch_nr in average_beads_properties.index
+            if isinstance(average_beads_properties.at[ch_nr, "average_bead"], np.ndarray)
+        ],
+    )
+    average_beads_properties.drop("average_bead", axis=1, inplace=True)
+    bead_properties.drop("beads", axis=1, inplace=True)
+
+    key_measurements = _generate_key_measurements(
+        bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
+    )
+
+    key_measurements = mm_schema.PSFBeadsKeyMeasurements(
+        name="psf_beads_key_measurements",
+        description="Averaged key measurements for all beads considered valid in the dataset.",
+        **key_measurements.to_dict("list"),
+    )
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
@@ -670,32 +697,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         stroke_width=4,
     )
 
-    # TODO: get more metadata from the source images
-    average_bead = numpy_to_mm_image(
-        array=np.expand_dims(
-            np.stack(
-                [c for c in average_beads_properties["average_bead"] if isinstance(c, np.ndarray)],
-                axis=-1,
-            ),
-            axis=0,
-        ),
-        name="average_bead",
-        description="Average bead image extracted from all the beads considered valid in the dataset.",
-        source_images=dataset.input.psf_beads_images,
-        channel_names=[
-            f"Channel_{ch_nr}"
-            for ch_nr in average_beads_properties.index
-            if isinstance(average_beads_properties.at[ch_nr, "average_bead"], np.ndarray)
-        ],
-    )
-    key_measurements.drop("average_bead", axis=1, inplace=True)
-    bead_properties.drop("beads", axis=1, inplace=True)
-
-    key_measurements = mm_schema.PSFBeadsKeyMeasurements(
-        name="psf_beads_key_measurements",
-        description="Averaged key measurements for all beads considered valid in the dataset.",
-        **key_measurements.to_dict("list"),
-    )
     bead_properties = df_to_table(bead_properties, "bead_properties")
     bead_profiles_z = df_to_table(bead_profiles_z, "bead_profiles_z")
     bead_profiles_y = df_to_table(bead_profiles_y, "bead_profiles_y")
