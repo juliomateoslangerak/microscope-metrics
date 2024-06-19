@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 from hypothesis import given, reproduce_failure, settings
 from hypothesis import strategies as st
@@ -52,7 +53,9 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
         beads.append(bead)
         ref_beads.append(ref_bead)
 
-    averaged_bead = psf_beads._average_beads(beads)
+    averaged_bead = psf_beads._average_beads(
+        pd.DataFrame({"beads": beads, "considered_valid": True})
+    ).values[0]
     ref_bead = np.mean(ref_beads, axis=0)
 
     averaged_sigma_z = fit_gaussian(np.squeeze(averaged_bead[:, 10, 10]))[3][3]
