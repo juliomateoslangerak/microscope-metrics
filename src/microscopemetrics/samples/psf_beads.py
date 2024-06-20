@@ -112,26 +112,40 @@ def _calculate_bead_intensity_outliers(
     bead_positions: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
     bead_positions["max_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_positions["integrated_intensity_robust_z_score"] = pd.Series(dtype="float")
     bead_positions["considered_intensity_outlier"] = pd.Series(dtype="bool")
-
-    median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
-    mad = bead_positions[bead_positions.considered_valid]["intensity_max"].mad()
 
     if len(bead_positions[bead_positions.considered_valid]) == 1:
         bead_positions["max_intensity_robust_z_score"] = 0
-        bead_positions["considered_intensity_outlier"] = False
-    elif 1 < len(bead_positions[bead_positions.considered_valid]) < 6:
-        bead_positions["max_intensity_robust_z_score"] = (
-            0.6745 * (bead_positions["intensity_max"] - median) / mad
-        )
+        bead_positions["integrated_intensity_robust_z_score"] = 0
         bead_positions["considered_intensity_outlier"] = False
     else:
+        max_int_median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
+        max_int_mad = bead_positions[bead_positions.considered_valid]["intensity_max"].mad()
+        integrated_int_median = bead_positions[bead_positions.considered_valid][
+            "intensity_integrated"
+        ].median()
+        integrated_int_mad = bead_positions[bead_positions.considered_valid][
+            "intensity_integrated"
+        ].mad()
+
         bead_positions["max_intensity_robust_z_score"] = (
-            0.6745 * (bead_positions["intensity_max"] - median) / mad
+            0.6745 * (bead_positions["intensity_max"] - max_int_median) / max_int_mad
         )
-        bead_positions["considered_intensity_outlier"] = (
-            abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
+        bead_positions["integrated_intensity_robust_z_score"] = (
+            0.6745
+            * (bead_positions["intensity_integrated"] - integrated_int_median)
+            / integrated_int_mad
         )
+
+        if 1 < len(bead_positions[bead_positions.considered_valid]) < 6:
+            bead_positions["considered_intensity_outlier"] = False
+        else:
+            bead_positions["considered_intensity_outlier"] = (
+                # abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
+                abs(bead_positions["integrated_intensity_robust_z_score"])
+                > robust_z_score_threshold
+            )
 
     bead_positions["considered_intensity_outlier"] = bead_positions[
         "considered_intensity_outlier"
@@ -220,6 +234,7 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
             "fwhm_micron_x": np.nan,
             "fwhm_lateral_asymmetry_ratio": np.nan,
             "considered_axial_edge": np.nan,
+            "intensity_integrated": np.nan,
             "intensity_max": np.nan,
             "intensity_min": np.nan,
             "intensity_std": np.nan,
@@ -272,6 +287,7 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     intensity_max = bead.max()
     intensity_min = bead.min()
     intensity_std = bead.std()
+    intensity_integrated = (bead - intensity_min).sum()
 
     return {
         "profile_z_raw": profile_z_raw,
@@ -291,6 +307,7 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
         "fwhm_micron_x": fwhm_micron_x,
         "fwhm_lateral_asymmetry_ratio": fwhm_lateral_asymmetry_ratio,
         "considered_axial_edge": considered_axial_edge,
+        "intensity_integrated": intensity_integrated,
         "intensity_max": intensity_max,
         "intensity_min": intensity_min,
         "intensity_std": intensity_std,
