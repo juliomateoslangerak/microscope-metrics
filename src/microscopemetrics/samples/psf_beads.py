@@ -192,7 +192,12 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
 
     average_bead_properties = average_bead_properties.add_prefix("average_bead_")
 
-    return pd.concat([channel_counts, channel_measurements, average_bead_properties], axis=1)
+    key_measurements = pd.concat(
+        [channel_counts, channel_measurements, average_bead_properties], axis=1
+    )
+    key_measurements.reset_index(inplace=True)
+
+    return key_measurements
 
 
 def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float]):
