@@ -270,7 +270,7 @@ def df_to_table(
         name=name,
         description=description,
         column_descriptions=column_descriptions,
-        data=dataframe,
+        data=dataframe.reset_index(),
     )
 
 
