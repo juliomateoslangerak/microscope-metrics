@@ -120,14 +120,13 @@ def _calculate_bead_intensity_outliers(
         bead_positions["integrated_intensity_robust_z_score"] = 0
         bead_positions["considered_intensity_outlier"] = False
     else:
+        max_int_mean = bead_positions[bead_positions.considered_valid]["intensity_max"].mean()
         max_int_median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
-        max_int_mad = bead_positions[bead_positions.considered_valid]["intensity_max"].mad()
-        integrated_int_median = bead_positions[bead_positions.considered_valid][
-            "intensity_integrated"
-        ].median()
-        integrated_int_mad = bead_positions[bead_positions.considered_valid][
-            "intensity_integrated"
-        ].mad()
+        max_int_mad = (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean).abs().mean()
+
+        integrated_int_mean = bead_positions[bead_positions.considered_valid]["intensity_integrated"].mean()
+        integrated_int_median = bead_positions[bead_positions.considered_valid]["intensity_integrated"].median()
+        integrated_int_mad = (bead_positions[bead_positions.considered_valid]["intensity_integrated"] - integrated_int_mean).abs().mean()
 
         bead_positions["max_intensity_robust_z_score"] = (
             0.6745 * (bead_positions["intensity_max"] - max_int_median) / max_int_mad
