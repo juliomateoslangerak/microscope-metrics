@@ -667,6 +667,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     key_measurements = mm_schema.PSFBeadsKeyMeasurements(
         name="psf_beads_key_measurements",
         description="Averaged key measurements for all beads considered valid in the dataset.",
+        table_data=key_measurements,
         **key_measurements.to_dict("list"),
     )
 
