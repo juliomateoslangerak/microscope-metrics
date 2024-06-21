@@ -122,11 +122,26 @@ def _calculate_bead_intensity_outliers(
     else:
         max_int_mean = bead_positions[bead_positions.considered_valid]["intensity_max"].mean()
         max_int_median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
-        max_int_mad = (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean).abs().mean()
+        max_int_mad = (
+            (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean)
+            .abs()
+            .mean()
+        )
 
-        integrated_int_mean = bead_positions[bead_positions.considered_valid]["intensity_integrated"].mean()
-        integrated_int_median = bead_positions[bead_positions.considered_valid]["intensity_integrated"].median()
-        integrated_int_mad = (bead_positions[bead_positions.considered_valid]["intensity_integrated"] - integrated_int_mean).abs().mean()
+        integrated_int_mean = bead_positions[bead_positions.considered_valid][
+            "intensity_integrated"
+        ].mean()
+        integrated_int_median = bead_positions[bead_positions.considered_valid][
+            "intensity_integrated"
+        ].median()
+        integrated_int_mad = (
+            (
+                bead_positions[bead_positions.considered_valid]["intensity_integrated"]
+                - integrated_int_mean
+            )
+            .abs()
+            .mean()
+        )
 
         bead_positions["max_intensity_robust_z_score"] = (
             0.6745 * (bead_positions["intensity_max"] - max_int_median) / max_int_mad
@@ -749,7 +764,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         stroke_width=4,
     )
 
-    bead_properties = df_to_table(bead_properties, "bead_properties")
+    bead_properties = df_to_table(bead_properties.reset_index(), "bead_properties")
     bead_profiles_z = df_to_table(bead_profiles_z, "bead_profiles_z")
     bead_profiles_y = df_to_table(bead_profiles_y, "bead_profiles_y")
     bead_profiles_x = df_to_table(bead_profiles_x, "bead_profiles_x")
