@@ -512,10 +512,11 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input.psf_beads_images:
-        if positions.empty or image.name not in positions.index.get_level_values("image_name"):
+        image_id = image.data_reference.omero_object_id or image.name
+        if positions.empty or image_id not in positions.index.get_level_values("image_id"):
             continue
         points = []
-        for index, row in positions.xs(image.name, level="image_name").iterrows():
+        for index, row in positions.xs(image_id, level="image_id").iterrows():
             points.append(
                 mm_schema.Point(
                     name=_concatenate_index_levels(
@@ -535,8 +536,8 @@ def _generate_center_roi(
         if points:
             rois.append(
                 mm_schema.Roi(
-                    name=f"{root_name}_{image.name}",
-                    description=f"{root_name} in image {image.name}",
+                    name=f"{root_name}_{image_id}",
+                    description=f"{root_name} in image {image_id}",
                     linked_references=image.data_reference,
                     points=points,
                 )
@@ -550,7 +551,7 @@ def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
         f"profile_{axis}_raw",
         f"profile_{axis}_fitted",
     ]
-    indexing_col_names = ["image_name", "bead_id"]
+    indexing_col_names = ["image_id", "bead_id"]
     profiles = {}
     for index, row in bead_properties.iterrows():
         if isinstance(index, (list, tuple)):
@@ -582,35 +583,36 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # First loop to prepare data
     for image in dataset.input.psf_beads_images:
-        images[image.name] = image.array_data[0, ...]
+        image_id = image.data_reference.omero_object_id or image.name
+        images[image_id] = image.array_data[0, ...]
 
-        voxel_sizes_micron[image.name] = (
+        voxel_sizes_micron[image_id] = (
             image.voxel_size_z_micron,
             image.voxel_size_y_micron,
             image.voxel_size_x_micron,
         )
-        saturated_channels[image.name] = []
+        saturated_channels[image_id] = []
 
         # Check image shape
-        logger.info(f"Checking image {image.name} shape...")
+        logger.info(f"Checking image {image_id} shape...")
         if len(image.array_data.shape) != 5:
-            logger.error(f"Image {image.name} must be 5D")
+            logger.error(f"Image {image_id} must be 5D")
             return False
         if image.array_data.shape[0] != 1:
             logger.warning(
-                f"Image {image.name} must be in TZYXC order and single time-point. Using first time-point."
+                f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
 
         # Check image saturation
-        logger.info(f"Checking image {image.name} saturation...")
+        logger.info(f"Checking image {image_id} saturation...")
         for c in range(image.array_data.shape[-1]):
             if is_saturated(
                 channel=image.array_data[..., c],
                 threshold=dataset.input.saturation_threshold,
                 detector_bit_depth=dataset.input.bit_depth,
             ):
-                logger.error(f"Image {image.name}: channel {c} is saturated")
-                saturated_channels[image.name].append(c)
+                logger.error(f"Image {image_id}: channel {c} is saturated")
+                saturated_channels[image_id].append(c)
 
     if any(len(saturated_channels[name]) for name in saturated_channels):
         logger.error(f"Channels {saturated_channels} are saturated")
@@ -618,7 +620,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Second loop main image analysis
     for image in dataset.input.psf_beads_images:
-        logger.info(f"Processing image {image.name}...")
+        logger.info(f"Processing image {image_id}...")
 
         image_bead_properties = _process_image(
             image=image.array_data,
@@ -627,11 +629,11 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
             intensity_robust_z_score_threshold=dataset.input.intensity_robust_z_score_threshold,
-            voxel_size_micron=voxel_sizes_micron[image.name],
+            voxel_size_micron=voxel_sizes_micron[image_id],
         )
 
         logger.info(
-            f"Image {image.name} processed."
+            f"Image {image_id} processed."
             f"    {image_bead_properties.considered_valid.sum()} beads considered valid."
             f"    {image_bead_properties.considered_lateral_edge.sum()} beads considered lateral edge."
             f"    {image_bead_properties.considered_self_proximity.sum()} beads considered self proximity."
@@ -642,7 +644,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             f"    {image_bead_properties.considered_bad_fit_x.sum()} beads considered bad fit in x."
         )
 
-        _add_row_index_level(image_bead_properties, "image_name", image.name)
+        _add_row_index_level(image_bead_properties, "image_id", image_id)
         bead_properties.append(image_bead_properties)
 
     bead_properties = pd.concat(bead_properties)
@@ -652,7 +654,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         average_beads_properties = bead_properties.groupby("channel_nr").apply(_average_beads)
         average_beads_properties = average_beads_properties.join(
             average_beads_properties["average_bead"].apply(
-                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
+                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image_id]))
             )
         )
         average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
