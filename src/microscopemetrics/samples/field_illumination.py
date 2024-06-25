@@ -315,13 +315,14 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
         im_properties = pd.DataFrame()
         for c in range(image_data.shape[-1]):
             ch_properties = pd.DataFrame(
-                columns=["image_name", "image_id", "channel_name", "channel_nr"]
+                columns=["image_name", "image_id", "channel_name", "channel_nr", "channel_id"]
             )
             ch_properties.loc[0] = [
                 image.name,
                 get_object_id(image),
                 image.channel_series.channels[c].name,
                 c,
+                get_object_id(image.channel_series.channels[c]),
             ]
             ch_properties = ch_properties.join(
                 pd.DataFrame(
