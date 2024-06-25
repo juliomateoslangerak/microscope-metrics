@@ -10,6 +10,7 @@ from skimage.filters import gaussian
 from microscopemetrics import FittingError, SaturationError
 from microscopemetrics.samples import (
     df_to_table,
+    get_object_id,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -512,7 +513,7 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input.psf_beads_images:
-        image_id = image.data_reference.omero_object_id or image.name
+        image_id = get_object_id(image) or image.name
         if positions.empty or image_id not in positions.index.get_level_values("image_id"):
             continue
         points = []
@@ -583,7 +584,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # First loop to prepare data
     for image in dataset.input.psf_beads_images:
-        image_id = image.data_reference.omero_object_id or image.name
+        image_id = get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
 
         voxel_sizes_micron[image_id] = (
