@@ -55,6 +55,21 @@ logger = logging.getLogger(__name__)
 #         raise ValueError("Input should be a metrics object or a list of metrics objects")
 
 
+def get_object_id(
+    objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]]
+) -> Union[str, List[str]]:
+    """Get the object id of a metrics object or a list of metrics objects"""
+    if isinstance(objects, list):
+        return [get_object_id(obj) for obj in objects]
+    if not isinstance(objects, mm_schema.MetricsObject):
+        raise ValueError("Input should be a metrics object or a list of metrics objects")
+    if objects.data_reference:
+        try:
+            return objects.data_reference.omero_object_id
+        except AttributeError:
+            return None
+
+
 def numpy_to_mm_image(
     array: np.ndarray,
     name: str = None,
