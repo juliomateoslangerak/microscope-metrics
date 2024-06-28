@@ -67,6 +67,7 @@ def get_object_id(
         try:
             return objects.data_reference.omero_object_id
         except AttributeError:
+            logger.warning(f"Object {objects.name} does not have an object id")
             return None
 
 
