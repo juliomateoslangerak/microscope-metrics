@@ -4,6 +4,7 @@ from typing import Dict, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
+import pandas as pd
 import scipy
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
@@ -12,6 +13,7 @@ from skimage.measure import regionprops
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import (
     dict_to_table,
+    get_object_id,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -300,25 +302,43 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
         input images from the field illumination dataset.
     Returns
     -------
-    profiles_statistics : dict
+    profiles_statistics : pandas.DataFrame
         Dictionary showing the intensity values of the different regions and
         their ratio over the maximum intensity value of the array.
         Dictionary values will be lists in case of multiple channels.
     """
-    properties = []
+    properties = pd.DataFrame()
     for image in images:
         # For the analysis we are using only the first z and time-point
         image_data = image.array_data[0, 0, :, :, :]
 
+        im_properties = pd.DataFrame()
         for c in range(image_data.shape[-1]):
-            channel_properties = {"channel_name": image.channel_series.channels[c].name}
-            channel_properties.update(_channel_max_intensity_properties(image_data[:, :, c], sigma))
-            channel_properties.update(
-                _channel_corner_properties(image_data[:, :, c], corner_fraction)
+            ch_properties = pd.DataFrame(
+                columns=["image_name", "image_id", "channel_name", "channel_nr", "channel_id"]
             )
-            properties.append(channel_properties)
+            ch_properties.loc[0] = [
+                image.name,
+                get_object_id(image),
+                image.channel_series.channels[c].name,
+                c,
+                get_object_id(image.channel_series.channels[c]),
+            ]
+            ch_properties = ch_properties.join(
+                pd.DataFrame(
+                    _channel_max_intensity_properties(image_data[:, :, c], sigma), index=[0]
+                )
+            )
+            ch_properties = ch_properties.join(
+                pd.DataFrame(
+                    _channel_corner_properties(image_data[:, :, c], corner_fraction), index=[0]
+                )
+            )
+            im_properties = pd.concat([im_properties, ch_properties], axis=0)
 
-    return {k: [i[k] for i in properties] for k in properties[0]}
+        properties = pd.concat([properties, im_properties], axis=0)
+
+    return properties
 
 
 def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
@@ -364,13 +384,17 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             logger.error(f"Channels {saturated_channels} are saturated")
             raise SaturationError(f"Channels {saturated_channels} are saturated")
 
+    key_measurements = _image_properties(
+        images=dataset.input.field_illumination_image,
+        corner_fraction=dataset.input.corner_fraction,
+        sigma=dataset.input.sigma,
+    )
+
     key_measurements = mm_schema.FieldIlluminationKeyMeasurements(
-        # TODO: give name and description to the key values
-        **_image_properties(
-            images=dataset.input.field_illumination_image,
-            corner_fraction=dataset.input.corner_fraction,
-            sigma=dataset.input.sigma,
-        )
+        name="field_illumination_key_measurements",
+        description="Key measurements of the field illumination channels",
+        table_data=key_measurements,
+        **key_measurements.to_dict(orient="list"),
     )
 
     intensity_profiles = [

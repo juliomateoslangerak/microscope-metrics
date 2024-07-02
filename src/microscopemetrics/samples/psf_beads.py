@@ -10,6 +10,7 @@ from skimage.filters import gaussian
 from microscopemetrics import FittingError, SaturationError
 from microscopemetrics.samples import (
     df_to_table,
+    get_object_id,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -122,11 +123,26 @@ def _calculate_bead_intensity_outliers(
     else:
         max_int_mean = bead_positions[bead_positions.considered_valid]["intensity_max"].mean()
         max_int_median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
-        max_int_mad = (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean).abs().mean()
+        max_int_mad = (
+            (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean)
+            .abs()
+            .mean()
+        )
 
-        integrated_int_mean = bead_positions[bead_positions.considered_valid]["intensity_integrated"].mean()
-        integrated_int_median = bead_positions[bead_positions.considered_valid]["intensity_integrated"].median()
-        integrated_int_mad = (bead_positions[bead_positions.considered_valid]["intensity_integrated"] - integrated_int_mean).abs().mean()
+        integrated_int_mean = bead_positions[bead_positions.considered_valid][
+            "intensity_integrated"
+        ].mean()
+        integrated_int_median = bead_positions[bead_positions.considered_valid][
+            "intensity_integrated"
+        ].median()
+        integrated_int_mad = (
+            (
+                bead_positions[bead_positions.considered_valid]["intensity_integrated"]
+                - integrated_int_mean
+            )
+            .abs()
+            .mean()
+        )
 
         bead_positions["max_intensity_robust_z_score"] = (
             0.6745 * (bead_positions["intensity_max"] - max_int_median) / max_int_mad
@@ -151,8 +167,9 @@ def _calculate_bead_intensity_outliers(
     ].astype(bool)
 
 
-def _generate_key_measurements(bead_properties_df, average_bead_properties):
+def _generate_key_measurements(bead_properties, average_bead_properties):
     measurement_aggregation_columns = [
+        "channel_name",
         "channel_nr",
         "intensity_max",
         "intensity_min",
@@ -169,6 +186,7 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
         "fwhm_micron_x",
     ]
     count_aggregation_columns = [
+        "channel_name",
         "channel_nr",
         "considered_valid",
         "considered_self_proximity",
@@ -180,11 +198,13 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
         "considered_bad_fit_x",
     ]
 
-    reindex_bead_properties_df = bead_properties_df.reset_index()
+    reindex_bead_properties_df = bead_properties.reset_index()
 
     # We aggregate counts for each channel on beads according to their status
     channel_counts = (
-        reindex_bead_properties_df[count_aggregation_columns].groupby("channel_nr").agg(["sum"])
+        reindex_bead_properties_df[count_aggregation_columns]
+        .groupby(["channel_name", "channel_nr"])
+        .agg(["sum"])
     )
     channel_counts.columns = [
         "_".join((col[0], "count")).strip() for col in channel_counts.columns.values
@@ -196,7 +216,7 @@ def _generate_key_measurements(bead_properties_df, average_bead_properties):
     ]
     channel_measurements = (
         valid_bead_properties_df[measurement_aggregation_columns]
-        .groupby("channel_nr")
+        .groupby(["channel_name", "channel_nr"])
         .agg(["mean", "median", "std"])
     )
     channel_measurements.columns = [
@@ -447,16 +467,22 @@ def _process_channel(
 
 
 def _process_image(
-    image: np.ndarray,
+    image: mm_schema.Image,
     sigma: tuple[float, float, float],
     min_bead_distance: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
-    voxel_size_micron: tuple[float, float, float],
 ) -> tuple:
-    # Remove the time dimension
-    image = image[0, ...]
+    channel_names = [c.name for c in image.channel_series.channels]
+    voxel_size_micron = (
+        image.voxel_size_z_micron,
+        image.voxel_size_y_micron,
+        image.voxel_size_x_micron,
+    )
+
+    # Get image data and remove the time dimension
+    image = image.array_data[0, ...]
 
     # Some images (e.g. OMX-3D-SIM) may contain negative values.
     image = np.clip(image, a_min=0, a_max=None)
@@ -477,6 +503,7 @@ def _process_image(
         )
 
         _add_row_index_level(ch_bead_positions, "channel_nr", ch)
+        _add_row_index_level(ch_bead_positions, "channel_name", channel_names[ch])
         bead_properties.append(ch_bead_positions)
 
     return pd.concat(bead_properties)
@@ -497,15 +524,14 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input.psf_beads_images:
-        if positions.empty or image.name not in positions.index.get_level_values("image_name"):
+        image_id = get_object_id(image) or image.name
+        if positions.empty or image_id not in positions.index.get_level_values("image_id"):
             continue
         points = []
-        for index, row in positions.xs(image.name, level="image_name").iterrows():
+        for index, row in positions.xs(image_id, level="image_id").iterrows():
             points.append(
                 mm_schema.Point(
-                    name=_concatenate_index_levels(
-                        index_names=positions.index.names[1:], index_values=index
-                    ),
+                    name=index[positions.index.names[1:].index("bead_id")],
                     z=row["center_z"],
                     y=row["center_y"] + 0.5,  # Rois are centered on the voxel
                     x=row["center_x"] + 0.5,
@@ -520,8 +546,8 @@ def _generate_center_roi(
         if points:
             rois.append(
                 mm_schema.Roi(
-                    name=f"{root_name}_{image.name}",
-                    description=f"{root_name} in image {image.name}",
+                    name=f"{root_name}_{image_id}",
+                    description=f"{root_name} in image {image_id}",
                     linked_references=image.data_reference,
                     points=points,
                 )
@@ -535,7 +561,7 @@ def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
         f"profile_{axis}_raw",
         f"profile_{axis}_fitted",
     ]
-    indexing_col_names = ["image_name", "bead_id"]
+    indexing_col_names = ["image_id", "bead_id"]
     profiles = {}
     for index, row in bead_properties.iterrows():
         if isinstance(index, (list, tuple)):
@@ -567,35 +593,31 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # First loop to prepare data
     for image in dataset.input.psf_beads_images:
-        images[image.name] = image.array_data[0, ...]
+        image_id = get_object_id(image) or image.name
+        images[image_id] = image.array_data[0, ...]
 
-        voxel_sizes_micron[image.name] = (
-            image.voxel_size_z_micron,
-            image.voxel_size_y_micron,
-            image.voxel_size_x_micron,
-        )
-        saturated_channels[image.name] = []
+        saturated_channels[image_id] = []
 
         # Check image shape
-        logger.info(f"Checking image {image.name} shape...")
+        logger.info(f"Checking image {image_id} shape...")
         if len(image.array_data.shape) != 5:
-            logger.error(f"Image {image.name} must be 5D")
+            logger.error(f"Image {image_id} must be 5D")
             return False
         if image.array_data.shape[0] != 1:
             logger.warning(
-                f"Image {image.name} must be in TZYXC order and single time-point. Using first time-point."
+                f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
 
         # Check image saturation
-        logger.info(f"Checking image {image.name} saturation...")
+        logger.info(f"Checking image {image_id} saturation...")
         for c in range(image.array_data.shape[-1]):
             if is_saturated(
                 channel=image.array_data[..., c],
                 threshold=dataset.input.saturation_threshold,
                 detector_bit_depth=dataset.input.bit_depth,
             ):
-                logger.error(f"Image {image.name}: channel {c} is saturated")
-                saturated_channels[image.name].append(c)
+                logger.error(f"Image {image_id}: channel {c} is saturated")
+                saturated_channels[image_id].append(c)
 
     if any(len(saturated_channels[name]) for name in saturated_channels):
         logger.error(f"Channels {saturated_channels} are saturated")
@@ -603,20 +625,25 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Second loop main image analysis
     for image in dataset.input.psf_beads_images:
-        logger.info(f"Processing image {image.name}...")
+        image_id = get_object_id(image) or image.name
+        logger.info(f"Processing image {image_id}...")
+        voxel_sizes_micron[image_id] = (
+            image.voxel_size_z_micron,
+            image.voxel_size_y_micron,
+            image.voxel_size_x_micron,
+        )
 
         image_bead_properties = _process_image(
-            image=image.array_data,
+            image=image,
             sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
             intensity_robust_z_score_threshold=dataset.input.intensity_robust_z_score_threshold,
-            voxel_size_micron=voxel_sizes_micron[image.name],
         )
 
         logger.info(
-            f"Image {image.name} processed."
+            f"Image {image_id} processed."
             f"    {image_bead_properties.considered_valid.sum()} beads considered valid."
             f"    {image_bead_properties.considered_lateral_edge.sum()} beads considered lateral edge."
             f"    {image_bead_properties.considered_self_proximity.sum()} beads considered self proximity."
@@ -627,17 +654,19 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             f"    {image_bead_properties.considered_bad_fit_x.sum()} beads considered bad fit in x."
         )
 
-        _add_row_index_level(image_bead_properties, "image_name", image.name)
+        _add_row_index_level(image_bead_properties, "image_id", image_id)
         bead_properties.append(image_bead_properties)
 
     bead_properties = pd.concat(bead_properties)
 
     # Before averaging any bead we need to verify that all voxel sizes are equal
     if len(set(voxel_sizes_micron.values())) == 1:
-        average_beads_properties = bead_properties.groupby("channel_nr").apply(_average_beads)
+        average_beads_properties = bead_properties.groupby(["channel_name", "channel_nr"]).apply(
+            _average_beads
+        )
         average_beads_properties = average_beads_properties.join(
             average_beads_properties["average_bead"].apply(
-                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image.name]))
+                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image_id]))
             )
         )
         average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
@@ -671,9 +700,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             description="Average bead image extracted from all the beads considered valid in the dataset.",
             source_images=dataset.input.psf_beads_images,
             channel_names=[
-                f"Channel_{ch_nr}"
-                for ch_nr in average_beads_properties.index
-                if isinstance(average_beads_properties.at[ch_nr, "average_bead"], np.ndarray)
+                i[average_beads_properties.index.names.index("channel_name")]
+                for i in average_beads_properties.index
+                if isinstance(average_beads_properties.at[i, "average_bead"], np.ndarray)
             ],
         )
     else:
@@ -682,7 +711,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_properties.drop("beads", axis=1, inplace=True)
 
     key_measurements = _generate_key_measurements(
-        bead_properties_df=bead_properties, average_bead_properties=average_beads_properties
+        bead_properties=bead_properties, average_bead_properties=average_beads_properties
     )
 
     key_measurements = mm_schema.PSFBeadsKeyMeasurements(
@@ -749,7 +778,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         stroke_width=4,
     )
 
-    bead_properties = df_to_table(bead_properties, "bead_properties")
+    bead_properties = df_to_table(bead_properties.reset_index(), "bead_properties")
     bead_profiles_z = df_to_table(bead_profiles_z, "bead_profiles_z")
     bead_profiles_y = df_to_table(bead_profiles_y, "bead_profiles_y")
     bead_profiles_x = df_to_table(bead_profiles_x, "bead_profiles_x")

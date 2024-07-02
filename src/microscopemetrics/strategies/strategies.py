@@ -558,7 +558,11 @@ def st_psf_beads_dataset(
     psf_beads_unprocessed_dataset = draw(unprocessed_dataset)
 
     psf_beads_unprocessed_dataset.input.psf_beads_images = [
-        numpy_to_mm_image(image, name=f"PSF_image_{i}")
+        numpy_to_mm_image(
+            array=image,
+            name=f"PSF_image_{i}",
+            channel_names=[f"Channel_{c}" for c in range(image.shape[-1])],
+        )
         for i, image in enumerate(test_data.pop("images"))
     ]
 
