@@ -55,6 +55,22 @@ logger = logging.getLogger(__name__)
 #         raise ValueError("Input should be a metrics object or a list of metrics objects")
 
 
+def get_object_id(
+    objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]]
+) -> Union[str, List[str]]:
+    """Get the object id of a metrics object or a list of metrics objects"""
+    if isinstance(objects, list):
+        return [get_object_id(obj) for obj in objects]
+    if not isinstance(objects, mm_schema.MetricsObject):
+        raise ValueError("Input should be a metrics object or a list of metrics objects")
+    if objects.data_reference:
+        try:
+            return objects.data_reference.omero_object_id
+        except AttributeError:
+            logger.warning(f"Object {objects.name} does not have an object id")
+            return None
+
+
 def numpy_to_mm_image(
     array: np.ndarray,
     name: str = None,
@@ -112,12 +128,12 @@ def numpy_to_mm_image(
         channel = mm_schema.Channel(
             name=channel_names[i] if channel_names is not None else None,
             description=channel_descriptions[i] if channel_descriptions is not None else None,
-            excitation_wavelength_nm=excitation_wavelengths_nm[i]
-            if excitation_wavelengths_nm is not None
-            else None,
-            emission_wavelength_nm=emission_wavelengths_nm[i]
-            if emission_wavelengths_nm is not None
-            else None,
+            excitation_wavelength_nm=(
+                excitation_wavelengths_nm[i] if excitation_wavelengths_nm is not None else None
+            ),
+            emission_wavelength_nm=(
+                emission_wavelengths_nm[i] if emission_wavelengths_nm is not None else None
+            ),
         )
         channels.append(channel)
 
@@ -208,23 +224,29 @@ def _create_table(
     description: str = None,
     column_descriptions: dict[str, str] = None,
 ) -> mm_schema.Table:
-    if not data:
+    if len(data) == 0:
         logger.error(f"Table {name} could not created as there is no data")
         return None
 
-    if column_descriptions is not None:
-        columns = [mm_schema.Column(name=n, description=d) for n, d in column_descriptions.items()]
-    elif isinstance(data, dict):
-        columns = [mm_schema.Column(name=n) for n in data.keys()]
+    # TODO: Add values to columns
+    if isinstance(data, dict):
+        columns = [mm_schema.Column(name=n, values=v) for n, v in data.items()]
     elif isinstance(data, pd.DataFrame):
-        columns = [mm_schema.Column(name=n) for n in data.columns]
+        columns = [mm_schema.Column(name=n, values=data[n].tolist()) for n in data.columns]
     else:
         raise ValueError("Data should be either a dictionary or a pandas dataframe")
+
+    if column_descriptions is not None:
+        for column in columns:
+            try:
+                column.description = column_descriptions[column.name]
+            except KeyError:
+                logger.warning(f"Column {column.name} does not have a description")
 
     return mm_schema.Table(
         name=name,
         description=description,
-        column_series=mm_schema.ColumnSeries(columns=columns),
+        columns=columns,
         table_data=data,
     )
 

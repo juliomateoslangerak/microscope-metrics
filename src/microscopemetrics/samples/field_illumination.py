@@ -4,6 +4,7 @@ from typing import Dict, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
+import pandas as pd
 import scipy
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
@@ -12,6 +13,7 @@ from skimage.measure import regionprops
 from microscopemetrics import SaturationError
 from microscopemetrics.samples import (
     dict_to_table,
+    get_object_id,
     logger,
     numpy_to_mm_image,
     validate_requirements,
@@ -40,7 +42,8 @@ def _channel_line_profile(
     channel: np.ndarray, start: Tuple[int, int], end: Tuple[int, int], profile_size: int
 ) -> np.ndarray:
     """
-    Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation
+    Compute the intensity profile along a line between x0-y0 and x1-y1 using cubic interpolation. The mode used is
+    'nearest' to avoid edge artifacts.
     Parameters
     ----------
     channel : np.array.
@@ -56,7 +59,11 @@ def _channel_line_profile(
     """
     x, y = np.linspace(start[0], end[0], profile_size), np.linspace(start[1], end[1], profile_size)
 
-    return scipy.ndimage.map_coordinates(channel, np.vstack((x, y)))
+    return scipy.ndimage.map_coordinates(
+        input=channel,
+        coordinates=np.vstack((x, y)),
+        mode="nearest",
+    )
 
 
 def _image_line_profile(image: np.ndarray, profile_size: int):
@@ -212,8 +219,8 @@ def _channel_max_intensity_properties(
         center_region_intensity_fraction = 1 / (n_bins - 1)
 
     # Fitting the intensity profile to a gaussian
-    _, _, _, center_fitted_y = fit_gaussian(np.max(channel, axis=1))
-    _, _, _, center_fitted_x = fit_gaussian(np.max(channel, axis=0))
+    _, _, _, (_, _, center_fitted_y, _) = fit_gaussian(np.max(channel, axis=1))
+    _, _, _, (_, _, center_fitted_x, _) = fit_gaussian(np.max(channel, axis=0))
 
     return {
         "center_region_intensity_fraction": center_region_intensity_fraction,
@@ -295,25 +302,43 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
         input images from the field illumination dataset.
     Returns
     -------
-    profiles_statistics : dict
+    profiles_statistics : pandas.DataFrame
         Dictionary showing the intensity values of the different regions and
         their ratio over the maximum intensity value of the array.
         Dictionary values will be lists in case of multiple channels.
     """
-    properties = []
+    properties = pd.DataFrame()
     for image in images:
         # For the analysis we are using only the first z and time-point
         image_data = image.array_data[0, 0, :, :, :]
 
+        im_properties = pd.DataFrame()
         for c in range(image_data.shape[-1]):
-            channel_properties = {"channel_name": image.channel_series.channels[c].name}
-            channel_properties.update(_channel_max_intensity_properties(image_data[:, :, c], sigma))
-            channel_properties.update(
-                _channel_corner_properties(image_data[:, :, c], corner_fraction)
+            ch_properties = pd.DataFrame(
+                columns=["image_name", "image_id", "channel_name", "channel_nr", "channel_id"]
             )
-            properties.append(channel_properties)
+            ch_properties.loc[0] = [
+                image.name,
+                get_object_id(image),
+                image.channel_series.channels[c].name,
+                c,
+                get_object_id(image.channel_series.channels[c]),
+            ]
+            ch_properties = ch_properties.join(
+                pd.DataFrame(
+                    _channel_max_intensity_properties(image_data[:, :, c], sigma), index=[0]
+                )
+            )
+            ch_properties = ch_properties.join(
+                pd.DataFrame(
+                    _channel_corner_properties(image_data[:, :, c], corner_fraction), index=[0]
+                )
+            )
+            im_properties = pd.concat([im_properties, ch_properties], axis=0)
 
-    return {k: [i[k] for i in properties] for k in properties[0]}
+        properties = pd.concat([properties, im_properties], axis=0)
+
+    return properties
 
 
 def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
@@ -359,13 +384,17 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             logger.error(f"Channels {saturated_channels} are saturated")
             raise SaturationError(f"Channels {saturated_channels} are saturated")
 
-    key_values = mm_schema.FieldIlluminationKeyValues(
-        # TODO: give name and description to the key values
-        **_image_properties(
-            images=dataset.input.field_illumination_image,
-            corner_fraction=dataset.input.corner_fraction,
-            sigma=dataset.input.sigma,
-        )
+    key_measurements = _image_properties(
+        images=dataset.input.field_illumination_image,
+        corner_fraction=dataset.input.corner_fraction,
+        sigma=dataset.input.sigma,
+    )
+
+    key_measurements = mm_schema.FieldIlluminationKeyMeasurements(
+        name="field_illumination_key_measurements",
+        description="Key measurements of the field illumination channels",
+        table_data=key_measurements,
+        **key_measurements.to_dict(orient="list"),
     )
 
     intensity_profiles = [
@@ -406,11 +435,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.center_of_mass_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.center_of_mass_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.center_of_mass_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.center_of_mass_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -431,11 +460,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.center_geometric_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.center_geometric_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.center_geometric_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.center_geometric_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -456,11 +485,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.center_fitted_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.center_fitted_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.center_fitted_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.center_fitted_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -481,11 +510,11 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_values.max_intensity_pos_y[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    y=key_measurements.max_intensity_pos_y[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_values.max_intensity_pos_x[
-                        key_values.channel_name.index(image.channel_series.channels[c].name)
+                    x=key_measurements.max_intensity_pos_x[
+                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -524,7 +553,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         processing_application="microscopemetrics",
         processing_version="0.1.0",
         processing_datetime=datetime.now(),
-        key_values=key_values,
+        key_measurements=key_measurements,
         intensity_profiles=intensity_profiles,
         roi_profiles=roi_profiles,
         roi_corners=roi_corners,

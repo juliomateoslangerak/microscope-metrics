@@ -447,7 +447,7 @@ def st_psf_beads_test_data(
     sigma_z=st.floats(min_value=0.9, max_value=1.5),
     sigma_x=st.floats(min_value=0.9, max_value=1.5),
     sigma_y=st.floats(min_value=0.9, max_value=1.5),
-    min_distance=st.just(25),
+    min_distance=st.just(20),
     nr_valid_beads=st.integers(min_value=1, max_value=10),
     nr_edge_beads=st.integers(min_value=0, max_value=3),
     nr_out_of_focus_beads=st.integers(min_value=0, max_value=3),
@@ -476,7 +476,7 @@ def st_psf_beads_test_data(
 
     dtype = draw(dtype)
 
-    min_distance_z = draw(min_distance) // 4
+    min_distance_z = draw(min_distance) // 2
     min_distance_y = draw(min_distance)
     min_distance_x = draw(min_distance)
 
@@ -558,7 +558,11 @@ def st_psf_beads_dataset(
     psf_beads_unprocessed_dataset = draw(unprocessed_dataset)
 
     psf_beads_unprocessed_dataset.input.psf_beads_images = [
-        numpy_to_mm_image(image, name=f"PSF_image_{i}")
+        numpy_to_mm_image(
+            array=image,
+            name=f"PSF_image_{i}",
+            channel_names=[f"Channel_{c}" for c in range(image.shape[-1])],
+        )
         for i, image in enumerate(test_data.pop("images"))
     ]
 
