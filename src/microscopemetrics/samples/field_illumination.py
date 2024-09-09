@@ -345,7 +345,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     validate_requirements()
 
     channel_names = []
-    for image in dataset.input.field_illumination_image:
+    for image in dataset.input_data.field_illumination_image:
         # We want to verify that the input images all have different channel names
         # As it does not make sense to average file illumination between images from the same channel
         if image.channel_series is not None:
@@ -375,8 +375,8 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for c in range(image.array_data.shape[-1]):
             if is_saturated(
                 channel=image.array_data[..., c],
-                threshold=dataset.input.saturation_threshold,
-                detector_bit_depth=dataset.input.bit_depth,
+                threshold=dataset.input_parameters.saturation_threshold,
+                detector_bit_depth=dataset.input_parameters.bit_depth,
             ):
                 logger.error(f"Channel {c} is saturated")
                 saturated_channels.append(c)
@@ -385,9 +385,9 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             raise SaturationError(f"Channels {saturated_channels} are saturated")
 
     key_measurements = _image_properties(
-        images=dataset.input.field_illumination_image,
-        corner_fraction=dataset.input.corner_fraction,
-        sigma=dataset.input.sigma,
+        images=dataset.input_data.field_illumination_image,
+        corner_fraction=dataset.input_parameters.corner_fraction,
+        sigma=dataset.input_parameters.sigma,
     )
 
     key_measurements = mm_schema.FieldIlluminationKeyMeasurements(
@@ -403,7 +403,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             name=f"{image.name}_intensity_profiles",
             description=f"Intensity profiles of {image.name}",
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     roi_profiles = [
@@ -413,7 +413,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             linked_references=image.data_reference,
             lines=_line_profile_shapes(image.array_data),
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     roi_corners = mm_schema.Roi(
@@ -421,10 +421,10 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         description="ROIs used to compute the corner intensities",
         linked_references=[
             i.data_reference
-            for i in dataset.input.field_illumination_image
+            for i in dataset.input_data.field_illumination_image
             if i.data_reference is not None
         ],
-        rectangles=_corner_shapes(image.array_data, dataset.input.corner_fraction),
+        rectangles=_corner_shapes(image.array_data, dataset.input_parameters.corner_fraction),
     )
 
     roi_centers_of_mass = [
@@ -449,7 +449,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 for c in range(image.array_data.shape[-1])
             ],
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     roi_centers_geometric = [
@@ -474,7 +474,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 for c in range(image.array_data.shape[-1])
             ],
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     roi_centers_fitted = [
@@ -499,7 +499,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 for c in range(image.array_data.shape[-1])
             ],
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     roi_centers_max_intensity = [
@@ -524,7 +524,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 for c in range(image.array_data.shape[-1])
             ],
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     roi_center_region = [
@@ -546,7 +546,7 @@ def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 for c in range(image.array_data.shape[-1])
             ],
         )
-        for image in dataset.input.field_illumination_image
+        for image in dataset.input_data.field_illumination_image
     ]
 
     dataset.output = mm_schema.FieldIlluminationOutput(

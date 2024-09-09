@@ -16,7 +16,7 @@ def test_field_illumination_analysis_instantiation(dataset):
     assert dataset.name
     assert dataset.description
     assert dataset.microscope
-    assert dataset.input
+    assert dataset.input_parameters
 
 
 @given(st_mm.st_field_illumination_dataset())
@@ -56,9 +56,9 @@ def test_field_illumination_analysis_centers_geometric(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
-        f"sigma: {field_illumination_dataset.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input_parameters.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input_parameters.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input_parameters.sigma}"
     )
 
     for measured_c, expected_c in zip(measured_centers, expected_centers):
@@ -94,9 +94,9 @@ def test_field_illumination_analysis_centers_of_mass(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
-        f"sigma: {field_illumination_dataset.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input_parameters.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input_parameters.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input_parameters.sigma}"
     )
 
     for measured_c_w, expected_c in zip(measured_centers_weighted, expected_centers):
@@ -125,9 +125,9 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
-        f"sigma: {field_illumination_dataset.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input_parameters.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input_parameters.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input_parameters.sigma}"
     )
 
     for measured_m_i, expected_c in zip(measured_max_intensity_positions, expected_centers):
@@ -156,9 +156,9 @@ def test_field_illumination_analysis_centers_fitted(dataset):
     note(f"Expected output: {expected_output}")
     note(
         f"Input params: "
-        f"bit_depth: {field_illumination_dataset.input.bit_depth}"
-        f"saturation_threshold: {field_illumination_dataset.input.saturation_threshold}"
-        f"sigma: {field_illumination_dataset.input.sigma}"
+        f"bit_depth: {field_illumination_dataset.input_parameters.bit_depth}"
+        f"saturation_threshold: {field_illumination_dataset.input_parameters.saturation_threshold}"
+        f"sigma: {field_illumination_dataset.input_parameters.sigma}"
     )
 
     for measured_m_i, expected_c in zip(measured_centers_fitted, expected_centers):

@@ -79,7 +79,7 @@ def test_psf_beads_analysis_instantiation(dataset):
     assert dataset.name
     assert dataset.description
     assert dataset.microscope
-    assert dataset.input
+    assert dataset.input_parameters
 
 
 @given(st_mm.st_psf_beads_dataset())
@@ -106,7 +106,7 @@ def test_psf_beads_analysis_run(dataset):
         ),
         unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
             dataset=st_mm_schema.st_mm_dataset(
-                input=st_mm_schema.st_mm_psf_beads_input(
+                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
                     fitting_r2_threshold=st.just(0.8),  # TODO: Remove this?
                     intensity_robust_z_score_threshold=st.just(4.0),
                 )
@@ -117,7 +117,9 @@ def test_psf_beads_analysis_run(dataset):
 def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.input.min_lateral_distance_factor = expected_output["min_distance_y"][0]
+    psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
+        "min_distance_y"
+    ][0]
 
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
@@ -145,7 +147,9 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
-    psf_beads_dataset.input.min_lateral_distance_factor = expected_output["min_distance_y"][0]
+    psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
+        "min_distance_y"
+    ][0]
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
 

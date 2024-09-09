@@ -511,7 +511,7 @@ def _process_image(
 
 def _estimate_min_bead_distance(dataset: mm_schema.PSFBeadsDataset) -> float:
     # TODO: get the resolution somewhere or pass it as a metadata
-    return dataset.input.min_lateral_distance_factor
+    return dataset.input_parameters.min_lateral_distance_factor
 
 
 def _generate_center_roi(
@@ -523,7 +523,7 @@ def _generate_center_roi(
 ):
     rois = []
 
-    for image in dataset.input.psf_beads_images:
+    for image in dataset.input_data.psf_beads_images:
         image_id = get_object_id(image) or image.name
         if positions.empty or image_id not in positions.index.get_level_values("image_id"):
             continue
@@ -587,15 +587,15 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     images = {}
     voxel_sizes_micron = {}
     min_bead_distance = _estimate_min_bead_distance(dataset)
-    snr_threshold = dataset.input.snr_threshold
-    fitting_r2_threshold = dataset.input.fitting_r2_threshold
+    snr_threshold = dataset.input_parameters.snr_threshold
+    fitting_r2_threshold = dataset.input_parameters.fitting_r2_threshold
 
     # Containers for output data
     saturated_channels = {}
     bead_properties = []
 
     # First loop to prepare data
-    for image in dataset.input.psf_beads_images:
+    for image in dataset.input_data.psf_beads_images:
         image_id = get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
 
@@ -616,8 +616,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         for c in range(image.array_data.shape[-1]):
             if is_saturated(
                 channel=image.array_data[..., c],
-                threshold=dataset.input.saturation_threshold,
-                detector_bit_depth=dataset.input.bit_depth,
+                threshold=dataset.input_parameters.saturation_threshold,
+                detector_bit_depth=dataset.input_parameters.bit_depth,
             ):
                 logger.error(f"Image {image_id}: channel {c} is saturated")
                 saturated_channels[image_id].append(c)
@@ -627,7 +627,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         raise SaturationError(f"Channels {saturated_channels} are saturated")
 
     # Second loop main image analysis
-    for image in dataset.input.psf_beads_images:
+    for image in dataset.input_data.psf_beads_images:
         image_id = get_object_id(image) or image.name
         logger.info(f"Processing image {image_id}...")
         voxel_sizes_micron[image_id] = (
@@ -638,11 +638,15 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
         image_bead_properties = _process_image(
             image=image,
-            sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
+            sigma=(
+                dataset.input_parameters.sigma_z,
+                dataset.input_parameters.sigma_y,
+                dataset.input_parameters.sigma_x,
+            ),
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
-            intensity_robust_z_score_threshold=dataset.input.intensity_robust_z_score_threshold,
+            intensity_robust_z_score_threshold=dataset.input_parameters.intensity_robust_z_score_threshold,
         )
 
         logger.info(
@@ -701,7 +705,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             ),
             name="average_bead",
             description="Average bead image extracted from all the beads considered valid in the dataset.",
-            source_images=dataset.input.psf_beads_images,
+            source_images=dataset.input_data.psf_beads_images,
             channel_names=[
                 i[average_beads_properties.index.names.index("channel_name")]
                 for i in average_beads_properties.index
