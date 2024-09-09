@@ -14,7 +14,7 @@ documentation = "https://github.com/MontpellierRessourcesImagerie/microscope-met
 keywords = ["microscopy", "metrology"]
 
 [tool.pytest.ini_options]
-addopts = "--hypothesis-show-statistics --hypothesis-profile=dev --workers=auto"
+addopts = "--hypothesis-show-statistics --hypothesis-profile=dev" # --workers=auto"
 testpaths = [
     "tests"
 ]
@@ -30,6 +30,9 @@ filterwarnings = [
     "ignore:.*urllib3 v2 only supports OpenSSL.*:Warning",
 ]
 
+[tool.isort]
+profile = "black"
+
 [tool.poetry.dependencies]
 python = ">=3.9.18 <3.12"
 numpy = "^1"
@@ -37,7 +40,7 @@ scikit-image = "^0"
 scipy = "^1"
 pandas = "^1"
 matplotlib = "^3"
-microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev"}
+microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev_psf_refactoring"}
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7"

@@ -71,7 +71,7 @@ def fit_gaussian(profile, guess=None):
     ssr = np.sum((profile - fitted_profile) ** 2)
     cd_r2 = 1 - (ssr / sst)
 
-    return fitted_profile, cd_r2, fwhm, popt[2]
+    return fitted_profile, cd_r2, fwhm, popt
 
 
 def fit_airy(profile, guess=None):
@@ -102,7 +102,7 @@ def fit_airy(profile, guess=None):
     ssr = np.sum((profile - fitted_profile) ** 2)
     cd_r2 = 1 - (ssr / sst)
 
-    return fitted_profile, cd_r2, fwhm, popt[0]
+    return fitted_profile, cd_r2, fwhm, popt
 
 
 def multi_airy_fun(x: ndarray, *params) -> ndarray:
