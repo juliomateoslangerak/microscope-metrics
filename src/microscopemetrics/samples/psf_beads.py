@@ -203,7 +203,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     # We aggregate counts for each channel on beads according to their status
     channel_counts = (
         reindex_bead_properties_df[count_aggregation_columns]
-        .groupby(["channel_name", "channel_nr"])
+        .groupby(["channel_nr", "channel_name"])
         .agg(["sum"])
     )
     channel_counts.columns = [
@@ -216,7 +216,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     ]
     channel_measurements = (
         valid_bead_properties_df[measurement_aggregation_columns]
-        .groupby(["channel_name", "channel_nr"])
+        .groupby(["channel_nr", "channel_name"])
         .agg(["mean", "median", "std"])
     )
     channel_measurements.columns = [
@@ -668,7 +668,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Before averaging any bead we need to verify that all voxel sizes are equal
     if len(set(voxel_sizes_micron.values())) == 1:
-        average_beads_properties = bead_properties.groupby(["channel_name", "channel_nr"]).apply(
+        average_beads_properties = bead_properties.groupby(["channel_nr", "channel_name"]).apply(
             _average_beads
         )
         average_beads_properties = average_beads_properties.join(
