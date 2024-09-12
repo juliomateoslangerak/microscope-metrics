@@ -566,7 +566,7 @@ def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
     profiles = {}
     for index, row in bead_properties.iterrows():
         if isinstance(index, (list, tuple)):
-            index = {index[bead_properties.index.names.index(col_i)] for col_i in column_indexes}
+            index = [index[bead_properties.index.names.index(col_i)] for col_i in column_indexes]
 
             index_str = "_".join([str(i) for i in index])
         else:
