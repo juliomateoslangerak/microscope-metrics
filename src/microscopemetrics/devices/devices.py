@@ -533,9 +533,7 @@ class WideFieldMicroscope(Microscope):
                 )
                 theoretical_res["resolution_theoretical_rayleigh_lateral"].append(None)
             try:
-                theoretical_res["resolution_theoretical_rayleigh_axial"].append(
-                    2 * em * ri / na**2
-                )
+                theoretical_res["resolution_theoretical_rayleigh_axial"].append(2 * em * ri / na**2)
             except TypeError as e:
                 module_logger.warning(
                     "Rayleigh theoretical axial resolution could not be calculated. Verify configuration files."

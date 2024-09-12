@@ -1,4 +1,5 @@
 """These are some possibly useful code snippets"""
+
 import logging
 from itertools import permutations
 from typing import List

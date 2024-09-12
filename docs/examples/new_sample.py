@@ -11,6 +11,7 @@ The procedure to follow is, in short:
     - define a 'run' method that will implement the logic of your analysis
     - if desired, define a 'plot' method returning a plot showing the results of the analysis
 """
+
 from math import atan2
 
 # import the types that you may be using
