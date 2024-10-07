@@ -24,7 +24,7 @@ def test_field_illumination_analysis_instantiation(dataset):
 def test_field_illumination_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
     assert not dataset.processed
-    assert field_illumination.analise_field_illumination(dataset)
+    assert field_illumination.analyse_field_illumination(dataset)
     assert dataset.processed
 
 
@@ -39,7 +39,7 @@ def test_field_illumination_analysis_run(dataset):
 def test_field_illumination_analysis_centers_geometric(dataset):
     field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination.analise_field_illumination(field_illumination_dataset)
+    field_illumination.analyse_field_illumination(field_illumination_dataset)
 
     measured_centers = list(
         zip(
@@ -77,7 +77,7 @@ def test_field_illumination_analysis_centers_geometric(dataset):
 def test_field_illumination_analysis_centers_of_mass(dataset):
     field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination.analise_field_illumination(field_illumination_dataset)
+    field_illumination.analyse_field_illumination(field_illumination_dataset)
 
     measured_centers_weighted = list(
         zip(
@@ -108,7 +108,7 @@ def test_field_illumination_analysis_centers_of_mass(dataset):
 def test_field_illumination_analysis_max_intensity_positions(dataset):
     field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination.analise_field_illumination(field_illumination_dataset)
+    field_illumination.analyse_field_illumination(field_illumination_dataset)
 
     measured_max_intensity_positions = list(
         zip(
@@ -139,7 +139,7 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
 def test_field_illumination_analysis_centers_fitted(dataset):
     field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    field_illumination.analise_field_illumination(field_illumination_dataset)
+    field_illumination.analyse_field_illumination(field_illumination_dataset)
 
     measured_centers_fitted = list(
         zip(
@@ -176,4 +176,4 @@ def test_field_illumination_analysis_centers_fitted(dataset):
 def test_field_illumination_analysis_raises_saturation_error(dataset):
     with pytest.raises(SaturationError):
         dataset = dataset["unprocessed_dataset"]
-        field_illumination.analise_field_illumination(dataset)
+        field_illumination.analyse_field_illumination(dataset)

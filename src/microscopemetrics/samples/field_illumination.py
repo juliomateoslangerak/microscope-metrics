@@ -341,7 +341,7 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
     return properties
 
 
-def analise_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
+def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
     validate_requirements()
 
     channel_names = []
