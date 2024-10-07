@@ -18,7 +18,7 @@ from microscopemetrics.analyses import (
     numpy_to_mm_image,
     validate_requirements,
 )
-from microscopemetrics.utilities.utilities import fit_gaussian, is_saturated
+from microscopemetrics.analyses.tools import fit_gaussian, is_saturated
 
 
 def _get_center_region_mask(channel: np.ndarray, fraction: float = 0.1) -> np.ndarray:

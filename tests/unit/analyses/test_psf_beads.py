@@ -11,7 +11,7 @@ from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics.analyses import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
-from microscopemetrics.utilities.utilities import fit_gaussian
+from microscopemetrics.analyses.tools import fit_gaussian
 
 
 @given(

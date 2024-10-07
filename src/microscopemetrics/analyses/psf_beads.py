@@ -15,7 +15,7 @@ from microscopemetrics.analyses import (
     numpy_to_mm_image,
     validate_requirements,
 )
-from microscopemetrics.utilities.utilities import fit_airy, fit_gaussian, is_saturated
+from microscopemetrics.analyses.tools import fit_airy, fit_gaussian, is_saturated
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):

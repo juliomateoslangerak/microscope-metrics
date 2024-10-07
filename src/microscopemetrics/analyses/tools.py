@@ -2,11 +2,12 @@
 
 import logging
 from itertools import permutations
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from scipy import ndimage
+from scipy import ndimage, special
+from scipy.optimize import curve_fit, fsolve
 from scipy.spatial.distance import cdist
 from skimage.feature import peak_local_max
 from skimage.filters import apply_hysteresis_threshold, gaussian, threshold_otsu
@@ -16,6 +17,156 @@ from skimage.segmentation import clear_border
 
 # Creating logging services
 logger = logging.getLogger(__name__)
+
+INT_DETECTOR_BIT_DEPTHS = [8, 10, 11, 12, 15, 16, 32]
+FLOAT_DETECTOR_BIT_DEPTHS = [32, 64]
+
+
+def airy_fun(
+    x: np.ndarray, centre: np.float64, amp: np.float64
+) -> np.ndarray:  # , exp):  # , amp, bg):
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(
+            (x - centre) == 0,
+            amp * 0.5**2,
+            amp * (special.j1(x - centre) / (x - centre)) ** 2,
+        )
+
+
+def gaussian_fun(x, background, amplitude, center, sd):
+    gauss = np.exp(-np.power(x - center, 2.0) / (2 * np.power(sd, 2.0)))
+    return background + (amplitude - background) * gauss
+
+
+def fit_gaussian(profile, guess=None):
+    if guess is None:
+        guess = [profile.min(), profile.max(), profile.argmax(), 0.8]
+    x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
+    popt, pcov, infodict, mesg, ier = curve_fit(
+        f=gaussian_fun, xdata=x, ydata=profile, p0=guess, maxfev=5000, full_output=True
+    )
+
+    if ier not in [1, 2, 3, 4]:
+        logger.warning(f"No gaussian fit found. Reason: {mesg}")
+
+    fitted_profile = gaussian_fun(x, popt[0], popt[1], popt[2], popt[3])
+    fwhm = popt[3] * 2.35482
+
+    # Calculate the fit quality using the coefficient of determination (R^2)
+    y_mean = np.mean(profile)
+    sst = np.sum((profile - y_mean) ** 2)
+    ssr = np.sum((profile - fitted_profile) ** 2)
+    cd_r2 = 1 - (ssr / sst)
+
+    return fitted_profile, cd_r2, fwhm, popt
+
+
+def fit_airy(profile, guess=None):
+    profile = (profile - profile.min()) / (profile.max() - profile.min())
+    if guess is None:
+        guess = [profile.argmax(), 4 * profile.max()]
+    x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
+    popt, pcov, infodict, mesg, ier = curve_fit(
+        f=airy_fun, xdata=x, ydata=profile, p0=guess, full_output=True
+    )
+
+    if ier not in [1, 2, 3, 4]:
+        logger.warning(f"No airy fit found. Reason: {mesg}")
+
+    fitted_profile = airy_fun(x, popt[0], popt[1])
+
+    # Calculate the FWHM
+    def _f(d):
+        return airy_fun(d, popt[0], popt[1]) - (fitted_profile.max() - fitted_profile.min()) / 2
+
+    guess = np.array([fitted_profile.argmax() - 1, fitted_profile.argmax() + 1])
+    v = fsolve(_f, guess)
+    fwhm = abs(v[1] - v[0])
+
+    # Calculate the fit quality using the coefficient of determination (R^2)
+    y_mean = np.mean(profile)
+    sst = np.sum((profile - y_mean) ** 2)
+    ssr = np.sum((profile - fitted_profile) ** 2)
+    cd_r2 = 1 - (ssr / sst)
+
+    return fitted_profile, cd_r2, fwhm, popt
+
+
+def multi_airy_fun(x: np.ndarray, *params) -> np.ndarray:
+    y = np.zeros_like(x)
+    for i in range(0, len(params), 2):
+        y = y + airy_fun(x, params[i], params[i + 1])
+    return y
+
+
+def is_saturated(
+    channel: np.ndarray, threshold: float = 0.0, detector_bit_depth: Optional[int] = None
+) -> bool:
+    """
+    Checks if the channel is saturated.
+    A warning if it suspects that the detector bit depth does not match the datatype.
+    thresh: float
+        Threshold for the ratio of saturated pixels to total pixels
+    detector_bit_depth: int
+        Bit depth of the detector. Sometimes, detectors bit depth are not matching the datatype of the measureemnts.
+        Here it can be specified the bit depth of the detector if known. The function is going to raise
+        If None, it will be inferred from the channel dtype.
+    """
+    if detector_bit_depth is not None:
+        if (
+            detector_bit_depth not in INT_DETECTOR_BIT_DEPTHS
+            and detector_bit_depth not in FLOAT_DETECTOR_BIT_DEPTHS
+        ):
+            raise ValueError(
+                f"The detector bit depth provided ({detector_bit_depth}) is not supported. Supported values are {INT_DETECTOR_BIT_DEPTHS} for integer detectors and {FLOAT_DETECTOR_BIT_DEPTHS} for floating point detectors."
+            )
+        if (
+            np.issubdtype(channel.dtype, np.integer)
+            and detector_bit_depth not in INT_DETECTOR_BIT_DEPTHS
+        ):
+            raise ValueError(
+                f"The channel datatype {channel.dtype} does not match the detector bit depth {detector_bit_depth}. The channel might be saturated."
+            )
+        elif (
+            np.issubdtype(channel.dtype, np.floating)
+            and detector_bit_depth not in FLOAT_DETECTOR_BIT_DEPTHS
+        ):
+            raise ValueError(
+                f"The channel datatype {channel.dtype} does not match the detector bit depth {detector_bit_depth}. The channel might be saturated."
+            )
+        else:
+            if np.issubdtype(channel.dtype, np.integer):
+                if detector_bit_depth > np.iinfo(channel.dtype).bits:
+                    raise ValueError(
+                        f"The channel datatype {channel.dtype} does not support the detector bit depth {detector_bit_depth}. The channel might be saturated."
+                    )
+                else:
+                    max_limit = pow(2, detector_bit_depth) - 1
+            elif np.issubdtype(channel.dtype, np.floating):
+                if detector_bit_depth != np.finfo(channel.dtype).bits:
+                    raise ValueError(
+                        f"The channel datatype {channel.dtype} does not support the detector bit depth {detector_bit_depth}. The channel might be saturated."
+                    )
+                else:
+                    max_limit = np.finfo(channel.dtype).max
+
+    else:
+        if np.issubdtype(channel.dtype, np.integer):
+            max_limit = np.iinfo(channel.dtype).max
+        elif np.issubdtype(channel.dtype, np.floating):
+            max_limit = np.finfo(channel.dtype).max
+        else:
+            raise ValueError("The channel provided is not a valid numpy dtype.")
+
+    if channel.max() > max_limit:
+        raise ValueError(
+            "The channel provided has values larger than the bit depth of the detector."
+        )
+
+    saturation_matrix = channel == max_limit
+    saturation_ratio = np.count_nonzero(saturation_matrix) / channel.size
+
+    return saturation_ratio > threshold
 
 
 def _segment_channel(
@@ -258,3 +409,52 @@ def fft_3d(image):
         fft[..., c, :, :] = _channel_fft_3d(image[..., c, :, :])
 
     return fft
+
+
+def wavelength_to_rgb(wavelength, gamma=0.8):
+    """
+    Copied from https://www.noah.org/wiki/Wavelength_to_RGB_in_Python
+    This converts a given wavelength of light to an
+    approximate RGB color value. The wavelength must be given
+    in nanometers in the range from 380 nm through 750 nm
+    (789 THz through 400 THz).
+
+    Based on code by Dan Bruton
+    http://www.physics.sfasu.edu/astro/color/spectra.html
+    """
+
+    wavelength = float(wavelength)
+    if 380 < wavelength <= 440:
+        attenuation = 0.3 + 0.7 * (wavelength - 380) / (440 - 380)
+        r = ((-(wavelength - 440) / (440 - 380)) * attenuation) ** gamma
+        g = 0.0
+        b = (1.0 * attenuation) ** gamma
+    elif 440 < wavelength <= 490:
+        r = 0.0
+        g = ((wavelength - 440) / (490 - 440)) ** gamma
+        b = 1.0
+    elif 490 < wavelength <= 510:
+        r = 0.0
+        g = 1.0
+        b = (-(wavelength - 510) / (510 - 490)) ** gamma
+    elif 510 < wavelength <= 580:
+        r = ((wavelength - 510) / (580 - 510)) ** gamma
+        g = 1.0
+        b = 0.0
+    elif 580 < wavelength <= 645:
+        r = 1.0
+        g = (-(wavelength - 645) / (645 - 580)) ** gamma
+        b = 0.0
+    elif 645 < wavelength <= 750:
+        attenuation = 0.3 + 0.7 * (750 - wavelength) / (750 - 645)
+        r = (1.0 * attenuation) ** gamma
+        g = 0.0
+        b = 0.0
+    else:
+        r = 0.0
+        g = 0.0
+        b = 0.0
+    r *= int(r * 255)
+    g *= int(g * 255)
+    g *= int(g * 255)
+    return r, g, b

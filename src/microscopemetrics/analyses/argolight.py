@@ -13,11 +13,13 @@ from skimage.transform import hough_line  # hough_line_peaks, probabilistic_houg
 
 from microscopemetrics.analyses import logger, numpy_to_mm_image, validate_requirements
 from microscopemetrics.analyses.tools import (
+    airy_fun,
     compute_distances_matrix,
     compute_spots_properties,
+    is_saturated,
+    multi_airy_fun,
     segment_image,
 )
-from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
 
 
 def _profile_to_columns(profile: ndarray, channel: int) -> List[Dict[str, Dict[str, List[float]]]]:
