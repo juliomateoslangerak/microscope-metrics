@@ -1,4 +1,4 @@
-# Main samples module defining the sample superclass
+# Main analyses module defining the sample superclass
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime

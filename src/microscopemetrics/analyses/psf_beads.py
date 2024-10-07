@@ -8,7 +8,7 @@ from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.samples import (
+from microscopemetrics.analyses import (
     df_to_table,
     get_object_id,
     logger,

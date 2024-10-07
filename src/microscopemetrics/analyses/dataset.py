@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
 
-from microscopemetrics.samples.samples import Analysis, Configurator
+from microscopemetrics.analyses.samples import Analysis, Configurator
 
-module_logger = logging.getLogger("metrics.samples.dataset")
+module_logger = logging.getLogger("metrics.analyses.dataset")
 
 
 class DatasetConfigurator(Configurator):

@@ -9,7 +9,7 @@ from scipy import ndimage
 from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
 
-from microscopemetrics.samples import psf_beads
+from microscopemetrics.analyses import psf_beads
 from microscopemetrics.strategies import strategies as st_mm
 from microscopemetrics.utilities.utilities import fit_gaussian
 

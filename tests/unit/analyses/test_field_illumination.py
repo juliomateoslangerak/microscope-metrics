@@ -4,7 +4,7 @@ from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
 
 from microscopemetrics import SaturationError
-from microscopemetrics.samples import field_illumination
+from microscopemetrics.analyses import field_illumination
 from microscopemetrics.strategies import strategies as st_mm
 
 

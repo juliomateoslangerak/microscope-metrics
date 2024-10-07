@@ -11,7 +11,7 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 from microscopemetrics import SaturationError
-from microscopemetrics.samples import (
+from microscopemetrics.analyses import (
     dict_to_table,
     get_object_id,
     logger,
