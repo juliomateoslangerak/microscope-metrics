@@ -224,7 +224,7 @@ def _compute_resolution(
     )
 
 
-def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
+def analyse_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
     validate_requirements()
 
     # Check image shape
@@ -403,7 +403,7 @@ def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
     return True
 
 
-def analise_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
+def analyse_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
     validate_requirements()
 
     # Check image shape
