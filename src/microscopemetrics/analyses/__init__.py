@@ -1,4 +1,4 @@
-# Main samples module defining the sample superclass
+# Main analyses module defining the sample superclass
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -8,51 +8,8 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 
-# We are defining some global dictionaries to register the different analysis types
-IMAGE_ANALYSIS_REGISTRY = {}
-DATASET_ANALYSIS_REGISTRY = {}
-PROGRESSION_ANALYSIS_REGISTRY = {}
-
-
-# Decorators to register exposed analysis functions
-def register_image_analysis(cls):
-    IMAGE_ANALYSIS_REGISTRY[cls.__name__] = cls
-    return cls
-
-
-def register_dataset_analysis(cls):
-    DATASET_ANALYSIS_REGISTRY[cls.__name__] = cls
-    return cls
-
-
-def register_progression_analysis(cls):
-    PROGRESSION_ANALYSIS_REGISTRY[cls.__name__] = cls
-    return cls
-
-
 # Create a logging service
 logger = logging.getLogger(__name__)
-# TODO: work on the loggers
-
-
-# def get_references(
-#     objects: Union[mm_schema.MetricsObject, list[mm_schema.MetricsObject]]
-# ) -> List[mm_schema.DataReference]:
-#     """Get the references of a metrics object or a list of metrics objects"""
-#     if isinstance(objects, mm_schema.MetricsObject):
-#         return mm_schema.DataReference(
-#             data_uri=objects.data_uri,
-#             # HACK: This is a temporary fix to get the first element of the tuple
-#             omero_host=objects.omero_host[0],
-#             omero_port=objects.omero_port[0],
-#             omero_object_type=objects.omero_object_type[0],
-#             omero_object_id=objects.omero_object_id,
-#         )
-#
-#     elif isinstance(objects, list):
-#         return [get_references(obj) for obj in objects]
-#     else:
-#         raise ValueError("Input should be a metrics object or a list of metrics objects")
 
 
 def get_object_id(
@@ -150,72 +107,6 @@ def numpy_to_mm_image(
         acquisition_datetime=acquisition_datetime,
         channel_series=mm_schema.ChannelSeries(channels=channels),
     )
-
-
-# def numpy_to_mask_inlined(
-#     array: np.ndarray,
-#     name: str = None,
-#     description: str = None,
-#     image_url: str = None,
-#     source_image_url: Union[str, List[str]] = None,
-# ) -> mm_schema.ImageMask:
-#     """Converts a bool numpy array with dimensions order yx to an inlined mask"""
-#     if array.ndim != 2:
-#         raise ValueError("Input array should be 2D")
-#     if array.dtype != bool and array.dtype == np.uint8:
-#         try:
-#             array = array.astype(bool)
-#         except ValueError:
-#             raise ValueError("Input array could not be casted to type bool")
-#     if array.dtype != bool:
-#         raise ValueError("Input array should be of type bool")
-#
-#     return mm_schema.ImageMask(
-#         name=name,
-#         description=description,
-#         image_url=image_url,
-#         source_image_url=source_image_url,
-#         data=array.flatten().tolist(),
-#         shape_y=array.shape[0],
-#         shape_x=array.shape[1],
-#     )
-#
-#
-# def numpy_to_image_inlined(
-#     array: np.ndarray,
-#     name: str = None,
-#     description: str = None,
-#     image_url: str = None,
-#     source_image_url: Union[str, List[str]] = None,
-# ) -> mm_schema.ImageInline:
-#     """Converts a numpy array with dimensions order tzyxc or yx to an inlined image"""
-#     if array.ndim == 5:
-#         return mm_schema.Image5D(
-#             name=name,
-#             description=description,
-#             image_url=image_url,
-#             source_image_url=source_image_url,
-#             data=array.flatten().tolist(),
-#             shape_t=array.shape[0],
-#             shape_z=array.shape[1],
-#             shape_y=array.shape[2],
-#             shape_x=array.shape[3],
-#             shape_c=array.shape[4],
-#         )
-#     elif array.ndim == 2:
-#         return mm_schema.Image2D(
-#             name=name,
-#             description=description,
-#             image_url=image_url,
-#             source_image_url=source_image_url,
-#             data=array.flatten().tolist(),
-#             shape_y=array.shape[0],
-#             shape_x=array.shape[1],
-#         )
-#     else:
-#         raise NotImplementedError(
-#             f"Array of dimension {array.ndim} is not supported by this function"
-#         )
 
 
 def _create_table(

@@ -11,15 +11,12 @@ except ImportError:
     raise ImportError(
         "In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`."
     )
-from microscopemetrics_schema import datamodel as mm_schema
 from microscopemetrics_schema import strategies as st_mm_schema
 from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
 
-from microscopemetrics import samples as mm_samples
-from microscopemetrics.samples import (
-    argolight,
+from microscopemetrics.analyses import (  # argolight,
     field_illumination,
     numpy_to_mm_image,
     psf_beads,
@@ -208,7 +205,7 @@ def st_field_illumination_dataset(
     test_data = draw(test_data)
     field_illumination_unprocessed_dataset = draw(unprocessed_dataset)
 
-    field_illumination_unprocessed_dataset.input.field_illumination_image = [
+    field_illumination_unprocessed_dataset.input_data.field_illumination_image = [
         numpy_to_mm_image(
             array=image,
             name=f"FI_image_{i}",
@@ -220,17 +217,21 @@ def st_field_illumination_dataset(
     # Setting the bit depth to the data type of the image
     image_dtype = {
         a.array_data.dtype
-        for a in field_illumination_unprocessed_dataset.input.field_illumination_image
+        for a in field_illumination_unprocessed_dataset.input_data.field_illumination_image
     }
     if len(image_dtype) != 1:
         raise ValueError("All images should have the same data type")
     image_dtype = image_dtype.pop()
     if np.issubdtype(image_dtype, np.integer):
-        field_illumination_unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
+        field_illumination_unprocessed_dataset.input_parameters.bit_depth = np.iinfo(
+            image_dtype
+        ).bits
     elif np.issubdtype(image_dtype, np.floating):
-        field_illumination_unprocessed_dataset.input.bit_depth = np.finfo(image_dtype).bits
+        field_illumination_unprocessed_dataset.input_parameters.bit_depth = np.finfo(
+            image_dtype
+        ).bits
     else:
-        field_illumination_unprocessed_dataset.input.bit_depth = None
+        field_illumination_unprocessed_dataset.input_parameters.bit_depth = None
 
     return {
         "unprocessed_dataset": field_illumination_unprocessed_dataset,
@@ -254,9 +255,7 @@ def st_field_illumination_table(
         dataset = draw(st_field_illumination_dataset())["unprocessed_dataset"]
         dataset.run()
         if dataset.processed:
-            key_values = {}
-            for col in columns:
-                key_values[col] = getattr(dataset.output.key_values, col)
+            key_values = {col: getattr(dataset.output.key_values, col) for col in columns}
         else:
             continue
         table.append(key_values)
@@ -336,14 +335,14 @@ def _gen_psf_beads_image(
         z_pos = z_image_shape // 2
         y_pos = random.choice(
             [
-                random.randint(5, int(min_distance_y / 2) - 2),
-                random.randint(y_image_shape - int(min_distance_y / 2) + 2, y_image_shape - 5),
+                random.randint(5, min_distance_y // 2 - 2),
+                random.randint(y_image_shape - min_distance_y // 2 + 2, y_image_shape - 5),
             ]
         )
         x_pos = random.choice(
             [
-                random.randint(5, int(min_distance_x / 2) - 2),
-                random.randint(x_image_shape - int(min_distance_x / 2) + 2, x_image_shape - 5),
+                random.randint(5, min_distance_x // 2 - 2),
+                random.randint(x_image_shape - min_distance_x // 2 + 2, x_image_shape - 5),
             ]
         )
         if not edge_bead_positions:
@@ -480,7 +479,7 @@ def st_psf_beads_test_data(
     min_distance_y = draw(min_distance)
     min_distance_x = draw(min_distance)
 
-    for image_nr in range(draw(nr_images)):
+    for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
         _nr_edge_beads = draw(nr_edge_beads)
         _nr_out_of_focus_beads = draw(nr_out_of_focus_beads)
@@ -557,7 +556,7 @@ def st_psf_beads_dataset(
     test_data = draw(test_data)
     psf_beads_unprocessed_dataset = draw(unprocessed_dataset)
 
-    psf_beads_unprocessed_dataset.input.psf_beads_images = [
+    psf_beads_unprocessed_dataset.input_data.psf_beads_images = [
         numpy_to_mm_image(
             array=image,
             name=f"PSF_image_{i}",
@@ -567,16 +566,18 @@ def st_psf_beads_dataset(
     ]
 
     # Setting the bit depth to the data type of the image
-    image_dtype = {a.array_data.dtype for a in psf_beads_unprocessed_dataset.input.psf_beads_images}
+    image_dtype = {
+        a.array_data.dtype for a in psf_beads_unprocessed_dataset.input_data.psf_beads_images
+    }
     if len(image_dtype) != 1:
         raise ValueError("All images should have the same data type")
     image_dtype = image_dtype.pop()
     if np.issubdtype(image_dtype, np.integer):
-        psf_beads_unprocessed_dataset.input.bit_depth = np.iinfo(image_dtype).bits
+        psf_beads_unprocessed_dataset.input_parameters.bit_depth = np.iinfo(image_dtype).bits
     elif np.issubdtype(image_dtype, np.floating):
-        psf_beads_unprocessed_dataset.input.bit_depth = np.finfo(image_dtype).bits
+        psf_beads_unprocessed_dataset.input_parameters.bit_depth = np.finfo(image_dtype).bits
     else:
-        psf_beads_unprocessed_dataset.input.bit_depth = None
+        psf_beads_unprocessed_dataset.input_parameters.bit_depth = None
 
     return {
         "unprocessed_dataset": psf_beads_unprocessed_dataset,

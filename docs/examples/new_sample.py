@@ -3,14 +3,15 @@ but naive analysis where lines are detected through a progressive probabilistic 
 See official documentation at https://scikit-image.org/docs/0.7.0/api/skimage.transform.html#probabilistic-hough
 
 The procedure to follow is, in short:
-- import everything from the samples module
+- import everything from the analyses module
 - import the types that you might be using from the typing module
 - import any necessary libraries that you will need for your analysis
-- Create one or more subclasses of the Analysis abstract class of samples. Within each class:
+- Create one or more subclasses of the Analysis abstract class of analyses. Within each class:
     - define your input requirements
     - define a 'run' method that will implement the logic of your analysis
     - if desired, define a 'plot' method returning a plot showing the results of the analysis
 """
+
 from math import atan2
 
 # import the types that you may be using
@@ -25,7 +26,7 @@ from scipy.spatial import distance
 from skimage.transform import probabilistic_hough_line
 
 # import the sample functionality
-from microscopemetrics.samples import *
+from microscopemetrics.analyses import *
 
 
 class DetectLinesAnalysis(

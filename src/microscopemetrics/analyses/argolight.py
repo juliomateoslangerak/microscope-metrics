@@ -1,24 +1,25 @@
 from datetime import datetime
 from itertools import product
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from numpy import float64, int64, ndarray
 from pandas import DataFrame
-from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
 
-from microscopemetrics.analysis.tools import (
+from microscopemetrics.analyses import logger, numpy_to_mm_image, validate_requirements
+from microscopemetrics.analyses.tools import (
+    airy_fun,
     compute_distances_matrix,
     compute_spots_properties,
+    is_saturated,
+    multi_airy_fun,
     segment_image,
 )
-from microscopemetrics.samples import logger, numpy_to_mm_image, validate_requirements
-from microscopemetrics.utilities.utilities import airy_fun, is_saturated, multi_airy_fun
 
 
 def _profile_to_columns(profile: ndarray, channel: int) -> List[Dict[str, Dict[str, List[float]]]]:
@@ -223,12 +224,12 @@ def _compute_resolution(
     )
 
 
-def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
+def analyse_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
     validate_requirements()
 
     # Check image shape
     logger.info("Checking image shape...")
-    image = dataset.input.argolight_b_image.data
+    image = dataset.input_data.argolight_b_image.data
     if len(image.shape) != 5:
         logger.error("Image must be 5D")
         return False
@@ -239,8 +240,8 @@ def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
     for c in range(image.shape[-1]):
         if is_saturated(
             channel=image[:, :, :, :, c],
-            threshold=dataset.input.saturation_threshold,
-            detector_bit_depth=dataset.input.bit_depth,
+            threshold=dataset.input_parameters.saturation_threshold,
+            detector_bit_depth=dataset.input_parameters.bit_depth,
         ):
             logger.error(f"Channel {c} is saturated")
             saturated_channels.append(c)
@@ -249,32 +250,36 @@ def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
         return False
 
     # Calculating the distance between spots in pixels with a security margin
-    min_distance = round(dataset.input.spots_distance * 0.3)
+    min_distance = round(dataset.input_parameters.spots_distance * 0.3)
 
     # Calculating the maximum tolerated distance in microns for the same spot in a different channels
-    max_distance = dataset.input.spots_distance * 0.4
+    max_distance = dataset.input_parameters.spots_distance * 0.4
 
     labels = segment_image(
         image=image,
         min_distance=min_distance,
-        sigma=(dataset.input.sigma_z, dataset.input.sigma_y, dataset.input.sigma_x),
+        sigma=(
+            dataset.input_parameters.sigma_z,
+            dataset.input_parameters.sigma_y,
+            dataset.input_parameters.sigma_x,
+        ),
         method="local_max",
-        low_corr_factors=dataset.input.lower_threshold_correction_factors,
-        high_corr_factors=dataset.input.upper_threshold_correction_factors,
+        low_corr_factors=dataset.input_parameters.lower_threshold_correction_factors,
+        high_corr_factors=dataset.input_parameters.upper_threshold_correction_factors,
     )
 
     dataset.output.spots_labels_image = numpy_to_mm_image(  # TODO: this should be a mask
         array=labels,
-        name=f"{dataset.input.argolight_b_image.name}_spots_labels",
-        description=f"Spots labels of {dataset.input.argolight_b_image.image_url}",
-        image_url=dataset.input.argolight_b_image.image_url,
-        source_image_url=dataset.input.argolight_b_image.image_url,
+        name=f"{dataset.input_data.argolight_b_image.name}_spots_labels",
+        description=f"Spots labels of {dataset.input_data.argolight_b_image.image_url}",
+        image_url=dataset.input_data.argolight_b_image.image_url,
+        source_image_url=dataset.input_data.argolight_b_image.image_url,
     )
 
     spots_properties, spots_positions = compute_spots_properties(
         image=image,
         labels=labels,
-        remove_center_cross=dataset.input.remove_center_cross,
+        remove_center_cross=dataset.input_parameters.remove_center_cross,
     )
 
     distances_df = compute_distances_matrix(
@@ -338,7 +343,7 @@ def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
         spots_centroids.append(
             mm_schema.Roi(
                 label=f"Centroids_ch{ch:02}",
-                image=dataset.input.argolight_b_image.image_url,
+                image=dataset.input_data.argolight_b_image.image_url,
                 shapes=channel_shapes,
             )
         )
@@ -398,7 +403,7 @@ def analise_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
     return True
 
 
-def analise_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
+def analyse_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
     validate_requirements()
 
     # Check image shape
@@ -410,11 +415,11 @@ def analise_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
     # Check for axis value
     pass  # TODO: implement
 
-    image = dataset.input.argolight_e_image.data
+    image = dataset.input_data.argolight_e_image.data
     image = image[0]  # if there is a time dimension, take the first one
-    axis = dataset.input.orientation_axis
-    pixel_size = dataset.input.argolight_e_image.voxel_size_x_micron
-    measured_band = dataset.input.measured_band
+    axis = dataset.input_parameters.orientation_axis
+    pixel_size = dataset.input_data.argolight_e_image.voxel_size_x_micron
+    measured_band = dataset.input_parameters.measured_band
 
     (
         profiles,
@@ -428,7 +433,7 @@ def analise_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
         image=image,
         axis=axis,
         measured_band=measured_band,
-        prominence=dataset.input.prominence_threshold,
+        prominence=dataset.input_parameters.prominence_threshold,
         do_angle_refinement=False,  # TODO: implement angle refinement
     )
     key_values = {
@@ -498,7 +503,7 @@ def analise_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
         rois.append(
             mm_schema.Roi(
                 label=f"ch{ch:02}_peaks",
-                image=dataset.input.argolight_e_image.image_url,
+                image=dataset.input_data.argolight_e_image.image_url,
                 shapes=shapes,
             )
         )

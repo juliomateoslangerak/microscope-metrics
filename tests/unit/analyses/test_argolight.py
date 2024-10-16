@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from microscopemetrics.samples import argolight, numpy_to_mm_image
+# from microscopemetrics.analyses import argolight, numpy_to_mm_image
 from tests.test_utilities import get_file
 
 
