@@ -718,7 +718,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_properties.drop("beads", axis=1, inplace=True)
 
     key_measurements = _generate_key_measurements(
-        bead_properties=bead_properties, average_bead_properties=average_beads_properties
+        bead_properties=bead_properties,
+        average_bead_properties=average_beads_properties,
     )
 
     key_measurements = mm_schema.PSFBeadsKeyMeasurements(
