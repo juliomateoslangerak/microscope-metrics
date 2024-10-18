@@ -1,10 +1,12 @@
 # run pytest with --hypothesis-profile=dev to load a profile
 from datetime import datetime
 
+import numpy as np
 import pytest
 from pathlib import Path
 from hypothesis import HealthCheck, Verbosity, settings
 from microscopemetrics_schema import datamodel as mm_schema
+from microscopemetrics.analyses import numpy_to_mm_image
 from linkml_runtime.loaders.yaml_loader import YAMLLoader
 
 settings.register_profile(
@@ -63,7 +65,8 @@ settings.register_profile(
 )
 
 
-def _load_schema(loader: YAMLLoader, target_class: mm_schema.MetricsObject, path: Path, depth=3) -> mm_schema.MetricsObject:
+def _load_schema(loader: YAMLLoader, target_class: mm_schema.MetricsObject, path: Path,
+                 depth=3) -> mm_schema.MetricsObject:
     if not path.exists():
         raise FileNotFoundError(f"File {path} not found")
 
@@ -76,11 +79,21 @@ def _load_schema(loader: YAMLLoader, target_class: mm_schema.MetricsObject, path
         )
     if depth == 0:
         raise FileNotFoundError(f"File {file_path} not found")
-    return _load_schema(loader, target_class, path.parent, depth=depth-1)
+    return _load_schema(loader, target_class, path.parent, depth=depth - 1)
 
 
-def _load_data_schema(loader: YAMLLoader, target_class: mm_schema.MetricsInputData, path: Path) -> mm_schema.MetricsInputData:
-    return None
+def _load_data_schema(loader: YAMLLoader, target_class: mm_schema.MetricsInputData, path: Path,
+                      extension=".npy") -> mm_schema.MetricsInputData:
+    input_data_images_mappings = {
+        mm_schema.FieldIlluminationInputData: "field_illumination_image",
+        mm_schema.PSFBeadsInputData: "psf_beads_images",
+    }
+    image_paths = list(path.rglob(f'*{extension}'))
+    data = {input_data_images_mappings[target_class]:
+                [numpy_to_mm_image(array=np.load(path), name=path.name) for path in image_paths]
+            }
+
+    return target_class(**data)
 
 
 def _dataset_from_dir(
@@ -96,7 +109,7 @@ def _dataset_from_dir(
         mm_schema.FieldIlluminationDataset: mm_schema.FieldIlluminationInputData,
         mm_schema.PSFBeadsDataset: mm_schema.PSFBeadsInputData,
     }
-    input_data = input_data_mappings[target_class]
+
     return target_class(
         name=path.name,
         microscope=_load_schema(loader, mm_schema.Microscope, path),
@@ -106,7 +119,8 @@ def _dataset_from_dir(
         input_parameters=_load_schema(
             loader, input_parameters_mappings[target_class], path
         ),
-        input_data=_load_data_schema(loader, target_class, path),
+        input_data=_load_data_schema(
+            loader, input_data_mappings[target_class], path),
         processed=False,
     )
 
