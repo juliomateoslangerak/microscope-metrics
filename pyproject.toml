@@ -34,7 +34,7 @@ filterwarnings = [
 profile = "black"
 
 [tool.poetry.dependencies]
-python = ">=3.10.12 <3.12"
+python = ">=3.9.18 <3.12"
 numpy = "^1"
 scikit-image = "^0"
 scipy = "^1"
