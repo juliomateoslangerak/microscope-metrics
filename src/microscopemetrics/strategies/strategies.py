@@ -7,10 +7,10 @@ import pandas as pd
 try:
     from hypothesis import assume
     from hypothesis import strategies as st
-except ImportError:
+except ImportError as e:
     raise ImportError(
         "In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`."
-    )
+    ) from e
 from microscopemetrics_schema import strategies as st_mm_schema
 from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
