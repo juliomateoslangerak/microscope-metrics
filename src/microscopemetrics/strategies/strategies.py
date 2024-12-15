@@ -67,7 +67,7 @@ def _gen_field_illumination_channel(
 def _gen_field_illumination_image(
     y_shape: int,
     x_shape: int,
-    c_shape: list[int],
+    c_shape: int,
     y_center_rel_offset: list[float],
     x_center_rel_offset: list[float],
     dispersion: list[float],
