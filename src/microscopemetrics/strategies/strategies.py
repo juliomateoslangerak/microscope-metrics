@@ -46,7 +46,6 @@ def _gen_field_illumination_channel(
         channel,
         sigma=max(channel.shape) * dispersion,
         mode="constant",
-        cval=0.0,
         preserve_range=True,
     )
 
