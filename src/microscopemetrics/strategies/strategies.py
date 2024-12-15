@@ -577,3 +577,96 @@ def st_psf_beads_dataset(
         "unprocessed_dataset": psf_beads_unprocessed_dataset,
         "expected_output": test_data,
     }
+
+
+# Strategies for user experiment
+def _gen_user_experiment_channel(
+    z_shape: int,
+    y_shape: int,
+    x_shape: int,
+    lines_nr: int,
+    sigma: float,
+    target_min_intensity: float,
+    target_max_intensity: float,
+    do_noise: bool,
+    signal: int,
+):
+    # Generate the channel as float64
+    channel = np.zeros(shape=(z_shape, y_shape, x_shape), dtype="float64")
+
+    # draw lines_nr lines through the center of the image in z across the y and x dimensions
+    for i in range(lines_nr):
+        channel[
+            int(channel.shape[0] * 0.5),
+            :,
+            int(channel.shape[2] * i / lines_nr),
+        ] = 1.0
+        channel[
+            int(channel.shape[0] * 0.5),
+            int(channel.shape[1] * i / lines_nr),
+            :,
+        ] = 1.0
+        channel[
+            :,
+            int(channel.shape[1] * i / lines_nr),
+            int(channel.shape[1] * i / lines_nr),
+        ] = 1.0
+
+    channel = skimage_gaussian(
+        channel,
+        sigma=sigma,
+        mode="constant",
+        preserve_range=True,
+    )
+
+    # Normalize channel intensity to be between target_min_intensity and target_max_intensity
+    # Saturation point is at 1.0 when we rescale later to the target dtype
+    channel = skimage_rescale_intensity(
+        channel, out_range=(target_min_intensity, target_max_intensity)
+    )
+
+    if do_noise:
+        # The noise on a 1.0 intensity image is too strong, so we rescale the image to
+        # the defined signal and then rescale it back to the target intensity
+        channel = channel * signal
+        channel = skimage_random_noise(channel, mode="poisson", clip=False)
+        channel = channel / signal
+
+    return channel
+
+
+def _gen_user_experiment_image(
+    z_shape: int,
+    y_shape: int,
+    x_shape: int,
+    c_shape: int,
+    lines_nr: list[int],
+    sigma: list[float],
+    target_min_intensity: list[float],
+    target_max_intensity: list[float],
+    do_noise: bool,
+    signal: list[int],
+    dtype: np.dtype,
+):
+    # Generate the image as float64
+    image = np.zeros(shape=(y_shape, x_shape, c_shape), dtype="float64")
+
+    for ch in range(c_shape):
+        image[:, :, ch] = _gen_user_experiment_channel(
+            z_shape=z_shape,
+            y_shape=y_shape,
+            x_shape=x_shape,
+            lines_nr=lines_nr[ch],
+            sigma=sigma[ch],
+            target_min_intensity=target_min_intensity[ch],
+            target_max_intensity=target_max_intensity[ch],
+            do_noise=do_noise,
+            signal=signal[ch],
+        )
+
+    # Rescale to the target dtype
+    image = np.clip(image, None, 1)
+    image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
+    image = np.expand_dims(image, (0, 1))
+
+    return image
