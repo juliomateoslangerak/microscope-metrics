@@ -1,6 +1,4 @@
 # Main analyses module defining the sample superclass
-import logging
-from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, Union
 
@@ -8,10 +6,10 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 
-# Create a logging service
-logger = logging.getLogger(__name__)
+from microscopemetrics import logger
 
 
+# TODO: This function is getting the id from OMERO. It should be more general
 def get_object_id(
     objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]]
 ) -> Union[str, List[str]]:
