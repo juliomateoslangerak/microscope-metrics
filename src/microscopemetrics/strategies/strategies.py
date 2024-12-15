@@ -15,11 +15,7 @@ from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
 
-from microscopemetrics.analyses import (  # argolight,
-    field_illumination,
-    numpy_to_mm_image,
-    psf_beads,
-)
+from microscopemetrics.analyses import numpy_to_mm_image
 
 
 # Strategies for Field Illumination
