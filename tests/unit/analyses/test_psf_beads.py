@@ -10,7 +10,10 @@ from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics.analyses import psf_beads
-from microscopemetrics.strategies import strategies as st_mm
+from microscopemetrics.strategies.psf_beads import (
+    st_psf_beads_dataset,
+    st_psf_beads_test_data
+)
 from microscopemetrics.analyses.tools import fit_gaussian
 
 
@@ -71,7 +74,7 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
     assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.3)
 
 
-@given(st_mm.st_psf_beads_dataset())
+@given(st_psf_beads_dataset())
 @settings(max_examples=1)
 def test_psf_beads_analysis_instantiation(dataset):
     dataset = dataset["unprocessed_dataset"]
@@ -82,7 +85,7 @@ def test_psf_beads_analysis_instantiation(dataset):
     assert dataset.input_parameters
 
 
-@given(st_mm.st_psf_beads_dataset())
+@given(st_psf_beads_dataset())
 @settings(max_examples=1)
 def test_psf_beads_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
@@ -92,8 +95,8 @@ def test_psf_beads_analysis_run(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -130,8 +133,8 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -158,8 +161,8 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(71),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -183,8 +186,8 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
