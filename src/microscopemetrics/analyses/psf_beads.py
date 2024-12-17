@@ -105,59 +105,59 @@ def _find_bead_shifts(data1, data2=None):
 
 
 def _calculate_bead_intensity_outliers(
-    bead_positions: pd.DataFrame, robust_z_score_threshold: float
+    bead_properties: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
-    bead_positions["max_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_positions["integrated_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_positions["considered_intensity_outlier"] = pd.Series(dtype="bool")
+    bead_properties["max_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_properties["integrated_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_properties["considered_intensity_outlier"] = pd.Series(dtype="bool")
 
-    if len(bead_positions[bead_positions.considered_valid]) == 1:
-        bead_positions["max_intensity_robust_z_score"] = 0
-        bead_positions["integrated_intensity_robust_z_score"] = 0
-        bead_positions["considered_intensity_outlier"] = False
+    if len(bead_properties[bead_properties.considered_valid]) == 1:
+        bead_properties["max_intensity_robust_z_score"] = 0
+        bead_properties["integrated_intensity_robust_z_score"] = 0
+        bead_properties["considered_intensity_outlier"] = False
     else:
-        max_int_mean = bead_positions[bead_positions.considered_valid]["intensity_max"].mean()
-        max_int_median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
+        max_int_mean = bead_properties[bead_properties.considered_valid]["intensity_max"].mean()
+        max_int_median = bead_properties[bead_properties.considered_valid]["intensity_max"].median()
         max_int_mad = (
-            (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean)
+            (bead_properties[bead_properties.considered_valid]["intensity_max"] - max_int_mean)
             .abs()
             .mean()
         )
 
-        integrated_int_mean = bead_positions[bead_positions.considered_valid][
+        integrated_int_mean = bead_properties[bead_properties.considered_valid][
             "intensity_integrated"
         ].mean()
-        integrated_int_median = bead_positions[bead_positions.considered_valid][
+        integrated_int_median = bead_properties[bead_properties.considered_valid][
             "intensity_integrated"
         ].median()
         integrated_int_mad = (
             (
-                bead_positions[bead_positions.considered_valid]["intensity_integrated"]
+                bead_properties[bead_properties.considered_valid]["intensity_integrated"]
                 - integrated_int_mean
             )
             .abs()
             .mean()
         )
 
-        bead_positions["max_intensity_robust_z_score"] = (
-            0.6745 * (bead_positions["intensity_max"] - max_int_median) / max_int_mad
+        bead_properties["max_intensity_robust_z_score"] = (
+            0.6745 * (bead_properties["intensity_max"] - max_int_median) / max_int_mad
         )
-        bead_positions["integrated_intensity_robust_z_score"] = (
+        bead_properties["integrated_intensity_robust_z_score"] = (
             0.6745
-            * (bead_positions["intensity_integrated"] - integrated_int_median)
+            * (bead_properties["intensity_integrated"] - integrated_int_median)
             / integrated_int_mad
         )
 
-        if 1 < len(bead_positions[bead_positions.considered_valid]) < 6:
-            bead_positions["considered_intensity_outlier"] = False
+        if 1 < len(bead_properties[bead_properties.considered_valid]) < 6:
+            bead_properties["considered_intensity_outlier"] = False
         else:
-            bead_positions["considered_intensity_outlier"] = (
+            bead_properties["considered_intensity_outlier"] = (
                 # abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
-                abs(bead_positions["integrated_intensity_robust_z_score"])
+                abs(bead_properties["integrated_intensity_robust_z_score"])
                 > robust_z_score_threshold
             )
 
-    bead_positions["considered_intensity_outlier"] = bead_positions[
+    bead_properties["considered_intensity_outlier"] = bead_properties[
         "considered_intensity_outlier"
     ].astype(bool)
 
