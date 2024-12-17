@@ -3,6 +3,7 @@ from datetime import datetime
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
+from skimage.measure import profile_line
 
 import microscopemetrics as mm
 
@@ -13,10 +14,70 @@ def _get_intensity_profiles(
     pass
 
 
+def _get_orthogonals(
+    image: mm_schema.Image,
+    roi: mm_schema.Roi,
+) -> list[mm_schema.OrthogonalImage]:
+    try:
+        coords = [(int(p.z), int(p.y), int(p.x)) for p in roi.points]
+    except AttributeError as e:
+        raise AttributeError("ROI must have points") from e
+
+    orthogonals = []
+
+    for coord in coords:
+        orthogonals.extend(
+            (
+                mm_schema.OrthogonalImage(
+                    shape_x=image.shape_x,
+                    shape_y=image.shape_y,
+                    shape_z=1,
+                    source_image=image,
+                    source_roi=roi,
+                    axis="XY",
+                    array_data=image.array_data[:, coord[0], :, :, :],
+                ),
+                mm_schema.OrthogonalImage(
+                    shape_x=1,
+                    shape_y=image.shape_y,
+                    shape_z=image.shape_z,
+                    source_image=image,
+                    source_roi=roi,
+                    axis="YZ",
+                    array_data=image.array_data[:, :, :, coord[1], :],
+                ),
+                mm_schema.OrthogonalImage(
+                    shape_x=image.shape_x,
+                    shape_y=image.shape_z,
+                    shape_z=1,
+                    source_image=image,
+                    source_roi=roi,
+                    axis="XZ",
+                    array_data=image.array_data[:, :, coord[2], :, :],
+                ),
+            )
+        )
+    return orthogonals
+
+
 def _get_orthogonal_images(
     dataset: mm_schema.UserExperimentDataset,
 ) -> list[mm_schema.OrthogonalImage]:
-    pass
+    orthogonals = []
+
+    for roi in dataset.input_data.orthogonal_rois:
+        if len(roi.linked_references) != 1:
+            raise ValueError("ROI must be linked to exactly one image")
+        orthogonals.extend(
+            _get_orthogonals(
+                image=dataset.input_data.user_experiment_images[
+                    mm.analyses.get_object_id(roi.linked_references[0])
+                ],
+                roi=roi,
+            )
+        )
+
+    return orthogonals
 
 
 def _get_fft_images(
