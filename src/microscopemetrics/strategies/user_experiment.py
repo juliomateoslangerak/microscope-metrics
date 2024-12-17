@@ -114,3 +114,32 @@ def _gen_user_experiment_image(
     image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
 
     return image
+
+
+@st.composite
+def st_user_experiment_test_data(
+    draw,
+    nr_images=st.integers(min_value=1, max_value=3),
+    z_image_shape=st.integers(min_value=2, max_value=50),
+    y_image_shape=st.integers(min_value=512, max_value=1024),
+    x_image_shape=st.integers(min_value=512, max_value=1024),
+    c_image_shape=st.integers(min_value=1, max_value=3),
+    dtype=st.sampled_from([np.uint8, np.uint16, np.float32]),
+    do_noise=st.just(True),
+    signal=st.floats(min_value=20.0, max_value=1000.0),
+    target_min_intensity=st.floats(min_value=0.001, max_value=0.1),
+    target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
+    sigma=st.floats(min_value=2.0, max_value=10.0),
+    nr_orthogonal_rois=st.integers(min_value=0, max_value=3),
+    nr_profile_rois=st.integers(min_value=0, max_value=3),
+):
+    pass
+
+
+@st.composite
+def st_user_experiment_dataset(
+    draw,
+    unprocessed_dataset=st_mm_schema.st_mm_user_experiment_unprocessed_dataset(),
+    test_data=st_user_experiment_test_data(),
+):
+    pass
