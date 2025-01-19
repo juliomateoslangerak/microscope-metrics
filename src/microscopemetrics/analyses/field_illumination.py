@@ -58,7 +58,7 @@ def _channel_line_profile(
     )
 
 
-def _image_line_profile(image: np.ndarray, profile_size: int):
+def _image_line_profile(image: np.ndarray, profile_size: int) -> Dict[str, list]:
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1
     Parameters
@@ -69,8 +69,8 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
         size of the intensity profile.
     Returns
     -------
-    line_pixel_values : np.ndarray
-        2d np.ndarray representing the values of the chosen line of pixels for each channel.
+    line_pixel_values : dict
+        dictionary representing the values of the chosen line of pixels for each channel.
     """
     profile_coordinates = {
         "leftTop_to_rightBottom": ((0, 0), (image.shape[-2], image.shape[-3])),

@@ -46,7 +46,7 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
     return concatenated_str.rstrip("_")
 
 
-def _average_beads(group: pd.DataFrame) -> np.ndarray:
+def _average_beads(group: pd.DataFrame) -> pd.Series:
     """
     Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
@@ -421,7 +421,7 @@ def _process_channel(
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
     voxel_size_micron: tuple[float, float, float],
-) -> tuple:
+) -> pd.DataFrame:
     bead_properties = _find_beads(
         channel=channel,
         sigma=sigma,
