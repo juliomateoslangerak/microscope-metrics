@@ -47,6 +47,7 @@ hypothesis = "^6"
 tox = "^3"
 coverage = "^7"
 pytest-parallel = "^0.1.1"
+dvc = "^3"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24"
