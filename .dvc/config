@@ -1,0 +1,4 @@
+[core]
+    remote = my_remote
+['remote "my_remote"']
+    url = /run/media/julio/225e6802-f653-4336-bc7f-b87ab8f6600b/julio/microscopemetrics_test_data
