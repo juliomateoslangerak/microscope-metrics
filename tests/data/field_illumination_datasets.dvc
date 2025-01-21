@@ -1,0 +1,6 @@
+outs:
+- md5: bdc69de164e0d320a12987a6c405a714.dir
+  size: 262282
+  nfiles: 2
+  hash: md5
+  path: field_illumination_datasets
