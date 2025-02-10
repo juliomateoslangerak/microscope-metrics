@@ -8,6 +8,7 @@ from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 import microscopemetrics as mm
+from microscopemetrics.analyses import tools as mm_tools
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
@@ -99,7 +100,7 @@ def _find_bead_shifts(data1, data2=None):
         profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
 
     return tuple(
-        mm.analyses.tools.fit_gaussian(profile)[3][2] - profile.shape[0] // 2
+        mm_tools.fit_gaussian(profile)[3][2] - profile.shape[0] // 2
         for profile in profiles
     )
 
@@ -279,9 +280,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     )
 
     # Fitting the profiles
-    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = mm.analyses.tools.fit_airy(profile_z_raw)
-    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = mm.analyses.tools.fit_airy(profile_y_raw)
-    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = mm.analyses.tools.fit_airy(profile_x_raw)
+    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = mm_tools.fit_airy(profile_z_raw)
+    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = mm_tools.fit_airy(profile_y_raw)
+    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = mm_tools.fit_airy(profile_x_raw)
 
     fwhm_lateral_asymmetry_ratio = max(fwhm_y, fwhm_x) / min(fwhm_y, fwhm_x)
 
@@ -609,7 +610,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         # Check image saturation
         mm.logger.info(f"Checking image {image_id} saturation...")
         for c in range(image.array_data.shape[-1]):
-            if mm.analyses.tools.is_saturated(
+            if mm_tools.is_saturated(
                 channel=image.array_data[..., c],
                 threshold=dataset.input_parameters.saturation_threshold,
                 detector_bit_depth=dataset.input_parameters.bit_depth,

@@ -11,6 +11,7 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 import microscopemetrics as mm
+from microscopemetrics.analyses import tools as mm_tools
 
 
 def _get_center_region_mask(channel: np.ndarray, fraction: float = 0.1) -> np.ndarray:
@@ -211,8 +212,8 @@ def _channel_max_intensity_properties(
         center_region_intensity_fraction = 1 / (n_bins - 1)
 
     # Fitting the intensity profile to a gaussian
-    _, _, _, (_, _, center_fitted_y, _) = mm.analyses.tools.fit_gaussian(np.max(channel, axis=1))
-    _, _, _, (_, _, center_fitted_x, _) = mm.analyses.tools.fit_gaussian(np.max(channel, axis=0))
+    _, _, _, (_, _, center_fitted_y, _) = mm_tools.fit_gaussian(np.max(channel, axis=1))
+    _, _, _, (_, _, center_fitted_x, _) = mm_tools.fit_gaussian(np.max(channel, axis=0))
 
     return {
         "center_region_intensity_fraction": center_region_intensity_fraction,
@@ -365,7 +366,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         mm.logger.info("Checking image saturation...")
         saturated_channels = []
         for c in range(image.array_data.shape[-1]):
-            if mm.analyses.tools.is_saturated(
+            if mm_tools.is_saturated(
                 channel=image.array_data[..., c],
                 threshold=dataset.input_parameters.saturation_threshold,
                 detector_bit_depth=dataset.input_parameters.bit_depth,
