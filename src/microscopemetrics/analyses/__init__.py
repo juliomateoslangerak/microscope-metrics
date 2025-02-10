@@ -81,7 +81,7 @@ def numpy_to_mm_image(
     channels = []
     for i in range(shape_c):
         channel = mm_schema.Channel(
-            name=channel_names[i] if channel_names is not None else None,
+            name=channel_names[i] if channel_names is not None else str(i),
             description=channel_descriptions[i] if channel_descriptions is not None else None,
             excitation_wavelength_nm=(
                 excitation_wavelengths_nm[i] if excitation_wavelengths_nm is not None else None
