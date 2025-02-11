@@ -5,6 +5,20 @@ import pytest
 import microscopemetrics_schema.datamodel as mm_schema
 import datetime
 
+def filter_dict(expected, analyzed):
+    """
+    Recursively filter the analyzed dictionary to retain only the keys in expected.
+    """
+    if isinstance(expected, dict) and isinstance(analyzed, dict):
+        return {key: filter_dict(expected[key], analyzed[key]) for key in expected if key in analyzed}
+    return analyzed  # Base case: return value directly if not a dict
+
+
+def remove_np_pd_data(dataset):
+    if isinstance(dataset, dict):
+        return {k: remove_np_pd_data(v) for k, v in dataset.items() if k not in ["table_data", "array_data"]}
+    return dataset
+
 
 @pytest.fixture(scope="session")
 def microscope() -> mm_schema.Microscope:
