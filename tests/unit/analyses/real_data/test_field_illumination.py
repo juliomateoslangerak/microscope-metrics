@@ -15,7 +15,8 @@ from microscopemetrics_schema.datamodel import (
     FieldIlluminationInputParameters,
     FieldIlluminationInputData,
     FieldIlluminationOutput,
-    Image, FieldIlluminationKeyMeasurements
+    Image,
+    FieldIlluminationKeyMeasurements,
 )
 
 
@@ -48,7 +49,9 @@ def field_illumination_dataset(
     experimenter,
     acquisition_datetime,
     field_illumination_input_parameters,
-    data_path=pathlib.Path(__file__).parent.parent.parent.parent / "data" / "field_illumination_datasets"
+    data_path=pathlib.Path(__file__).parent.parent.parent.parent
+    / "data"
+    / "field_illumination_datasets",
 ) -> Generator[FieldIlluminationDataset, Any, None]:
 
     loader = YAMLLoader()
@@ -78,12 +81,18 @@ def field_illumination_dataset(
                         description="test_description",
                     )
                 )
-            elif data_file.name == "dataset_input_parameters.yaml" or data_file.name == "dataset_input_parameters.yml":
+            elif (
+                data_file.name == "dataset_input_parameters.yaml"
+                or data_file.name == "dataset_input_parameters.yml"
+            ):
                 dataset_input_parameters = loader.load_any(
                     source=str(data_file),
                     target_class=FieldIlluminationInputParameters,
                 )
-            elif data_file.name == "dataset_key_measurements.yaml" or data_file.name == "dataset_key_measurements.yml":
+            elif (
+                data_file.name == "dataset_key_measurements.yaml"
+                or data_file.name == "dataset_key_measurements.yml"
+            ):
                 dataset_key_measurements = loader.load_any(
                     source=str(data_file),
                     target_class=FieldIlluminationKeyMeasurements,
@@ -103,14 +112,13 @@ def field_illumination_dataset(
             experimenter=experimenter.orcid,
             acquisition_datetime=acquisition_datetime,
             input_parameters=dataset_input_parameters,
-            input_data=FieldIlluminationInputData(
-                field_illumination_image=images),
+            input_data=FieldIlluminationInputData(field_illumination_image=images),
             output=FieldIlluminationOutput(
                 key_measurements=dataset_key_measurements,
                 processing_application="Automated testing",
                 processing_version="0.0.1",
                 processing_datetime=str(datetime.datetime.now()),
-            )
+            ),
         )
 
         yield expected_data
@@ -135,6 +143,3 @@ def test_field_illumination(
     analyzed_output = remove_np_pd_data(analyzed_output)
 
     assert analyzed_output["key_measurements"] == expected_output["key_measurements"]
-
-
-

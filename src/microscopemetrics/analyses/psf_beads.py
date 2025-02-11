@@ -100,8 +100,7 @@ def _find_bead_shifts(data1, data2=None):
         profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
 
     return tuple(
-        mm_tools.fit_gaussian(profile)[3][2] - profile.shape[0] // 2
-        for profile in profiles
+        mm_tools.fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for profile in profiles
     )
 
 
@@ -716,7 +715,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_properties.drop("beads", axis=1, inplace=True)
 
     key_measurements = _generate_key_measurements(
-        bead_properties=bead_properties, average_bead_properties=average_beads_properties
+        bead_properties=bead_properties,
+        average_bead_properties=average_beads_properties,
     )
 
     key_measurements = mm_schema.PSFBeadsKeyMeasurements(

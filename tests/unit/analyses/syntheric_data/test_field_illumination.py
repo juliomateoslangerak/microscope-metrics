@@ -7,7 +7,7 @@ from microscopemetrics import SaturationError
 from microscopemetrics.analyses import field_illumination
 from microscopemetrics.strategies.field_illumination import (
     st_field_illumination_dataset,
-    st_field_illumination_test_data
+    st_field_illumination_test_data,
 )
 
 

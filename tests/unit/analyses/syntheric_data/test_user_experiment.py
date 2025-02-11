@@ -12,7 +12,7 @@ from skimage.util import random_noise as skimage_random_noise
 from microscopemetrics.analyses import psf_beads
 from microscopemetrics.strategies.user_experiment import (
     st_user_experiment_dataset,
-    st_user_experiment_test_data
+    st_user_experiment_test_data,
 )
 
 

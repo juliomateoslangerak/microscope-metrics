@@ -10,10 +10,7 @@ from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics.analyses import psf_beads
-from microscopemetrics.strategies.psf_beads import (
-    st_psf_beads_dataset,
-    st_psf_beads_test_data
-)
+from microscopemetrics.strategies.psf_beads import st_psf_beads_dataset, st_psf_beads_test_data
 from microscopemetrics.analyses.tools import fit_gaussian
 
 

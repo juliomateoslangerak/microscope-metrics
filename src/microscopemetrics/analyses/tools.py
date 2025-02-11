@@ -100,7 +100,9 @@ def multi_airy_fun(x: np.ndarray, *params) -> np.ndarray:
 
 
 def is_saturated(
-    channel: np.ndarray, threshold: float = 0.0, detector_bit_depth: Optional[int] = None
+    channel: np.ndarray,
+    threshold: float = 0.0,
+    detector_bit_depth: Optional[int] = None,
 ) -> bool:
     """
     Checks if the channel is saturated.
