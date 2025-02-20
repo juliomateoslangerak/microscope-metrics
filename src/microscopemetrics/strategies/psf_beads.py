@@ -151,15 +151,15 @@ def _gen_psf_beads_image(
             image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
         )
 
-    # Add noise
-    if do_noise:
-        image = skimage_random_noise(image, mode="poisson", clip=False)
-
     image = skimage_rescale_intensity(
         image,
         in_range=(0.0, signal / 20),
         out_range=(target_min_intensity, target_max_intensity),
     )
+
+    # Add noise
+    if do_noise:
+        image = skimage_random_noise(image, mode="poisson", clip=False)
 
     image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
 
