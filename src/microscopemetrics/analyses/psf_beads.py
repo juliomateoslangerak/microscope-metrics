@@ -332,6 +332,9 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
     channel_gauss_mip = np.max(channel_gauss, axis=0)
 
+    # We remove background as the min intensity
+    channel_gauss_mip = channel_gauss_mip - channel_gauss_mip.min()
+
     # Estimate a relative threshold for the peak_local_max function
     threshold_rel = 0.5
 
