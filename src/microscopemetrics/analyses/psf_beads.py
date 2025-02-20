@@ -108,12 +108,12 @@ def _calculate_bead_intensity_outliers(
     bead_properties: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
     bead_properties["max_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_properties["integrated_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_properties["std_intensity_robust_z_score"] = pd.Series(dtype="float")
     bead_properties["considered_intensity_outlier"] = pd.Series(dtype="bool")
 
     if len(bead_properties[bead_properties.considered_valid]) == 1:
         bead_properties["max_intensity_robust_z_score"] = 0
-        bead_properties["integrated_intensity_robust_z_score"] = 0
+        bead_properties["std_intensity_robust_z_score"] = 0
         bead_properties["considered_intensity_outlier"] = False
     else:
         max_int_mean = bead_properties[bead_properties.considered_valid]["intensity_max"].mean()
@@ -124,17 +124,10 @@ def _calculate_bead_intensity_outliers(
             .mean()
         )
 
-        integrated_int_mean = bead_properties[bead_properties.considered_valid][
-            "intensity_integrated"
-        ].mean()
-        integrated_int_median = bead_properties[bead_properties.considered_valid][
-            "intensity_integrated"
-        ].median()
-        integrated_int_mad = (
-            (
-                bead_properties[bead_properties.considered_valid]["intensity_integrated"]
-                - integrated_int_mean
-            )
+        std_int_mean = bead_properties[bead_properties.considered_valid]["intensity_std"].mean()
+        std_int_median = bead_properties[bead_properties.considered_valid]["intensity_std"].median()
+        std_int_mad = (
+            (bead_properties[bead_properties.considered_valid]["intensity_std"] - std_int_mean)
             .abs()
             .mean()
         )
@@ -142,10 +135,8 @@ def _calculate_bead_intensity_outliers(
         bead_properties["max_intensity_robust_z_score"] = (
             0.6745 * (bead_properties["intensity_max"] - max_int_median) / max_int_mad
         )
-        bead_properties["integrated_intensity_robust_z_score"] = (
-            0.6745
-            * (bead_properties["intensity_integrated"] - integrated_int_median)
-            / integrated_int_mad
+        bead_properties["std_intensity_robust_z_score"] = (
+            0.6745 * (bead_properties["intensity_std"] - std_int_median) / std_int_mad
         )
 
         if 1 < len(bead_properties[bead_properties.considered_valid]) < 6:
@@ -153,7 +144,7 @@ def _calculate_bead_intensity_outliers(
         else:
             bead_properties["considered_intensity_outlier"] = (
                 # abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
-                abs(bead_properties["integrated_intensity_robust_z_score"])
+                abs(bead_properties["std_intensity_robust_z_score"])
                 > robust_z_score_threshold
             )
 
