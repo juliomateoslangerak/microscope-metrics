@@ -323,7 +323,7 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     mm.logger.debug("Finding beads in channel...")
 
     if all(sigma):
-        mm.logger.debug(f"Applying Gaussian filter with sigma {sigma}")
+        mm.logger.debug(f"Gaussian filter applied with sigma {sigma}")
         channel_gauss = gaussian(image=channel, sigma=sigma)
     else:
         mm.logger.debug("No Gaussian filter applied")
