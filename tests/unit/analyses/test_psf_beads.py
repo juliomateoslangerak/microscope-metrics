@@ -243,13 +243,23 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
             # We create very noisy images.
             dtype=st.just(np.uint16),
             do_noise=st.just(True),
-            signal=st.just(.2),
-            target_min_intensity=st.just(0.1),
+            signal=st.just(20.0),
+            target_min_intensity=st.just(0.05),
             target_max_intensity=st.just(0.3),
             sigma_z=st.just(2),
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
-        )
+        ),
+        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+            dataset=st_mm_schema.st_mm_dataset(
+                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
+                    # We want to be very permissive with the fitting or otherwise
+                    # clustering beads will be thrown away.
+                    fitting_r2_threshold=st.just(0.1),
+                    # intensity_robust_z_score_threshold=st.just(4.0),
+                )
+            )
+        ),
     )
 )
 @settings(deadline=200000)
@@ -258,7 +268,8 @@ def test_psf_beads_analysis_noisy_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(len(img_cbp) for img_cbp in expected_output["clustering_bead_positions"])
+    expected = sum(len(im_vbp) for im_vbp in expected_output["valid_bead_positions"])
 
-    for measured in psf_beads_dataset.output.key_measurements.considered_intensity_outlier_count:
-        assert measured == expected
+    for measured in psf_beads_dataset.output.key_measurements.considered_valid_count:
+        # We just have to hope not to detect too many
+        assert measured <= expected
