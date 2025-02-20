@@ -336,7 +336,7 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     channel_gauss_mip = channel_gauss_mip - channel_gauss_mip.min()
 
     # Estimate a relative threshold for the peak_local_max function
-    threshold_rel = 0.5
+    threshold_rel = 0.2
 
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
     # and noise in the image. We report this as a warning.
