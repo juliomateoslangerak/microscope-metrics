@@ -205,7 +205,16 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             sigma_z=st.just(2),
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
-        )
+        ),
+        unprocessed_dataset = st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+            dataset=st_mm_schema.st_mm_dataset(
+                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
+                    # We want to be very permissive with the fitting or otherwise
+                    # clustering beads will be thrown away.
+                    fitting_r2_threshold=st.just(0.2),
+                )
+            )
+        ),
     )
 )
 @settings(deadline=200000)
