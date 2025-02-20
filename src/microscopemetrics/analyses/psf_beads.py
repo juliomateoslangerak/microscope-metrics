@@ -108,12 +108,12 @@ def _calculate_bead_intensity_outliers(
     bead_properties: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
     bead_properties["max_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_properties["integrated_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_properties["std_intensity_robust_z_score"] = pd.Series(dtype="float")
     bead_properties["considered_intensity_outlier"] = pd.Series(dtype="bool")
 
     if len(bead_properties[bead_properties.considered_valid]) == 1:
         bead_properties["max_intensity_robust_z_score"] = 0
-        bead_properties["integrated_intensity_robust_z_score"] = 0
+        bead_properties["std_intensity_robust_z_score"] = 0
         bead_properties["considered_intensity_outlier"] = False
     else:
         max_int_mean = bead_properties[bead_properties.considered_valid]["intensity_max"].mean()
@@ -124,17 +124,10 @@ def _calculate_bead_intensity_outliers(
             .mean()
         )
 
-        integrated_int_mean = bead_properties[bead_properties.considered_valid][
-            "intensity_integrated"
-        ].mean()
-        integrated_int_median = bead_properties[bead_properties.considered_valid][
-            "intensity_integrated"
-        ].median()
-        integrated_int_mad = (
-            (
-                bead_properties[bead_properties.considered_valid]["intensity_integrated"]
-                - integrated_int_mean
-            )
+        std_int_mean = bead_properties[bead_properties.considered_valid]["intensity_std"].mean()
+        std_int_median = bead_properties[bead_properties.considered_valid]["intensity_std"].median()
+        std_int_mad = (
+            (bead_properties[bead_properties.considered_valid]["intensity_std"] - std_int_mean)
             .abs()
             .mean()
         )
@@ -142,10 +135,8 @@ def _calculate_bead_intensity_outliers(
         bead_properties["max_intensity_robust_z_score"] = (
             0.6745 * (bead_properties["intensity_max"] - max_int_median) / max_int_mad
         )
-        bead_properties["integrated_intensity_robust_z_score"] = (
-            0.6745
-            * (bead_properties["intensity_integrated"] - integrated_int_median)
-            / integrated_int_mad
+        bead_properties["std_intensity_robust_z_score"] = (
+            0.6745 * (bead_properties["intensity_std"] - std_int_median) / std_int_mad
         )
 
         if 1 < len(bead_properties[bead_properties.considered_valid]) < 6:
@@ -153,7 +144,7 @@ def _calculate_bead_intensity_outliers(
         else:
             bead_properties["considered_intensity_outlier"] = (
                 # abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
-                abs(bead_properties["integrated_intensity_robust_z_score"])
+                abs(bead_properties["std_intensity_robust_z_score"])
                 > robust_z_score_threshold
             )
 
@@ -332,7 +323,7 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     mm.logger.debug("Finding beads in channel...")
 
     if all(sigma):
-        mm.logger.debug(f"Applying Gaussian filter with sigma {sigma}")
+        mm.logger.debug(f"Gaussian filter applied with sigma {sigma}")
         channel_gauss = gaussian(image=channel, sigma=sigma)
     else:
         mm.logger.debug("No Gaussian filter applied")
@@ -341,20 +332,42 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
     channel_gauss_mip = np.max(channel_gauss, axis=0)
 
+    # We remove background as the min intensity
+    channel_gauss_mip = channel_gauss_mip - channel_gauss_mip.min()
+
+    # Estimate a relative threshold for the peak_local_max function
+    threshold_rel = 0.2
+
+    # We assume that reaching a maximum number of beads is a sign of a bad thresholding
+    # and noise in the image. We report this as a warning.
+    num_peaks = 100
+
     # Find bead centers
-    positions_all = peak_local_max(image=channel_gauss_mip, threshold_rel=0.2)
+    positions_all = peak_local_max(
+        image=channel_gauss_mip,
+        threshold_rel=threshold_rel,
+        num_peaks=num_peaks,
+    )
+    if len(positions_all) == num_peaks:
+        mm.logger.error(
+            f"Reached the maximum number of peaks ({num_peaks}) in the image. "
+            f"Consider increasing the relative threshold."
+        )
+
     positions_all_not_proximity_not_edge = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=0.2,
+        threshold_rel=threshold_rel,
         min_distance=int(min_distance),
         exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
+        num_peaks=num_peaks,
         p_norm=2,
     )
     positions_all_not_proximity = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=0.2,
+        threshold_rel=threshold_rel,
         min_distance=int(min_distance),
         exclude_border=False,
+        num_peaks=num_peaks,
         p_norm=2,
     )
 
