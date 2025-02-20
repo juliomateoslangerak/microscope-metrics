@@ -341,20 +341,39 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
     channel_gauss_mip = np.max(channel_gauss, axis=0)
 
+    # Estimate a relative threshold for the peak_local_max function
+    threshold_rel = 0.5
+
+    # We assume that reaching a maximum number of beads is a sign of a bad thresholding
+    # and noise in the image. We report this as a warning.
+    num_peaks = 100
+
     # Find bead centers
-    positions_all = peak_local_max(image=channel_gauss_mip, threshold_rel=0.2)
+    positions_all = peak_local_max(
+        image=channel_gauss_mip,
+        threshold_rel=threshold_rel,
+        num_peaks=num_peaks,
+    )
+    if len(positions_all) == num_peaks:
+        mm.logger.error(
+            f"Reached the maximum number of peaks ({num_peaks}) in the image. "
+            f"Consider increasing the relative threshold."
+        )
+
     positions_all_not_proximity_not_edge = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=0.2,
+        threshold_rel=threshold_rel,
         min_distance=int(min_distance),
         exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
+        num_peaks=num_peaks,
         p_norm=2,
     )
     positions_all_not_proximity = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=0.2,
+        threshold_rel=threshold_rel,
         min_distance=int(min_distance),
         exclude_border=False,
+        num_peaks=num_peaks,
         p_norm=2,
     )
 
