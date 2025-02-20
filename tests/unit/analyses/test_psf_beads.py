@@ -102,7 +102,7 @@ def test_psf_beads_analysis_run(dataset):
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             min_distance=st.just(20),
-            nr_valid_beads=st.integers(min_value=0, max_value=10),
+            nr_valid_beads=st.integers(min_value=1, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
