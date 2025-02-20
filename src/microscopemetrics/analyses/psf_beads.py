@@ -7,15 +7,8 @@ from scipy import ndimage, signal
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
-from microscopemetrics import FittingError, SaturationError
-from microscopemetrics.analyses import (
-    df_to_table,
-    get_object_id,
-    logger,
-    numpy_to_mm_image,
-    validate_requirements,
-)
-from microscopemetrics.analyses.tools import fit_airy, fit_gaussian, is_saturated
+import microscopemetrics as mm
+from microscopemetrics.analyses import tools as mm_tools
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
@@ -54,7 +47,7 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
     return concatenated_str.rstrip("_")
 
 
-def _average_beads(group: pd.DataFrame) -> np.ndarray:
+def _average_beads(group: pd.DataFrame) -> pd.Series:
     """
     Averages the beads in the list by first aligning them to the center of the image and then averaging them.
     """
@@ -67,11 +60,11 @@ def _average_beads(group: pd.DataFrame) -> np.ndarray:
         if row.considered_valid
     ]
     if not aligned_beads:
-        logger.warning("No valid beads to average.")
+        mm.logger.warning("No valid beads to average.")
         return pd.Series({"average_bead": np.nan})
     if len(aligned_beads) < 2:
-        logger.warning("Less than 2 beads to average.")
-    logger.info(f"Averaging {len(aligned_beads)} beads")
+        mm.logger.warning("Less than 2 beads to average.")
+    mm.logger.info(f"Averaging {len(aligned_beads)} beads")
 
     return pd.Series(
         {
@@ -106,63 +99,56 @@ def _find_bead_shifts(data1, data2=None):
         pos_slices[dim] = slice(None)
         profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
 
-    return tuple(fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for profile in profiles)
+    return tuple(
+        mm_tools.fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for profile in profiles
+    )
 
 
 def _calculate_bead_intensity_outliers(
-    bead_positions: pd.DataFrame, robust_z_score_threshold: float
+    bead_properties: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
-    bead_positions["max_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_positions["integrated_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_positions["considered_intensity_outlier"] = pd.Series(dtype="bool")
+    bead_properties["max_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_properties["std_intensity_robust_z_score"] = pd.Series(dtype="float")
+    bead_properties["considered_intensity_outlier"] = pd.Series(dtype="bool")
 
-    if len(bead_positions[bead_positions.considered_valid]) == 1:
-        bead_positions["max_intensity_robust_z_score"] = 0
-        bead_positions["integrated_intensity_robust_z_score"] = 0
-        bead_positions["considered_intensity_outlier"] = False
+    if len(bead_properties[bead_properties.considered_valid]) == 1:
+        bead_properties["max_intensity_robust_z_score"] = 0
+        bead_properties["std_intensity_robust_z_score"] = 0
+        bead_properties["considered_intensity_outlier"] = False
     else:
-        max_int_mean = bead_positions[bead_positions.considered_valid]["intensity_max"].mean()
-        max_int_median = bead_positions[bead_positions.considered_valid]["intensity_max"].median()
+        max_int_mean = bead_properties[bead_properties.considered_valid]["intensity_max"].mean()
+        max_int_median = bead_properties[bead_properties.considered_valid]["intensity_max"].median()
         max_int_mad = (
-            (bead_positions[bead_positions.considered_valid]["intensity_max"] - max_int_mean)
+            (bead_properties[bead_properties.considered_valid]["intensity_max"] - max_int_mean)
             .abs()
             .mean()
         )
 
-        integrated_int_mean = bead_positions[bead_positions.considered_valid][
-            "intensity_integrated"
-        ].mean()
-        integrated_int_median = bead_positions[bead_positions.considered_valid][
-            "intensity_integrated"
-        ].median()
-        integrated_int_mad = (
-            (
-                bead_positions[bead_positions.considered_valid]["intensity_integrated"]
-                - integrated_int_mean
-            )
+        std_int_mean = bead_properties[bead_properties.considered_valid]["intensity_std"].mean()
+        std_int_median = bead_properties[bead_properties.considered_valid]["intensity_std"].median()
+        std_int_mad = (
+            (bead_properties[bead_properties.considered_valid]["intensity_std"] - std_int_mean)
             .abs()
             .mean()
         )
 
-        bead_positions["max_intensity_robust_z_score"] = (
-            0.6745 * (bead_positions["intensity_max"] - max_int_median) / max_int_mad
+        bead_properties["max_intensity_robust_z_score"] = (
+            0.6745 * (bead_properties["intensity_max"] - max_int_median) / max_int_mad
         )
-        bead_positions["integrated_intensity_robust_z_score"] = (
-            0.6745
-            * (bead_positions["intensity_integrated"] - integrated_int_median)
-            / integrated_int_mad
+        bead_properties["std_intensity_robust_z_score"] = (
+            0.6745 * (bead_properties["intensity_std"] - std_int_median) / std_int_mad
         )
 
-        if 1 < len(bead_positions[bead_positions.considered_valid]) < 6:
-            bead_positions["considered_intensity_outlier"] = False
+        if 1 < len(bead_properties[bead_properties.considered_valid]) < 6:
+            bead_properties["considered_intensity_outlier"] = False
         else:
-            bead_positions["considered_intensity_outlier"] = (
+            bead_properties["considered_intensity_outlier"] = (
                 # abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
-                abs(bead_positions["integrated_intensity_robust_z_score"])
+                abs(bead_properties["std_intensity_robust_z_score"])
                 > robust_z_score_threshold
             )
 
-    bead_positions["considered_intensity_outlier"] = bead_positions[
+    bead_properties["considered_intensity_outlier"] = bead_properties[
         "considered_intensity_outlier"
     ].astype(bool)
 
@@ -284,9 +270,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     )
 
     # Fitting the profiles
-    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = fit_airy(profile_z_raw)
-    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = fit_airy(profile_y_raw)
-    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = fit_airy(profile_x_raw)
+    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = mm_tools.fit_airy(profile_z_raw)
+    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = mm_tools.fit_airy(profile_y_raw)
+    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = mm_tools.fit_airy(profile_x_raw)
 
     fwhm_lateral_asymmetry_ratio = max(fwhm_y, fwhm_x) / min(fwhm_y, fwhm_x)
 
@@ -334,32 +320,54 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
 
 
 def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_distance: float):
-    logger.debug("Finding beads in channel...")
+    mm.logger.debug("Finding beads in channel...")
 
     if all(sigma):
-        logger.debug(f"Applying Gaussian filter with sigma {sigma}")
+        mm.logger.debug(f"Gaussian filter applied with sigma {sigma}")
         channel_gauss = gaussian(image=channel, sigma=sigma)
     else:
-        logger.debug("No Gaussian filter applied")
+        mm.logger.debug("No Gaussian filter applied")
         channel_gauss = channel
 
     # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
     channel_gauss_mip = np.max(channel_gauss, axis=0)
 
+    # We remove background as the min intensity
+    channel_gauss_mip = channel_gauss_mip - channel_gauss_mip.min()
+
+    # Estimate a relative threshold for the peak_local_max function
+    threshold_rel = 0.2
+
+    # We assume that reaching a maximum number of beads is a sign of a bad thresholding
+    # and noise in the image. We report this as a warning.
+    num_peaks = 100
+
     # Find bead centers
-    positions_all = peak_local_max(image=channel_gauss_mip, threshold_rel=0.2)
+    positions_all = peak_local_max(
+        image=channel_gauss_mip,
+        threshold_rel=threshold_rel,
+        num_peaks=num_peaks,
+    )
+    if len(positions_all) == num_peaks:
+        mm.logger.error(
+            f"Reached the maximum number of peaks ({num_peaks}) in the image. "
+            f"Consider increasing the relative threshold."
+        )
+
     positions_all_not_proximity_not_edge = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=0.2,
+        threshold_rel=threshold_rel,
         min_distance=int(min_distance),
         exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
+        num_peaks=num_peaks,
         p_norm=2,
     )
     positions_all_not_proximity = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=0.2,
+        threshold_rel=threshold_rel,
         min_distance=int(min_distance),
         exclude_border=False,
+        num_peaks=num_peaks,
         p_norm=2,
     )
 
@@ -393,12 +401,12 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
         lambda row: (row["center_y"], row["center_x"]) in positions_edge, axis=1
     )
 
-    logger.debug(f"Beads found: {len(positions_all)}")
-    logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
-    logger.debug(
+    mm.logger.debug(f"Beads found: {len(positions_all)}")
+    mm.logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
+    mm.logger.debug(
         f"Beads considered for being to close to the edge: {positions_df['considered_lateral_edge'].sum()}"
     )
-    logger.debug(
+    mm.logger.debug(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
 
@@ -426,7 +434,7 @@ def _process_channel(
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
     voxel_size_micron: tuple[float, float, float],
-) -> tuple:
+) -> pd.DataFrame:
     bead_properties = _find_beads(
         channel=channel,
         sigma=sigma,
@@ -524,7 +532,7 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input_data.psf_beads_images:
-        image_id = get_object_id(image) or image.name
+        image_id = mm.analyses.get_object_id(image) or image.name
         if positions.empty or image_id not in positions.index.get_level_values("image_id"):
             continue
         points = []
@@ -580,7 +588,7 @@ def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
 
 
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
-    validate_requirements()
+    mm.analyses.validate_requirements()
     # TODO: Implement Nyquist validation??
 
     # Containers for input data and input parameters
@@ -596,40 +604,40 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # First loop to prepare data
     for image in dataset.input_data.psf_beads_images:
-        image_id = get_object_id(image) or image.name
+        image_id = mm.analyses.get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
 
         saturated_channels[image_id] = []
 
         # Check image shape
-        logger.info(f"Checking image {image_id} shape...")
+        mm.logger.info(f"Checking image {image_id} shape...")
         if len(image.array_data.shape) != 5:
-            logger.error(f"Image {image_id} must be 5D")
+            mm.logger.error(f"Image {image_id} must be 5D")
             return False
         if image.array_data.shape[0] != 1:
-            logger.warning(
+            mm.logger.warning(
                 f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
 
         # Check image saturation
-        logger.info(f"Checking image {image_id} saturation...")
+        mm.logger.info(f"Checking image {image_id} saturation...")
         for c in range(image.array_data.shape[-1]):
-            if is_saturated(
+            if mm_tools.is_saturated(
                 channel=image.array_data[..., c],
                 threshold=dataset.input_parameters.saturation_threshold,
                 detector_bit_depth=dataset.input_parameters.bit_depth,
             ):
-                logger.error(f"Image {image_id}: channel {c} is saturated")
+                mm.logger.error(f"Image {image_id}: channel {c} is saturated")
                 saturated_channels[image_id].append(c)
 
     if any(len(saturated_channels[name]) for name in saturated_channels):
-        logger.error(f"Channels {saturated_channels} are saturated")
-        raise SaturationError(f"Channels {saturated_channels} are saturated")
+        mm.logger.error(f"Channels {saturated_channels} are saturated")
+        raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
 
     # Second loop main image analysis
     for image in dataset.input_data.psf_beads_images:
-        image_id = get_object_id(image) or image.name
-        logger.info(f"Processing image {image_id}...")
+        image_id = mm.analyses.get_object_id(image) or image.name
+        mm.logger.info(f"Processing image {image_id}...")
         voxel_sizes_micron[image_id] = (
             image.voxel_size_z_micron,
             image.voxel_size_y_micron,
@@ -649,7 +657,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             intensity_robust_z_score_threshold=dataset.input_parameters.intensity_robust_z_score_threshold,
         )
 
-        logger.info(
+        mm.logger.info(
             f"Image {image_id} processed."
             f"    {image_bead_properties.considered_valid.sum()} beads considered valid."
             f"    {image_bead_properties.considered_lateral_edge.sum()} beads considered lateral edge."
@@ -678,7 +686,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         )
         average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
     else:
-        logger.error("Voxel sizes are not equal among images. Skipping average bead calculation.")
+        mm.logger.error(
+            "Voxel sizes are not equal among images. Skipping average bead calculation."
+        )
         average_beads_properties = None
 
     bead_profiles_z = _extract_profiles(bead_properties, "z")
@@ -691,7 +701,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # TODO: get more metadata from the source images
     if any(isinstance(c, np.ndarray) for c in average_beads_properties["average_bead"]):
-        average_bead = numpy_to_mm_image(
+        average_bead = mm.analyses.numpy_to_mm_image(
             array=np.expand_dims(
                 np.stack(
                     [
@@ -786,14 +796,14 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         stroke_width=4,
     )
 
-    bead_properties = df_to_table(bead_properties.reset_index(), "bead_properties")
-    bead_profiles_z = df_to_table(bead_profiles_z, "bead_profiles_z")
-    bead_profiles_y = df_to_table(bead_profiles_y, "bead_profiles_y")
-    bead_profiles_x = df_to_table(bead_profiles_x, "bead_profiles_x")
+    bead_properties = mm.analyses.df_to_table(bead_properties.reset_index(), "bead_properties")
+    bead_profiles_z = mm.analyses.df_to_table(bead_profiles_z, "bead_profiles_z")
+    bead_profiles_y = mm.analyses.df_to_table(bead_profiles_y, "bead_profiles_y")
+    bead_profiles_x = mm.analyses.df_to_table(bead_profiles_x, "bead_profiles_x")
 
     dataset.output = mm_schema.PSFBeadsOutput(
         processing_application="microscopemetrics",
-        processing_version="0.1.0",
+        processing_version=mm.__version__,
         processing_datetime=datetime.now(),
         analyzed_bead_centers=considered_valid_bead_centers,
         considered_bead_centers_lateral_edge=considered_lateral_edge_bead_centers,

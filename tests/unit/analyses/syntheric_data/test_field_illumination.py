@@ -5,10 +5,13 @@ from microscopemetrics_schema import datamodel as mm_schema
 
 from microscopemetrics import SaturationError
 from microscopemetrics.analyses import field_illumination
-from microscopemetrics.strategies import strategies as st_mm
+from microscopemetrics.strategies.field_illumination import (
+    st_field_illumination_dataset,
+    st_field_illumination_test_data,
+)
 
 
-@given(st_mm.st_field_illumination_dataset())
+@given(st_field_illumination_dataset())
 @settings(max_examples=1)
 def test_field_illumination_analysis_instantiation(dataset):
     dataset = dataset["unprocessed_dataset"]
@@ -19,7 +22,7 @@ def test_field_illumination_analysis_instantiation(dataset):
     assert dataset.input_parameters
 
 
-@given(st_mm.st_field_illumination_dataset())
+@given(st_field_illumination_dataset())
 @settings(max_examples=1)
 def test_field_illumination_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
@@ -29,8 +32,8 @@ def test_field_illumination_analysis_run(dataset):
 
 
 @given(
-    st_mm.st_field_illumination_dataset(
-        test_data=st_mm.st_field_illumination_test_data(
+    st_field_illumination_dataset(
+        test_data=st_field_illumination_test_data(
             center_y_relative=st.floats(min_value=-0.0, max_value=0.6),
             center_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
@@ -75,8 +78,8 @@ def test_field_illumination_analysis_centers_geometric(dataset):
 
 
 @given(
-    st_mm.st_field_illumination_dataset(
-        test_data=st_mm.st_field_illumination_test_data(
+    st_field_illumination_dataset(
+        test_data=st_field_illumination_test_data(
             center_y_relative=st.floats(min_value=-0.0, max_value=0.6),
             center_x_relative=st.floats(min_value=-0.0, max_value=0.6),
         )
@@ -120,7 +123,7 @@ def test_field_illumination_analysis_centers_of_mass(dataset):
         assert measured_c_w[1] == pytest.approx(expected_c[1], abs=0.2)
 
 
-@given(st_mm.st_field_illumination_dataset())
+@given(st_field_illumination_dataset())
 def test_field_illumination_analysis_max_intensity_positions(dataset):
     field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
@@ -161,7 +164,7 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
         assert measured_m_i[1] == pytest.approx(expected_c[1], abs=0.05)
 
 
-@given(st_mm.st_field_illumination_dataset())
+@given(st_field_illumination_dataset())
 def test_field_illumination_analysis_centers_fitted(dataset):
     field_illumination_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
@@ -201,8 +204,8 @@ def test_field_illumination_analysis_centers_fitted(dataset):
 
 
 @given(
-    st_mm.st_field_illumination_dataset(
-        test_data=st_mm.st_field_illumination_test_data(
+    st_field_illumination_dataset(
+        test_data=st_field_illumination_test_data(
             target_min_intensity=st.just(1.5),
         )
     )

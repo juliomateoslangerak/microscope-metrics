@@ -34,25 +34,26 @@ filterwarnings = [
 profile = "black"
 
 [tool.poetry.dependencies]
-python = ">=3.10.12 <3.12"
-numpy = "^1"
+python = ">=3.9.18 <3.12"
+numpy = "^2"
 scikit-image = "^0"
 scipy = "^1"
-pandas = "^1"
-microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"}
+pandas = "^2"
+microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch="dev"}
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7"
+pytest = "^8"
 hypothesis = "^6"
 tox = "^3"
 coverage = "^7"
 pytest-parallel = "^0.1.1"
+dvc = "^3"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23"
-poetry = "^1"
+black = "^24"
+poetry = "^2"
 isort = "^5"
-pre-commit = "^3"
+pre-commit = "^4"
 
 [build-system]
 requires = ["poetry-core>=1.7.0"]

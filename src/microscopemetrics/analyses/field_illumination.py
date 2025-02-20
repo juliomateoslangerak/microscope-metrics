@@ -10,15 +10,8 @@ from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage.measure import regionprops
 
-from microscopemetrics import SaturationError
-from microscopemetrics.analyses import (
-    dict_to_table,
-    get_object_id,
-    logger,
-    numpy_to_mm_image,
-    validate_requirements,
-)
-from microscopemetrics.analyses.tools import fit_gaussian, is_saturated
+import microscopemetrics as mm
+from microscopemetrics.analyses import tools as mm_tools
 
 
 def _get_center_region_mask(channel: np.ndarray, fraction: float = 0.1) -> np.ndarray:
@@ -66,7 +59,7 @@ def _channel_line_profile(
     )
 
 
-def _image_line_profile(image: np.ndarray, profile_size: int):
+def _image_line_profile(image: np.ndarray, profile_size: int) -> Dict[str, list]:
     """
     Compute the intensity profile along a line between x0-y0 and x1-y1
     Parameters
@@ -77,8 +70,8 @@ def _image_line_profile(image: np.ndarray, profile_size: int):
         size of the intensity profile.
     Returns
     -------
-    line_pixel_values : np.ndarray
-        2d np.ndarray representing the values of the chosen line of pixels for each channel.
+    line_pixel_values : dict
+        dictionary representing the values of the chosen line of pixels for each channel.
     """
     profile_coordinates = {
         "leftTop_to_rightBottom": ((0, 0), (image.shape[-2], image.shape[-3])),
@@ -219,8 +212,8 @@ def _channel_max_intensity_properties(
         center_region_intensity_fraction = 1 / (n_bins - 1)
 
     # Fitting the intensity profile to a gaussian
-    _, _, _, (_, _, center_fitted_y, _) = fit_gaussian(np.max(channel, axis=1))
-    _, _, _, (_, _, center_fitted_x, _) = fit_gaussian(np.max(channel, axis=0))
+    _, _, _, (_, _, center_fitted_y, _) = mm_tools.fit_gaussian(np.max(channel, axis=1))
+    _, _, _, (_, _, center_fitted_x, _) = mm_tools.fit_gaussian(np.max(channel, axis=0))
 
     return {
         "center_region_intensity_fraction": center_region_intensity_fraction,
@@ -325,10 +318,10 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
             )
             ch_properties.loc[0] = [
                 image.name,
-                get_object_id(image),
+                mm.analyses.get_object_id(image),
                 image.channel_series.channels[c].name,
                 c,
-                get_object_id(image.channel_series.channels[c]),
+                mm.analyses.get_object_id(image.channel_series.channels[c]),
             ]
             ch_properties = ch_properties.join(
                 pd.DataFrame(
@@ -350,17 +343,17 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
 
 
 def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
-    validate_requirements()
+    mm.analyses.validate_requirements()
 
     channel_names = []
     for image in dataset.input_data.field_illumination_image:
         # We want to verify that the input images all have different channel names
         # As it does not make sense to average file illumination between images from the same channel
         if image.channel_series is not None:
-            logger.info("Checking duplicate channel names...")
+            mm.logger.info("Checking duplicate channel names...")
             for channel in image.channel_series.channels:
                 if channel.name in channel_names:
-                    logger.error(
+                    mm.logger.error(
                         f"Channel name {channel.name} is not unique. "
                         "We cannot average field illumination between images from the same channel."
                     )
@@ -368,29 +361,29 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                 channel_names.append(channel.name)
 
         # Check image shape
-        logger.info("Checking image shape...")
+        mm.logger.info("Checking image shape...")
         if len(image.array_data.shape) != 5:
-            logger.error("Image must be 5D")
+            mm.logger.error("Image must be 5D")
             return False
         if image.array_data.shape[0] != 1 or image.array_data.shape[1] != 1:
-            logger.warning(
+            mm.logger.warning(
                 "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
             )
 
         # Check image saturation
-        logger.info("Checking image saturation...")
+        mm.logger.info("Checking image saturation...")
         saturated_channels = []
         for c in range(image.array_data.shape[-1]):
-            if is_saturated(
+            if mm_tools.is_saturated(
                 channel=image.array_data[..., c],
                 threshold=dataset.input_parameters.saturation_threshold,
                 detector_bit_depth=dataset.input_parameters.bit_depth,
             ):
-                logger.error(f"Channel {c} is saturated")
+                mm.logger.error(f"Channel {c} is saturated")
                 saturated_channels.append(c)
         if len(saturated_channels):
-            logger.error(f"Channels {saturated_channels} are saturated")
-            raise SaturationError(f"Channels {saturated_channels} are saturated")
+            mm.logger.error(f"Channels {saturated_channels} are saturated")
+            raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
 
     key_measurements = _image_properties(
         images=dataset.input_data.field_illumination_image,
@@ -406,7 +399,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     )
 
     intensity_profiles = [
-        dict_to_table(
+        mm.analyses.dict_to_table(
             dictionary=_image_line_profile(image.array_data, profile_size=255),
             name=f"{image.name}_intensity_profiles",
             description=f"Intensity profiles of {image.name}",
@@ -424,16 +417,15 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for image in dataset.input_data.field_illumination_image
     ]
 
-    roi_corners = mm_schema.Roi(
-        name="Corner ROIs",
-        description="ROIs used to compute the corner intensities",
-        linked_references=[
-            i.data_reference
-            for i in dataset.input_data.field_illumination_image
-            if i.data_reference is not None
-        ],
-        rectangles=_corner_shapes(image.array_data, dataset.input_parameters.corner_fraction),
-    )
+    roi_corners = [
+        mm_schema.Roi(
+            name="Corner ROIs",
+            description="ROIs used to compute the corner intensities",
+            linked_references=image.data_reference,
+            rectangles=_corner_shapes(image.array_data, dataset.input_parameters.corner_fraction),
+        )
+        for image in dataset.input_data.field_illumination_image
+    ]
 
     roi_centers_of_mass = [
         mm_schema.Roi(
@@ -546,7 +538,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     x=0,
                     y=0,
                     c=c,
-                    mask=numpy_to_mm_image(
+                    mask=mm.analyses.numpy_to_mm_image(
                         array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
                     ),
                     fill_color={"r": 255, "g": 200, "b": 60, "alpha": 128},
@@ -559,7 +551,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
 
     dataset.output = mm_schema.FieldIlluminationOutput(
         processing_application="microscopemetrics",
-        processing_version="0.1.0",
+        processing_version=mm.__version__,
         processing_datetime=datetime.now(),
         key_measurements=key_measurements,
         intensity_profiles=intensity_profiles,

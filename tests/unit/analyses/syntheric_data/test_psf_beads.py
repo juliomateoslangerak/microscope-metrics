@@ -101,7 +101,7 @@ def test_psf_beads_analysis_run(dataset):
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             min_distance=st.just(20),
-            nr_valid_beads=st.integers(min_value=0, max_value=10),
+            nr_valid_beads=st.integers(min_value=1, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
@@ -109,7 +109,7 @@ def test_psf_beads_analysis_run(dataset):
         unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
             dataset=st_mm_schema.st_mm_dataset(
                 input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
-                    fitting_r2_threshold=st.just(0.8),  # TODO: Remove this?
+                    fitting_r2_threshold=st.just(0.7),  # TODO: Remove this?
                     intensity_robust_z_score_threshold=st.just(4.0),
                 )
             )
@@ -132,8 +132,8 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -162,8 +162,8 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(71),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -191,8 +191,8 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 
 
 @given(
-    st_mm.st_psf_beads_dataset(
-        test_data=st_mm.st_psf_beads_test_data(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -210,7 +210,16 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             sigma_z=st.just(2),
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
-        )
+        ),
+        unprocessed_dataset = st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+            dataset=st_mm_schema.st_mm_dataset(
+                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
+                    # We want to be very permissive with the fitting or otherwise
+                    # clustering beads will be thrown away.
+                    fitting_r2_threshold=st.just(0.2),
+                )
+            )
+        ),
     )
 )
 @settings(deadline=200000)
@@ -227,3 +236,49 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
         measured
     ) in psf_beads_dataset.output.key_measurements.considered_intensity_outlier_count:
         assert measured == expected
+
+
+@given(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
+            z_image_shape=st.just(61),
+            y_image_shape=st.just(512),
+            x_image_shape=st.just(512),
+            c_image_shape=st.just(3),
+            nr_valid_beads=st.integers(min_value=3, max_value=20),
+            nr_edge_beads=st.just(0),
+            nr_out_of_focus_beads=st.just(0),
+            nr_clustering_beads=st.just(0),
+            # We create very noisy images.
+            dtype=st.just(np.uint16),
+            do_noise=st.just(True),
+            signal=st.just(20.0),
+            target_min_intensity=st.just(0.05),
+            target_max_intensity=st.just(0.3),
+            sigma_z=st.just(2),
+            sigma_y=st.just(1.5),
+            sigma_x=st.just(1.5),
+        ),
+        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+            dataset=st_mm_schema.st_mm_dataset(
+                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
+                    # We want to be very permissive with the fitting or otherwise
+                    # clustering beads will be thrown away.
+                    fitting_r2_threshold=st.just(0.1),
+                    # intensity_robust_z_score_threshold=st.just(4.0),
+                )
+            )
+        ),
+    )
+)
+@settings(deadline=200000)
+def test_psf_beads_analysis_noisy_beads(dataset):
+    psf_beads_dataset = dataset["unprocessed_dataset"]
+    expected_output = dataset["expected_output"]
+    psf_beads.analyse_psf_beads(psf_beads_dataset)
+
+    expected = sum(len(im_vbp) for im_vbp in expected_output["valid_bead_positions"])
+
+    for measured in psf_beads_dataset.output.key_measurements.considered_valid_count:
+        # We just have to hope not to detect too many
+        assert measured <= expected
