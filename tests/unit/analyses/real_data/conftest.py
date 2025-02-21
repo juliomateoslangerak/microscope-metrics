@@ -1,8 +1,9 @@
 """
 This file contains fixtures to create various invariable schema dataclasses for testing purposes.
 """
-import pathlib
+import pytest
 
+import pathlib
 import numpy as np
 import pytest
 import microscopemetrics_schema.datamodel as mm_schema
