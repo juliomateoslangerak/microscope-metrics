@@ -605,7 +605,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     saturated_channels = {}
     bead_properties = []
 
-    # First loop to prepare data
+    # First loop to prepare data and do checks
+    images_shape = None
     for image in dataset.input_data.psf_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
@@ -621,6 +622,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             mm.logger.warning(
                 f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
+
+        # Check all shapes equal
+        if images_shape is None:
+            images_shape = image.array_data.shape
+        elif images_shape != image.array_data.shape:
+            mm.logger.error("Not all images have the same dimensions")
+            return False
 
         # Check image saturation
         mm.logger.info(f"Checking image {image_id} saturation...")
