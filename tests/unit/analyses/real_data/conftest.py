@@ -5,7 +5,7 @@ import pytest
 
 import pathlib
 import numpy as np
-import pytest
+from skimage import io
 import microscopemetrics_schema.datamodel as mm_schema
 import datetime
 
@@ -77,9 +77,15 @@ def images_dataset_generator(
                     )
                 )
             elif data_file.suffix == ".tif" or data_file.suffix == ".tiff":
+                im = io.imread(data_file)
+                # We are assuming for the moment czyx and we need to convert
+                # to tzyxc
+                if im.ndim == 4:
+                    im = np.expand_dims(im, axis=0)
+
                 images.append(
                     numpy_to_mm_image(
-                        array=np.load(data_file),
+                        array=im,
                         name=data_file.name[:-len(data_file.suffix)],
                         description=f"test_description for image {len(images)}",
                     )
