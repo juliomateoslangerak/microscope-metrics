@@ -6,6 +6,7 @@ from dataclasses import asdict
 from microscopemetrics.analyses.psf_beads import analyse_psf_beads
 from microscopemetrics_schema.datamodel import (
     PSFBeadsDataset,
+    PSFBeads,
     PSFBeadsInputParameters,
     PSFBeadsInputData,
     PSFBeadsOutput,
@@ -19,11 +20,14 @@ from microscopemetrics_schema.datamodel import (
         {
             "dataset_path": "psf_beads_datasets",
             "dataset_target_class": PSFBeadsDataset,
+            "sample_target_class": PSFBeads,
             "input_parameters_target_class": PSFBeadsInputParameters,
             "input_data_target_class": PSFBeadsInputData,
             "input_images_field": "psf_beads_images",
             "output_target_class": PSFBeadsOutput,
             "key_measurements_target_class": PSFBeadsKeyMeasurements,
+            "do_generate_missing_key_measurements": True,
+            "do_generate_missing_input_parameters": True,
         }
     ],
     indirect=True
