@@ -286,7 +286,10 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
         fwhm_micron_x = np.nan
 
     considered_axial_edge = (
-        center_pos_z < fwhm_z * 4 or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 4
+        # TODO: review the tolerance values for considering beads at axial edge
+        # a 1.5x FWHM tolerance is used and that is arbitrary and rather low
+        center_pos_z < fwhm_z * 1.5
+        or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 1.5
     )
 
     intensity_max = bead.max()
@@ -602,7 +605,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     saturated_channels = {}
     bead_properties = []
 
-    # First loop to prepare data
+    # First loop to prepare data and do checks
+    images_shape = None
     for image in dataset.input_data.psf_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
@@ -618,6 +622,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             mm.logger.warning(
                 f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
+
+        # Check all shapes equal
+        if images_shape is None:
+            images_shape = image.array_data.shape
+        elif images_shape != image.array_data.shape:
+            mm.logger.error("Not all images have the same dimensions")
+            return False
 
         # Check image saturation
         mm.logger.info(f"Checking image {image_id} saturation...")

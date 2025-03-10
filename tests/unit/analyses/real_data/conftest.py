@@ -1,11 +1,12 @@
 """
 This file contains fixtures to create various invariable schema dataclasses for testing purposes.
 """
+import pytest
+
 import pathlib
 import warnings
 
 import imageio.v3 as iio
-import pytest
 import microscopemetrics_schema.datamodel as mm_schema
 import datetime
 
@@ -44,7 +45,7 @@ def generate_missing_key_measurements(dataset: mm_schema.MetricsDataset) -> mm_s
     dataset = analyse_dataset(dataset)
     dataset.output.key_measurements.table_data = None
     return dataset.output.key_measurements
-        
+
 
 def analyse_dataset(dataset: mm_schema.MetricsDataset):
     mapping = mappings.MAPPINGS
@@ -79,6 +80,7 @@ def images_dataset_generator(
 
     loader = YAMLLoader()
     for data_dir in dataset_path.iterdir():
+        # For convenience, we can preceed a directory name with "_" to ignore it
         if data_dir.name.startswith("_"):
             continue
         images = []
