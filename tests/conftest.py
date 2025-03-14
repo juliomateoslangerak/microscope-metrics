@@ -94,17 +94,14 @@ def _load_data_schema(
     image_paths = list(path.rglob(f"*{extension}"))
     data = {
         input_data_images_mappings[target_class]: [
-            numpy_to_mm_image(array=np.load(path), name=path.name)
-            for path in image_paths
+            numpy_to_mm_image(array=np.load(path), name=path.name) for path in image_paths
         ]
     }
 
     return target_class(**data)
 
 
-def _dataset_from_dir(
-    loader: YAMLLoader, target_class, path: Path
-) -> mm_schema.MetricsDataset:
+def _dataset_from_dir(loader: YAMLLoader, target_class, path: Path) -> mm_schema.MetricsDataset:
     input_parameters_mappings = {
         mm_schema.FieldIlluminationDataset: mm_schema.FieldIlluminationInputParameters,
         mm_schema.PSFBeadsDataset: mm_schema.PSFBeadsInputParameters,
@@ -120,9 +117,7 @@ def _dataset_from_dir(
         sample=_load_schema(loader, mm_schema.Sample, path),
         experimenter=_load_schema(loader, mm_schema.Experimenter, path),
         acquisition_datetime=datetime.now(),
-        input_parameters=_load_schema(
-            loader, input_parameters_mappings[target_class], path
-        ),
+        input_parameters=_load_schema(loader, input_parameters_mappings[target_class], path),
         input_data=_load_data_schema(loader, input_data_mappings[target_class], path),
         processed=False,
     )

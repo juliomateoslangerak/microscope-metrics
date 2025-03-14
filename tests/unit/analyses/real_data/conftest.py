@@ -1,19 +1,18 @@
 """
 This file contains fixtures to create various invariable schema dataclasses for testing purposes.
 """
-import pytest
 
+import datetime
 import pathlib
 import warnings
 
 import imageio.v3 as iio
 import microscopemetrics_schema.datamodel as mm_schema
-import datetime
-
+import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-from microscopemetrics.analyses import numpy_to_mm_image, mappings
+from microscopemetrics.analyses import mappings, numpy_to_mm_image
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +40,9 @@ def acquisition_datetime() -> str:
     return str(datetime.datetime.now())
 
 
-def generate_missing_key_measurements(dataset: mm_schema.MetricsDataset) -> mm_schema.KeyMeasurements:
+def generate_missing_key_measurements(
+    dataset: mm_schema.MetricsDataset,
+) -> mm_schema.KeyMeasurements:
     dataset = analyse_dataset(dataset)
     dataset.output.key_measurements.table_data = None
     return dataset.output.key_measurements
@@ -66,8 +67,9 @@ def images_dataset_generator(
     # We are naming parameters as "dataset_xxx" when they have to be specified in the dataset directory
     # or otherwise just "xxx" when they are fixed, not relevant for the tests.
     params = request.param  # Expecting a dictionary
-    dataset_path =  \
+    dataset_path = (
         pathlib.Path(__file__).parent.parent.parent.parent / "data" / params["dataset_path"]
+    )
     dataset_target_class = params["dataset_target_class"]
     sample_target_class = params["sample_target_class"]
     input_parameters_target_class = params["input_parameters_target_class"]
@@ -97,7 +99,7 @@ def images_dataset_generator(
                 images.append(
                     numpy_to_mm_image(
                         array=iio.imread(data_file),
-                        name=data_file.name[:-len(data_file.suffix)],
+                        name=data_file.name[: -len(data_file.suffix)],
                         description=f"test_description for image {len(images)}",
                     )
                 )
@@ -129,10 +131,14 @@ def images_dataset_generator(
             # if no input parameters are present in the dataset directory we use defaults
             dataset_input_parameters = input_parameters_target_class()
             if do_generate_missing_input_parameters:
-                warnings.warn(f"No input parameters found in {data_dir}."
-                              f"Generating default input parameters.")
+                warnings.warn(
+                    f"No input parameters found in {data_dir}."
+                    f"Generating default input parameters."
+                )
                 dumper = YAMLDumper()
-                dumper.dump(dataset_input_parameters, str(data_dir / "dataset_input_parameters.yaml"))
+                dumper.dump(
+                    dataset_input_parameters, str(data_dir / "dataset_input_parameters.yaml")
+                )
 
         dataset = dataset_target_class(
             microscope=microscope,
@@ -151,14 +157,17 @@ def images_dataset_generator(
 
         if dataset_key_measurements is None:
             if do_generate_missing_key_measurements:
-                warnings.warn(f"No key measurements found in {data_dir}."
-                              f"Generating default key measurements.")
+                warnings.warn(
+                    f"No key measurements found in {data_dir}."
+                    f"Generating default key measurements."
+                )
                 dataset_key_measurements = generate_missing_key_measurements(dataset)
                 dataset.output.key_measurements = dataset_key_measurements
                 dumper = YAMLDumper()
-                dumper.dump(dataset_key_measurements, str(data_dir / "dataset_key_measurements.yaml"))
+                dumper.dump(
+                    dataset_key_measurements, str(data_dir / "dataset_key_measurements.yaml")
+                )
             else:
                 raise ValueError(f"No key measurements found in {data_dir}")
 
         yield dataset
-

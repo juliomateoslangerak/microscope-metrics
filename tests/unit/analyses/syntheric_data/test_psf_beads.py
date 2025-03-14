@@ -13,7 +13,7 @@ from microscopemetrics.analyses import psf_beads
 from microscopemetrics.analyses.tools import fit_gaussian
 from microscopemetrics.strategies.psf_beads import (
     st_psf_beads_dataset,
-    st_psf_beads_test_data
+    st_psf_beads_test_data,
 )
 
 
@@ -158,9 +158,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
 
-    for (
-        measured
-    ) in psf_beads_dataset.output.key_measurements.considered_lateral_edge_count:
+    for measured in psf_beads_dataset.output.key_measurements.considered_lateral_edge_count:
         assert measured == expected
 
 
@@ -183,13 +181,9 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(
-        len(im_ofbp) for im_ofbp in expected_output["out_of_focus_bead_positions"]
-    )
+    expected = sum(len(im_ofbp) for im_ofbp in expected_output["out_of_focus_bead_positions"])
 
-    for (
-        measured
-    ) in psf_beads_dataset.output.key_measurements.considered_axial_edge_count:
+    for measured in psf_beads_dataset.output.key_measurements.considered_axial_edge_count:
         assert measured == expected
 
 
@@ -214,7 +208,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
         ),
-        unprocessed_dataset = st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
+        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
             dataset=st_mm_schema.st_mm_dataset(
                 input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
                     # We want to be very permissive with the fitting or otherwise
@@ -231,13 +225,9 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
-    expected = sum(
-        len(img_cbp) for img_cbp in expected_output["clustering_bead_positions"]
-    )
+    expected = sum(len(img_cbp) for img_cbp in expected_output["clustering_bead_positions"])
 
-    for (
-        measured
-    ) in psf_beads_dataset.output.key_measurements.considered_intensity_outlier_count:
+    for measured in psf_beads_dataset.output.key_measurements.considered_intensity_outlier_count:
         assert measured == expected
 
 

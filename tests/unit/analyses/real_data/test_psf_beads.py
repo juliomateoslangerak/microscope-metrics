@@ -1,17 +1,17 @@
-import pytest
-from tests.helper_functions import filter_dict, remove_np_pd_data
-
 from dataclasses import asdict
 
-from microscopemetrics.analyses.psf_beads import analyse_psf_beads
+import pytest
 from microscopemetrics_schema.datamodel import (
-    PSFBeadsDataset,
     PSFBeads,
-    PSFBeadsInputParameters,
+    PSFBeadsDataset,
     PSFBeadsInputData,
-    PSFBeadsOutput,
+    PSFBeadsInputParameters,
     PSFBeadsKeyMeasurements,
+    PSFBeadsOutput,
 )
+
+from microscopemetrics.analyses.psf_beads import analyse_psf_beads
+from tests.helper_functions import filter_dict, remove_np_pd_data
 
 
 @pytest.mark.parametrize(
@@ -30,7 +30,7 @@ from microscopemetrics_schema.datamodel import (
             "do_generate_missing_input_parameters": True,
         }
     ],
-    indirect=True
+    indirect=True,
 )
 def test_psf_beads(images_dataset_generator):
     expected_output = asdict(images_dataset_generator.output)
@@ -48,4 +48,3 @@ def test_psf_beads(images_dataset_generator):
     analyzed_output = remove_np_pd_data(analyzed_output)
 
     assert analyzed_output["key_measurements"] == expected_output["key_measurements"]
-
