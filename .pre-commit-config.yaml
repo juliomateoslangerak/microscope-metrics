@@ -1,6 +1,6 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.1.0
     hooks:
       - id: black
         args: # arguments to configure black
@@ -10,7 +10,7 @@ repos:
         # pre-commits default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
         language_version: python3.11
-        files: ^(src|tests)/.*\.py$
+#        files: \.py$
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
@@ -18,4 +18,4 @@ repos:
       - id: isort
         args: ["--profile", "black"]
         name: isort (python)
-        files: ^(src|tests)/.*\.py$
+#        files: \.py$
