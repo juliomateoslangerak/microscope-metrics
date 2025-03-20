@@ -11,3 +11,7 @@ class SaturationError(Exception):
 
 class FittingError(Exception):
     pass
+
+
+class AnalysisError(Exception):
+    pass
