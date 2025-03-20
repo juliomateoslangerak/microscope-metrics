@@ -4,11 +4,14 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from scipy import ndimage, signal
+from skimage.exposure import rescale_intensity
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
 
 import microscopemetrics as mm
 from microscopemetrics.analyses import tools as mm_tools
+
+MAX_NR_PEAKS = 100
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
@@ -104,6 +107,48 @@ def _find_bead_shifts(data1, data2=None):
     )
 
 
+def _estimate_threshold(image, tolerance=2):
+    """
+    This function is finding a range of thresholds for which there is not much
+    difference in the number of peaks found.
+    """
+    threshold_range = np.linspace(0.0, 1.0, 11)
+    peak_counts = []
+
+    for threshold in threshold_range:
+        peak_counts.append(len(peak_local_max(image=image, threshold_abs=threshold)))
+
+    peak_counts_diff = np.abs(np.diff(peak_counts))
+    peak_counts_mask = peak_counts_diff <= tolerance
+
+    plateau_length = 0
+    plateau_start = None
+    current_length = 0
+    current_start = None
+
+    for i, is_plateau in enumerate(peak_counts_mask):
+        if is_plateau:
+            if current_length == 0:
+                current_start = i
+            current_length += 1
+        else:
+            if current_length >= plateau_length:
+                plateau_length = current_length
+                plateau_start = current_start
+            current_length = 0
+
+    # Final check inc ase the plateau extends to the end
+    if current_length > plateau_length:
+        plateau_length = current_length
+        plateau_start = current_start
+
+    if plateau_start is None:
+        return None  # No threshold found
+
+    # We return the threshold that best matches the higher end of the plateau
+    return threshold_range[plateau_start + int(plateau_length * 0.8)]
+
+
 def _calculate_bead_intensity_outliers(
     bead_properties: pd.DataFrame, robust_z_score_threshold: float
 ) -> None:
@@ -174,6 +219,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     count_aggregation_columns = [
         "channel_name",
         "channel_nr",
+        "total_bead",
         "considered_valid",
         "considered_self_proximity",
         "considered_lateral_edge",
@@ -185,6 +231,9 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     ]
 
     reindex_bead_properties_df = bead_properties.reset_index()
+
+    # Add a all True column to count the total number of beads
+    reindex_bead_properties_df["total_bead"] = True
 
     # We aggregate counts for each channel on beads according to their status
     channel_counts = (
@@ -322,7 +371,15 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     }
 
 
-def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_distance: float):
+def _find_beads(
+    channel: np.ndarray,
+    sigma: tuple[float, float, float],
+    min_distance: float,
+    do_noisy: bool = True,
+):
+    """
+    This function finds the beads in a channel by applying a Gaussian filter and then finding the local maxima.
+    """
     mm.logger.debug("Finding beads in channel...")
 
     if all(sigma):
@@ -335,42 +392,51 @@ def _find_beads(channel: np.ndarray, sigma: tuple[float, float, float], min_dist
     # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
     channel_gauss_mip = np.max(channel_gauss, axis=0)
 
-    # We remove background as the min intensity
-    channel_gauss_mip = channel_gauss_mip - channel_gauss_mip.min()
+    # We rescale the image intensities to work with relative thresholds
+    channel_gauss_mip = rescale_intensity(channel_gauss_mip, out_range=np.float32)
 
     # Estimate a relative threshold for the peak_local_max function
-    threshold_rel = 0.2
+    if do_noisy:
+        threshold = _estimate_threshold(channel_gauss_mip)
+        if threshold is None:
+            mm.logger.error("No optimal noisy beads threshold found for the channel.")
+            threshold = 0.6
+    else:
+        threshold = 0.3
 
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
-    # and noise in the image. We report this as a warning.
-    num_peaks = 100
+    # and noise in the image. We report this as an error.
+    max_num_peaks = MAX_NR_PEAKS
 
     # Find bead centers
     positions_all = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=threshold_rel,
-        num_peaks=num_peaks,
+        threshold_abs=threshold,
+        num_peaks=max_num_peaks,
     )
-    if len(positions_all) == num_peaks:
-        mm.logger.error(
-            f"Reached the maximum number of peaks ({num_peaks}) in the image. "
-            f"Consider increasing the relative threshold."
-        )
+    if len(positions_all) == max_num_peaks:
+        mm.logger.warning(f"Reached the maximum number of peaks ({max_num_peaks}) in the image. ")
+        if not do_noisy:  # We did not do noisy this time
+            mm.logger.info("Trying noisy beads detected.")
+            return _find_beads(channel, sigma, min_distance, do_noisy=True)
+        else:
+            mm.logger.error("Too many beads detected. The image is probably too noisy.")
+            raise mm.AnalysisError("Too many beads detected. The image is probably too noisy.")
 
     positions_all_not_proximity_not_edge = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=threshold_rel,
+        threshold_abs=threshold,
         min_distance=int(min_distance),
         exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
-        num_peaks=num_peaks,
+        num_peaks=max_num_peaks,
         p_norm=2,
     )
     positions_all_not_proximity = peak_local_max(
         image=channel_gauss_mip,
-        threshold_rel=threshold_rel,
+        threshold_abs=threshold,
         min_distance=int(min_distance),
         exclude_border=False,
-        num_peaks=num_peaks,
+        num_peaks=max_num_peaks,
         p_norm=2,
     )
 
