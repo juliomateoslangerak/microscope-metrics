@@ -21,7 +21,7 @@ def microscope() -> mm_schema.Microscope:
     return mm_schema.Microscope(
         name="microscope_name",
         description="microscope_description",
-        type="WIDEFIELD",
+        microscope_type="WIDEFIELD",
         manufacturer="microscope_manufacturer",
         model="microscope_model",
         serial_number="microscope_serial_number",
