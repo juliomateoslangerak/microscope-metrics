@@ -306,7 +306,14 @@ def _image_properties(
         Dictionary values will be lists in case of multiple channels.
     """
     properties = pd.DataFrame()
-    for image in images:
+    for index, image in enumerate(images):
+        if progress_callback:
+            # We estimate that this function will take 80% of the time
+            progress_callback(
+                index * 0.8 / len(images),
+                f"Processing image ({index}/{len(images)}): {image.name}",
+            )
+
         # For the analysis we are using only the first z and time-point
         image_data = image.array_data[0, 0, :, :, :]
 
@@ -360,17 +367,21 @@ def _run_checks(dataset: mm_schema.FieldIlluminationDataset):
                         f"Channel name {channel.name} is not unique. "
                         "We cannot average field illumination between images from the same channel."
                     )
-                    return False
+                    raise mm.InconsistentDataError(
+                        f"Channel name {channel.name} is not unique. "
+                        "We cannot average field illumination between images from the same channel."
+                    )
                 channel_names.append(channel.name)
 
         # Check image shape
         mm.logger.info("Checking image shape...")
         if len(image.array_data.shape) != 5:
             mm.logger.error("Image must be 5D")
-            return False
+            raise mm.InconsistentDataError("Image must be 5D")
         if image.array_data.shape[0] != 1 or image.array_data.shape[1] != 1:
-            mm.logger.warning(
-                "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
+            mm.logger.error("Image must be in TZYXC order, single z and single time-point.")
+            raise mm.InconsistentDataError(
+                "Image must be in TZYXC order, single z and single time-point."
             )
 
         # Check image saturation
@@ -403,6 +414,7 @@ def analyse_field_illumination(
         images=dataset.input_data.field_illumination_image,
         corner_fraction=dataset.input_parameters.corner_fraction,
         sigma=dataset.input_parameters.sigma,
+        progress_callback=progress_callback,
     )
 
     key_measurements = mm_schema.FieldIlluminationKeyMeasurements(
@@ -411,6 +423,9 @@ def analyse_field_illumination(
         table_data=key_measurements,
         **key_measurements.to_dict(orient="list"),
     )
+
+    if progress_callback:
+        progress_callback(0.8, "Extracting profiles...")
 
     intensity_profiles = [
         mm.analyses.dict_to_table(
