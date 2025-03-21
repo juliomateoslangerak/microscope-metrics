@@ -285,7 +285,12 @@ def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> d
     }
 
 
-def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sigma: float):
+def _image_properties(
+    images: list[mm_schema.Image],
+    corner_fraction: float,
+    sigma: float,
+    progress_callback,
+):
     """
     given FI input images, this function return intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
@@ -342,9 +347,7 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
     return properties
 
 
-def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
-    mm.analyses.validate_requirements()
-
+def _run_checks(dataset: mm_schema.FieldIlluminationDataset):
     channel_names = []
     for image in dataset.input_data.field_illumination_image:
         # We want to verify that the input images all have different channel names
@@ -384,6 +387,17 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         if len(saturated_channels):
             mm.logger.error(f"Channels {saturated_channels} are saturated")
             raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
+
+
+def analyse_field_illumination(
+    dataset: mm_schema.FieldIlluminationDataset, progress_callback: callable = None
+) -> bool:
+    if progress_callback:
+        progress_callback(0.0, "Running preliminary checks...")
+
+    mm.analyses.validate_requirements()
+
+    _run_checks(dataset)
 
     key_measurements = _image_properties(
         images=dataset.input_data.field_illumination_image,
