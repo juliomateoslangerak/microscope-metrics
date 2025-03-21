@@ -361,6 +361,8 @@ def _run_checks(dataset: mm_schema.FieldIlluminationDataset):
         # As it does not make sense to average file illumination between images from the same channel
         if image.channel_series is not None:
             mm.logger.info("Checking duplicate channel names...")
+            # TODO: We might have to reconsider averaging channels. Some people
+            # is doing it to remove sample related inhomogeneities.
             for channel in image.channel_series.channels:
                 if channel.name in channel_names:
                     mm.logger.error(
