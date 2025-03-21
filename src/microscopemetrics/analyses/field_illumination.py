@@ -27,8 +27,8 @@ def _get_center_region_mask(channel: np.ndarray, fraction: float = 0.1) -> np.nd
         2d bool np.ndarray representing the center region of the chosen channel.
     """
     channel = rescale_intensity(channel, in_range=(0, channel.max()), out_range=(0.0, 1.0))
-    mask = channel > (1 - fraction)
-    return mask
+
+    return channel > (1 - fraction)
 
 
 def _channel_line_profile(
