@@ -5,9 +5,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SaturationError(Exception):
+class InconsistentDataError(Exception):
     pass
 
 
-class FittingError(Exception):
+class AnalysisError(Exception):
+    pass
+
+
+class SaturationError(AnalysisError):
+    pass
+
+
+class FittingError(AnalysisError):
     pass
