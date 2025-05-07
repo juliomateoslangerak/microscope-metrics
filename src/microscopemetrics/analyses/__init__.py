@@ -43,6 +43,7 @@ def numpy_to_mm_image(
     elif array.ndim == 2:
         shape_y, shape_x = array.shape
         shape_t, shape_z, shape_c = 1, 1, 1
+        array = array.reshape((1, 1, shape_y, shape_x, 1))
     else:
         raise NotImplementedError(
             f"Array of dimension {array.ndim} is not supported by this function. Image has to have either 5 or 2 dimensions"
