@@ -52,4 +52,3 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
         return expected.lower() == analyzed.lower()  # Case-insensitive match
 
     return expected == analyzed  # Default exact match for other types
-

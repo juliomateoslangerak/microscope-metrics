@@ -1,17 +1,17 @@
-import pytest
-from tests.helper_functions import filter_dict, remove_np_pd_data
-
 from dataclasses import asdict
 
-from microscopemetrics.analyses.field_illumination import analyse_field_illumination
+import pytest
 from microscopemetrics_schema.datamodel import (
     FieldIlluminationDataset,
-    HomogeneousField,
-    FieldIlluminationInputParameters,
     FieldIlluminationInputData,
-    FieldIlluminationOutput,
+    FieldIlluminationInputParameters,
     FieldIlluminationKeyMeasurements,
+    FieldIlluminationOutput,
+    HomogeneousField,
 )
+
+from microscopemetrics.analyses.field_illumination import analyse_field_illumination
+from tests.helper_functions import filter_dict, remove_np_pd_data
 
 
 @pytest.mark.parametrize(
@@ -23,14 +23,14 @@ from microscopemetrics_schema.datamodel import (
             "sample_target_class": HomogeneousField,
             "input_parameters_target_class": FieldIlluminationInputParameters,
             "input_data_target_class": FieldIlluminationInputData,
-            "input_images_field": "field_illumination_image",
+            "input_images_field": "field_illumination_images",
             "output_target_class": FieldIlluminationOutput,
             "key_measurements_target_class": FieldIlluminationKeyMeasurements,
             "do_generate_missing_key_measurements": False,
             "do_generate_missing_input_parameters": False,
         }
     ],
-    indirect=True
+    indirect=True,
 )
 def test_field_illumination(images_dataset_generator):
     expected_output = asdict(images_dataset_generator.output)

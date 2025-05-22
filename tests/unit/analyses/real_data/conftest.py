@@ -1,19 +1,18 @@
 """
 This file contains fixtures to create various invariable schema dataclasses for testing purposes.
 """
-import pytest
 
+import datetime
 import pathlib
 import warnings
 
 import imageio.v3 as iio
 import microscopemetrics_schema.datamodel as mm_schema
-import datetime
-
+import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-from microscopemetrics.analyses import numpy_to_mm_image, mappings
+from microscopemetrics.analyses import mappings, numpy_to_mm_image
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +40,9 @@ def acquisition_datetime() -> str:
     return str(datetime.datetime.now())
 
 
-def generate_missing_key_measurements(dataset: mm_schema.MetricsDataset) -> mm_schema.KeyMeasurements:
+def generate_missing_key_measurements(
+    dataset: mm_schema.MetricsDataset,
+) -> mm_schema.KeyMeasurements:
     dataset = analyse_dataset(dataset)
     dataset.output.key_measurements.table_data = None
     return dataset.output.key_measurements
@@ -91,7 +92,7 @@ def build_dataset_from_dir(
             images.append(
                 numpy_to_mm_image(
                     array=array,
-                    name=data_file.name[:-len(data_file.suffix)],
+                    name=data_file.name[: -len(data_file.suffix)],
                     description=f"test_description for image {len(images)}",
                 )
             )
@@ -122,7 +123,9 @@ def build_dataset_from_dir(
         if do_generate_missing_input_parameters:
             warnings.warn(f"No input parameters found in {dataset_dir}. Generating defaults.")
             dumper = YAMLDumper()
-            dumper.dump(dataset_input_parameters, str(dataset_dir / "dataset_input_parameters.yaml"))
+            dumper.dump(
+                dataset_input_parameters, str(dataset_dir / "dataset_input_parameters.yaml")
+            )
 
     dataset = dataset_target_class(
         microscope=microscope,
@@ -145,7 +148,9 @@ def build_dataset_from_dir(
             dataset_key_measurements = generate_missing_key_measurements(dataset)
             dataset.output.key_measurements = dataset_key_measurements
             dumper = YAMLDumper()
-            dumper.dump(dataset_key_measurements, str(dataset_dir / "dataset_key_measurements.yaml"))
+            dumper.dump(
+                dataset_key_measurements, str(dataset_dir / "dataset_key_measurements.yaml")
+            )
         else:
             raise ValueError(f"No key measurements found in {dataset_dir}")
 
@@ -179,8 +184,8 @@ def dataset_tested(
 
 def pytest_generate_tests(metafunc):
     if "dataset_dir" in metafunc.fixturenames:
-        data_root = pathlib.Path(__file__).parent.parent.parent.parent / "data" / "psf_beads_datasets"
-        dataset_dirs = [
-            p for p in data_root.iterdir() if p.is_dir() and not p.name.startswith("_")
-        ]
+        data_root = (
+            pathlib.Path(__file__).parent.parent.parent.parent / "data" / "psf_beads_datasets"
+        )
+        dataset_dirs = [p for p in data_root.iterdir() if p.is_dir() and not p.name.startswith("_")]
         metafunc.parametrize("dataset_dir", dataset_dirs)
