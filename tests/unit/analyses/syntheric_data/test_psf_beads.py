@@ -206,13 +206,11 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
         ),
-        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
-            dataset=st_mm_schema.st_mm_dataset(
-                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
-                    # We want to be very permissive with the fitting or otherwise
-                    # clustering beads will be thrown away.
-                    fitting_r2_threshold=st.just(0.2),
-                )
+        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(
+            input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
+                # We want to be very permissive with the fitting or otherwise
+                # clustering beads will be thrown away.
+                fitting_r2_threshold=st.just(0.2),
             )
         ),
     )
@@ -250,14 +248,12 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
         ),
-        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
-            dataset=st_mm_schema.st_mm_dataset(
-                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
-                    # We want to be very permissive with the fitting or otherwise
-                    # clustering beads will be thrown away.
-                    fitting_r2_threshold=st.just(0.1),
-                    # intensity_robust_z_score_threshold=st.just(4.0),
-                )
+        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(
+            input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
+                # We want to be very permissive with the fitting or otherwise
+                # clustering beads will be thrown away.
+                fitting_r2_threshold=st.just(0.1),
+                # intensity_robust_z_score_threshold=st.just(4.0),
             )
         ),
     )
