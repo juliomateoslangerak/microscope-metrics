@@ -8,6 +8,7 @@ import warnings
 
 import imageio.v3 as iio
 import microscopemetrics_schema.datamodel as mm_schema
+import numpy as np
 import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
