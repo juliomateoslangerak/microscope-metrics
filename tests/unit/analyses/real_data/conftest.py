@@ -83,12 +83,12 @@ def build_dataset_from_dir(
         if data_file.suffix in [".tif", ".tiff"]:
             array = iio.imread(data_file)
             # We are assuming images here of an order zyx
-            if len(array.shape) == 3 and array.shape[0] < array.shape[1]:
-                array = array.reshape((1, array.shape[0], array.shape[1], array.shape[2], 1))
-            else:
-                raise ValueError(
-                    f"Image {data_file} has an unexpected shape {array.shape}. Expected 3D image with zyx order."
-                )
+            if len(array.shape) == 3:
+                array = np.expand_dims(array, (0, -1))
+                if array.shape[1] > array.shape[2]:
+                    raise ValueError(
+                        f"Image {data_file} has an unexpected shape {array.shape}. Expected 3D image with zyx order."
+                    )
             images.append(
                 numpy_to_mm_image(
                     array=array,
@@ -125,6 +125,15 @@ def build_dataset_from_dir(
             dumper = YAMLDumper()
             dumper.dump(
                 dataset_input_parameters, str(dataset_dir / "dataset_input_parameters.yaml")
+            )
+
+    if dataset_key_measurements is None:
+        dataset_key_measurements = key_measurements_target_class()
+        if do_generate_missing_key_measurements:
+            warnings.warn(f"No key measurements found in {dataset_dir}. Generating defaults.")
+            dumper = YAMLDumper()
+            dumper.dump(
+                dataset_key_measurements, str(dataset_dir / "dataset_key_measurements.yaml")
             )
 
     dataset = dataset_target_class(
