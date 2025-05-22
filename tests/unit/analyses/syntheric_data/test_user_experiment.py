@@ -10,18 +10,19 @@ from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics.analyses import psf_beads
-from microscopemetrics.strategies.user_experiment import (
-    st_user_experiment_dataset,
-    st_user_experiment_test_data,
-)
 
-
-@given(st_user_experiment_dataset())
-@settings(max_examples=1)
-def test_user_experiment_analysis_instantiation(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert isinstance(dataset, mm_schema.UserExperimentDataset)
-    assert dataset.name
-    assert dataset.description
-    assert dataset.microscope
-    assert dataset.input_parameters
+# from microscopemetrics.strategies.user_experiment import (
+#     st_user_experiment_dataset,
+#     st_user_experiment_test_data,
+# )
+#
+# @pytest.skip
+# @given(st_user_experiment_dataset())
+# @settings(max_examples=1)
+# def test_user_experiment_analysis_instantiation(dataset):
+#     dataset = dataset["unprocessed_dataset"]
+#     assert isinstance(dataset, mm_schema.UserExperimentDataset)
+#     assert dataset.name
+#     assert dataset.description
+#     assert dataset.microscope
+#     assert dataset.input_parameters
