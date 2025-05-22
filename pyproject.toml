@@ -39,7 +39,8 @@ numpy = "^2"
 scikit-image = "^0"
 scipy = "^1"
 pandas = "^2"
-microscopemetrics-schema = {git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch="dev"}
+microscopemetrics-schema = "0.0.4"
+poetry = "^2.0.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8"
