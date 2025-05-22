@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given, reproduce_failure, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
-from microscopemetrics_schema import strategies as st_mm_schema
+import microscopemetrics_schema.strategies.analyses as st_mm_analyses_schema
 from scipy import ndimage
 from skimage.filters import gaussian
 from skimage.util import random_noise as skimage_random_noise
@@ -104,12 +104,10 @@ def test_psf_beads_analysis_run(dataset):
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
         ),
-        unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(
-            dataset=st_mm_schema.st_mm_dataset(
-                input_parameters=st_mm_schema.st_mm_psf_beads_input_parameters(
-                    fitting_r2_threshold=st.just(0.8),  # TODO: Remove this?
-                    intensity_robust_z_score_threshold=st.just(4.0),
-                )
+        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(
+            input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
+                fitting_r2_threshold=st.just(0.8),  # TODO: Remove this?
+                intensity_robust_z_score_threshold=st.just(4.0),
             )
         ),
     )

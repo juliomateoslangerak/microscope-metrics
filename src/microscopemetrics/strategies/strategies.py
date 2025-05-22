@@ -1,4 +1,3 @@
-import dataclasses
 import random
 
 import numpy as np
@@ -11,16 +10,12 @@ except ImportError:
     raise ImportError(
         "In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`."
     )
-from microscopemetrics_schema import strategies as st_mm_schema
+import microscopemetrics_schema.strategies.analyses as st_mm_analyses_schema
 from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
 
-from microscopemetrics.analyses import (  # argolight,
-    field_illumination,
-    numpy_to_mm_image,
-    psf_beads,
-)
+from microscopemetrics.analyses import numpy_to_mm_image
 
 
 # Strategies for Field Illumination
@@ -199,7 +194,7 @@ def st_field_illumination_test_data(
 @st.composite
 def st_field_illumination_dataset(
     draw,
-    unprocessed_dataset=st_mm_schema.st_mm_field_illumination_unprocessed_dataset(),
+    unprocessed_dataset=st_mm_analyses_schema.st_mm_field_illumination_unprocessed_dataset(),
     test_data=st_field_illumination_test_data(),
 ):
     test_data = draw(test_data)
@@ -550,7 +545,7 @@ def st_psf_beads_test_data(
 @st.composite
 def st_psf_beads_dataset(
     draw,
-    unprocessed_dataset=st_mm_schema.st_mm_psf_beads_unprocessed_dataset(),
+    unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(),
     test_data=st_psf_beads_test_data(),
 ):
     test_data = draw(test_data)
