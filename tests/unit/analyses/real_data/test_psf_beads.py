@@ -12,26 +12,39 @@ from microscopemetrics_schema.datamodel import (
 
 from microscopemetrics.analyses.psf_beads import analyse_psf_beads
 from tests.helper_functions import filter_dict, remove_np_pd_data
+from tests.unit.analyses.real_data.conftest import (
+    build_dataset_from_dir,
+    get_test_subdirectories,
+)
+
+
+def pytest_generate_tests(metafunc):
+    if "dataset_dir" in metafunc.fixturenames:
+        test_dirs = get_test_subdirectories("psf_beads_datasets")
+        metafunc.parametrize("dataset_dir", test_dirs)
 
 
 @pytest.mark.parametrize(
-    "dataset_tested",
+    "data_gen_args",
     [
         {
             "dataset_target_class": PSFBeadsDataset,
-            "sample_target_class": PSFBeads,
             "input_parameters_target_class": PSFBeadsInputParameters,
             "input_data_target_class": PSFBeadsInputData,
-            "input_images_field": "psf_beads_images",
             "output_target_class": PSFBeadsOutput,
             "key_measurements_target_class": PSFBeadsKeyMeasurements,
-            "do_generate_missing_key_measurements": True,
-            "do_generate_missing_input_parameters": False,
+            "sample_target_class": PSFBeads,
+            "input_images_field": "psf_beads_images",
+            # "do_generate_missing_key_measurements": True,
+            # "do_generate_missing_input_parameters": True,
         }
     ],
-    indirect=True,
 )
-def test_psf_beads(dataset_tested):
+def test_psf_beads(data_gen_args, dataset_dir):
+    dataset_tested = build_dataset_from_dir(
+        dataset_dir=dataset_dir,
+        **data_gen_args,
+    )
     expected_output = asdict(dataset_tested.output)
     dataset_tested.output = None
     assert analyse_psf_beads(dataset_tested)

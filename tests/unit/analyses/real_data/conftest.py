@@ -16,8 +16,7 @@ from linkml_runtime.loaders import YAMLLoader
 from microscopemetrics.analyses import mappings, numpy_to_mm_image
 
 
-@pytest.fixture(scope="session")
-def microscope() -> mm_schema.Microscope:
+def gen_microscope() -> mm_schema.Microscope:
     return mm_schema.Microscope(
         name="microscope_name",
         description="microscope_description",
@@ -28,16 +27,23 @@ def microscope() -> mm_schema.Microscope:
     )
 
 
-@pytest.fixture(scope="session")
-def experimenter() -> mm_schema.Experimenter:
+def gen_sample() -> mm_schema.Sample:
+    return mm_schema.Sample(
+        name="sample_name",
+        description="sample_description",
+        manufacturer="sample_manufacturer",
+        preparation_protocol="https://example.com/preparation_protocol",
+    )
+
+
+def gen_experimenter() -> mm_schema.Experimenter:
     return mm_schema.Experimenter(
         name="John Doe",
         orcid="0123-4567-8901-2345",
     )
 
 
-@pytest.fixture(scope="session")
-def acquisition_datetime() -> str:
+def gen_acquisition_datetime() -> str:
     return str(datetime.datetime.now())
 
 
@@ -60,23 +66,24 @@ def analyse_dataset(dataset: mm_schema.MetricsDataset):
 
 def build_dataset_from_dir(
     dataset_dir,
-    microscope,
-    experimenter,
-    acquisition_datetime,
+    dataset_target_class,
     input_parameters_target_class,
     input_data_target_class,
-    input_images_field,
     output_target_class,
     key_measurements_target_class,
-    dataset_target_class,
-    do_generate_missing_input_parameters,
-    do_generate_missing_key_measurements,
+    sample_target_class=None,
+    microscope=None,
+    experimenter=None,
+    input_images_field=None,
+    acquisition_datetime=None,
+    do_generate_missing_input_parameters=False,
+    do_generate_missing_key_measurements=False,
 ):
     loader = YAMLLoader()
     images = []
-    dataset_input_parameters = None
-    dataset_sample = None
-    dataset_key_measurements = None
+    input_parameters = None
+    sample = None
+    key_measurements = None
 
     for data_file in dataset_dir.iterdir():
         if not data_file.is_file():
@@ -101,7 +108,7 @@ def build_dataset_from_dir(
             "dataset_input_parameters.yaml",
             "dataset_input_parameters.yml",
         ]:
-            dataset_input_parameters = loader.load_any(
+            input_parameters = loader.load_any(
                 source=str(data_file),
                 target_class=input_parameters_target_class,
             )
@@ -109,93 +116,68 @@ def build_dataset_from_dir(
             "dataset_key_measurements.yaml",
             "dataset_key_measurements.yml",
         ]:
-            dataset_key_measurements = loader.load_any(
+            key_measurements = loader.load_any(
                 source=str(data_file),
                 target_class=key_measurements_target_class,
             )
         elif data_file.name in ["dataset_microscope.yaml", "dataset_microscope.yml"]:
-            microscope = loader.load_any(
-                source=str(data_file),
-                target_class=mm_schema.Microscope,
-            )
+            if microscope is None:
+                microscope = loader.load_any(
+                    source=str(data_file),
+                    target_class=mm_schema.Microscope,
+                )
+        elif data_file.name in ["dataset_sample.yaml", "dataset_sample.yml"]:
+            if sample_target_class is not None:
+                sample = loader.load_any(
+                    source=str(data_file),
+                    target_class=sample_target_class,
+                )
 
-    if dataset_input_parameters is None:
-        dataset_input_parameters = input_parameters_target_class()
+    if input_parameters is None:
+        input_parameters = input_parameters_target_class()
         if do_generate_missing_input_parameters:
             warnings.warn(f"No input parameters found in {dataset_dir}. Generating defaults.")
             dumper = YAMLDumper()
-            dumper.dump(
-                dataset_input_parameters, str(dataset_dir / "dataset_input_parameters.yaml")
-            )
+            dumper.dump(input_parameters, str(dataset_dir / "dataset_input_parameters.yaml"))
 
-    if dataset_key_measurements is None:
-        dataset_key_measurements = key_measurements_target_class()
+    if key_measurements is None:
+        key_measurements = key_measurements_target_class()
         if do_generate_missing_key_measurements:
             warnings.warn(f"No key measurements found in {dataset_dir}. Generating defaults.")
             dumper = YAMLDumper()
-            dumper.dump(
-                dataset_key_measurements, str(dataset_dir / "dataset_key_measurements.yaml")
-            )
+            dumper.dump(key_measurements, str(dataset_dir / "dataset_key_measurements.yaml"))
 
     dataset = dataset_target_class(
-        microscope=microscope,
-        experimenter=experimenter.orcid,
-        acquisition_datetime=acquisition_datetime,
-        sample=dataset_sample,
-        input_parameters=dataset_input_parameters,
+        microscope=microscope or gen_microscope(),
+        experimenter=experimenter or gen_experimenter(),
+        acquisition_datetime=acquisition_datetime or gen_acquisition_datetime(),
+        sample=sample or gen_sample(),
+        input_parameters=input_parameters,
         input_data=input_data_target_class(**{input_images_field: images}),
         output=output_target_class(
-            key_measurements=dataset_key_measurements,
+            key_measurements=key_measurements,
             processing_application="microscopemetrics",
             processing_version="0.0.1",
             processing_datetime=str(datetime.datetime.now()),
         ),
     )
 
-    if dataset_key_measurements is None:
+    if key_measurements is None:
         if do_generate_missing_key_measurements:
             warnings.warn(f"Generating default key_measurements.")
-            dataset_key_measurements = generate_missing_key_measurements(dataset)
-            dataset.output.key_measurements = dataset_key_measurements
+            key_measurements = generate_missing_key_measurements(dataset)
+            dataset.output.key_measurements = key_measurements
             dumper = YAMLDumper()
-            dumper.dump(
-                dataset_key_measurements, str(dataset_dir / "dataset_key_measurements.yaml")
-            )
+            dumper.dump(key_measurements, str(dataset_dir / "dataset_key_measurements.yaml"))
         else:
             raise ValueError(f"No key measurements found in {dataset_dir}")
 
     return dataset
 
 
-@pytest.fixture
-def dataset_tested(
-    dataset_dir,
-    microscope,
-    experimenter,
-    acquisition_datetime,
-    request,
-):
-    params = request.param
-    return build_dataset_from_dir(
-        dataset_dir=dataset_dir,
-        microscope=microscope,
-        experimenter=experimenter,
-        acquisition_datetime=acquisition_datetime,
-        input_parameters_target_class=params["input_parameters_target_class"],
-        input_data_target_class=params["input_data_target_class"],
-        input_images_field=params["input_images_field"],
-        output_target_class=params["output_target_class"],
-        key_measurements_target_class=params["key_measurements_target_class"],
-        dataset_target_class=params["dataset_target_class"],
-        do_generate_missing_input_parameters=params["do_generate_missing_input_parameters"],
-        do_generate_missing_key_measurements=params["do_generate_missing_key_measurements"],
-    )
-
-
-def pytest_generate_tests(metafunc):
-    if "dataset_dir" in metafunc.fixturenames:
-        data_root = (
-            pathlib.Path(__file__).parent.parent.parent.parent / "data" / "psf_beads_datasets"
-        )
-        dataset_dirs = [p for p in data_root.iterdir() if p.is_dir() and not p.name.startswith("_")]
-        metafunc.parametrize("dataset_dir", dataset_dirs)
+def get_test_subdirectories(test_dir):
+    """
+    Get all subdirectories in the test directory that do not start with an underscore.
+    """
+    data_root = pathlib.Path(__file__).parent.parent.parent.parent / "data" / test_dir
+    return [p for p in data_root.iterdir() if p.is_dir() and not p.name.startswith("_")]
