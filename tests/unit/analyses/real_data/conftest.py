@@ -142,13 +142,6 @@ def build_dataset_from_dir(
             dumper = YAMLDumper()
             dumper.dump(input_parameters, str(dataset_dir / "dataset_input_parameters.yaml"))
 
-    if key_measurements is None:
-        key_measurements = key_measurements_target_class()
-        if do_generate_missing_key_measurements:
-            warnings.warn(f"No key measurements found in {dataset_dir}. Generating defaults.")
-            dumper = YAMLDumper()
-            dumper.dump(key_measurements, str(dataset_dir / "dataset_key_measurements.yaml"))
-
     dataset = dataset_target_class(
         microscope=microscope or gen_microscope(),
         experimenter=experimenter or gen_experimenter(),
@@ -157,7 +150,7 @@ def build_dataset_from_dir(
         input_parameters=input_parameters,
         input_data=input_data_target_class(**{input_images_field: images}),
         output=output_target_class(
-            key_measurements=key_measurements,
+            key_measurements=key_measurements or key_measurements_target_class(),
             processing_application="microscopemetrics",
             processing_version="0.0.1",
             processing_datetime=str(datetime.datetime.now()),
