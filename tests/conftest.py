@@ -88,7 +88,7 @@ def _load_data_schema(
     extension=".npy",
 ) -> mm_schema.MetricsInputData:
     input_data_images_mappings = {
-        mm_schema.FieldIlluminationInputData: "field_illumination_image",
+        mm_schema.FieldIlluminationInputData: "field_illumination_images",
         mm_schema.PSFBeadsInputData: "psf_beads_images",
     }
     image_paths = list(path.rglob(f"*{extension}"))

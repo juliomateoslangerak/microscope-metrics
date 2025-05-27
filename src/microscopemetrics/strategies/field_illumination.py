@@ -197,7 +197,7 @@ def st_field_illumination_dataset(
     test_data = draw(test_data)
     field_illumination_unprocessed_dataset = draw(unprocessed_dataset)
 
-    field_illumination_unprocessed_dataset.input_data.field_illumination_image = [
+    field_illumination_unprocessed_dataset.input_data.field_illumination_images = [
         numpy_to_mm_image(
             array=image,
             name=f"FI_image_{i}",
@@ -209,7 +209,7 @@ def st_field_illumination_dataset(
     # Setting the bit depth to the data type of the image
     image_dtype = {
         a.array_data.dtype
-        for a in field_illumination_unprocessed_dataset.input_data.field_illumination_image
+        for a in field_illumination_unprocessed_dataset.input_data.field_illumination_images
     }
     if len(image_dtype) != 1:
         raise ValueError("All images should have the same data type")
