@@ -63,6 +63,8 @@ def analyse_dataset(dataset: mm_schema.MetricsDataset):
             m.analysis_function(dataset)
             return dataset
 
+    raise ValueError(f"No analysis function found for the {dataset.class_name} dataset type.")
+
 
 def build_dataset_from_dir(
     dataset_dir,
