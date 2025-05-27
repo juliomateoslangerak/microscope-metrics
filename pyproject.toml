@@ -1,17 +1,80 @@
-[tool.poetry]
+[build-system]
+requires = ["poetry-core>=1.7.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[project]
 name = "microscopemetrics"
-version = "0.2.2"
-description = "A package providing analysis routines to measure the performance of micrsocopes used in biomedical research"
+description = "A package providing analysis routines to measure the performance of microscopes used in biomedical research"
 authors = [
-    "Julio Mateos Langerak <julio.matoes-langerak@igh.cnrs.fr>",
-    "Sotirios Papadiamantis <sotirios.papadiamantis@univ-amu.fr>"
+    {name = "Julio Mateos Langerak", email = "julio.mateos-langerak@igh,cnrs.fr"},
+    {name = "Sotirios Papadiamantis", email = "sotirios.papadiamantis@univ-amu.fr"}
 ]
-license = "GPL-3.0-only"
+maintainers = [
+    {name = "Julio Mateos Langerak", email = "julio.mateos-langerak@igh,cnrs.fr"}
+]
+keywords = ["microscopy", "metrology"]
+license = {text = "GPL-3.0-only"}
 readme = "README.md"
+requires-python = ">=3.9.18,<3.12"
+include = [
+    "README.md",
+    "src/microscopemetrics",
+    "project"
+]
+dynamic = [
+    "version",
+    "classifiers",
+    "dependencies",
+]
+
+[project.urls]
 homepage = "https://github.com/MontpellierRessourcesImagerie/microscope-metrics"
 repository = "https://github.com/MontpellierRessourcesImagerie/microscope-metrics"
 documentation = "https://github.com/MontpellierRessourcesImagerie/microscope-metrics/tree/master/docs"
-keywords = ["microscopy", "metrology"]
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Image Processing"
+]
+version = "0.0.0"
+
+[tool.poetry.dependencies]
+numpy = "^2"
+scikit-image = "^0"
+scipy = "^1"
+pandas = "^2"
+microscopemetrics-schema = "0.0.4"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8"
+hypothesis = "^6"
+tox = "^3"
+coverage = "^7"
+pytest-parallel = "^0.1.1"
+dvc = "^3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25"
+poetry = "^2"
+isort = "^6"
+pre-commit = "^4"
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = ">=1.5.2"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "pep440"
 
 [tool.pytest.ini_options]
 addopts = "--hypothesis-show-statistics --hypothesis-profile=dev --workers=auto"
@@ -33,28 +96,4 @@ filterwarnings = [
 [tool.isort]
 profile = "black"
 
-[tool.poetry.dependencies]
-python = ">=3.9.18 <3.12"
-numpy = "^2"
-scikit-image = "^0"
-scipy = "^1"
-pandas = "^2"
-microscopemetrics-schema = "0.0.4"
 
-[tool.poetry.group.test.dependencies]
-pytest = "^8"
-hypothesis = "^6"
-tox = "^3"
-coverage = "^7"
-pytest-parallel = "^0.1.1"
-dvc = "^3"
-
-[tool.poetry.group.dev.dependencies]
-black = "^25"
-poetry = "^2"
-isort = "^6"
-pre-commit = "^4"
-
-[build-system]
-requires = ["poetry-core>=1.7.0"]
-build-backend = "poetry.core.masonry.api"
