@@ -40,7 +40,6 @@ scikit-image = "^0"
 scipy = "^1"
 pandas = "^2"
 microscopemetrics-schema = "0.0.4"
-poetry = "^2.0.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8"
@@ -51,9 +50,9 @@ pytest-parallel = "^0.1.1"
 dvc = "^3"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24"
+black = "^25"
 poetry = "^2"
-isort = "^5"
+isort = "^6"
 pre-commit = "^4"
 
 [build-system]
