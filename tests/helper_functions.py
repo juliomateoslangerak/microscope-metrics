@@ -1,3 +1,5 @@
+import microscopemetrics_schema.datamodel as mm_schema
+import numpy as np
 import pytest
 
 
@@ -52,3 +54,37 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
         return expected.lower() == analyzed.lower()  # Case-insensitive match
 
     return expected == analyzed  # Default exact match for other types
+
+
+def assert_key_measurements_equality(
+    expected: mm_schema.KeyMeasurements,
+    actual: mm_schema.KeyMeasurements,
+):
+    """Assert that two KeyMeasurements objects are equal, ignoring oddities."""
+
+    def assert_item_equality(exp, act):
+        if isinstance(act, list):
+            if len(exp) != len(act):
+                raise ValueError(f"Expected {len(exp)} items, got {len(act)}")
+            for e, a in zip(exp, act):
+                assert_item_equality(e, a)
+                return True
+        if isinstance(act, float):
+            if np.isnan(act) == np.isnan(exp):
+                return True
+            # linkml_runtime.utils.yamlutils.extended_float is used to handle floats
+            # when read from a yaml file, while the analyzed output is a float
+            if exp.real == act:
+                return True
+        if act != exp:
+            raise ValueError(f"Expected {exp}, got {act}")
+        return True
+
+    for key, expected_measurement in expected.items():
+        if key in ["id", "name", "description", "data_reference", "linked_references"]:
+            continue
+        if not assert_item_equality(expected_measurement, actual[key]):
+            raise ValueError(
+                f"Key measurement '{key}' does not match: expected {expected_measurement}, got {actual[key]}"
+            )
+    return True  # All key measurements match

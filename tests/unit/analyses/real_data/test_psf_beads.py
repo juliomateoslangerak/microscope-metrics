@@ -11,7 +11,11 @@ from microscopemetrics_schema.datamodel import (
 )
 
 from microscopemetrics.analyses.psf_beads import analyse_psf_beads
-from tests.helper_functions import filter_dict, remove_np_pd_data
+from tests.helper_functions import (
+    assert_key_measurements_equality,
+    filter_dict,
+    remove_np_pd_data,
+)
 from tests.unit.analyses.real_data.conftest import (
     build_dataset_from_dir,
     get_test_subdirectories,
@@ -59,4 +63,7 @@ def test_psf_beads(data_gen_args, dataset_dir):
     expected_output = remove_np_pd_data(expected_output)
     analyzed_output = remove_np_pd_data(analyzed_output)
 
-    assert analyzed_output["key_measurements"] == expected_output["key_measurements"]
+    assert assert_key_measurements_equality(
+        expected=expected_output["key_measurements"],
+        actual=analyzed_output["key_measurements"],
+    ), "Key measurements do not match"
