@@ -129,6 +129,7 @@ def _gen_psf_beads_image(
             (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
         )
 
+    # Fill the image with the beads and adding some normal distributed random intensity
     for pos in edge_bead_positions:
         image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
     for pos in non_edge_bead_positions:
