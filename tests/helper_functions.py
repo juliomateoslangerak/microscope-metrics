@@ -77,7 +77,7 @@ def assert_key_measurements_equality(
             if exp.real == act:
                 return True
         if act != exp:
-            raise ValueError(f"Expected {exp}, got {act}")
+            return False
         return True
 
     for key, expected_measurement in expected.items():
