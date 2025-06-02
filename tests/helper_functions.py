@@ -76,9 +76,7 @@ def assert_key_measurements_equality(
             # when read from a yaml file, while the analyzed output is a float
             if exp.real == act:
                 return True
-        if act != exp:
-            return False
-        return True
+        return act == exp
 
     for key, expected_measurement in expected.items():
         if key in ["id", "name", "description", "data_reference", "linked_references"]:
