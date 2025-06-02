@@ -336,9 +336,9 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
 
     considered_axial_edge = (
         # TODO: review the tolerance values for considering beads at axial edge
-        # a 1.5x FWHM tolerance is used and that is arbitrary and rather low
-        center_pos_z < fwhm_z * 1.5
-        or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 1.5
+        # a 2.5x FWHM tolerance is used and that is arbitrary and rather low
+        center_pos_z < fwhm_z * 2.5
+        or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 2.5
     )
 
     intensity_max = bead.max()
