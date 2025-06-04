@@ -1,6 +1,6 @@
 outs:
-- md5: c1ef5cff545d91bb5a8cd409bf7f0c96.dir
-  size: 3977525483
-  nfiles: 64
+- md5: 13b181755f2a22ac7e17241f7c106029.dir
+  size: 3492934474
+  nfiles: 69
   hash: md5
   path: psf_beads_datasets
