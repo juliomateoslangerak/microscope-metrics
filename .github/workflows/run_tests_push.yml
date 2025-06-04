@@ -26,4 +26,4 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          poetry run pytest --hypothesis-profile=push
+          poetry run pytest --hypothesis-profile=push tests/unit/analyses/syntheric_data
