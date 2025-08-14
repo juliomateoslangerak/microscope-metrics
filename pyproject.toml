@@ -75,6 +75,7 @@ poetry-dynamic-versioning = ">=1.5.2"
 enable = true
 vcs = "git"
 style = "pep440"
+strict = true
 
 [tool.pytest.ini_options]
 addopts = "--hypothesis-show-statistics --hypothesis-profile=dev --workers=auto"
