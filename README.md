@@ -22,7 +22,7 @@ directory to find some example code
 
 ## Related to
 
-microscope-metrics is designed to be used with [microscopemetrics-omero](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-omero.git)
+microscope-metrics is designed to be used with [OMERO-metrics](https://github.com/MontpellierRessourcesImagerie/OMERO-metrics)
 to store the results in an OMERO server.
 The measurements made by micrsocope-metrics are backed up by a model that can be found in the 
 [microscopemetrics-schema](https://github.com/MontpellierRessourcesImagerie/microscopemetrics-schema.git) repository. The model is also accessible through the 
