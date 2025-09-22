@@ -82,18 +82,22 @@ def _compute_light_source_power_key_measurements(
     power_measurement_df = pd.DataFrame.from_records(power_measurements)
     key_measurements = []
 
-    # Replace some of the columns with the identifiers instead of the full objects
-    power_measurement_df["light_source"] = power_measurement_df["light_source"].apply(
-        lambda ls: ls.wavelength_nm if ls else None
-    )
-    power_measurement_df["measurement_device"] = power_measurement_df["measurement_device"].apply(
-        lambda md: md.name if md else None
-    )
+    # # Replace some of the columns with the identifiers instead of the full objects
+    # power_measurement_df["light_source"] = power_measurement_df["light_source"].apply(
+    #     lambda ls: ls.wavelength_nm if ls else None
+    # )
+    # power_measurement_df["measurement_device"] = power_measurement_df["measurement_device"].apply(
+    #     lambda md: md.name if md else None
+    # )
 
     # Go through each light source, power meter and measuring location combinations
-    for light_source in power_measurement_df["light_source"].unique():
-        for measurement_device in power_measurement_df["measurement_device"].unique():
-            for measuring_location in power_measurement_df["measuring_location"].unique():
+    for light_source in power_measurement_df["light_source"].drop_duplicates(ignore_index=True):
+        for measurement_device in power_measurement_df["measurement_device"].drop_duplicates(
+            ignore_index=True
+        ):
+            for measuring_location in power_measurement_df["measuring_location"].drop_duplicates(
+                ignore_index=True
+            ):
                 logging.info(
                     f"Processing light source {light_source}, "
                     f"measurement device {measurement_device}, "
@@ -104,6 +108,17 @@ def _compute_light_source_power_key_measurements(
                     "light_source": light_source,
                     "measurement_device": measurement_device,
                     "measuring_location": measuring_location,
+                    "nr_of_measurements": np.nan,
+                    "power_mean_mw": np.nan,
+                    "power_median_mw": np.nan,
+                    "power_std_mw": np.nan,
+                    "power_min_mw": np.nan,
+                    "power_max_mw": np.nan,
+                    "power_linearity": np.nan,
+                    "short_term_power_stability": np.nan,
+                    "short_term_measurement_duration_seconds": np.nan,
+                    "long_term_power_stability": np.nan,
+                    "long_term_measurement_duration_seconds": np.nan,
                 }
 
                 subset_df = power_measurement_df[
