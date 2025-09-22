@@ -38,7 +38,6 @@ def _compute_linearity(measurements: pd.DataFrame) -> Dict:
 def _compute_stability(
     measurements: pd.DataFrame, short_long_term_threshold_seconds: float
 ) -> Dict:
-    measurements = measurements.sort_values(by="acquisition_datetime")
     time_deltas = measurements["acquisition_datetime"].diff().dt.total_seconds().fillna(0).values
     # The first measurement delta is always zero, so we set it to the second one
     time_deltas[0] = time_deltas[1]
@@ -80,15 +79,8 @@ def _compute_light_source_power_key_measurements(
     input_parameters: mm_schema.LightSourcePowerInputParameters,
 ) -> mm_schema.LightSourcePowerKeyMeasurements:
     power_measurement_df = pd.DataFrame.from_records(power_measurements)
-    key_measurements = []
 
-    # # Replace some of the columns with the identifiers instead of the full objects
-    # power_measurement_df["light_source"] = power_measurement_df["light_source"].apply(
-    #     lambda ls: ls.wavelength_nm if ls else None
-    # )
-    # power_measurement_df["measurement_device"] = power_measurement_df["measurement_device"].apply(
-    #     lambda md: md.name if md else None
-    # )
+    key_measurements = []
 
     # Go through each light source, power meter and measuring location combinations
     for light_source in power_measurement_df["light_source"].drop_duplicates(ignore_index=True):
@@ -126,6 +118,7 @@ def _compute_light_source_power_key_measurements(
                     & (power_measurement_df["measurement_device"] == measurement_device)
                     & (power_measurement_df["measuring_location"] == measuring_location)
                 ]
+                subset_df = subset_df.sort_values(by="acquisition_datetime").reset_index(drop=True)
 
                 # Catch the case where we have only one measurement
                 if len(subset_df) == 1:
