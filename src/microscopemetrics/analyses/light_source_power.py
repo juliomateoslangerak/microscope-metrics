@@ -122,11 +122,16 @@ def _compute_light_source_power_key_measurements(
 
                 # Catch the case where we have only one measurement
                 if len(subset_df) == 1:
-                    logging.into("Only one measurement found. Extracting basic statistics.")
+                    logging.info("Only one measurement found. Extracting basic statistics.")
                     subset_key_measurements |= _compute_basic_measurement(subset_df)
                     key_measurements.append(subset_key_measurements)
 
                     continue
+
+                # Get basic statistics following these rules:
+                # 1. If there is a single power set point with less than REQ_NR measurements, use it for basic statistics
+                # 2. If there are a single power set point with more than REQ_NR measurements, use it for basic statistics
+                # 3. throw an error otherwise
 
                 power_set_point_counts = subset_df["power_set_point"].value_counts()
                 linearity_set_point_counts = power_set_point_counts[power_set_point_counts == 1]
@@ -134,11 +139,6 @@ def _compute_light_source_power_key_measurements(
                     (power_set_point_counts > 1) & (power_set_point_counts <= REQ_NR)
                 ]
                 stability_set_point_counts = power_set_point_counts[power_set_point_counts > REQ_NR]
-
-                # Get basic statistics following these rules:
-                # 1. If there is a single power set point with less than REQ_NR measurements, use it for basic statistics
-                # 2. If there are a single power set point with more than REQ_NR measurements, use it for basic statistics
-                # 3. throuw an error otherwise
 
                 if len(basic_statistics_set_point_counts) == 1:
                     logging.warning(
@@ -167,7 +167,7 @@ def _compute_light_source_power_key_measurements(
                 if (
                     0 < len(stability_set_point_counts) < 3
                 ):  # We might one or two power set points for stability
-                    logging.info("COmputing stability.")
+                    logging.info("Computing stability.")
                     subset_key_measurements |= _compute_stability(
                         short_long_term_threshold_seconds=input_parameters.short_long_term_threshold_seconds,
                         measurements=subset_df[
