@@ -20,14 +20,14 @@ def _stability(values: np.ndarray) -> float:
     return 1 - ((p_max - p_min) / (p_max + p_min))
 
 
-def _compute_single_measurement(measurements: pd.DataFrame) -> Dict:
+def _compute_basic_measurement(measurements: pd.DataFrame) -> Dict:
     return {
         "nr_of_measurements": len(measurements),
-        "power_mean_mw": measurements["power_mw"].mean,
-        "power_median_mw": measurements["power_mw"].median,
-        "power_std_mw": measurements["power_mw"].std,
-        "power_min_mw": measurements["power_mw"].min,
-        "power_max_mw": measurements["power_mw"].max,
+        "power_mean_mw": measurements["power_mw"].mean(),
+        "power_median_mw": measurements["power_mw"].median(),
+        "power_std_mw": measurements["power_mw"].std(),
+        "power_min_mw": measurements["power_mw"].min(),
+        "power_max_mw": measurements["power_mw"].max(),
     }
 
 
@@ -67,7 +67,7 @@ def _compute_stability(
             short_term_measurement_duration_seconds = time_deltas[long_term_segment].mean()
 
     return {
-        "power_std_mw": measurements["power_mw"].std,
+        "power_std_mw": measurements["power_mw"].std(),
         "short_term_power_stability": short_term_stability,
         "short_term_measurement_duration_seconds": short_term_measurement_duration_seconds,
         "long_term_power_stability": long_term_stability,
@@ -114,49 +114,79 @@ def _compute_light_source_power_key_measurements(
 
                 # Catch the case where we have only one measurement
                 if len(subset_df) == 1:
-                    subset_key_measurements |= _compute_single_measurement(subset_df)
+                    logging.into("Only one measurement found. Extracting basic statistics.")
+                    subset_key_measurements |= _compute_basic_measurement(subset_df)
                     key_measurements.append(subset_key_measurements)
 
                     continue
 
                 power_set_point_counts = subset_df["power_set_point"].value_counts()
-                if len(power_set_point_counts) == 1:
-                    # There are no linearity measurements, only stability
-                    if power_set_point_counts[0] < REQ_NR:
-                        # Not enough measurements for stability analysis
-                        logging.warning(
-                            "Not enough measurements for stability analysis, Treating as single measurement."
-                        )
-                        subset_key_measurements |= _compute_single_measurement(subset_df)
-                        key_measurements.append(subset_key_measurements)
-                    else:
-                        subset_key_measurements |= _compute_single_measurement(subset_df)
-                        subset_key_measurements |= _compute_stability(
-                            short_long_term_threshold_seconds=input_parameters.short_long_term_threshold_seconds,
-                            measurements=subset_df,
-                        )
-                        key_measurements.append(subset_key_measurements)
+                linearity_set_point_counts = power_set_point_counts[power_set_point_counts == 1]
+                basic_statistics_set_point_counts = power_set_point_counts[
+                    (power_set_point_counts > 1) & (power_set_point_counts <= REQ_NR)
+                ]
+                stability_set_point_counts = power_set_point_counts[power_set_point_counts > REQ_NR]
 
-                    continue
+                # Get basic statistics following these rules:
+                # 1. If there is a single power set point with less than REQ_NR measurements, use it for basic statistics
+                # 2. If there are a single power set point with more than REQ_NR measurements, use it for basic statistics
+                # 3. throuw an error otherwise
 
-                elif 1 < len(power_set_point_counts) < 10:
-                    logging.error("Not enough different power set points for linearity analysis.")
-                    continue
-
+                if len(basic_statistics_set_point_counts) == 1:
+                    logging.warning(
+                        "Some power measurements do not have enough values for stability analysis."
+                        "These will be used for the basic statistics."
+                    )
+                    subset_key_measurements |= _compute_basic_measurement(
+                        subset_df[
+                            subset_df["power_set_point"].isin(
+                                basic_statistics_set_point_counts.index
+                            )
+                        ]
+                    )
+                elif len(stability_set_point_counts) == 1:
+                    logging.info("Getting basic statistics from stability measurements.")
+                    subset_key_measurements |= _compute_basic_measurement(
+                        subset_df[
+                            subset_df["power_set_point"].isin(stability_set_point_counts.index)
+                        ]
+                    )
                 else:
-                    # There are linearity measurements, and possibly stability too
-                    # We are only considering the scenario where there is a single measurement per power set point and,
-                    # possibly, more than REQ_NR measurements for stability analysis
-                    stability_mask = power_set_point_counts > REQ_NR
-                    linearity_mask = power_set_point_counts == 1
-                    if np.sum(linearity_mask) < 10:
-                        logging.error(
-                            "Not enough different power set points for linearity analysis."
-                        )
-                        continue
+                    logging.error(
+                        "Could not determine which measurements to use for basic statistics."
+                    )
 
-                # Populate the key measurements with single measurement results
-                pass
+                if (
+                    0 < len(stability_set_point_counts) < 3
+                ):  # We might one or two power set points for stability
+                    logging.info("COmputing stability.")
+                    subset_key_measurements |= _compute_stability(
+                        short_long_term_threshold_seconds=input_parameters.short_long_term_threshold_seconds,
+                        measurements=subset_df[
+                            subset_df["power_set_point"].isin(stability_set_point_counts.index)
+                        ],
+                    )
+                else:
+                    logging.warning("Not enough measurements for stability analysis.")
+
+                if len(linearity_set_point_counts) > 9:
+                    logging.info("Computing linearity.")
+                    subset_key_measurements |= _compute_linearity(
+                        subset_df[
+                            subset_df["power_set_point"].isin(linearity_set_point_counts.index)
+                        ]
+                    )
+                else:
+                    logging.warning("Not enough measurements for linearity analysis.")
+
+                key_measurements.append(subset_key_measurements)
+
+    key_measurements = {
+        k: list(v)
+        for k, v in zip(key_measurements[0], zip(*[d.values() for d in key_measurements]))
+    }
+
+    return mm_schema.LightSourcePowerKeyMeasurements(**key_measurements)
 
 
 def analyse_light_source_power(dataset: mm_schema.LightSourcePowerDataset) -> bool:
