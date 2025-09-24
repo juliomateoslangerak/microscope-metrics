@@ -11,9 +11,6 @@ import microscopemetrics as mm
 from microscopemetrics.analyses import tools as mm_tools
 
 # TODO: Determine what are we going to consider the threshold for measuring stability
-REQ_NR_LINEARITY = 5
-REQ_NR_STABILITY_SHORT_TERM = 100
-REQ_NR_STABILITY_LONG_TERM = 100
 
 
 def _is_constant(series: pd.Series) -> bool:
@@ -81,8 +78,8 @@ def _find_linearity_subset(
 
 def _find_stability_subset(
     df: pd.DataFrame,
-    min_nb_points: int = 100,
-    interval_seconds: float = 1.0,
+    min_nb_points: int,
+    interval_seconds: float,
     tolerance_seconds: float = 0.1,
 ) -> List[pd.DataFrame] | None:
     """
@@ -209,11 +206,13 @@ def _compute_light_source_power_key_measurements(
                     "power_std_mw": np.nan,
                     "power_min_mw": np.nan,
                     "power_max_mw": np.nan,
+                    "power_linearity_slope": np.nan,
+                    "power_linearity_intercept": np.nan,
                     "power_linearity_coefficient_of_determination": np.nan,
+                    "power_linearity_p_value": np.nan,
+                    "power_linearity_std_err": np.nan,
                     "short_term_power_stability": np.nan,
-                    "short_term_measurement_duration_seconds": np.nan,
                     "long_term_power_stability": np.nan,
-                    "long_term_measurement_duration_seconds": np.nan,
                 }
 
                 subset_df = power_measurement_df[
@@ -240,21 +239,23 @@ def _compute_light_source_power_key_measurements(
 
                 basic_stats_df = _find_stability_subset(
                     subset_df,
-                    1,
-                    interval_seconds=1.0,
+                    min_nb_points=1,
+                    interval_seconds=input_parameters.short_term_stability_measurement_interval_seconds,
                     tolerance_seconds=0.1,
                 )
-                linearity_df = _find_linearity_subset(subset_df, min_points=REQ_NR_LINEARITY)
+                linearity_df = _find_linearity_subset(
+                    subset_df, min_points=input_parameters.linearity_required_measurements
+                )
                 short_term_stability_df = _find_stability_subset(
                     subset_df,
-                    REQ_NR_STABILITY_SHORT_TERM,
-                    interval_seconds=1.0,
+                    min_nb_points=input_parameters.short_term_stability_required_measurements,
+                    interval_seconds=input_parameters.short_term_stability_measurement_interval_seconds,
                     tolerance_seconds=0.1,
                 )
                 long_term_stability_df = _find_stability_subset(
                     subset_df,
-                    REQ_NR_STABILITY_LONG_TERM,
-                    interval_seconds=30.0,
+                    min_nb_points=input_parameters.long_term_stability_required_measurements,
+                    interval_seconds=input_parameters.long_term_stability_measurement_interval_seconds,
                     tolerance_seconds=1.0,
                 )
 
