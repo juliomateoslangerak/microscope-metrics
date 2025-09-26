@@ -13,24 +13,6 @@ from microscopemetrics.analyses import tools as mm_tools
 # TODO: Determine what are we going to consider the threshold for measuring stability
 
 
-def _is_constant(series: pd.Series) -> bool:
-    """Check if a series has at most one unique non-NaN value."""
-    non_na = series.dropna().unique()
-    return len(non_na) <= 1
-
-
-def _is_regular_timeseries(series: pd.Series) -> bool:
-    """Check if a datetime series has regular intervals."""
-    deltas = series.diff().dt.total_seconds().unique()
-    return len(deltas) == 1
-
-
-def _is_equally_spaced(values: np.ndarray, tol=1e-8) -> bool:
-    """Check if sorted values are equally spaced within tolerance."""
-    diffs = np.diff(np.sort(values))
-    return np.allclose(diffs, diffs[0], atol=tol)
-
-
 def _find_linearity_subset(
     df: pd.DataFrame,
     min_points: int = 10,
