@@ -44,12 +44,12 @@ def _find_linearity_subset(
     ]
     if (
         linearity_group.empty
-        or linearity_group["acquisition_datetime"]["count"].values[0] < min_points
+        or linearity_group["acquisition_datetime"]["count"].iloc[0] < min_points
     ):
         return None
 
-    start_time = linearity_group["acquisition_datetime"]["min"].values[0]
-    end_time = linearity_group["acquisition_datetime"]["max"].values[0]
+    start_time = linearity_group["acquisition_datetime"]["min"].iloc[0]
+    end_time = linearity_group["acquisition_datetime"]["max"].iloc[0]
     subset = linearity_subset_df[
         (linearity_subset_df["acquisition_datetime"] >= start_time)
         & (linearity_subset_df["acquisition_datetime"] <= end_time)
@@ -101,7 +101,7 @@ def _find_stability_subset(
     stability_group = groups[
         groups["acquisition_datetime"]["count"] == groups["acquisition_datetime"]["count"].max()
     ]
-    if stability_group["acquisition_datetime"]["count"].values[0] < min_nb_points:
+    if stability_group["acquisition_datetime"]["count"].iloc[0] < min_nb_points:
         logging.warning(
             "Not enough measurements for stability analysis."
             f" Found {len(stability_group)}, required {min_nb_points}."
@@ -111,8 +111,8 @@ def _find_stability_subset(
         logging.warning("No measurements for stability analysis.")
         return None
 
-    start_time = stability_group["acquisition_datetime"]["min"].values[0]
-    end_time = stability_group["acquisition_datetime"]["max"].values[0]
+    start_time = stability_group["acquisition_datetime"]["min"].iloc[0]
+    end_time = stability_group["acquisition_datetime"]["max"].iloc[0]
 
     return stability_subset_df[
         (stability_subset_df["acquisition_datetime"] >= start_time)
@@ -137,6 +137,12 @@ def _compute_linearity(measurements: pd.DataFrame) -> Dict:
         measurements["power_mw"].values,
     )
     return {
+        "power_linearity_start_datetime": measurements["acquisition_datetime"]
+        .iloc[0]
+        .to_pydatetime(),
+        "power_linearity_end_datetime": measurements["acquisition_datetime"]
+        .iloc[-1]
+        .to_pydatetime(),
         "power_linearity_slope": slope,
         "power_linearity_intercept": intercept,
         "power_linearity_coefficient_of_determination": r_value**2,
@@ -152,6 +158,8 @@ def _compute_stability(measurements: pd.DataFrame) -> Dict:
     stability = 1 - ((p_max - p_min) / (p_max + p_min))
 
     return {
+        "stability_start_datetime": measurements["acquisition_datetime"].iloc[0].to_pydatetime(),
+        "stability_end_datetime": measurements["acquisition_datetime"].iloc[-1].to_pydatetime(),
         "power_stability": stability,
     }
 
@@ -161,6 +169,11 @@ def _compute_light_source_power_key_measurements(
     input_parameters: mm_schema.LightSourcePowerInputParameters,
 ) -> mm_schema.LightSourcePowerKeyMeasurements:
     power_measurement_df = pd.DataFrame.from_records(power_measurements)
+
+    # We change the datetime to microssecond precision to avoid issues when converting to XSD later
+    power_measurement_df["acquisition_datetime"] = power_measurement_df[
+        "acquisition_datetime"
+    ].astype("datetime64[us]")
 
     key_measurements = []
 
@@ -188,12 +201,18 @@ def _compute_light_source_power_key_measurements(
                     "power_std_mw": np.nan,
                     "power_min_mw": np.nan,
                     "power_max_mw": np.nan,
+                    "power_linearity_start_datetime": datetime.min,
+                    "power_linearity_end_datetime": datetime.min,
                     "power_linearity_slope": np.nan,
                     "power_linearity_intercept": np.nan,
                     "power_linearity_coefficient_of_determination": np.nan,
                     "power_linearity_p_value": np.nan,
                     "power_linearity_std_err": np.nan,
+                    "short_term_power_stability_start_datetime": datetime.min,
+                    "short_term_power_stability_end_datetime": datetime.min,
                     "short_term_power_stability": np.nan,
+                    "long_term_power_stability_start_datetime": datetime.min,
+                    "long_term_power_stability_end_datetime": datetime.min,
                     "long_term_power_stability": np.nan,
                 }
 
@@ -267,6 +286,12 @@ def _compute_light_source_power_key_measurements(
                 else:
                     logging.info("Computing short term stability statistics.")
                     res = _compute_stability(short_term_stability_df)
+                    subset_key_measurements["short_term_power_stability_start_datetime"] = res[
+                        "stability_start_datetime"
+                    ]
+                    subset_key_measurements["short_term_power_stability_end_datetime"] = res[
+                        "stability_end_datetime"
+                    ]
                     subset_key_measurements["short_term_power_stability"] = res["power_stability"]
 
                 if long_term_stability_df is None:
@@ -274,6 +299,12 @@ def _compute_light_source_power_key_measurements(
                 else:
                     logging.info("Computing long term stability statistics.")
                     res = _compute_stability(long_term_stability_df)
+                    subset_key_measurements["long_term_power_stability_start_datetime"] = res[
+                        "stability_start_datetime"
+                    ]
+                    subset_key_measurements["long_term_power_stability_end_datetime"] = res[
+                        "stability_end_datetime"
+                    ]
                     subset_key_measurements["long_term_power_stability"] = res["power_stability"]
 
                 key_measurements.append(subset_key_measurements)
