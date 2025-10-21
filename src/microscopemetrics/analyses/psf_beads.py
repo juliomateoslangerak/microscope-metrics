@@ -4,8 +4,8 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 from scipy import ndimage, signal
-from skimage.exposure import rescale_intensity
-from skimage.feature import peak_local_max
+from scipy.spatial import distance_matrix
+from skimage.feature import blob_dog, blob_log, peak_local_max
 from skimage.filters import gaussian
 
 import microscopemetrics as mm
@@ -373,104 +373,90 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
 
 def _find_beads(
     channel: np.ndarray,
-    sigma: tuple[float, float, float],
+    sigma_min: float,
+    sigma_max: float,
     min_distance: float,
-    do_noisy: bool = True,
 ):
     """
     This function finds the beads in a channel by applying a Gaussian filter and then finding the local maxima.
     """
     mm.logger.debug("Finding beads in channel...")
 
-    if all(sigma):
-        mm.logger.debug(f"Gaussian filter applied with sigma {sigma}")
-        channel_gauss = gaussian(image=channel, sigma=sigma)
-    else:
-        mm.logger.debug("No Gaussian filter applied")
-        channel_gauss = channel
-
-    # We find the beads in the MIP for performance and to avoid anisotropy issues in the axial direction
-    channel_gauss_mip = np.max(channel_gauss, axis=0)
-
-    # We rescale the image intensities to work with relative thresholds
-    channel_gauss_mip = rescale_intensity(channel_gauss_mip, out_range=np.float32)
-
-    # Estimate a relative threshold for the peak_local_max function
-    if do_noisy:
-        threshold = _estimate_threshold(channel_gauss_mip)
-        if threshold is None:
-            mm.logger.error("No optimal noisy beads threshold found for the channel.")
-            threshold = 0.6
-    else:
-        threshold = 0.3
-
+    # Precalculate the half of the minimal distance between beads as reused multiple times
+    half_min_distance = np.ceil(min_distance / 2)
+    # TODO: Review this max number of beads and how to implement it
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
     # and noise in the image. We report this as an error.
     max_num_peaks = MAX_NR_PEAKS
 
-    # Find bead centers
-    positions_all = peak_local_max(
-        image=channel_gauss_mip,
-        threshold_abs=threshold,
-        num_peaks=max_num_peaks,
-    )
-    if len(positions_all) == max_num_peaks:
-        mm.logger.warning(f"Reached the maximum number of peaks ({max_num_peaks}) in the image. ")
-        if not do_noisy:  # We did not do noisy this time
-            mm.logger.info("Trying noisy beads detected.")
-            return _find_beads(channel, sigma, min_distance, do_noisy=True)
-        else:
-            mm.logger.error("Too many beads detected. The image is probably too noisy.")
-            raise mm.AnalysisError("Too many beads detected. The image is probably too noisy.")
+    # We find the beads in the AIP for performance and to avoid anisotropy issues in the axial direction
+    channel_aip = np.mean(channel, axis=0)
 
-    positions_all_not_proximity_not_edge = peak_local_max(
-        image=channel_gauss_mip,
-        threshold_abs=threshold,
-        min_distance=int(min_distance),
-        exclude_border=(int(1 + min_distance // 2), int(1 + min_distance // 2)),
-        num_peaks=max_num_peaks,
-        p_norm=2,
-    )
-    positions_all_not_proximity = peak_local_max(
-        image=channel_gauss_mip,
-        threshold_abs=threshold,
-        min_distance=int(min_distance),
+    # Find all bead centers
+    positions_all = blob_log(
+        image=channel_aip,
+        min_sigma=sigma_min,
+        max_sigma=sigma_max,
+        num_sigma=10,
+        threshold=None,
+        threshold_rel=0.3,
         exclude_border=False,
-        num_peaks=max_num_peaks,
-        p_norm=2,
     )
 
-    # We convert the arrays into sets to perform easier to follow filtering logic
-    positions_all = set(map(tuple, positions_all))
-    positions_all_not_proximity_not_edge = set(map(tuple, positions_all_not_proximity_not_edge))
-    positions_all_not_proximity = set(map(tuple, positions_all_not_proximity))
+    if len(positions_all) == max_num_peaks:
+        mm.logger.warning(
+            f"Too many beads detected {len(positions_all)}. Maximum number of peaks is ({max_num_peaks}). Image is probably too noisy"
+        )
 
-    # positions_proximity_edge = positions_all - positions_all_not_proximity_not_edge
-    positions_edge = positions_all_not_proximity - positions_all_not_proximity_not_edge
-    positions_proximity = positions_all - positions_all_not_proximity
+    # Find beads that are too close to the edge of the image
+    positions_edge = []
+    for pos in positions_all:
+        if any(
+            [
+                0 <= pos[0] <= half_min_distance,
+                0 <= pos[1] <= half_min_distance,
+                channel_aip.shape[0] - half_min_distance <= pos[0] < channel_aip.shape[0],
+                channel_aip.shape[1] - half_min_distance <= pos[1] < channel_aip.shape[1],
+            ]
+        ):
+            positions_edge.append(pos)
+
+    # Find beads that are too close to each other
+    dist_matrix = distance_matrix(
+        positions_all,
+        positions_all,
+        p=2,
+    )
+    np.fill_diagonal(dist_matrix, np.inf)
+    proximity_mask = dist_matrix < min_distance
+    proximity_pairs = np.argwhere(proximity_mask)
+    proximity_indexes = {i for i, _ in proximity_pairs}
+    positions_proximity = [positions_all[i] for i in proximity_indexes]
 
     positions_df = pd.DataFrame(
         positions_all,
-        columns=["center_y", "center_x"],
+        columns=["center_y", "center_x", "sigma_LoG"],
         index=pd.Index(range(len(positions_all)), name="bead_id"),
     )
-    positions_df["center_z"] = positions_df.apply(
-        lambda row: int(channel_gauss[:, row["center_y"], row["center_x"]].argmax()),
-        axis=1,
-    )
-
-    positions_df["considered_valid"] = positions_df.apply(
-        lambda row: (row["center_y"], row["center_x"]) in positions_all_not_proximity_not_edge,
-        axis=1,
-    )
-    positions_df["considered_self_proximity"] = positions_df.apply(
-        lambda row: (row["center_y"], row["center_x"]) in positions_proximity, axis=1
-    )
-    positions_df["considered_lateral_edge"] = positions_df.apply(
-        lambda row: (row["center_y"], row["center_x"]) in positions_edge, axis=1
-    )
-
-    mm.logger.debug(f"Beads found: {len(positions_all)}")
+    positions_df["center_z"] = [
+        channel[:, int(y), int(x)].argmax()
+        for y, x in zip(positions_df["center_y"], positions_df["center_x"])
+    ]
+    positions_df["considered_self_proximity"] = [
+        any(np.array_equal(arr, prox_arr) for prox_arr in positions_proximity)
+        for arr in positions_df[["center_y", "center_x", "sigma_LoG"]].to_numpy()
+    ]
+    positions_df["considered_lateral_edge"] = [
+        any(np.array_equal(arr, prox_arr) for prox_arr in positions_edge)
+        for arr in positions_df[["center_y", "center_x", "sigma_LoG"]].to_numpy()
+    ]
+    positions_df["considered_valid"] = [
+        not any([edge, prox])
+        for edge, prox in zip(
+            positions_df["considered_lateral_edge"], positions_df["considered_self_proximity"]
+        )
+    ]
+    mm.logger.debug(f"Beads found: {len(positions_df)}")
     mm.logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
     mm.logger.debug(
         f"Beads considered for being to close to the edge: {positions_df['considered_lateral_edge'].sum()}"
@@ -479,25 +465,28 @@ def _find_beads(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
 
-    def get_bead_image(row, channel, min_distance):
-        return channel[
+    def get_bead_image(row, ch, hmd):
+        return ch[
             :,
-            max(0, (row["center_y"] - int(min_distance // 2))) : min(
-                channel.shape[1], (row["center_y"] + int(min_distance // 2) + 1)
+            int(max(0, (row["center_y"] - hmd))) : int(
+                min(ch.shape[1], (row["center_y"] + hmd + 1))
             ),
-            max(0, (row["center_x"] - int(min_distance // 2))) : min(
-                channel.shape[2], (row["center_x"] + int(min_distance // 2) + 1)
+            int(max(0, (row["center_x"] - hmd))) : int(
+                min(ch.shape[2], (row["center_x"] + hmd + 1))
             ),
         ]
 
-    positions_df["beads"] = positions_df.apply(get_bead_image, axis=1, args=(channel, min_distance))
+    positions_df["beads"] = positions_df.apply(
+        get_bead_image, axis=1, args=(channel, half_min_distance)
+    )
 
     return positions_df
 
 
 def _process_channel(
     channel: np.ndarray,
-    sigma: tuple[float, float, float],
+    sigma_min: float,
+    sigma_max: float,
     min_bead_distance: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
@@ -506,7 +495,8 @@ def _process_channel(
 ) -> pd.DataFrame:
     bead_properties = _find_beads(
         channel=channel,
-        sigma=sigma,
+        sigma_min=sigma_min,
+        sigma_max=sigma_max,
         min_distance=min_bead_distance,
     )
 
@@ -526,26 +516,25 @@ def _process_channel(
     )
 
     # We need to invalidate all the bad fits and outliers
-    bead_properties["considered_valid"] = bead_properties.apply(
-        lambda row: not any(
-            [
-                row["considered_lateral_edge"],
-                row["considered_axial_edge"],
-                row["considered_bad_fit_z"],
-                row["considered_bad_fit_y"],
-                row["considered_bad_fit_x"],
-                row["considered_intensity_outlier"],
-            ]
-        ),
-        axis=1,
-    )
+    bead_properties["considered_valid"] = [
+        not any([l_edge, a_edge, bf_z, bf_y, bf_x, i_out])
+        for l_edge, a_edge, bf_z, bf_y, bf_x, i_out in zip(
+            bead_properties["considered_lateral_edge"],
+            bead_properties["considered_axial_edge"],
+            bead_properties["considered_bad_fit_z"],
+            bead_properties["considered_bad_fit_y"],
+            bead_properties["considered_bad_fit_x"],
+            bead_properties["considered_intensity_outlier"],
+        )
+    ]
 
     return bead_properties
 
 
 def _process_image(
     image: mm_schema.Image,
-    sigma: tuple[float, float, float],
+    sigma_min: float,
+    sigma_max: float,
     min_bead_distance: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
@@ -571,7 +560,8 @@ def _process_image(
     for ch in range(nr_channels):
         ch_bead_positions = _process_channel(
             channel=image[..., ch],
-            sigma=sigma,
+            sigma_min=sigma_min,
+            sigma_max=sigma_max,
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
@@ -723,11 +713,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
         image_bead_properties = _process_image(
             image=image,
-            sigma=(
-                dataset.input_parameters.sigma_z,
-                dataset.input_parameters.sigma_y,
-                dataset.input_parameters.sigma_x,
-            ),
+            sigma_min=dataset.input_parameters.sigma_min,
+            sigma_max=dataset.input_parameters.sigma_max,
             min_bead_distance=min_bead_distance,
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
