@@ -11,7 +11,7 @@ from microscopemetrics import logger
 
 # TODO: This function is getting the id from OMERO. It should be more general
 def get_object_id(
-    objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]]
+    objects: Union[mm_schema.MetricsObject, List[mm_schema.MetricsObject]],
 ) -> Union[str, List[str]]:
     """Get the object id of a metrics object or a list of metrics objects"""
     if isinstance(objects, list):
