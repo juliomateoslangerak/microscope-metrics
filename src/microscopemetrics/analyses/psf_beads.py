@@ -413,8 +413,8 @@ def _find_beads(
     for pos in positions_all:
         if any(
             [
-                0 <= pos[0] <= half_min_distance,
-                0 <= pos[1] <= half_min_distance,
+                0 <= pos[0] < half_min_distance,
+                0 <= pos[1] < half_min_distance,
                 channel_aip.shape[0] - half_min_distance <= pos[0] < channel_aip.shape[0],
                 channel_aip.shape[1] - half_min_distance <= pos[1] < channel_aip.shape[1],
             ]
