@@ -316,9 +316,35 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     )
 
     # Fitting the profiles
-    profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = mm_tools.fit_airy(profile_z_raw)
-    profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = mm_tools.fit_airy(profile_y_raw)
-    profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = mm_tools.fit_airy(profile_x_raw)
+    try:
+        profile_z_fitted, r2_z, fwhm_z, (center_pos_z, _) = mm_tools.fit_airy(profile_z_raw)
+        profile_y_fitted, r2_y, fwhm_y, (center_pos_y, _) = mm_tools.fit_airy(profile_y_raw)
+        profile_x_fitted, r2_x, fwhm_x, (center_pos_x, _) = mm_tools.fit_airy(profile_x_raw)
+    except RuntimeError as e:
+        mm.logger.error(f"Error while fitting the profiles for bead: {e}")
+        return {
+            "z_raw": np.nan,
+            "z_fitted": np.nan,
+            "y_raw": np.nan,
+            "y_fitted": np.nan,
+            "x_raw": np.nan,
+            "x_fitted": np.nan,
+            "fit_r2_z": np.nan,
+            "fit_r2_y": np.nan,
+            "fit_r2_x": np.nan,
+            "fwhm_pixel_z": np.nan,
+            "fwhm_pixel_y": np.nan,
+            "fwhm_pixel_x": np.nan,
+            "fwhm_micron_z": np.nan,
+            "fwhm_micron_y": np.nan,
+            "fwhm_micron_x": np.nan,
+            "fwhm_lateral_asymmetry_ratio": np.nan,
+            "considered_axial_edge": np.nan,
+            "intensity_integrated": np.nan,
+            "intensity_max": np.nan,
+            "intensity_min": np.nan,
+            "intensity_std": np.nan,
+        }
 
     fwhm_lateral_asymmetry_ratio = max(fwhm_y, fwhm_x) / min(fwhm_y, fwhm_x)
 

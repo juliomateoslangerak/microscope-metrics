@@ -62,16 +62,22 @@ def fit_gaussian(profile, guess=None):
 
 
 def fit_airy(profile, guess=None):
+    logger.debug("Fitting Airy function to bead profile.")
     profile = (profile - profile.min()) / (profile.max() - profile.min())
     if guess is None:
         guess = [profile.argmax(), 4 * profile.max()]
     x = np.linspace(0, profile.shape[0], profile.shape[0], endpoint=False)
-    popt, pcov, infodict, mesg, ier = curve_fit(
-        f=airy_fun, xdata=x, ydata=profile, p0=guess, full_output=True
-    )
-
-    if ier not in [1, 2, 3, 4]:
-        logger.warning(f"No airy fit found. Reason: {mesg}")
+    try:
+        popt, pcov, infodict, mesg, ier = curve_fit(
+            f=airy_fun, xdata=x, ydata=profile, p0=guess, full_output=True
+        )
+        if ier not in [1, 2, 3, 4]:
+            logger.warning(f"Could not fit Airy function. Reason: {mesg}")
+        else:
+            logger.debug(f"Airy fit found: {mesg}")
+    except RuntimeError as e:
+        logger.warning(f"Error while fitting Airy function: {e}")
+        raise e
 
     fitted_profile = airy_fun(x, popt[0], popt[1])
 
