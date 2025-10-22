@@ -420,11 +420,15 @@ def _find_beads(
         image=channel_aip,
         min_sigma=sigma_min,
         max_sigma=sigma_max,
-        num_sigma=10,
+        num_sigma=20,
         threshold=None,
         threshold_rel=0.3,
         exclude_border=False,
     )
+
+    # Where images are noisy, a lot of beads are detected that match the
+    # sigma_min. We may remove them here.
+    positions_all = positions_all[positions_all[:, 2] > sigma_min]
 
     if len(positions_all) == max_num_peaks:
         mm.logger.warning(
