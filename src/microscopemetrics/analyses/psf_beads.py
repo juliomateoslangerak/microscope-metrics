@@ -293,14 +293,11 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
             "intensity_min": np.nan,
             "intensity_std": np.nan,
         }
-    # TODO: This can be shortened
+
     # Find the strongest sections to generate profiles
-    z_max = np.max(bead, axis=(1, 2))
-    z_focus = np.argmax(z_max)
-    y_max = np.max(bead, axis=(0, 2))
-    y_focus = np.argmax(y_max)
-    x_max = np.max(bead, axis=(0, 1))
-    x_focus = np.argmax(x_max)
+    z_focus = np.argmax(np.max(bead, axis=(1, 2)))
+    y_focus = np.argmax(np.max(bead, axis=(0, 2)))
+    x_focus = np.argmax(np.max(bead, axis=(0, 1)))
 
     # Generate profiles
     profile_z_raw = np.squeeze(bead[:, y_focus, x_focus])
