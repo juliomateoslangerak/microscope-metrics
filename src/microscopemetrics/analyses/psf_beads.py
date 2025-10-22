@@ -527,6 +527,10 @@ def _process_channel(
         min_distance=min_bead_distance,
     )
 
+    if len(bead_properties) == 0:
+        mm.logger.warning("No beads found in channel")
+        return pd.DataFrame()
+
     bead_properties = bead_properties.assign(
         considered_intensity_outlier=pd.Series(dtype=bool),
     )
@@ -748,6 +752,10 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             intensity_robust_z_score_threshold=dataset.input_parameters.intensity_robust_z_score_threshold,
         )
 
+        if len(image_bead_properties) == 0:
+            mm.logger.warning(f"No beads found in image {image_id}")
+            continue
+
         mm.logger.info(
             f"Image {image_id} processed."
             f"    {image_bead_properties.considered_valid.sum()} beads considered valid."
@@ -763,6 +771,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         _add_row_index_level(image_bead_properties, "image_id", image_id)
         bead_properties.append(image_bead_properties)
 
+    if not bead_properties:
+        mm.logger.error("No beads found in any image")
+        return False
     bead_properties = pd.concat(bead_properties)
 
     # Before averaging any bead we need to verify that all voxel sizes are equal
