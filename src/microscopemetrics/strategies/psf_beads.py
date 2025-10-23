@@ -38,10 +38,9 @@ def _gen_psf_beads_image(
     sigma_z: float,
     sigma_y: float,
     sigma_x: float,
-    target_min_intensity: float,
-    target_max_intensity: float,
+    signal: float,
+    background: float,
     do_noise: bool,
-    signal: int,
     dtype: np.dtype,
 ):
     # Generate the image as float64
@@ -57,117 +56,122 @@ def _gen_psf_beads_image(
     out_of_focus_bead_positions = []
     clustering_bead_positions = []
 
-    # The strategy is as follows:
-    # 1. Generate the valid beads in the center of the image.
-    # Those equal to valid_beads + out_of_focus_beads + clustering_beads
-    # 2. Generate the edge beads in the edge of the image making sure that they are not too close to the valid beads
-    # 3. Gradually remove out_of_focus_beads and clustering_beads from those not in the edge
-    while len(non_edge_bead_positions) < (
-        nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads
-    ):
-        z_pos = z_image_shape // 2
-        y_pos = random.randint(min_distance_y + 2, y_image_shape - min_distance_y - 2)
-        x_pos = random.randint(min_distance_x + 2, x_image_shape - min_distance_x - 2)
-        if not non_edge_bead_positions:
-            non_edge_bead_positions.append((z_pos, y_pos, x_pos))
-        for pos in non_edge_bead_positions:
-            if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
-                break
-            else:
-                continue
-        else:
-            non_edge_bead_positions.append((z_pos, y_pos, x_pos))
+    # The tests might require images with no beads
+    if nr_valid_beads + nr_edge_beads + nr_out_of_focus_beads + nr_clustering_beads > 0:
 
-    while len(edge_bead_positions) < nr_edge_beads:
-        z_pos = z_image_shape // 2
-        y_pos = random.choice(
-            [
-                random.randint(5, min_distance_y // 2 - 2),
-                random.randint(y_image_shape - min_distance_y // 2 + 2, y_image_shape - 5),
-            ]
-        )
-        x_pos = random.choice(
-            [
-                random.randint(5, min_distance_x // 2 - 2),
-                random.randint(x_image_shape - min_distance_x // 2 + 2, x_image_shape - 5),
-            ]
-        )
-        if not edge_bead_positions:
-            edge_bead_positions.append((z_pos, y_pos, x_pos))
-        for pos in edge_bead_positions:
-            if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
-                break
+        # The strategy is as follows:
+        # 1. Generate the valid beads in the center of the image.
+        # Those equal to valid_beads + out_of_focus_beads + clustering_beads
+        # 2. Generate the edge beads in the edge of the image making sure that they are not too close to the valid beads
+        # 3. Gradually remove out_of_focus_beads and clustering_beads from those not in the edge
+        while len(non_edge_bead_positions) < (
+            nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads
+        ):
+            z_pos = z_image_shape // 2
+            y_pos = random.randint(min_distance_y + 2, y_image_shape - min_distance_y - 2)
+            x_pos = random.randint(min_distance_x + 2, x_image_shape - min_distance_x - 2)
+            if not non_edge_bead_positions:
+                non_edge_bead_positions.append((z_pos, y_pos, x_pos))
+            for pos in non_edge_bead_positions:
+                if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
+                    break
+                else:
+                    continue
             else:
-                continue
-        else:
-            edge_bead_positions.append((z_pos, y_pos, x_pos))
+                non_edge_bead_positions.append((z_pos, y_pos, x_pos))
 
-    for _ in range(nr_out_of_focus_beads):
-        pos = non_edge_bead_positions.pop()
-        pos = (
-            random.choice(
+        while len(edge_bead_positions) < nr_edge_beads:
+            z_pos = z_image_shape // 2
+            y_pos = random.choice(
                 [
-                    random.randint(3, min_distance_z - 2),
-                    random.randint(z_image_shape - min_distance_z + 2, z_image_shape - 4),
+                    random.randint(5, min_distance_y // 2 - 2),
+                    random.randint(y_image_shape - min_distance_y // 2 + 2, y_image_shape - 5),
                 ]
-            ),
-            pos[1],
-            pos[2],
-        )
-        out_of_focus_bead_positions.append(pos)
-
-    for _ in range(nr_clustering_beads):
-        pos_1 = non_edge_bead_positions.pop()
-        pos_2 = (
-            pos_1[0],
-            pos_1[1] + random.choice([-1, 1]),
-            pos_1[2] + random.choice([-1, 1]),
-        )
-        image[pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(signal * 1.5, signal / 10)
-        image[pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(signal * 1.5, signal / 10)
-        clustering_bead_positions.append(
-            (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
-        )
-
-    # Fill the image with the beads and adding some normal distributed random intensity
-    for pos in edge_bead_positions:
-        image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
-    for pos in non_edge_bead_positions:
-        image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
-        valid_bead_positions.append(pos)
-    for pos in out_of_focus_bead_positions:
-        image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
-
-    # Apply a gaussian filter to the image
-    for ch in range(c_image_shape):
-        sigma_correction = 1 + ch * 0.1
-        applied_sigmas.append(
-            (
-                sigma_z * sigma_correction,
-                sigma_y * sigma_correction,
-                sigma_x * sigma_correction,
             )
-        )
-        image[:, :, :, ch] = skimage_gaussian(
-            image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
-        )
+            x_pos = random.choice(
+                [
+                    random.randint(5, min_distance_x // 2 - 2),
+                    random.randint(x_image_shape - min_distance_x // 2 + 2, x_image_shape - 5),
+                ]
+            )
+            if not edge_bead_positions:
+                edge_bead_positions.append((z_pos, y_pos, x_pos))
+            for pos in edge_bead_positions:
+                if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
+                    break
+                else:
+                    continue
+            else:
+                edge_bead_positions.append((z_pos, y_pos, x_pos))
 
-    image = skimage_rescale_intensity(
-        image,
-        in_range=(0.0, signal / 20),
-        out_range=(target_min_intensity, target_max_intensity),
+        for _ in range(nr_out_of_focus_beads):
+            pos = non_edge_bead_positions.pop()
+            pos = (
+                random.choice(
+                    [
+                        random.randint(3, min_distance_z - 2),
+                        random.randint(z_image_shape - min_distance_z + 2, z_image_shape - 4),
+                    ]
+                ),
+                pos[1],
+                pos[2],
+            )
+            out_of_focus_bead_positions.append(pos)
+
+        for _ in range(nr_clustering_beads):
+            pos_1 = non_edge_bead_positions.pop()
+            pos_2 = (
+                pos_1[0],
+                pos_1[1] + random.choice([-1, 1]),
+                pos_1[2] + random.choice([-1, 1]),
+            )
+            image[pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(signal * 1.5, signal / 10)
+            image[pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(signal * 1.5, signal / 10)
+            clustering_bead_positions.append(
+                (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
+            )
+
+        # Fill the image with the beads and adding some normal distributed random intensity
+        for pos in edge_bead_positions:
+            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+        for pos in non_edge_bead_positions:
+            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            valid_bead_positions.append(pos)
+        for pos in out_of_focus_bead_positions:
+            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+
+        # Apply a gaussian filter to the image
+        for ch in range(c_image_shape):
+            sigma_correction = 1 + ch * 0.1
+            applied_sigmas.append(
+                (
+                    sigma_z * sigma_correction,
+                    sigma_y * sigma_correction,
+                    sigma_x * sigma_correction,
+                )
+            )
+            image[:, :, :, ch] = skimage_gaussian(
+                image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
+            )
+
+    # Normalize the image to the target range before applying noise
+    image_normalized = (
+        skimage_rescale_intensity(
+            image,
+            out_range=(background, signal),
+        )
+        * np.iinfo(dtype).max
     )
 
     # Add noise
     if do_noise:
-        image = skimage_random_noise(image, mode="poisson", clip=False)
+        image_normalized = np.random.poisson(image_normalized)
 
-    image = skimage_rescale_intensity(image, in_range=(0.0, 1.0), out_range=dtype)
-
-    image = np.expand_dims(image, 0)
+    image_normalized = np.astype(image_normalized, dtype)
+    image_normalized = np.expand_dims(image_normalized, 0)
 
     return (
-        image,
+        image_normalized,
         applied_sigmas,
         non_edge_bead_positions,
         edge_bead_positions,
@@ -187,15 +191,14 @@ def st_psf_beads_test_data(
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
     dtype=st.sampled_from([np.uint8, np.uint16]),
+    signal=st.floats(min_value=0.2, max_value=0.5),
+    background=st.floats(min_value=0.001, max_value=0.01),
     do_noise=st.just(True),
-    signal=st.floats(min_value=20.0, max_value=1000.0),
-    target_min_intensity=st.floats(min_value=0.01, max_value=0.02),
-    target_max_intensity=st.floats(min_value=0.5, max_value=0.9),
-    sigma_z=st.floats(min_value=0.9, max_value=1.5),
-    sigma_x=st.floats(min_value=0.9, max_value=1.5),
-    sigma_y=st.floats(min_value=0.9, max_value=1.5),
+    sigma_z=st.floats(min_value=1.2, max_value=1.5),
+    sigma_x=st.floats(min_value=1.2, max_value=1.5),
+    sigma_y=st.floats(min_value=1.2, max_value=1.5),
     min_distance=st.just(20),
-    nr_valid_beads=st.integers(min_value=1, max_value=10),
+    nr_valid_beads=st.integers(min_value=3, max_value=10),
     nr_edge_beads=st.integers(min_value=0, max_value=3),
     nr_out_of_focus_beads=st.integers(min_value=0, max_value=3),
     nr_clustering_beads=st.integers(min_value=0, max_value=3),
@@ -211,6 +214,7 @@ def st_psf_beads_test_data(
         "min_distance_y": [],
         "min_distance_x": [],
         "signal": [],
+        "background": [],
         "do_noise": [],
     }
 
@@ -236,12 +240,11 @@ def st_psf_beads_test_data(
         assume(
             20
             > (_nr_valid_beads + _nr_edge_beads + _nr_out_of_focus_beads + _nr_clustering_beads)
-            > 0
+            >= 0
         )
 
         _signal = draw(signal)
-        _target_min_intensity = draw(target_min_intensity)
-        _target_max_intensity = draw(target_max_intensity)
+        _background = draw(background)
 
         _sigma_z = draw(sigma_z)
         _sigma_y = draw(sigma_y)
@@ -273,10 +276,9 @@ def st_psf_beads_test_data(
             sigma_z=_sigma_z,
             sigma_y=_sigma_y,
             sigma_x=_sigma_x,
-            target_min_intensity=_target_min_intensity,
-            target_max_intensity=_target_max_intensity,
-            do_noise=do_noise,
             signal=_signal,
+            background=_background,
+            do_noise=do_noise,
             dtype=dtype,
         )
 
@@ -290,6 +292,7 @@ def st_psf_beads_test_data(
         output["min_distance_y"].append(min_distance_y)
         output["min_distance_x"].append(min_distance_x)
         output["signal"].append(_signal)
+        output["background"].append(_background)
         output["do_noise"].append(do_noise)
 
     return output

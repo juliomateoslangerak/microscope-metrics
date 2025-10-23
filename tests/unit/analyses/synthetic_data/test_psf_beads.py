@@ -87,7 +87,15 @@ def test_psf_beads_analysis_instantiation(dataset):
     assert dataset.input_parameters
 
 
-@given(st_psf_beads_dataset())
+@given(
+    st_psf_beads_dataset(
+        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(
+            input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
+                sigma_min=st.just(0.7),
+            )
+        ),
+    )
+)
 @settings(max_examples=1)
 def test_psf_beads_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
@@ -139,8 +147,37 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
+            dtype=st.just(np.uint16),
+            min_distance=st.just(20),
+            signal=st.just(0.01),
+            background=st.just(0.005),
             nr_valid_beads=st.just(0),
-            nr_edge_beads=st.integers(min_value=0, max_value=5),
+            nr_edge_beads=st.just(0),
+            nr_out_of_focus_beads=st.just(0),
+            nr_clustering_beads=st.just(0),
+        ),
+        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(),
+    )
+)
+def test_psf_beads_analysis_no_beads(dataset):
+    psf_beads_dataset = dataset["unprocessed_dataset"]
+    expected_output = dataset["expected_output"]
+    psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
+        "min_distance_y"
+    ][0]
+
+    assert not psf_beads.analyse_psf_beads(psf_beads_dataset)
+
+
+@given(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
+            z_image_shape=st.just(61),
+            y_image_shape=st.just(512),
+            x_image_shape=st.just(512),
+            c_image_shape=st.just(3),
+            nr_valid_beads=st.just(3),
+            nr_edge_beads=st.integers(min_value=1, max_value=5),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
         )
@@ -167,9 +204,9 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
-            nr_valid_beads=st.just(0),
+            nr_valid_beads=st.just(2),
             nr_edge_beads=st.just(0),
-            nr_out_of_focus_beads=st.integers(min_value=0, max_value=5),
+            nr_out_of_focus_beads=st.integers(min_value=1, max_value=5),
             nr_clustering_beads=st.just(0),
         )
     )
@@ -199,9 +236,8 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             # To find the outliers we need to ensure that all images have the same intensity related parameters
             dtype=st.just(np.uint16),
             do_noise=st.just(True),
-            signal=st.just(100.0),
-            target_min_intensity=st.just(0.1),
-            target_max_intensity=st.just(0.5),
+            signal=st.just(0.1),
+            background=st.just(0.005),
             sigma_z=st.just(2),
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
@@ -241,9 +277,8 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
             # We create very noisy images.
             dtype=st.just(np.uint16),
             do_noise=st.just(True),
-            signal=st.just(20.0),
-            target_min_intensity=st.just(0.05),
-            target_max_intensity=st.just(0.3),
+            signal=st.just(0.003),
+            background=st.just(0.001),
             sigma_z=st.just(2),
             sigma_y=st.just(1.5),
             sigma_x=st.just(1.5),
@@ -254,6 +289,9 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
                 # clustering beads will be thrown away.
                 fitting_r2_threshold=st.just(0.1),
                 # intensity_robust_z_score_threshold=st.just(4.0),
+                # We want to limit the sigma range to avoid finding noise as beads.
+                sigma_min=st.just(1.1),
+                snr_threshold=st.just(5.0),
             )
         ),
     )
