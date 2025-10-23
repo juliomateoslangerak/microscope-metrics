@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy import ndimage, signal
 from scipy.spatial import distance_matrix
-from skimage.feature import blob_dog, blob_log, peak_local_max
+from skimage.feature import blob_log, peak_local_max
 from skimage.filters import gaussian
 
 import microscopemetrics as mm
@@ -399,6 +399,7 @@ def _find_beads(
     sigma_min: float,
     sigma_max: float,
     min_distance: float,
+    snr_threshold: float,
 ):
     """
     This function finds the beads in a channel by applying a Gaussian filter and then finding the local maxima.
@@ -411,6 +412,31 @@ def _find_beads(
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
     # and noise in the image. We report this as an error.
     max_num_peaks = MAX_NR_PEAKS
+
+    # Estimate SNR
+    signal_estimate = channel[channel > np.percentile(channel, 99.9)].mean()
+    background_estimate = np.percentile(channel, 50)
+    background_std = channel[channel <= background_estimate].std()
+    snr = (signal_estimate - background_estimate) / background_std
+
+    # If signal region is too large (>50%) or SNR is too low, channel is likely too noisy
+    if snr < snr_threshold:
+        mm.logger.warning(
+            f"Channel appears too noisy for reliable bead detection. Estimated SNR: {snr:.2f}. "
+            "Consider improving image quality or adjusting detection parameters."
+        )
+        return pd.DataFrame(
+            columns=[
+                "center_y",
+                "center_x",
+                "sigma_LoG",
+                "center_z",
+                "considered_self_proximity",
+                "considered_lateral_edge",
+                "considered_valid",
+                "beads",
+            ]
+        )
 
     # We find the beads in the AIP for performance and to avoid anisotropy issues in the axial direction
     channel_aip = np.mean(channel, axis=0)
@@ -525,6 +551,7 @@ def _process_channel(
         sigma_min=sigma_min,
         sigma_max=sigma_max,
         min_distance=min_bead_distance,
+        snr_threshold=snr_threshold,
     )
 
     if len(bead_properties) == 0:
