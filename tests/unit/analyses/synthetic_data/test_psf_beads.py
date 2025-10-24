@@ -247,7 +247,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
         ),
     )
 )
-@settings(deadline=200000)
+@settings(deadline=20000)
 def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
@@ -292,7 +292,7 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
         ),
     )
 )
-@settings(deadline=200000)
+@settings(deadline=20000)
 def test_psf_beads_analysis_noisy_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
