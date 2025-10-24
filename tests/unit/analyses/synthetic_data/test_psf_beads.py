@@ -6,8 +6,8 @@ from hypothesis import given, reproduce_failure, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
 from scipy import ndimage
+from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
-from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics.analyses import psf_beads
 from microscopemetrics.analyses.tools import fit_gaussian
@@ -27,11 +27,12 @@ from microscopemetrics.strategies.psf_beads import (
         min_size=3,
         max_size=10,
     ),
-    signal=st.integers(min_value=50, max_value=1000),
+    signal=st.integers(min_value=2000, max_value=10000),
+    background=st.integers(min_value=40, max_value=400),
     sigma_axial=st.floats(min_value=1.0, max_value=3.0),
     sigma_lateral=st.floats(min_value=1.0, max_value=2.0),
 )
-def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
+def test_average_beads(shifts, signal, background, sigma_axial, sigma_lateral):
     beads = []
     ref_beads = []
 
@@ -41,20 +42,16 @@ def test_average_beads(shifts, signal, sigma_axial, sigma_lateral):
         # - bead is blurred by microscope PSF (gaussian?)
         # - bead is noised by Poisson noise in the camera
         # a replica is caught as reference before shifting
-        bead = np.zeros((61, 21, 21), dtype=np.int16)
-        bead[30, 10, 10] = signal
+        bead = np.zeros((61, 21, 21), dtype=np.uint16)
+        bead[30, 10, 10] = 1
+        bead = gaussian(
+            bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=False
+        )
+        bead = np.astype(rescale_intensity(bead, out_range=(background, signal)), np.uint16)
         ref_bead = bead.copy()
         bead = ndimage.shift(bead, shift, mode="nearest", order=1)
-        bead = gaussian(
-            bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=True
-        )
-        ref_bead = gaussian(
-            ref_bead,
-            sigma=(sigma_axial, sigma_lateral, sigma_lateral),
-            preserve_range=True,
-        )
-        bead = skimage_random_noise(bead, mode="poisson", clip=False)
-        ref_bead = skimage_random_noise(ref_bead, mode="poisson", clip=False)
+        bead = np.random.poisson(bead)
+        ref_bead = np.random.poisson(ref_bead)
         beads.append(bead)
         ref_beads.append(ref_bead)
 
