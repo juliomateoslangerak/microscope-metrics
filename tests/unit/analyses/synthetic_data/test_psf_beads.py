@@ -153,7 +153,6 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
         ),
-        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(),
     )
 )
 def test_psf_beads_analysis_no_beads(dataset):
