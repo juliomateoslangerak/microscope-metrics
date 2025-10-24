@@ -294,6 +294,11 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
             "intensity_std": np.nan,
         }
 
+    intensity_max = bead.max()
+    intensity_min = bead.min()
+    intensity_std = bead.std()
+    intensity_integrated = (bead - intensity_min).sum()
+
     # Find the strongest sections to generate profiles
     z_focus = np.argmax(np.max(bead, axis=(1, 2)))
     y_focus = np.argmax(np.max(bead, axis=(0, 2)))
@@ -339,11 +344,11 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
             "fwhm_micron_y": np.nan,
             "fwhm_micron_x": np.nan,
             "fwhm_lateral_asymmetry_ratio": np.nan,
-            "considered_axial_edge": np.nan,
-            "intensity_integrated": np.nan,
-            "intensity_max": np.nan,
-            "intensity_min": np.nan,
-            "intensity_std": np.nan,
+            "considered_axial_edge": False,
+            "intensity_integrated": intensity_integrated,
+            "intensity_max": intensity_max,
+            "intensity_min": intensity_min,
+            "intensity_std": intensity_std,
         }
 
     fwhm_lateral_asymmetry_ratio = max(fwhm_y, fwhm_x) / min(fwhm_y, fwhm_x)
@@ -363,11 +368,6 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
         center_pos_z < fwhm_z * 2.5
         or profile_z_raw.shape[0] - center_pos_z < fwhm_z * 2.5
     )
-
-    intensity_max = bead.max()
-    intensity_min = bead.min()
-    intensity_std = bead.std()
-    intensity_integrated = (bead - intensity_min).sum()
 
     return {
         "z_raw": profile_z_raw,
@@ -808,11 +808,18 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         average_beads_properties = bead_properties.groupby(["channel_nr", "channel_name"]).apply(
             _average_beads
         )
+        # If a channel does not have any beads, the average bead is NaN, and
+        # it has to be dropped from the dataframe before getting the properties
+        average_beads_properties.dropna(inplace=True)
+
         average_beads_properties = average_beads_properties.join(
             average_beads_properties["average_bead"].apply(
                 lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image_id]))
             )
         )
+        # it is the _process_bead function that decides if a bead is
+        # considered axial edge or not. For the average bead, this is not
+        # relevant, so we drop this column.
         average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
     else:
         mm.logger.error(
