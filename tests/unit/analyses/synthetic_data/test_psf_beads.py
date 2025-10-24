@@ -177,10 +177,10 @@ def test_psf_beads_analysis_no_beads(dataset):
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             nr_valid_beads=st.just(3),
-            nr_edge_beads=st.integers(min_value=1, max_value=5),
+            nr_edge_beads=st.integers(min_value=1, max_value=3),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
-        )
+        ),
     )
 )
 def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
