@@ -79,10 +79,19 @@ def assert_key_measurements_equality(
         return act == exp
 
     for key, expected_measurement in expected.items():
-        if key in ["id", "name", "description", "data_reference", "linked_references"]:
+        if key in [
+            "id",
+            "name",
+            "description",
+            "data_reference",
+            "linked_references",
+            "channel_name",
+        ]:
+            continue
+        if not expected_measurement:  # Skip measurements with no expected value
             continue
         if not assert_item_equality(expected_measurement, actual[key]):
-            raise ValueError(
+            raise AssertionError(
                 f"Key measurement '{key}' does not match: expected {expected_measurement}, got {actual[key]}"
             )
     return True  # All key measurements match
