@@ -50,9 +50,12 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
     return concatenated_str.rstrip("_")
 
 
-def _average_beads(group: pd.DataFrame) -> pd.Series:
+def _average_beads_group(
+    group: pd.DataFrame, voxel_size_micron: tuple[float, float, float]
+) -> pd.Series:
     """
-    Averages the beads in the list by first aligning them to the center of the image and then averaging them.
+    Averages the beads in a group by first aligning them to the center of the image and then averaging them.
+    Then calculates measurements on the averaged bead.
     """
     dtype = {bead.dtype for bead in group.beads}
     if len(dtype) > 1:
@@ -69,10 +72,109 @@ def _average_beads(group: pd.DataFrame) -> pd.Series:
         mm.logger.warning("Less than 2 beads to average.")
     mm.logger.info(f"Averaging {len(aligned_beads)} beads")
 
-    return pd.Series(
-        {
-            "average_bead": np.mean(aligned_beads, axis=0).astype(dtype.pop()),
-        }
+    average_bead = np.mean(aligned_beads, axis=0).astype(dtype.pop())
+
+    # Process the average bead to get measurements
+    measurements = _process_bead(average_bead, voxel_size_micron)
+
+    # Add the average bead array to the measurements
+    result = pd.Series({"average_bead": average_bead})
+    result = pd.concat([result, pd.Series(measurements)])
+
+    return result
+
+
+def _average_beads(
+    bead_properties: pd.DataFrame,
+    voxel_sizes_micron: dict,
+    bead_profiles_z: pd.DataFrame,
+    bead_profiles_y: pd.DataFrame,
+    bead_profiles_x: pd.DataFrame,
+    source_images: list,
+) -> tuple[pd.DataFrame | None, pd.DataFrame, pd.DataFrame, pd.DataFrame, mm_schema.Image | None]:
+    """
+    Averages beads across all images, calculates measurements on the averaged beads,
+    extracts profiles, and creates the average bead images.
+
+    Returns a tuple of:
+    - average_beads_properties: DataFrame with averaged bead properties or None
+    - bead_profiles_z: DataFrame with z profiles (including average if computed)
+    - bead_profiles_y: DataFrame with y profiles (including average if computed)
+    - bead_profiles_x: DataFrame with x profiles (including average if computed)
+    - average_bead_image: mm_schema.Image or None
+    """
+    # Before averaging any bead we need to verify that voxel sizes of every image are equal
+    voxel_sizes_micron = set(voxel_sizes_micron.values())
+    if len(voxel_sizes_micron) != 1:
+        mm.logger.error(
+            "Voxel sizes are not equal among images. Skipping average bead calculation."
+        )
+        return None, bead_profiles_z, bead_profiles_y, bead_profiles_x, None
+
+    # Get the common voxel size (all are equal)
+    voxel_sizes_micron = voxel_sizes_micron.pop()
+
+    # Do the actual averaging grouped by image and channel
+    average_beads_properties = bead_properties.groupby(["channel_nr", "channel_name"]).apply(
+        _average_beads_group, voxel_size_micron=voxel_sizes_micron
+    )
+
+    # If a channel does not have any beads, the average bead is NaN, and
+    # it has to be dropped from the dataframe before getting the properties
+    average_beads_properties.dropna(inplace=True)
+
+    # If, after dropping image-channels without beads we keep nothing, we return
+    if average_beads_properties.empty:
+        mm.logger.warning("No average beads were computed")
+        return None, bead_profiles_z, bead_profiles_y, bead_profiles_x, None
+
+    # it is the _process_bead function that decides if a bead is
+    # considered axial edge or not. For the average bead, this is not
+    # relevant, so we drop this column.
+    average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
+
+    # Extract profiles from average beads and join with existing profiles
+    bead_profiles_z = bead_profiles_z.join(_extract_profiles(average_beads_properties, "z"))
+    bead_profiles_y = bead_profiles_y.join(_extract_profiles(average_beads_properties, "y"))
+    bead_profiles_x = bead_profiles_x.join(_extract_profiles(average_beads_properties, "x"))
+
+    # Create the average bead image
+    average_bead_image = None
+    # TODO: get more metadata from the source images
+    if any(isinstance(c, np.ndarray) for c in average_beads_properties["average_bead"]):
+        average_bead_image = mm.analyses.numpy_to_mm_image(
+            array=np.expand_dims(
+                np.stack(
+                    [
+                        c
+                        for c in average_beads_properties["average_bead"]
+                        if isinstance(c, np.ndarray)
+                    ],
+                    axis=-1,
+                ),
+                axis=0,
+            ),
+            name="average_bead",
+            description="Average bead image extracted from all the beads considered valid in the dataset.",
+            source_images=source_images,
+            channel_names=[
+                i[average_beads_properties.index.names.index("channel_name")]
+                for i in average_beads_properties.index
+                if isinstance(average_beads_properties.at[i, "average_bead"], np.ndarray)
+            ],
+        )
+
+        # We dont need the average bead arrays anymore
+        average_beads_properties.drop("average_bead", axis=1, inplace=True)
+
+        average_beads_properties.add_prefix("average_bead_")
+
+    return (
+        average_beads_properties,
+        bead_profiles_z,
+        bead_profiles_y,
+        bead_profiles_x,
+        average_bead_image,
     )
 
 
@@ -258,11 +360,12 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
         "_".join(col).strip() for col in channel_measurements.columns.values
     ]
 
-    average_bead_properties = average_bead_properties.add_prefix("average_bead_")
-
-    key_measurements = pd.concat(
-        [channel_counts, channel_measurements, average_bead_properties], axis=1
-    )
+    if average_bead_properties is not None:
+        key_measurements = pd.concat(
+            [channel_counts, channel_measurements, average_bead_properties], axis=1
+        )
+    else:
+        key_measurements = pd.concat([channel_counts, channel_measurements], axis=1)
     key_measurements.reset_index(inplace=True)
 
     return key_measurements
@@ -803,64 +906,24 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         return False
     bead_properties = pd.concat(bead_properties)
 
-    # Before averaging any bead we need to verify that all voxel sizes are equal
-    if len(set(voxel_sizes_micron.values())) == 1:
-        average_beads_properties = bead_properties.groupby(["channel_nr", "channel_name"]).apply(
-            _average_beads
-        )
-        # If a channel does not have any beads, the average bead is NaN, and
-        # it has to be dropped from the dataframe before getting the properties
-        average_beads_properties.dropna(inplace=True)
-
-        average_beads_properties = average_beads_properties.join(
-            average_beads_properties["average_bead"].apply(
-                lambda x: pd.Series(_process_bead(x, voxel_sizes_micron[image_id]))
-            )
-        )
-        # it is the _process_bead function that decides if a bead is
-        # considered axial edge or not. For the average bead, this is not
-        # relevant, so we drop this column.
-        average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
-    else:
-        mm.logger.error(
-            "Voxel sizes are not equal among images. Skipping average bead calculation."
-        )
-        average_beads_properties = None
-
+    # Extract bead profiles first (needed by _average_beads)
     bead_profiles_z = _extract_profiles(bead_properties, "z")
     bead_profiles_y = _extract_profiles(bead_properties, "y")
     bead_profiles_x = _extract_profiles(bead_properties, "x")
 
-    bead_profiles_z = bead_profiles_z.join(_extract_profiles(average_beads_properties, "z"))
-    bead_profiles_y = bead_profiles_y.join(_extract_profiles(average_beads_properties, "y"))
-    bead_profiles_x = bead_profiles_x.join(_extract_profiles(average_beads_properties, "x"))
-
-    # TODO: get more metadata from the source images
-    if any(isinstance(c, np.ndarray) for c in average_beads_properties["average_bead"]):
-        average_bead = mm.analyses.numpy_to_mm_image(
-            array=np.expand_dims(
-                np.stack(
-                    [
-                        c
-                        for c in average_beads_properties["average_bead"]
-                        if isinstance(c, np.ndarray)
-                    ],
-                    axis=-1,
-                ),
-                axis=0,
-            ),
-            name="average_bead",
-            description="Average bead image extracted from all the beads considered valid in the dataset.",
+    # Calculate average beads, extract their profiles, and create average bead image
+    average_beads_properties, bead_profiles_z, bead_profiles_y, bead_profiles_x, average_bead = (
+        _average_beads(
+            bead_properties=bead_properties,
+            voxel_sizes_micron=voxel_sizes_micron,
+            bead_profiles_z=bead_profiles_z,
+            bead_profiles_y=bead_profiles_y,
+            bead_profiles_x=bead_profiles_x,
             source_images=dataset.input_data.psf_beads_images,
-            channel_names=[
-                i[average_beads_properties.index.names.index("channel_name")]
-                for i in average_beads_properties.index
-                if isinstance(average_beads_properties.at[i, "average_bead"], np.ndarray)
-            ],
         )
-    else:
-        average_bead = None
-    average_beads_properties.drop("average_bead", axis=1, inplace=True)
+    )
+
+    # We don't need te bead arrays anymore
     bead_properties.drop("beads", axis=1, inplace=True)
 
     key_measurements = _generate_key_measurements(
