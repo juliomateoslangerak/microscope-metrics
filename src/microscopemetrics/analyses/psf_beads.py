@@ -167,7 +167,7 @@ def _average_beads(
         # We dont need the average bead arrays anymore
         average_beads_properties.drop("average_bead", axis=1, inplace=True)
 
-        average_beads_properties.add_prefix("average_bead_")
+        average_beads_properties = average_beads_properties.add_prefix("average_bead_")
 
     return (
         average_beads_properties,
