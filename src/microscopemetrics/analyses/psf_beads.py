@@ -1020,6 +1020,20 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         average_bead=average_bead,
     )
 
+    dataset.description = (
+        "PSF beads dataset\n"
+        f"Successfully analyzed on {dataset.output.processing_datetime}.\n"
+        "Found beads:\n"
+        f"- Valid: {bead_properties.table_data['considered_valid'].sum()}\n"
+        f"- Invalid: {len(bead_properties.table_data) - bead_properties.table_data['considered_valid'].sum()}\n"
+        f"  - Lateral_edge: {bead_properties.table_data['considered_lateral_edge'].sum()}\n"
+        f"  - Axial_edge: {bead_properties.table_data['considered_axial_edge'].sum()}\n"
+        f"  - Bad_fit_x: {bead_properties.table_data['considered_bad_fit_x'].sum()}\n"
+        f"  - Bad_fit_y: {bead_properties.table_data['considered_bad_fit_y'].sum()}\n"
+        f"  - Bad_fit_z: {bead_properties.table_data['considered_bad_fit_z'].sum()}\n"
+        f"  - Intensity_outlier: {bead_properties.table_data['considered_intensity_outlier'].sum()}"
+    )
+
     dataset.processed = True
 
     return True

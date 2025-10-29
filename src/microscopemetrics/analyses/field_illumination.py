@@ -564,6 +564,11 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         roi_center_region=roi_center_region,
     )
 
+    dataset.description = (
+        "Field illumination dataset."
+        f"Successfully analyzed on {dataset.output.processing_datetime}"
+    )
+
     dataset.processed = True
 
     return True
