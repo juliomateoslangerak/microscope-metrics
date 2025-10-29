@@ -61,16 +61,15 @@ def _average_beads_group(
     dtype = {bead.dtype for bead in group.beads}
     if len(dtype) > 1:
         raise ValueError("All beads must have the same dtype.")
+    # TODO: consider using a higher threshold to do averaging
+    if group.considered_valid.sum() < 2:
+        mm.logger.warning("Less than 2 valid beads to average.")
+        return pd.Series({"average_bead": np.nan})
     aligned_beads = [
         ndimage.shift(row.beads, _find_bead_shifts(row.beads), mode="nearest", order=1)
         for row in group.itertuples()
         if row.considered_valid
     ]
-    if not aligned_beads:
-        mm.logger.warning("No valid beads to average.")
-        return pd.Series({"average_bead": np.nan})
-    if len(aligned_beads) < 2:
-        mm.logger.warning("Less than 2 beads to average.")
     mm.logger.info(f"Averaging {len(aligned_beads)} beads")
 
     average_bead = np.mean(aligned_beads, axis=0).astype(dtype.pop())
@@ -116,13 +115,17 @@ def _average_beads(
     voxel_sizes_micron = voxel_sizes_micron.pop()
 
     # Do the actual averaging grouped by image and channel
-    average_beads_properties = bead_properties.groupby(["channel_nr", "channel_name"]).apply(
-        _average_beads_group, voxel_size_micron=voxel_sizes_micron
-    )
+    average_beads_properties = pd.DataFrame(
+        {
+            keys: _average_beads_group(group, voxel_size_micron=voxel_sizes_micron)
+            for keys, group in bead_properties.groupby(["channel_nr", "channel_name"])
+        }
+    ).T
+    average_beads_properties.index.names = ["channel_nr", "channel_name"]
 
     # If a channel does not have any beads, the average bead is NaN, and
     # it has to be dropped from the dataframe before getting the properties
-    average_beads_properties.dropna(inplace=True)
+    average_beads_properties = average_beads_properties.dropna(subset=["average_bead"])
 
     # If, after dropping image-channels without beads we keep nothing, we return
     if average_beads_properties.empty:
@@ -142,15 +145,11 @@ def _average_beads(
     # Create the average bead image
     average_bead_image = None
     # TODO: get more metadata from the source images
-    if any(isinstance(c, np.ndarray) for c in average_beads_properties["average_bead"]):
+    if len(average_beads_properties["average_bead"]):
         average_bead_image = mm.analyses.numpy_to_mm_image(
             array=np.expand_dims(
                 np.stack(
-                    [
-                        c
-                        for c in average_beads_properties["average_bead"]
-                        if isinstance(c, np.ndarray)
-                    ],
+                    [c for c in average_beads_properties["average_bead"]],
                     axis=-1,
                 ),
                 axis=0,
@@ -161,7 +160,6 @@ def _average_beads(
             channel_names=[
                 i[average_beads_properties.index.names.index("channel_name")]
                 for i in average_beads_properties.index
-                if isinstance(average_beads_properties.at[i, "average_bead"], np.ndarray)
             ],
         )
 
