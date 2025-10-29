@@ -887,7 +887,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         )
 
         if len(image_bead_properties) == 0:
-            mm.logger.warning(f"No beads found in image {image_id}")
+            mm.logger.warning(f"No beads found in image {image.name}")
             continue
 
         mm.logger.info(
