@@ -519,12 +519,12 @@ def _find_beads(
     signal_estimate = channel[channel > np.percentile(channel, 99.9)].mean()
     background_estimate = np.percentile(channel, 50)
     background_std = channel[channel <= background_estimate].std()
-    snr = (signal_estimate - background_estimate) / background_std
+    snr_estimate = (signal_estimate - background_estimate) / background_std
 
     # If signal region is too large (>50%) or SNR is too low, channel is likely too noisy
-    if snr < snr_threshold:
+    if snr_estimate < snr_threshold:
         mm.logger.warning(
-            f"Channel appears too noisy for reliable bead detection. Estimated SNR: {snr:.2f}. "
+            f"Channel appears too noisy for reliable bead detection. Estimated SNR: {snr_estimate:.2f}. "
             "Consider improving image quality or adjusting detection parameters."
         )
         return pd.DataFrame(
@@ -634,6 +634,7 @@ def _find_beads(
     positions_df["beads"] = positions_df.apply(
         get_bead_image, axis=1, args=(channel, half_min_distance)
     )
+    positions_df["channel_snr_estimate"] = snr_estimate
 
     return positions_df
 
