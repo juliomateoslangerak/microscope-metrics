@@ -1001,7 +1001,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_profiles_x = mm.analyses.df_to_table(bead_profiles_x, "bead_profiles_x")
 
     dataset.output = mm_schema.PSFBeadsOutput(
-        processing_application="microscopemetrics",
+        processing_application=mm.__name__,
         processing_version=mm.__version__,
         processing_datetime=datetime.now(),
         analyzed_bead_centers=considered_valid_bead_centers,

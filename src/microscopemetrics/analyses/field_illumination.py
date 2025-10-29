@@ -550,7 +550,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     ]
 
     dataset.output = mm_schema.FieldIlluminationOutput(
-        processing_application="microscopemetrics",
+        processing_application=mm.__name__,
         processing_version=mm.__version__,
         processing_datetime=datetime.now(),
         key_measurements=key_measurements,
