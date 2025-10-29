@@ -9,6 +9,7 @@ from scipy import ndimage
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 
+from microscopemetrics import AnalysisError
 from microscopemetrics.analyses import psf_beads
 from microscopemetrics.analyses.tools import fit_gaussian
 from microscopemetrics.strategies.psf_beads import (
@@ -162,8 +163,9 @@ def test_psf_beads_analysis_no_beads(dataset):
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
         "min_distance_y"
     ][0]
-
-    assert not psf_beads.analyse_psf_beads(psf_beads_dataset)
+    # Should raise AnalysisError
+    with pytest.raises(AnalysisError):
+        psf_beads.analyse_psf_beads(psf_beads_dataset)
 
 
 @given(

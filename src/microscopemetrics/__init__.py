@@ -5,13 +5,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SaturationError(Exception):
-    pass
-
-
-class FittingError(Exception):
-    pass
-
-
 class AnalysisError(Exception):
-    pass
+    def __init__(self, message, suggestion=None):
+        super().__init__(message)
+        self.suggestion = suggestion
+
+
+class SaturationError(AnalysisError):
+    def __init__(self, message, suggestion=None):
+        super().__init__(message, suggestion)
+
+
+class FittingError(AnalysisError):
+    def __init__(self, message, suggestion=None):
+        super().__init__(message, suggestion)
+
+
+class SNRError(AnalysisError):
+    def __init__(self, message, suggestion=None):
+        super().__init__(message, suggestion)

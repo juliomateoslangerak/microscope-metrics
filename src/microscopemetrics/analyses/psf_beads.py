@@ -9,6 +9,7 @@ from skimage.feature import blob_log, peak_local_max
 from skimage.filters import gaussian
 
 import microscopemetrics as mm
+from microscopemetrics import AnalysisError
 from microscopemetrics.analyses import tools as mm_tools
 
 MAX_NR_PEAKS = 100
@@ -807,6 +808,10 @@ def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
     return pd.DataFrame(profiles)
 
 
+def _make_suggestion(bead_properties, input_parameters):
+    return "Exemple suggestion"
+
+
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     mm.analyses.validate_requirements()
     # TODO: Implement Nyquist validation??
@@ -901,10 +906,14 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         _add_row_index_level(image_bead_properties, "image_id", image_id)
         bead_properties.append(image_bead_properties)
 
-    if not bead_properties:
-        mm.logger.error("No beads found in any image")
-        return False
-    bead_properties = pd.concat(bead_properties)
+    if bead_properties:
+        bead_properties = pd.concat(bead_properties)
+    else:  # No beads found
+        mm.logger.error("No valid or invalid beads found in any image")
+        raise AnalysisError(
+            message="No valid or invalid beads found in any image",
+            suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
+        )
 
     # Extract bead profiles first (needed by _average_beads)
     bead_profiles_z = _extract_profiles(bead_properties, "z")
@@ -925,6 +934,16 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # We don't need te bead arrays anymore
     bead_properties.drop("beads", axis=1, inplace=True)
+
+    # At this point we know if we found valid beads, and we raise an exception
+    # if there are no beads. Depending on the number of invalid beads and their
+    # classes
+    if bead_properties["considered_valid"].sum() == 0:
+        mm.logger.error("No valid beads found in any image")
+        raise AnalysisError(
+            message="No beads valid found in any image",
+            suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
+        )
 
     key_measurements = _generate_key_measurements(
         bead_properties=bead_properties,
