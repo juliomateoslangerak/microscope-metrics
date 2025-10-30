@@ -678,8 +678,9 @@ def _process_channel(
 
     # We need to invalidate all the bad fits and outliers
     bead_properties["considered_valid"] = [
-        not any([l_edge, a_edge, bf_z, bf_y, bf_x, i_out])
-        for l_edge, a_edge, bf_z, bf_y, bf_x, i_out in zip(
+        not any([prox, l_edge, a_edge, bf_z, bf_y, bf_x, i_out])
+        for prox, l_edge, a_edge, bf_z, bf_y, bf_x, i_out in zip(
+            bead_properties["considered_self_proximity"],
             bead_properties["considered_lateral_edge"],
             bead_properties["considered_axial_edge"],
             bead_properties["considered_bad_fit_z"],
