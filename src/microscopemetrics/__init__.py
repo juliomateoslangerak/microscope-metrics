@@ -11,6 +11,11 @@ class AnalysisError(Exception):
         self.suggestion = suggestion
 
 
+class DataFormatError(AnalysisError):
+    def __init__(self, message, suggestion=None):
+        super().__init__(message, suggestion)
+
+
 class SaturationError(AnalysisError):
     def __init__(self, message, suggestion=None):
         super().__init__(message, suggestion)

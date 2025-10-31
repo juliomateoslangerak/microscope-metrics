@@ -10,7 +10,6 @@ from skimage.feature import blob_log, peak_local_max
 from skimage.filters import gaussian
 
 import microscopemetrics as mm
-from microscopemetrics import AnalysisError
 from microscopemetrics.analyses import tools as mm_tools
 
 MAX_NR_PEAKS = 100
@@ -842,8 +841,10 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         mm.logger.info(f"Checking image {image_id} shape...")
         if len(image.array_data.shape) != 5:
             mm.logger.error(f"Image {image_id} must be 5D")
-            # TODO: raise a propper error
-            return False
+            raise mm.DataFormatError(
+                f"Image {image_id} must be 5D (TZYXC). {len(image.array_data.shape)}D was provided. "
+            )
+
         if image.array_data.shape[0] != 1:
             mm.logger.warning(
                 f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
@@ -854,8 +855,11 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             images_shape = image.array_data.shape
         elif images_shape != image.array_data.shape:
             mm.logger.error("Not all images have the same dimensions")
-            # TODO: raise a propper error
-            return False
+            raise mm.DataFormatError(
+                "Not all images have the same sizes. Please make sure that"
+                "all dimensions (TZYXC) are consistent.",
+                "In a future version, only ZYX will be required to be equal.",
+            )
 
         # Check image saturation
         mm.logger.info(f"Checking image {image_id} saturation...")
@@ -915,7 +919,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         bead_properties = pd.concat(bead_properties)
     else:  # No beads found
         mm.logger.error("No valid or invalid beads found in any image")
-        raise AnalysisError(
+        raise mm.AnalysisError(
             message="No valid or invalid beads found in any image",
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
@@ -945,7 +949,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     # classes
     if bead_properties["considered_valid"].sum() == 0:
         mm.logger.error("No valid beads found in any image")
-        raise AnalysisError(
+        raise mm.AnalysisError(
             message="No beads valid found in any image",
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )

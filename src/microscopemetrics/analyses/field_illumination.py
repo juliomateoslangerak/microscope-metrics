@@ -347,6 +347,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
 
     channel_names = []
     for image in dataset.input_data.field_illumination_images:
+        image_id = mm.analyses.get_object_id(image) or image.name
         # We want to verify that the input images all have different channel names
         # As it does not make sense to average file illumination between images from the same channel
         if image.channel_series is not None:
@@ -357,14 +358,19 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                         f"Channel name {channel.name} is not unique. "
                         "We cannot average field illumination between images from the same channel."
                     )
-                    return False
+                    raise mm.DataFormatError(
+                        "Image channel name must be unique. That is only one channel may be provided.",
+                        "In a future version, we will support averaging channels.",
+                    )
                 channel_names.append(channel.name)
 
         # Check image shape
         mm.logger.info("Checking image shape...")
         if len(image.array_data.shape) != 5:
             mm.logger.error("Image must be 5D")
-            return False
+            raise mm.DataFormatError(
+                f"Image {image_id} must be 5D (TZYXC). {len(image.array_data.shape)}D was provided. "
+            )
         if image.array_data.shape[0] != 1 or image.array_data.shape[1] != 1:
             mm.logger.warning(
                 "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
