@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
@@ -91,7 +92,9 @@ def _average_beads(
     bead_profiles_y: pd.DataFrame,
     bead_profiles_x: pd.DataFrame,
     source_images: list,
-) -> tuple[pd.DataFrame | None, pd.DataFrame, pd.DataFrame, pd.DataFrame, mm_schema.Image | None]:
+) -> Tuple[
+    Optional[pd.DataFrame], pd.DataFrame, pd.DataFrame, pd.DataFrame, Optional[mm_schema.Image]
+]:
     """
     Averages beads across all images, calculates measurements on the averaged beads,
     extracts profiles, and creates the average bead images.
@@ -839,6 +842,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         mm.logger.info(f"Checking image {image_id} shape...")
         if len(image.array_data.shape) != 5:
             mm.logger.error(f"Image {image_id} must be 5D")
+            # TODO: raise a propper error
             return False
         if image.array_data.shape[0] != 1:
             mm.logger.warning(
@@ -850,6 +854,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             images_shape = image.array_data.shape
         elif images_shape != image.array_data.shape:
             mm.logger.error("Not all images have the same dimensions")
+            # TODO: raise a propper error
             return False
 
         # Check image saturation
