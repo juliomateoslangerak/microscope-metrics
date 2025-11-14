@@ -49,6 +49,8 @@ def test_psf_beads(data_gen_args, dataset_dir):
         dataset_dir=dataset_dir,
         **data_gen_args,
     )
+    print(f"Analyzing directory: {dataset_dir}")
+
     expected_output = asdict(dataset_tested.output)
     dataset_tested.output = None
     assert analyse_psf_beads(dataset_tested)
