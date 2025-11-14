@@ -92,7 +92,11 @@ def _average_beads(
     bead_profiles_x: pd.DataFrame,
     source_images: list,
 ) -> Tuple[
-    Optional[pd.DataFrame], pd.DataFrame, pd.DataFrame, pd.DataFrame, Optional[mm_schema.Image]
+    Optional[pd.DataFrame],
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    Optional[mm_schema.Image],
 ]:
     """
     Averages beads across all images, calculates measurements on the averaged beads,
@@ -608,7 +612,8 @@ def _find_beads(
     positions_df["considered_valid"] = [
         not any([edge, prox])
         for edge, prox in zip(
-            positions_df["considered_lateral_edge"], positions_df["considered_self_proximity"]
+            positions_df["considered_lateral_edge"],
+            positions_df["considered_self_proximity"],
         )
     ]
     mm.logger.debug(f"Beads found: {len(positions_df)}")
@@ -924,15 +929,19 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_profiles_x = _extract_profiles(bead_properties, "x")
 
     # Calculate average beads, extract their profiles, and create average bead image
-    average_beads_properties, bead_profiles_z, bead_profiles_y, bead_profiles_x, average_bead = (
-        _average_beads(
-            bead_properties=bead_properties,
-            voxel_sizes_micron=voxel_sizes_micron,
-            bead_profiles_z=bead_profiles_z,
-            bead_profiles_y=bead_profiles_y,
-            bead_profiles_x=bead_profiles_x,
-            source_images=dataset.input_data.psf_beads_images,
-        )
+    (
+        average_beads_properties,
+        bead_profiles_z,
+        bead_profiles_y,
+        bead_profiles_x,
+        average_bead,
+    ) = _average_beads(
+        bead_properties=bead_properties,
+        voxel_sizes_micron=voxel_sizes_micron,
+        bead_profiles_z=bead_profiles_z,
+        bead_profiles_y=bead_profiles_y,
+        bead_profiles_x=bead_profiles_x,
+        source_images=dataset.input_data.psf_beads_images,
     )
 
     # We don't need te bead arrays anymore

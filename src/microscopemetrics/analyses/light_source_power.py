@@ -245,7 +245,8 @@ def _compute_light_source_power_key_measurements(
                     tolerance_seconds=0.1,
                 )
                 linearity_df = _find_linearity_subset(
-                    subset_df, min_points=input_parameters.linearity_required_measurements
+                    subset_df,
+                    min_points=input_parameters.linearity_required_measurements,
                 )
                 short_term_stability_df = _find_stability_subset(
                     subset_df,
