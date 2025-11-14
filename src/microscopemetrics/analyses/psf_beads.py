@@ -622,20 +622,14 @@ def _find_beads(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
 
-    def get_bead_image(row, ch, hmd):
+    def get_bead_image(row, ch, md):
         return ch[
             :,
-            int(max(0, (row["center_y"] - hmd))) : int(
-                min(ch.shape[1], (row["center_y"] + hmd + 1))
-            ),
-            int(max(0, (row["center_x"] - hmd))) : int(
-                min(ch.shape[2], (row["center_x"] + hmd + 1))
-            ),
+            int(max(0, (row["center_y"] - md))) : int(min(ch.shape[1], (row["center_y"] + md + 1))),
+            int(max(0, (row["center_x"] - md))) : int(min(ch.shape[2], (row["center_x"] + md + 1))),
         ]
 
-    positions_df["beads"] = positions_df.apply(
-        get_bead_image, axis=1, args=(channel, half_min_distance)
-    )
+    positions_df["beads"] = positions_df.apply(get_bead_image, axis=1, args=(channel, min_distance))
     positions_df["channel_snr_estimate"] = snr_estimate
 
     return positions_df
@@ -741,8 +735,10 @@ def _process_image(
 
 
 def _estimate_min_bead_distance(dataset: mm_schema.PSFBeadsDataset) -> float:
-    # TODO: get the resolution somewhere or pass it as a metadata
-    return dataset.input_parameters.min_lateral_distance_factor
+    # TODO: get the resolution somewhere or pass it as a metadata and remove it from the schema
+    # Assuming we are imaging using nyquist criterium,
+    # the min distance factor should be roughly twice the min_lateral_distance_factor
+    return dataset.input_parameters.min_lateral_distance_factor * 2
 
 
 def _generate_center_roi(
