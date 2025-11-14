@@ -510,8 +510,6 @@ def _find_beads(
     """
     mm.logger.debug("Finding beads in channel...")
 
-    # Precalculate the half of the minimal distance between beads as reused multiple times
-    half_min_distance = np.ceil(min_distance / 2)
     # TODO: Review this max number of beads and how to implement it
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
     # and noise in the image. We report this as an error.
@@ -570,10 +568,10 @@ def _find_beads(
     for pos in positions_all:
         if any(
             [
-                0 <= pos[0] < half_min_distance,
-                0 <= pos[1] < half_min_distance,
-                channel_aip.shape[0] - half_min_distance <= pos[0] < channel_aip.shape[0],
-                channel_aip.shape[1] - half_min_distance <= pos[1] < channel_aip.shape[1],
+                0 <= pos[0] < min_distance,
+                0 <= pos[1] < min_distance,
+                channel_aip.shape[0] - min_distance <= pos[0] < channel_aip.shape[0],
+                channel_aip.shape[1] - min_distance <= pos[1] < channel_aip.shape[1],
             ]
         ):
             positions_edge.append(pos)
