@@ -228,9 +228,8 @@ def st_psf_beads_test_data(
 
     dtype = draw(dtype)
 
-    min_distance_z = draw(min_distance) // 2
-    min_distance_y = draw(min_distance)
-    min_distance_x = draw(min_distance)
+    min_distance_x = min_distance_y = draw(min_distance)
+    min_distance_z = min_distance_x // 2
 
     for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
