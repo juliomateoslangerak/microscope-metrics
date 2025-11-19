@@ -122,7 +122,7 @@ def st_light_source_power_test_data(
                 current_datetime, linearity_interval_seconds
             )
 
-        # Generating short term stability measurements
+        # Generating short-term stability measurements
         set_power_value = draw(short_term_stability_set_power_value)
         for _ in range(nr_short_term_stability_measurements):
             measured_power = max(
@@ -148,7 +148,7 @@ def st_light_source_power_test_data(
                 current_datetime, short_term_stability_interval_seconds
             )
 
-        # Generating long term stability measurements
+        # Generating long-term stability measurements
         set_power_value = draw(long_term_stability_set_power_value)
         for _ in range(nr_long_term_stability_measurements):
             measured_power = max(
