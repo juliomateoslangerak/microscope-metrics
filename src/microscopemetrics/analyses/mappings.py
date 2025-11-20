@@ -6,7 +6,12 @@ from collections import namedtuple
 
 from microscopemetrics_schema import datamodel as mm_schema
 
-from microscopemetrics.analyses import field_illumination, psf_beads
+from microscopemetrics.analyses import (
+    field_illumination,
+    light_source_power,
+    psf_beads,
+    user_experiment,
+)
 
 Mapping = namedtuple("Mapping", ["sample_class", "analysis_function", "dataset_class"])
 
@@ -22,6 +27,7 @@ MAPPINGS = [
         mm_schema.FieldIlluminationDataset,
     ),
     Mapping(mm_schema.PSFBeads, psf_beads.analyse_psf_beads, mm_schema.PSFBeadsDataset),
+    Mapping(None, light_source_power.analyse_light_source_power, mm_schema.LightSourcePowerDataset),
 ]
 
 # TEST = {
