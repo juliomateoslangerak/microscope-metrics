@@ -1,11 +1,18 @@
 """These are some possibly useful code snippets"""
 
+import csv
 import logging
 from itertools import permutations
 from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+from microscopemetrics_schema.datamodel import (
+    LightSource,
+    LightSourcePowerInputData,
+    PowerMeasurement,
+    PowerMeter,
+)
 from scipy import ndimage, special
 from scipy.optimize import curve_fit, fsolve
 from scipy.spatial.distance import cdist
@@ -466,3 +473,77 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     g *= int(g * 255)
     g *= int(g * 255)
     return r, g, b
+
+
+def csv_power_measurements_parser(csv_file):
+    """
+    This function parses the csv file containing input data for input power measurements
+    analysis:
+    - LightSources.
+    - MeasurementDevices.
+    - AcquisitionDateTime.
+    - InputData: as for today, containing the PowerMeasurements.
+
+    Parameters
+    ----------
+    csv_file: a file object
+
+    Returns
+    -------
+
+    """
+    light_sources = []
+    power_meters = []
+    acquisition_datetime = None
+    input_data = {}
+    mode = None
+
+    with open(csv_file, newline="", encoding="utf-8-sig") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row:
+                continue  # remove empty lines
+            if row[0].replace(" ", "") == "#light_sources":
+                mode = "light_sources"
+                columns = next(reader)
+                continue
+            if row[0].replace(" ", "") == "#power_meters":
+                mode = "power_meters"
+                columns = next(reader)
+                continue
+            if row[0].replace(" ", "") == "#acquisition_datetime":
+                acquisition_datetime = next(reader)[0]
+                continue
+            if row[0].replace(" ", "") == "#input_data":
+                mode = "input_data"
+                input_key = next(reader)[0].replace(" ", "").replace("#", "")
+                input_data[input_key] = []
+                columns = next(reader)
+                continue
+
+            if mode == "light_sources":
+                row_dict = dict(zip(columns, row))
+                light_sources.append(row_dict)
+
+            elif mode == "power_meters":
+                row_dict = dict(zip(columns, row))
+                power_meters.append(row_dict)
+
+            elif mode == "input_data":
+                row_dict = dict(zip(columns, row))
+                input_data[input_key].append(row_dict)
+
+    light_sources = {ls["name"]: LightSource(**ls) for ls in light_sources}
+    power_meters = {pm["name"]: PowerMeter(**pm) for pm in power_meters}
+    input_data = LightSourcePowerInputData(
+        power_measurements=[
+            PowerMeasurement(
+                light_source=light_sources[pms.pop("light_source")],
+                measurement_device=power_meters[pms.pop("power_meter")],
+                **pms,
+            )
+            for pms in input_data["power_measurements"]
+        ]
+    )
+
+    return light_sources, power_meters, acquisition_datetime, input_data
