@@ -10,6 +10,7 @@ except ImportError as e:
     raise ImportError(
         "In order to run the strategies you need to install the test extras. Run `pip install microscopemetrics[test]`."
     ) from e
+import microscopemetrics_schema.datamodel as mm_schema
 import microscopemetrics_schema.strategies.analyses as st_mm_analyses_schema
 
 
@@ -108,15 +109,15 @@ def st_light_source_power_test_data(
                 * _target_intensity_mw,
             )
             power_measurements.append(
-                {
-                    "acquisition_datetime": current_datetime,
-                    "light_source": light_source,
-                    "power_meter": _power_meter,
-                    "measuring_location": _measuring_location,
-                    "power_set_point": set_power_value,
-                    "power_mw": measured_power,
-                    "integration_time_seconds": linearity_integration_time_seconds,
-                }
+                mm_schema.PowerMeasurement(
+                    acquisition_datetime=current_datetime,
+                    light_source=light_source.name,
+                    power_meter=_power_meter.name,
+                    measuring_location=_measuring_location,
+                    power_set_point=set_power_value,
+                    power_mw=measured_power,
+                    integration_time_seconds=linearity_integration_time_seconds,
+                )
             )
             current_datetime = _add_seconds_to_datetime(
                 current_datetime, linearity_interval_seconds
@@ -134,15 +135,15 @@ def st_light_source_power_test_data(
                 * _target_intensity_mw,
             )
             power_measurements.append(
-                {
-                    "acquisition_datetime": current_datetime,
-                    "light_source": light_source,
-                    "power_meter": _power_meter,
-                    "measuring_location": _measuring_location,
-                    "power_set_point": set_power_value,
-                    "power_mw": measured_power,
-                    "integration_time_seconds": short_term_stability_integration_time_seconds,
-                }
+                mm_schema.PowerMeasurement(
+                    acquisition_datetime=current_datetime,
+                    light_source=light_source.name,
+                    power_meter=_power_meter.name,
+                    measuring_location=_measuring_location,
+                    power_set_point=set_power_value,
+                    power_mw=measured_power,
+                    integration_time_seconds=short_term_stability_integration_time_seconds,
+                )
             )
             current_datetime = _add_seconds_to_datetime(
                 current_datetime, short_term_stability_interval_seconds
@@ -160,15 +161,15 @@ def st_light_source_power_test_data(
                 * _target_intensity_mw,
             )
             power_measurements.append(
-                {
-                    "acquisition_datetime": current_datetime,
-                    "light_source": light_source,
-                    "power_meter": _power_meter,
-                    "measuring_location": _measuring_location,
-                    "power_set_point": set_power_value,
-                    "power_mw": measured_power,
-                    "integration_time_seconds": long_term_stability_integration_time_seconds,
-                }
+                mm_schema.PowerMeasurement(
+                    acquisition_datetime=current_datetime,
+                    light_source=light_source.name,
+                    power_meter=_power_meter.name,
+                    measuring_location=_measuring_location,
+                    power_set_point=set_power_value,
+                    power_mw=measured_power,
+                    integration_time_seconds=long_term_stability_integration_time_seconds,
+                )
             )
             current_datetime = _add_seconds_to_datetime(
                 current_datetime, long_term_stability_interval_seconds
