@@ -179,21 +179,19 @@ def _compute_light_source_power_key_measurements(
 
     # Go through each light source, power meter and measuring location combinations
     for light_source in power_measurement_df["light_source"].drop_duplicates(ignore_index=True):
-        for measurement_device in power_measurement_df["measurement_device"].drop_duplicates(
-            ignore_index=True
-        ):
+        for power_meter in power_measurement_df["power_meter"].drop_duplicates(ignore_index=True):
             for measuring_location in power_measurement_df["measuring_location"].drop_duplicates(
                 ignore_index=True
             ):
                 logging.info(
                     f"Processing light source {light_source}, "
-                    f"measurement device {measurement_device}, "
+                    f"power meter {power_meter}, "
                     f"measuring location {measuring_location}."
                 )
 
                 subset_key_measurements = {
                     "light_source": light_source,
-                    "measurement_device": measurement_device,
+                    "power_meter": power_meter,
                     "measuring_location": measuring_location,
                     "nr_of_measurements": 0,
                     "power_mean_mw": np.nan,
@@ -218,7 +216,7 @@ def _compute_light_source_power_key_measurements(
 
                 subset_df = power_measurement_df[
                     (power_measurement_df["light_source"] == light_source)
-                    & (power_measurement_df["measurement_device"] == measurement_device)
+                    & (power_measurement_df["power_meter"] == power_meter)
                     & (power_measurement_df["measuring_location"] == measuring_location)
                 ]
                 subset_df = subset_df.set_index("acquisition_datetime")

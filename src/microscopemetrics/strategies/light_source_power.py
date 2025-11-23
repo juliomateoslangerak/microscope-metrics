@@ -111,7 +111,7 @@ def st_light_source_power_test_data(
                 {
                     "acquisition_datetime": current_datetime,
                     "light_source": light_source,
-                    "measurement_device": _power_meter,
+                    "power_meter": _power_meter,
                     "measuring_location": _measuring_location,
                     "power_set_point": set_power_value,
                     "power_mw": measured_power,
@@ -137,7 +137,7 @@ def st_light_source_power_test_data(
                 {
                     "acquisition_datetime": current_datetime,
                     "light_source": light_source,
-                    "measurement_device": _power_meter,
+                    "power_meter": _power_meter,
                     "measuring_location": _measuring_location,
                     "power_set_point": set_power_value,
                     "power_mw": measured_power,
@@ -163,7 +163,7 @@ def st_light_source_power_test_data(
                 {
                     "acquisition_datetime": current_datetime,
                     "light_source": light_source,
-                    "measurement_device": _power_meter,
+                    "power_meter": _power_meter,
                     "measuring_location": _measuring_location,
                     "power_set_point": set_power_value,
                     "power_mw": measured_power,
