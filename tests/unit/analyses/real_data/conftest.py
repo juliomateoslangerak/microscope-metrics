@@ -13,7 +13,11 @@ import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-from microscopemetrics.analyses import mappings, numpy_to_mm_image
+from microscopemetrics.analyses import (
+    csv_power_measurements_parser,
+    mappings,
+    numpy_to_mm_image,
+)
 
 
 def gen_microscope() -> mm_schema.Microscope:
@@ -77,6 +81,7 @@ def build_dataset_from_dir(
     microscope=None,
     experimenter=None,
     input_images_field=None,
+    input_non_images_field=None,
     acquisition_datetime=None,
     do_generate_missing_input_parameters=False,
     do_generate_missing_key_measurements=False,
@@ -106,6 +111,8 @@ def build_dataset_from_dir(
                     description=f"test_description for image {len(images)}",
                 )
             )
+        elif data_file.suffix in [".csv"]:
+            non_image_input = csv_power_measurements_parser(data_file)
         elif data_file.name in [
             "dataset_input_parameters.yaml",
             "dataset_input_parameters.yml",
@@ -142,19 +149,29 @@ def build_dataset_from_dir(
             dumper = YAMLDumper()
             dumper.dump(input_parameters, str(dataset_dir / "dataset_input_parameters.yaml"))
 
+    input_data = {}
+    if input_images_field is not None:
+        input_data[input_images_field] = images
+    if input_non_images_field is not None:
+        input_data[input_non_images_field] = non_image_input
+
+    optional_args = {}
+    if sample is not None:
+        optional_args["sample"] = (sample or gen_sample(),)
+
     dataset = dataset_target_class(
         microscope=microscope or gen_microscope(),
         experimenter=experimenter or gen_experimenter(),
         acquisition_datetime=acquisition_datetime or gen_acquisition_datetime(),
-        sample=sample or gen_sample(),
         input_parameters=input_parameters,
-        input_data=input_data_target_class(**{input_images_field: images}),
+        input_data=input_data_target_class(**input_data),
         output=output_target_class(
             key_measurements=key_measurements or key_measurements_target_class(),
             processing_application="microscopemetrics",
             processing_version="0.0.1",
             processing_datetime=str(datetime.datetime.now()),
         ),
+        **optional_args,
     )
 
     if key_measurements is None:
