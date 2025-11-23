@@ -10,7 +10,6 @@ from microscopemetrics.analyses import (
     field_illumination,
     light_source_power,
     psf_beads,
-    user_experiment,
 )
 
 Mapping = namedtuple("Mapping", ["sample_class", "analysis_function", "dataset_class"])
