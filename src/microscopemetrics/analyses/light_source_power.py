@@ -1,4 +1,5 @@
 import logging
+from dataclasses import asdict
 from datetime import datetime
 from typing import Dict, List, Tuple
 
@@ -123,11 +124,11 @@ def _find_stability_subset(
 def _compute_basic_measurement(measurements: pd.DataFrame) -> Dict:
     return {
         "nr_of_measurements": len(measurements),
-        "power_mean_mw": measurements["power_mw"].mean(),
-        "power_median_mw": measurements["power_mw"].median(),
-        "power_std_mw": measurements["power_mw"].std(),
-        "power_min_mw": measurements["power_mw"].min(),
-        "power_max_mw": measurements["power_mw"].max(),
+        "power_mean_mw": measurements["power_mw"].mean().item(),
+        "power_median_mw": measurements["power_mw"].median().item(),
+        "power_std_mw": measurements["power_mw"].std().item(),
+        "power_min_mw": measurements["power_mw"].min().item(),
+        "power_max_mw": measurements["power_mw"].max().item(),
     }
 
 
@@ -168,12 +169,16 @@ def _compute_light_source_power_key_measurements(
     power_measurements: List[mm_schema.PowerMeasurement],
     input_parameters: mm_schema.LightSourcePowerInputParameters,
 ) -> List[mm_schema.LightSourcePowerKeyMeasurement]:
-    power_measurement_df = pd.DataFrame.from_records(power_measurements)
+    power_measurement_df = pd.DataFrame.from_records([asdict(pm) for pm in power_measurements])
 
     # We change the datetime to microssecond precision to avoid issues when converting to XSD later
     power_measurement_df["acquisition_datetime"] = power_measurement_df[
         "acquisition_datetime"
     ].astype("datetime64[us]")
+
+    power_measurement_df["measuring_location"] = power_measurement_df["measuring_location"].apply(
+        lambda x: x["text"]
+    )
 
     key_measurements = []
 
@@ -308,7 +313,12 @@ def _compute_light_source_power_key_measurements(
 
                 key_measurements.append(subset_key_measurements)
 
-    return [mm_schema.LightSourcePowerKeyMeasurement(**km) for km in key_measurements]
+    key_measurements = {
+        k: list(v)
+        for k, v in zip(key_measurements[0], zip(*[d.values() for d in key_measurements]))
+    }
+
+    return mm_schema.LightSourcePowerKeyMeasurements(**key_measurements)
 
 
 def analyse_light_source_power(dataset: mm_schema.LightSourcePowerDataset) -> bool:
