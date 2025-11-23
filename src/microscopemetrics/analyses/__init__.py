@@ -1,4 +1,5 @@
 # Main analyses module defining the sample superclass
+import csv
 from datetime import datetime
 from typing import Dict, List, Union
 
@@ -184,3 +185,83 @@ def validate_requirements() -> bool:
     logger.info("Validating requirements...")
     # TODO: check image dimensions/shape
     return True
+
+
+def csv_power_measurements_parser(csv_file):
+    """
+    This function parses the csv file containing input data for input power measurements
+    analysis:
+    - LightSources.
+    - MeasurementDevices.
+    - AcquisitionDateTime.
+    - InputData: as for today, containing the PowerMeasurements.
+
+    Parameters
+    ----------
+    csv_file: a file object
+
+    Returns
+    -------
+
+    """
+    light_sources = []
+    power_meters = []
+    acquisition_datetime = None
+    input_data = {}
+    mode = None
+
+    with open(csv_file, newline="", encoding="utf-8-sig") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row or not row[0]:
+                continue  # remove empty lines
+            if row[0].replace(" ", "") == "#light_sources":
+                mode = "light_sources"
+                columns = next(reader)
+                continue
+            if row[0].replace(" ", "") == "#power_meters":
+                mode = "power_meters"
+                columns = next(reader)
+                continue
+            if row[0].replace(" ", "") == "#acquisition_datetime":
+                acquisition_datetime = next(reader)[0]
+                continue
+            if row[0].replace(" ", "") == "#input_data":
+                mode = "input_data"
+                input_key = next(reader)[0].replace(" ", "").replace("#", "")
+                input_data[input_key] = []
+                columns = next(reader)
+                continue
+
+            if mode == "light_sources":
+                row_dict = dict(zip(columns, row))
+                light_sources.append(row_dict)
+
+            elif mode == "power_meters":
+                row_dict = dict(zip(columns, row))
+                power_meters.append(row_dict)
+
+            elif mode == "input_data":
+                row_dict = dict(zip(columns, row))
+                input_data[input_key].append(row_dict)
+
+    try:
+        [ls.pop("") for ls in light_sources]
+    except KeyError:
+        pass
+    try:
+        [pm.pop("") for pm in power_meters]
+    except KeyError:
+        pass
+    light_sources = {ls["name"]: mm_schema.LightSource(**ls) for ls in light_sources}
+    power_meters = {pm["name"]: mm_schema.PowerMeter(**pm) for pm in power_meters}
+    power_measurements = [
+        mm_schema.PowerMeasurement(
+            # light_source=light_sources[pms.pop("light_source")],
+            # power_meter=power_meters[pms.pop("power_meter")],
+            **pms,
+        )
+        for pms in input_data["power_measurements"]
+    ]
+
+    return power_measurements
