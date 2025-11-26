@@ -287,7 +287,7 @@ def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> d
 
 def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sigma: float):
     """
-    given FI input images, this function return intensities for the corner and central regions
+    given FI input images, this function returns intensities for the corner and central regions
     and their ratio over the maximum intensity value of the array.
     Parameters
     ----------
@@ -391,18 +391,16 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             mm.logger.error(f"Channels {saturated_channels} are saturated")
             raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
 
-    key_measurements = _image_properties(
+    image_properties = _image_properties(
         images=dataset.input_data.field_illumination_images,
         corner_fraction=dataset.input_parameters.corner_fraction,
         sigma=dataset.input_parameters.sigma,
     )
 
-    key_measurements = mm_schema.FieldIlluminationKeyMeasurements(
-        name="field_illumination_key_measurements",
-        description="Key measurements of the field illumination channels",
-        table_data=key_measurements,
-        **key_measurements.to_dict(orient="list"),
-    )
+    key_measurements = [
+        mm_schema.FieldIlluminationKeyMeasurement(**km)
+        for km in image_properties.to_dict("records")
+    ]
 
     intensity_profiles = [
         mm.analyses.dict_to_table(
@@ -433,30 +431,41 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for image in dataset.input_data.field_illumination_images
     ]
 
-    roi_centers_of_mass = [
-        mm_schema.Roi(
-            name="Centers of mass ROIs",
-            description="Point ROI marking the centroids of the max intensity regions",
-            linked_references=image.data_reference,
-            points=[
-                mm_schema.Point(
-                    name=f"ch{c:02}_center",
-                    y=key_measurements.center_of_mass_y[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    x=key_measurements.center_of_mass_x[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    c=c,
-                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                    stroke_width=5,
-                )
-                for c in range(image.array_data.shape[-1])
-            ],
-        )
-        for image in dataset.input_data.field_illumination_images
-    ]
+    # roi_centers_of_mass = [
+    #     mm_schema.Roi(
+    #         name="Centers of mass ROIs",
+    #         description="Point ROI marking the centroids of the max intensity regions",
+    #         linked_references=image.data_reference,
+    #         points=[
+    #             mm_schema.Point(
+    #                 name=f"ch{km['channel_nr']:02}_center",
+    #                 y=km["center_of_mass_y"],
+    #                 x=km["center_of_mass_x"],
+    #                 c=km["channel_nr"],
+    #                 stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+    #                 fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+    #                 stroke_width=5,
+    #             )
+    #             for km in key_measurements if image.name == km{"image_name"}
+    #         ]
+    #         # points=[
+    #         #     mm_schema.Point(
+    #         #         name=f"ch{c:02}_center",
+    #         #         y=image_properties.center_of_mass_y[
+    #         #             image_properties.channel_name.index(image.channel_series.channels[c].name)
+    #         #         ],
+    #         #         x=image_properties.center_of_mass_x[
+    #         #             image_properties.channel_name.index(image.channel_series.channels[c].name)
+    #         #         ],
+    #         #         c=c,
+    #         #         stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+    #         #         fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+    #         #         stroke_width=5,
+    #         #     )
+    #         #     for c in range(image.array_data.shape[-1])
+    #         # ],
+    #     for image in dataset.input_data.field_illumination_images
+    # ]
 
     roi_centers_geometric = [
         mm_schema.Roi(
@@ -466,11 +475,11 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_measurements.center_geometric_y[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
+                    y=image_properties.center_geometric_y[
+                        image_properties.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_measurements.center_geometric_x[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
+                    x=image_properties.center_geometric_x[
+                        image_properties.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -491,11 +500,11 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_measurements.center_fitted_y[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
+                    y=image_properties.center_fitted_y[
+                        image_properties.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_measurements.center_fitted_x[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
+                    x=image_properties.center_fitted_x[
+                        image_properties.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
@@ -516,11 +525,11 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             points=[
                 mm_schema.Point(
                     name=f"ch{c:02}_center",
-                    y=key_measurements.max_intensity_pos_y[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
+                    y=image_properties.max_intensity_pos_y[
+                        image_properties.channel_name.index(image.channel_series.channels[c].name)
                     ],
-                    x=key_measurements.max_intensity_pos_x[
-                        key_measurements.channel_name.index(image.channel_series.channels[c].name)
+                    x=image_properties.max_intensity_pos_x[
+                        image_properties.channel_name.index(image.channel_series.channels[c].name)
                     ],
                     c=c,
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
