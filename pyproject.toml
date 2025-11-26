@@ -53,7 +53,7 @@ numpy = "^2"
 scikit-image = "^0"
 scipy = "^1"
 pandas = "^2"
-microscopemetrics-schema = { git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev" }
+microscopemetrics-schema = { git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev_km_asrows" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8"
@@ -79,7 +79,7 @@ style = "pep440"
 strict = true
 
 [tool.pytest.ini_options]
-addopts = "--hypothesis-show-statistics --hypothesis-profile=dev --workers=auto"
+addopts = "--hypothesis-show-statistics --hypothesis-profile=pre_release --workers=auto"
 testpaths = [
     "tests"
 ]
