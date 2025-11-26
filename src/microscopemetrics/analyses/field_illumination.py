@@ -431,62 +431,45 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
         for image in dataset.input_data.field_illumination_images
     ]
 
-    # roi_centers_of_mass = [
-    #     mm_schema.Roi(
-    #         name="Centers of mass ROIs",
-    #         description="Point ROI marking the centroids of the max intensity regions",
-    #         linked_references=image.data_reference,
-    #         points=[
-    #             mm_schema.Point(
-    #                 name=f"ch{km['channel_nr']:02}_center",
-    #                 y=km["center_of_mass_y"],
-    #                 x=km["center_of_mass_x"],
-    #                 c=km["channel_nr"],
-    #                 stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-    #                 fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-    #                 stroke_width=5,
-    #             )
-    #             for km in key_measurements if image.name == km{"image_name"}
-    #         ]
-    #         # points=[
-    #         #     mm_schema.Point(
-    #         #         name=f"ch{c:02}_center",
-    #         #         y=image_properties.center_of_mass_y[
-    #         #             image_properties.channel_name.index(image.channel_series.channels[c].name)
-    #         #         ],
-    #         #         x=image_properties.center_of_mass_x[
-    #         #             image_properties.channel_name.index(image.channel_series.channels[c].name)
-    #         #         ],
-    #         #         c=c,
-    #         #         stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-    #         #         fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-    #         #         stroke_width=5,
-    #         #     )
-    #         #     for c in range(image.array_data.shape[-1])
-    #         # ],
-    #     for image in dataset.input_data.field_illumination_images
-    # ]
-
-    roi_centers_geometric = [
+    roi_centers_of_mass = [
         mm_schema.Roi(
-            name="Geometric centers ROIs",
+            name="Centers of mass ROIs",
             description="Point ROI marking the centroids of the max intensity regions",
             linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
-                    name=f"ch{c:02}_center",
-                    y=image_properties.center_geometric_y[
-                        image_properties.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    x=image_properties.center_geometric_x[
-                        image_properties.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    c=c,
+                    name=f"ch{km['channel_nr']:02}_mass_center",
+                    y=km["center_of_mass_y"],
+                    x=km["center_of_mass_x"],
+                    c=km["channel_nr"],
                     stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[-1])
+                for km in key_measurements
+                if km["image_name"] == image.name
+            ],
+        )
+        for image in dataset.input_data.field_illumination_images
+    ]
+
+    roi_centers_geometric = [
+        mm_schema.Roi(
+            name="Centers of mass ROIs",
+            description="Point ROI marking the geometric center of the max intensity regions",
+            linked_references=image.data_reference,
+            points=[
+                mm_schema.Point(
+                    name=f"ch{km['channel_nr']:02}_geometric_center",
+                    y=km["center_geometric_y"],
+                    x=km["center_geometric_x"],
+                    c=km["channel_nr"],
+                    stroke_color={"r": 0, "g": 0, "b": 255, "alpha": 200},
+                    fill_color={"r": 0, "g": 0, "b": 255, "alpha": 200},
+                    stroke_width=5,
+                )
+                for km in key_measurements
+                if km["image_name"] == image.name
             ],
         )
         for image in dataset.input_data.field_illumination_images
@@ -494,24 +477,21 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
 
     roi_centers_fitted = [
         mm_schema.Roi(
-            name="Fitted centers ROIs",
-            description="Point ROI marking the centroids of the max intensity regions",
+            name="Centers of mass ROIs",
+            description="Point ROI marking the center of the fitted function",
             linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
-                    name=f"ch{c:02}_center",
-                    y=image_properties.center_fitted_y[
-                        image_properties.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    x=image_properties.center_fitted_x[
-                        image_properties.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    c=c,
-                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    name=f"ch{km['channel_nr']:02}_fitted_center",
+                    y=km["center_fitted_y"],
+                    x=km["center_fitted_x"],
+                    c=km["channel_nr"],
+                    stroke_color={"r": 0, "g": 255, "b": 0, "alpha": 200},
+                    fill_color={"r": 0, "g": 255, "b": 0, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[-1])
+                for km in key_measurements
+                if km["image_name"] == image.name
             ],
         )
         for image in dataset.input_data.field_illumination_images
@@ -519,24 +499,21 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
 
     roi_centers_max_intensity = [
         mm_schema.Roi(
-            name="Max intensity ROIs",
-            description="Point ROI marking the centroids of the max intensity regions",
+            name="Centers of mass ROIs",
+            description="Point ROI marking the max intensity",
             linked_references=image.data_reference,
             points=[
                 mm_schema.Point(
-                    name=f"ch{c:02}_center",
-                    y=image_properties.max_intensity_pos_y[
-                        image_properties.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    x=image_properties.max_intensity_pos_x[
-                        image_properties.channel_name.index(image.channel_series.channels[c].name)
-                    ],
-                    c=c,
-                    stroke_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
-                    fill_color={"r": 255, "g": 0, "b": 0, "alpha": 200},
+                    name=f"ch{km['channel_nr']:02}_max_intensity_center",
+                    y=km["max_intensity_pos_y"],
+                    x=km["max_intensity_pos_x"],
+                    c=km["channel_nr"],
+                    stroke_color={"r": 150, "g": 0, "b": 150, "alpha": 200},
+                    fill_color={"r": 150, "g": 0, "b": 150, "alpha": 200},
                     stroke_width=5,
                 )
-                for c in range(image.array_data.shape[-1])
+                for km in key_measurements
+                if km["image_name"] == image.name
             ],
         )
         for image in dataset.input_data.field_illumination_images
@@ -549,16 +526,17 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
             linked_references=image.data_reference,
             masks=[
                 mm_schema.Mask(
-                    name=f"ch{c:02}_center_region",
-                    x=0,
+                    name=f"ch{km['channel_nr']:02}_center_region",
                     y=0,
-                    c=c,
+                    x=0,
+                    c=km["channel_nr"],
                     mask=mm.analyses.numpy_to_mm_image(
                         array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
                     ),
-                    fill_color={"r": 255, "g": 200, "b": 60, "alpha": 128},
+                    fill_color={"r": 150, "g": 0, "b": 150, "alpha": 200},
                 )
-                for c in range(image.array_data.shape[-1])
+                for km in key_measurements
+                if km["image_name"] == image.name
             ],
         )
         for image in dataset.input_data.field_illumination_images
