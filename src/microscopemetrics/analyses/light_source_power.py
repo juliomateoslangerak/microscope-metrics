@@ -167,7 +167,7 @@ def _compute_stability(measurements: pd.DataFrame) -> Dict:
 def _compute_light_source_power_key_measurements(
     power_measurements: List[mm_schema.PowerMeasurement],
     input_parameters: mm_schema.LightSourcePowerInputParameters,
-) -> mm_schema.LightSourcePowerKeyMeasurements:
+) -> List[mm_schema.LightSourcePowerKeyMeasurement]:
     power_measurement_df = pd.DataFrame.from_records(power_measurements)
 
     # We change the datetime to microssecond precision to avoid issues when converting to XSD later
@@ -308,12 +308,7 @@ def _compute_light_source_power_key_measurements(
 
                 key_measurements.append(subset_key_measurements)
 
-    key_measurements = {
-        k: list(v)
-        for k, v in zip(key_measurements[0], zip(*[d.values() for d in key_measurements]))
-    }
-
-    return mm_schema.LightSourcePowerKeyMeasurements(**key_measurements)
+    return [mm_schema.LightSourcePowerKeyMeasurement(**km) for km in key_measurements]
 
 
 def analyse_light_source_power(dataset: mm_schema.LightSourcePowerDataset) -> bool:
