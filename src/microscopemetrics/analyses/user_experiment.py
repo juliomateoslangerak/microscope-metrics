@@ -245,7 +245,7 @@ def _get_fft_images(
 
 def _get_key_measurements(
     dataset: mm_schema.UserExperimentDataset,
-) -> mm_schema.UserExperimentKeyMeasurements:
+) -> mm_schema.UserExperimentKeyMeasurement:
     pass
 
 
