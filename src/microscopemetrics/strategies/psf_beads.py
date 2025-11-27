@@ -211,9 +211,7 @@ def st_psf_beads_test_data(
         "out_of_focus_bead_positions": [],
         "clustering_bead_positions": [],
         "applied_sigmas": [],
-        "min_distance_z": [],
-        "min_distance_y": [],
-        "min_distance_x": [],
+        "min_distance": [],
         "signal": [],
         "background": [],
         "do_noise": [],
@@ -228,8 +226,13 @@ def st_psf_beads_test_data(
 
     dtype = draw(dtype)
 
-    min_distance_x = min_distance_y = draw(min_distance)
-    min_distance_z = min_distance_x // 2
+    # Microscope-metrics estimates the min distance as twice the min_distance
+    # declared in the input data. Logic being that this distance is declared as
+    # times the FWHM and so, if a correct nyquist is used, double the number of pixels.
+    # As for the z min distance, we just take the ratio z-fwhm and xy-fwhm of 3
+    min_distance = draw(min_distance)
+    min_distance_x = min_distance_y = 2 * min_distance
+    min_distance_z = min_distance_x // 3
 
     for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
@@ -288,9 +291,7 @@ def st_psf_beads_test_data(
         output["out_of_focus_bead_positions"].append(out_of_focus_bead_positions)
         output["clustering_bead_positions"].append(clustering_bead_positions)
         output["applied_sigmas"].append(applied_sigmas)
-        output["min_distance_z"].append(min_distance_z)
-        output["min_distance_y"].append(min_distance_y)
-        output["min_distance_x"].append(min_distance_x)
+        output["min_distance"].append(min_distance)
         output["signal"].append(_signal)
         output["background"].append(_background)
         output["do_noise"].append(do_noise)
@@ -315,7 +316,15 @@ def st_psf_beads_dataset(
         )
         for i, image in enumerate(test_data.pop("images"))
     ]
-
+    # Setting min_distance
+    psf_beads_unprocessed_dataset.input_parameters.min_distance = test_data["min_distance"][0]
+    # Setting the sigmas
+    psf_beads_unprocessed_dataset.input_parameters.sigma_min = (
+        test_data["applied_sigmas"][0][0][0] - 0.5
+    )
+    psf_beads_unprocessed_dataset.input_parameters.sigma_max = (
+        test_data["applied_sigmas"][-1][-1][-1] + 1.0
+    )
     # Setting the bit depth to the data type of the image
     image_dtype = {
         a.array_data.dtype for a in psf_beads_unprocessed_dataset.input_data.psf_beads_images

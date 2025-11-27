@@ -128,7 +128,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_distance_y"
+        "min_distance"
     ][0]
 
     psf_beads.analyse_psf_beads(psf_beads_dataset)
@@ -161,7 +161,7 @@ def test_psf_beads_analysis_no_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_distance_y"
+        "min_distance"
     ][0]
     # Should raise AnalysisError
     with pytest.raises(AnalysisError):
@@ -187,7 +187,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_distance_y"
+        "min_distance"
     ][0]
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
