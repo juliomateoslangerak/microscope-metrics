@@ -135,8 +135,8 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 
     expected = sum(len(im_vbp) for im_vbp in expected_output["valid_bead_positions"])
 
-    for measured in psf_beads_dataset.output.key_measurements.considered_valid_count:
-        assert measured == expected
+    for km in psf_beads_dataset.output.key_measurements:
+        assert km["considered_valid_count"] == expected
 
 
 @given(
@@ -192,8 +192,8 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
 
-    for measured in psf_beads_dataset.output.key_measurements.considered_lateral_edge_count:
-        assert measured == expected
+    for measured_km in psf_beads_dataset.output.key_measurements:
+        assert measured_km["considered_lateral_edge_count"] == expected
 
 
 @given(
@@ -217,8 +217,8 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 
     expected = sum(len(im_ofbp) for im_ofbp in expected_output["out_of_focus_bead_positions"])
 
-    for measured in psf_beads_dataset.output.key_measurements.considered_axial_edge_count:
-        assert measured == expected
+    for measured_km in psf_beads_dataset.output.key_measurements:
+        assert measured_km["considered_axial_edge_count"] == expected
 
 
 @given(
@@ -258,8 +258,8 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
 
     expected = sum(len(img_cbp) for img_cbp in expected_output["clustering_bead_positions"])
 
-    for measured in psf_beads_dataset.output.key_measurements.considered_intensity_outlier_count:
-        assert measured == expected
+    for measured_km in psf_beads_dataset.output.key_measurements:
+        assert measured_km["considered_intensity_outlier_count"] == expected
 
 
 @given(
@@ -303,6 +303,6 @@ def test_psf_beads_analysis_noisy_beads(dataset):
 
     expected = sum(len(im_vbp) for im_vbp in expected_output["valid_bead_positions"])
 
-    for measured in psf_beads_dataset.output.key_measurements.considered_valid_count:
+    for measured_km in psf_beads_dataset.output.key_measurements:
         # We just have to hope not to detect too many
-        assert measured <= expected
+        assert measured_km["considered_valid_count"] <= expected

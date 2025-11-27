@@ -44,12 +44,10 @@ def test_field_illumination_analysis_centers_geometric(dataset):
     expected_output = dataset["expected_output"]
     field_illumination.analyse_field_illumination(field_illumination_dataset)
 
-    measured_centers = list(
-        zip(
-            field_illumination_dataset.output.key_measurements.center_geometric_y_relative,
-            field_illumination_dataset.output.key_measurements.center_geometric_x_relative,
-        )
-    )
+    measured_centers = [
+        (km["center_geometric_y_relative"], km["center_geometric_x_relative"])
+        for km in field_illumination_dataset.output.key_measurements
+    ]
     expected_centers = list(
         zip(
             [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
@@ -82,12 +80,10 @@ def test_field_illumination_analysis_centers_of_mass(dataset):
     expected_output = dataset["expected_output"]
     field_illumination.analyse_field_illumination(field_illumination_dataset)
 
-    measured_centers_weighted = list(
-        zip(
-            field_illumination_dataset.output.key_measurements.center_of_mass_y_relative,
-            field_illumination_dataset.output.key_measurements.center_of_mass_x_relative,
-        )
-    )
+    measured_centers_weighted = [
+        (km["center_of_mass_y_relative"], km["center_of_mass_x_relative"])
+        for km in field_illumination_dataset.output.key_measurements
+    ]
     expected_centers = list(
         zip(
             [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
@@ -113,12 +109,10 @@ def test_field_illumination_analysis_max_intensity_positions(dataset):
     expected_output = dataset["expected_output"]
     field_illumination.analyse_field_illumination(field_illumination_dataset)
 
-    measured_max_intensity_positions = list(
-        zip(
-            field_illumination_dataset.output.key_measurements.max_intensity_pos_y_relative,
-            field_illumination_dataset.output.key_measurements.max_intensity_pos_x_relative,
-        )
-    )
+    measured_max_intensity_positions = [
+        (km["max_intensity_pos_y_relative"], km["max_intensity_pos_x_relative"])
+        for km in field_illumination_dataset.output.key_measurements
+    ]
     expected_centers = list(
         zip(
             [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
@@ -144,12 +138,10 @@ def test_field_illumination_analysis_centers_fitted(dataset):
     expected_output = dataset["expected_output"]
     field_illumination.analyse_field_illumination(field_illumination_dataset)
 
-    measured_centers_fitted = list(
-        zip(
-            field_illumination_dataset.output.key_measurements.center_fitted_y_relative,
-            field_illumination_dataset.output.key_measurements.center_fitted_x_relative,
-        )
-    )
+    measured_centers_fitted = [
+        (km["center_fitted_y_relative"], km["center_fitted_x_relative"])
+        for km in field_illumination_dataset.output.key_measurements
+    ]
     expected_centers = list(
         zip(
             [e_c for im in expected_output["centers_generated_y_relative"] for e_c in im],
