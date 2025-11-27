@@ -531,7 +531,9 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     x=0,
                     c=km["channel_nr"],
                     mask=mm.analyses.numpy_to_mm_image(
-                        array=_get_center_region_mask(image.array_data[0, 0, :, :, c])
+                        array=_get_center_region_mask(
+                            image.array_data[0, 0, :, :, km["channel_nr"]]
+                        )
                     ),
                     fill_color={"r": 150, "g": 0, "b": 150, "alpha": 200},
                 )
