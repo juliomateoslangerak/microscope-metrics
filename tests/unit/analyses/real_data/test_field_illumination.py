@@ -5,7 +5,7 @@ from microscopemetrics_schema.datamodel import (
     FieldIlluminationDataset,
     FieldIlluminationInputData,
     FieldIlluminationInputParameters,
-    FieldIlluminationKeyMeasurements,
+    FieldIlluminationKeyMeasurement,
     FieldIlluminationOutput,
     HomogeneousField,
 )
@@ -36,7 +36,7 @@ def pytest_generate_tests(metafunc):
             "input_parameters_target_class": FieldIlluminationInputParameters,
             "input_data_target_class": FieldIlluminationInputData,
             "output_target_class": FieldIlluminationOutput,
-            "key_measurements_target_class": FieldIlluminationKeyMeasurements,
+            "key_measurements_target_class": FieldIlluminationKeyMeasurement,
             "sample_target_class": HomogeneousField,
             "input_images_field": "field_illumination_images",
             # "do_generate_missing_key_measurements": True,

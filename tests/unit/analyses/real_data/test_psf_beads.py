@@ -6,7 +6,7 @@ from microscopemetrics_schema.datamodel import (
     PSFBeadsDataset,
     PSFBeadsInputData,
     PSFBeadsInputParameters,
-    PSFBeadsKeyMeasurements,
+    PSFBeadsKeyMeasurement,
     PSFBeadsOutput,
 )
 
@@ -36,7 +36,7 @@ def pytest_generate_tests(metafunc):
             "input_parameters_target_class": PSFBeadsInputParameters,
             "input_data_target_class": PSFBeadsInputData,
             "output_target_class": PSFBeadsOutput,
-            "key_measurements_target_class": PSFBeadsKeyMeasurements,
+            "key_measurements_target_class": PSFBeadsKeyMeasurement,
             "sample_target_class": PSFBeads,
             "input_images_field": "psf_beads_images",
             # "do_generate_missing_key_measurements": True,

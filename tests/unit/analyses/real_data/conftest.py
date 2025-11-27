@@ -5,6 +5,7 @@ This file contains fixtures to create various invariable schema dataclasses for 
 import datetime
 import pathlib
 import warnings
+from typing import List
 
 import imageio.v3 as iio
 import microscopemetrics_schema.datamodel as mm_schema
@@ -49,9 +50,8 @@ def gen_acquisition_datetime() -> str:
 
 def generate_missing_key_measurements(
     dataset: mm_schema.MetricsDataset,
-) -> mm_schema.KeyMeasurements:
+) -> List[mm_schema.KeyMeasurement]:
     dataset = analyse_dataset(dataset)
-    dataset.output.key_measurements.table_data = None
     return dataset.output.key_measurements
 
 

@@ -1,3 +1,5 @@
+from typing import List
+
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pytest
@@ -57,8 +59,8 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
 
 
 def assert_key_measurements_equality(
-    expected: mm_schema.KeyMeasurements,
-    actual: mm_schema.KeyMeasurements,
+    expected: List[mm_schema.KeyMeasurement],
+    actual: List[mm_schema.KeyMeasurement],
 ):
     """Assert that two KeyMeasurements objects are equal, ignoring oddities."""
 
@@ -78,20 +80,28 @@ def assert_key_measurements_equality(
                 return True
         return act == exp
 
-    for key, expected_measurement in expected.items():
-        if key in [
-            "id",
-            "name",
-            "description",
-            "data_reference",
-            "linked_references",
-            "channel_name",
-        ]:
-            continue
-        if not expected_measurement:  # Skip measurements with no expected value
-            continue
-        if not assert_item_equality(expected_measurement, actual[key]):
-            raise AssertionError(
-                f"Key measurement '{key}' does not match: expected {expected_measurement}, got {actual[key]}"
-            )
+    if isinstance(expected, list) and isinstance(actual, list):
+        for exp, act in zip(expected, actual):
+            assert_key_measurements_equality(exp, act)
+
+    elif isinstance(expected, dict) and isinstance(actual, dict):
+        for key, expected_measurement in expected.items():
+            if key in [
+                "id",
+                "name",
+                "description",
+                "data_reference",
+                "linked_references",
+                "channel_name",
+            ]:
+                continue
+            if not expected_measurement:  # Skip measurements with no expected value
+                continue
+            if not assert_item_equality(expected_measurement, actual[key]):
+                raise AssertionError(
+                    f"Key measurement '{key}' does not match: expected {expected_measurement}, got {actual[key]}"
+                )
+    else:
+        raise AssertionError(f"Key measurements is not a list or dict: {expected}, {actual}")
+
     return True  # All key measurements match
