@@ -1,3 +1,4 @@
+import contextlib
 import random
 
 import numpy as np
@@ -318,13 +319,14 @@ def st_psf_beads_dataset(
     ]
     # Setting min_distance
     psf_beads_unprocessed_dataset.input_parameters.min_distance = test_data["min_distance"][0]
-    # Setting the sigmas
-    psf_beads_unprocessed_dataset.input_parameters.sigma_min = (
-        test_data["applied_sigmas"][0][0][0] - 0.5
-    )
-    psf_beads_unprocessed_dataset.input_parameters.sigma_max = (
-        test_data["applied_sigmas"][-1][-1][-1] + 1.0
-    )
+    # Setting the sigmas if available
+    with contextlib.suppress(IndexError):
+        psf_beads_unprocessed_dataset.input_parameters.sigma_min = (
+            test_data["applied_sigmas"][0][0][0] - 0.5
+        )
+        psf_beads_unprocessed_dataset.input_parameters.sigma_max = (
+            test_data["applied_sigmas"][-1][-1][-1] + 1.0
+        )
     # Setting the bit depth to the data type of the image
     image_dtype = {
         a.array_data.dtype for a in psf_beads_unprocessed_dataset.input_data.psf_beads_images
