@@ -330,10 +330,12 @@ def st_psf_beads_dataset(
     # Setting the sigmas if available
     with contextlib.suppress(IndexError):
         psf_beads_unprocessed_dataset.input_parameters.sigma_min = (
-            test_data["applied_sigmas"][0][0][0] - 0.5
+            min(sigma for image in test_data["applied_sigmas"] for dim in image for sigma in dim)
+            - 0.5
         )
         psf_beads_unprocessed_dataset.input_parameters.sigma_max = (
-            test_data["applied_sigmas"][-1][-1][-1] + 1.0
+            max(sigma for image in test_data["applied_sigmas"] for dim in image for sigma in dim)
+            + 2.0
         )
     # Setting the bit depth to the data type of the image
     image_dtype = {
