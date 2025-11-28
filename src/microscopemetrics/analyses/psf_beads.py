@@ -510,13 +510,15 @@ def _find_beads(
     channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
-    min_distance: float,
+    min_distance_px: float,
     snr_threshold: float,
 ):
     """
     This function finds the beads in a channel by applying a Gaussian filter and then finding the local maxima.
     """
     mm.logger.debug("Finding beads in channel...")
+
+    half_min_distance_px = min_distance_px // 2
 
     # TODO: Review this max number of beads and how to implement it
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
@@ -576,10 +578,10 @@ def _find_beads(
     for pos in positions_all:
         if any(
             [
-                0 <= pos[0] < min_distance,
-                0 <= pos[1] < min_distance,
-                channel_aip.shape[0] - min_distance <= pos[0] < channel_aip.shape[0],
-                channel_aip.shape[1] - min_distance <= pos[1] < channel_aip.shape[1],
+                0 <= pos[0] < half_min_distance_px + 1,
+                0 <= pos[1] < half_min_distance_px + 1,
+                channel_aip.shape[0] - half_min_distance_px - 1 <= pos[0] < channel_aip.shape[0],
+                channel_aip.shape[1] - half_min_distance_px - 1 <= pos[1] < channel_aip.shape[1],
             ]
         ):
             positions_edge.append(pos)
@@ -591,7 +593,7 @@ def _find_beads(
         p=2,
     )
     np.fill_diagonal(dist_matrix, np.inf)
-    proximity_mask = dist_matrix < min_distance
+    proximity_mask = dist_matrix < min_distance_px
     proximity_pairs = np.argwhere(proximity_mask)
     proximity_indexes = {i for i, _ in proximity_pairs}
     positions_proximity = [positions_all[i] for i in proximity_indexes]
@@ -629,14 +631,20 @@ def _find_beads(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
 
-    def get_bead_image(row, ch, md):
+    def get_bead_image(row, ch, hmd):
         return ch[
             :,
-            int(max(0, (row["center_y"] - md))) : int(min(ch.shape[1], (row["center_y"] + md + 1))),
-            int(max(0, (row["center_x"] - md))) : int(min(ch.shape[2], (row["center_x"] + md + 1))),
+            int(max(0, (row["center_y"] - hmd))) : int(
+                min(ch.shape[1], (row["center_y"] + hmd + 1))
+            ),
+            int(max(0, (row["center_x"] - hmd))) : int(
+                min(ch.shape[2], (row["center_x"] + hmd + 1))
+            ),
         ]
 
-    positions_df["beads"] = positions_df.apply(get_bead_image, axis=1, args=(channel, min_distance))
+    positions_df["beads"] = positions_df.apply(
+        get_bead_image, axis=1, args=(channel, half_min_distance_px)
+    )
     positions_df["channel_snr_estimate"] = snr_estimate
 
     return positions_df
@@ -646,7 +654,7 @@ def _process_channel(
     channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
-    min_bead_distance: float,
+    min_distance_px: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
@@ -656,7 +664,7 @@ def _process_channel(
         channel=channel,
         sigma_min=sigma_min,
         sigma_max=sigma_max,
-        min_distance=min_bead_distance,
+        min_distance_px=min_distance_px,
         snr_threshold=snr_threshold,
     )
 
@@ -700,7 +708,7 @@ def _process_image(
     image: mm_schema.Image,
     sigma_min: float,
     sigma_max: float,
-    min_bead_distance: float,
+    min_distance_px: float,
     snr_threshold: float,
     fitting_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
@@ -727,7 +735,7 @@ def _process_image(
             channel=image[..., ch],
             sigma_min=sigma_min,
             sigma_max=sigma_max,
-            min_bead_distance=min_bead_distance,
+            min_distance_px=min_distance_px,
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
             intensity_robust_z_score_threshold=intensity_robust_z_score_threshold,
@@ -824,7 +832,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     # Containers for input data and input parameters
     images = {}
     voxel_sizes_micron = {}
-    min_bead_distance = _estimate_min_bead_distance(dataset)
+    min_distance_px = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input_parameters.snr_threshold
     fitting_r2_threshold = dataset.input_parameters.fitting_r2_threshold
 
@@ -893,7 +901,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             image=image,
             sigma_min=dataset.input_parameters.sigma_min,
             sigma_max=dataset.input_parameters.sigma_max,
-            min_bead_distance=min_bead_distance,
+            min_distance_px=min_distance_px,
             snr_threshold=snr_threshold,
             fitting_r2_threshold=fitting_r2_threshold,
             intensity_robust_z_score_threshold=dataset.input_parameters.intensity_robust_z_score_threshold,

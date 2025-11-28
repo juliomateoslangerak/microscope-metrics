@@ -33,9 +33,9 @@ def _gen_psf_beads_image(
     nr_edge_beads: int,
     nr_out_of_focus_beads: int,
     nr_clustering_beads: int,
-    min_distance_z: int,
-    min_distance_y: int,
-    min_distance_x: int,
+    min_distance_z_px: int,
+    min_distance_y_px: int,
+    min_distance_x_px: int,
     sigma_z: float,
     sigma_y: float,
     sigma_x: float,
@@ -69,12 +69,15 @@ def _gen_psf_beads_image(
             nr_valid_beads + nr_out_of_focus_beads + nr_clustering_beads
         ):
             z_pos = z_image_shape // 2
-            y_pos = random.randint(min_distance_y + 2, y_image_shape - min_distance_y - 2)
-            x_pos = random.randint(min_distance_x + 2, x_image_shape - min_distance_x - 2)
+            y_pos = random.randint(min_distance_y_px + 2, y_image_shape - min_distance_y_px - 2)
+            x_pos = random.randint(min_distance_x_px + 2, x_image_shape - min_distance_x_px - 2)
             if not non_edge_bead_positions:
                 non_edge_bead_positions.append((z_pos, y_pos, x_pos))
             for pos in non_edge_bead_positions:
-                if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
+                if (
+                    abs(pos[1] - y_pos) <= min_distance_y_px
+                    and abs(pos[2] - x_pos) <= min_distance_x_px
+                ):
                     break
                 else:
                     continue
@@ -85,20 +88,23 @@ def _gen_psf_beads_image(
             z_pos = z_image_shape // 2
             y_pos = random.choice(
                 [
-                    random.randint(5, min_distance_y // 2 - 2),
-                    random.randint(y_image_shape - min_distance_y // 2 + 2, y_image_shape - 5),
+                    random.randint(5, min_distance_y_px // 2 - 2),
+                    random.randint(y_image_shape - min_distance_y_px // 2 + 2, y_image_shape - 5),
                 ]
             )
             x_pos = random.choice(
                 [
-                    random.randint(5, min_distance_x // 2 - 2),
-                    random.randint(x_image_shape - min_distance_x // 2 + 2, x_image_shape - 5),
+                    random.randint(5, min_distance_x_px // 2 - 2),
+                    random.randint(x_image_shape - min_distance_x_px // 2 + 2, x_image_shape - 5),
                 ]
             )
             if not edge_bead_positions:
                 edge_bead_positions.append((z_pos, y_pos, x_pos))
             for pos in edge_bead_positions:
-                if abs(pos[1] - y_pos) <= min_distance_y and abs(pos[2] - x_pos) <= min_distance_x:
+                if (
+                    abs(pos[1] - y_pos) <= min_distance_y_px
+                    and abs(pos[2] - x_pos) <= min_distance_x_px
+                ):
                     break
                 else:
                     continue
@@ -110,8 +116,8 @@ def _gen_psf_beads_image(
             pos = (
                 random.choice(
                     [
-                        random.randint(3, min_distance_z - 2),
-                        random.randint(z_image_shape - min_distance_z + 2, z_image_shape - 4),
+                        random.randint(3, min_distance_z_px - 2),
+                        random.randint(z_image_shape - min_distance_z_px + 2, z_image_shape - 4),
                     ]
                 ),
                 pos[1],
@@ -199,7 +205,7 @@ def st_psf_beads_test_data(
     sigma_z=st.floats(min_value=1.4, max_value=1.7),
     sigma_x=st.floats(min_value=1.4, max_value=1.7),
     sigma_y=st.floats(min_value=1.4, max_value=1.7),
-    min_distance=st.just(20),
+    min_lateral_distance_factor=st.just(20),
     nr_valid_beads=st.integers(min_value=3, max_value=10),
     nr_edge_beads=st.integers(min_value=0, max_value=3),
     nr_out_of_focus_beads=st.integers(min_value=0, max_value=3),
@@ -212,7 +218,7 @@ def st_psf_beads_test_data(
         "out_of_focus_bead_positions": [],
         "clustering_bead_positions": [],
         "applied_sigmas": [],
-        "min_distance": [],
+        "min_lateral_distance_factor": [],
         "signal": [],
         "background": [],
         "do_noise": [],
@@ -231,9 +237,9 @@ def st_psf_beads_test_data(
     # declared in the input data. Logic being that this distance is declared as
     # times the FWHM and so, if a correct nyquist is used, double the number of pixels.
     # As for the z min distance, we just take the ratio z-fwhm and xy-fwhm of 3
-    min_distance = draw(min_distance)
-    min_distance_x = min_distance_y = 2 * min_distance
-    min_distance_z = min_distance_x // 3
+    min_lateral_distance_factor = draw(min_lateral_distance_factor)
+    min_distance_x_px = min_distance_y_px = 2 * min_lateral_distance_factor
+    min_distance_z_px = min_distance_x_px // 3
 
     for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
@@ -274,9 +280,9 @@ def st_psf_beads_test_data(
             nr_edge_beads=_nr_edge_beads,
             nr_out_of_focus_beads=_nr_out_of_focus_beads,
             nr_clustering_beads=_nr_clustering_beads,
-            min_distance_z=min_distance_z,
-            min_distance_y=min_distance_y,
-            min_distance_x=min_distance_x,
+            min_distance_z_px=min_distance_z_px,
+            min_distance_y_px=min_distance_y_px,
+            min_distance_x_px=min_distance_x_px,
             sigma_z=_sigma_z,
             sigma_y=_sigma_y,
             sigma_x=_sigma_x,
@@ -292,7 +298,7 @@ def st_psf_beads_test_data(
         output["out_of_focus_bead_positions"].append(out_of_focus_bead_positions)
         output["clustering_bead_positions"].append(clustering_bead_positions)
         output["applied_sigmas"].append(applied_sigmas)
-        output["min_distance"].append(min_distance)
+        output["min_lateral_distance_factor"].append(min_lateral_distance_factor)
         output["signal"].append(_signal)
         output["background"].append(_background)
         output["do_noise"].append(do_noise)
@@ -318,7 +324,9 @@ def st_psf_beads_dataset(
         for i, image in enumerate(test_data.pop("images"))
     ]
     # Setting min_distance
-    psf_beads_unprocessed_dataset.input_parameters.min_distance = test_data["min_distance"][0]
+    psf_beads_unprocessed_dataset.input_parameters.min_lateral_distance_factor = test_data[
+        "min_lateral_distance_factor"
+    ][0]
     # Setting the sigmas if available
     with contextlib.suppress(IndexError):
         psf_beads_unprocessed_dataset.input_parameters.sigma_min = (

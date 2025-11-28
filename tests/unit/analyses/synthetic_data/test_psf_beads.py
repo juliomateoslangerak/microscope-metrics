@@ -110,7 +110,7 @@ def test_psf_beads_analysis_run(dataset):
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
-            min_distance=st.just(20),
+            min_lateral_distance_factor=st.just(20),
             nr_valid_beads=st.integers(min_value=1, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
@@ -128,7 +128,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_distance"
+        "min_lateral_distance_factor"
     ][0]
 
     psf_beads.analyse_psf_beads(psf_beads_dataset)
@@ -147,7 +147,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
             x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             dtype=st.just(np.uint16),
-            min_distance=st.just(20),
+            min_lateral_distance_factor=st.just(20),
             signal=st.just(0.01),
             background=st.just(0.005),
             nr_valid_beads=st.just(0),
@@ -161,7 +161,7 @@ def test_psf_beads_analysis_no_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_distance"
+        "min_lateral_distance_factor"
     ][0]
     # Should raise AnalysisError
     with pytest.raises(AnalysisError):
@@ -187,7 +187,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_distance"
+        "min_lateral_distance_factor"
     ][0]
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
