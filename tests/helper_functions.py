@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Union
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
@@ -59,8 +59,8 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
 
 
 def assert_key_measurements_equality(
-    expected: List[mm_schema.KeyMeasurement],
-    actual: List[mm_schema.KeyMeasurement],
+    expected: List[Union[Dict, mm_schema.KeyMeasurement]],
+    actual: List[Union[Dict, mm_schema.KeyMeasurement]],
 ):
     """Assert that two KeyMeasurements objects are equal, ignoring oddities."""
 
@@ -69,15 +69,18 @@ def assert_key_measurements_equality(
             if len(exp) != len(act):
                 raise ValueError(f"Expected {len(exp)} items, got {len(act)}")
             for e, a in zip(exp, act):
-                assert_item_equality(e, a)
-                return True
+                if not assert_item_equality(e, a):
+                    return False
+            return True
         if isinstance(act, float):
-            if np.isnan(act) == np.isnan(exp):
+            # Handle NaN comparisons - both must be NaN or both must be non-NaN
+            if np.isnan(act) and np.isnan(exp):
                 return True
             # linkml_runtime.utils.yamlutils.extended_float is used to handle floats
             # when read from a yaml file, while the analyzed output is a float
-            if exp.real == act:
+            if hasattr(exp, "real") and exp.real == act:
                 return True
+            return exp == act
         return act == exp
 
     if isinstance(expected, list) and isinstance(actual, list):
