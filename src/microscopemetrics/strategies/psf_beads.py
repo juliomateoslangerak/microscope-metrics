@@ -328,7 +328,7 @@ def st_psf_beads_dataset(
         "min_lateral_distance_factor"
     ][0]
     # Setting the sigmas if available
-    with contextlib.suppress(IndexError):
+    with contextlib.suppress(ValueError):
         psf_beads_unprocessed_dataset.input_parameters.sigma_min = (
             min(sigma for image in test_data["applied_sigmas"] for dim in image for sigma in dim)
             - 0.5
