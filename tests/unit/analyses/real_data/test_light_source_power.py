@@ -5,7 +5,7 @@ from microscopemetrics_schema.datamodel import (
     LightSourcePowerDataset,
     LightSourcePowerInputData,
     LightSourcePowerInputParameters,
-    LightSourcePowerKeyMeasurements,
+    LightSourcePowerKeyMeasurement,
     LightSourcePowerOutput,
 )
 
@@ -35,7 +35,7 @@ def pytest_generate_tests(metafunc):
             "input_parameters_target_class": LightSourcePowerInputParameters,
             "input_data_target_class": LightSourcePowerInputData,
             "output_target_class": LightSourcePowerOutput,
-            "key_measurements_target_class": LightSourcePowerKeyMeasurements,
+            "key_measurements_target_class": LightSourcePowerKeyMeasurement,
             "input_non_images_field": "power_measurements",
             "do_generate_missing_key_measurements": True,
             "do_generate_missing_input_parameters": True,

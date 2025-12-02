@@ -157,7 +157,7 @@ def build_dataset_from_dir(
 
     optional_args = {}
     if sample is not None:
-        optional_args["sample"] = (sample or gen_sample(),)
+        optional_args["sample"] = sample or gen_sample()
 
     dataset = dataset_target_class(
         microscope=microscope or gen_microscope(),
