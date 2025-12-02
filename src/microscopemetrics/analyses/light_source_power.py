@@ -124,11 +124,11 @@ def _find_stability_subset(
 def _compute_basic_measurement(measurements: pd.DataFrame) -> Dict:
     return {
         "nr_of_measurements": len(measurements),
-        "power_mean_mw": measurements["power_mw"].mean().item(),
-        "power_median_mw": measurements["power_mw"].median().item(),
-        "power_std_mw": measurements["power_mw"].std().item(),
-        "power_min_mw": measurements["power_mw"].min().item(),
-        "power_max_mw": measurements["power_mw"].max().item(),
+        "power_mean_mw": measurements["power_mw"].mean(),
+        "power_median_mw": measurements["power_mw"].median(),
+        "power_std_mw": measurements["power_mw"].std(),
+        "power_min_mw": measurements["power_mw"].min(),
+        "power_max_mw": measurements["power_mw"].max(),
     }
 
 
