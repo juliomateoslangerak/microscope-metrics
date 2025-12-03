@@ -1,0 +1,6 @@
+outs:
+- md5: 15227dbe3a6949b10142d189b5461e96.dir
+  size: 25428
+  nfiles: 6
+  hash: md5
+  path: light_source_power_datasets
