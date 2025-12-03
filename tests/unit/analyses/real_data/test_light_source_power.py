@@ -38,11 +38,11 @@ def pytest_generate_tests(metafunc):
             "key_measurements_target_class": LightSourcePowerKeyMeasurement,
             "input_non_images_field": "power_measurements",
             "do_generate_missing_key_measurements": True,
-            "do_generate_missing_input_parameters": True,
+            # "do_generate_missing_input_parameters": True,
         }
     ],
 )
-def test_field_illumination(data_gen_args, dataset_dir):
+def test_light_source_power(data_gen_args, dataset_dir):
     dataset_tested = build_dataset_from_dir(
         dataset_dir=dataset_dir,
         **data_gen_args,

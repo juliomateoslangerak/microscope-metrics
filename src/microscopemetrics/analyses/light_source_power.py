@@ -124,11 +124,11 @@ def _find_stability_subset(
 def _compute_basic_measurement(measurements: pd.DataFrame) -> Dict:
     return {
         "nr_of_measurements": len(measurements),
-        "power_mean_mw": measurements["power_mw"].mean(),
-        "power_median_mw": measurements["power_mw"].median(),
-        "power_std_mw": measurements["power_mw"].std(),
-        "power_min_mw": measurements["power_mw"].min(),
-        "power_max_mw": measurements["power_mw"].max(),
+        "power_mean_mw": measurements["power_mw"].mean().item(),
+        "power_median_mw": measurements["power_mw"].median().item(),
+        "power_std_mw": measurements["power_mw"].std().item(),
+        "power_min_mw": measurements["power_mw"].min().item(),
+        "power_max_mw": measurements["power_mw"].max().item(),
     }
 
 
@@ -144,11 +144,11 @@ def _compute_linearity(measurements: pd.DataFrame) -> Dict:
         "power_linearity_end_datetime": measurements["acquisition_datetime"]
         .iloc[-1]
         .to_pydatetime(),
-        "power_linearity_slope": slope,
-        "power_linearity_intercept": intercept,
-        "power_linearity_coefficient_of_determination": r_value**2,
-        "power_linearity_p_value": p_value,
-        "power_linearity_std_err": std_err,
+        "power_linearity_slope": slope.item(),
+        "power_linearity_intercept": intercept.item(),
+        "power_linearity_coefficient_of_determination": (r_value**2).item(),
+        "power_linearity_p_value": p_value.item(),
+        "power_linearity_std_err": std_err.item(),
     }
 
 
@@ -161,7 +161,7 @@ def _compute_stability(measurements: pd.DataFrame) -> Dict:
     return {
         "stability_start_datetime": measurements["acquisition_datetime"].iloc[0].to_pydatetime(),
         "stability_end_datetime": measurements["acquisition_datetime"].iloc[-1].to_pydatetime(),
-        "power_stability": stability,
+        "power_stability": stability.item(),
     }
 
 
@@ -177,7 +177,7 @@ def _compute_light_source_power_key_measurements(
     ].astype("datetime64[us]")
 
     power_measurement_df["measuring_location"] = power_measurement_df["measuring_location"].apply(
-        lambda x: x["text"]
+        lambda x: x
     )
 
     key_measurements = []
