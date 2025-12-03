@@ -313,12 +313,9 @@ def _compute_light_source_power_key_measurements(
 
                 key_measurements.append(subset_key_measurements)
 
-    key_measurements = {
-        k: list(v)
-        for k, v in zip(key_measurements[0], zip(*[d.values() for d in key_measurements]))
-    }
+    key_measurements = [mm_schema.LightSourcePowerKeyMeasurement(**km) for km in key_measurements]
 
-    return mm_schema.LightSourcePowerKeyMeasurements(**key_measurements)
+    return key_measurements
 
 
 def analyse_light_source_power(dataset: mm_schema.LightSourcePowerDataset) -> bool:
