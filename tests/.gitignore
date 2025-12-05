@@ -1,0 +1,4 @@
+unit/.hypothesis
+unit/.coverage
+.coverage
+monkeytype.sqlite3
