@@ -62,6 +62,8 @@ tox = "^3"
 coverage = "^7"
 pytest-parallel = "^0.1.1"
 dvc = "^3"
+dvc-gdrive = "^3"
+pyOpenSSL = "^25"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25"

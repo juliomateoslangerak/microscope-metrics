@@ -1,4 +1,7 @@
 [core]
-    remote = my_remote
-['remote "my_remote"']
-    url = /run/media/julio/225e6802-f653-4336-bc7f-b87ab8f6600b/julio/microscopemetrics_test_data
+    remote = gdrive_remote
+['remote "gdrive_remote"']
+    url = gdrive://1kbJj9XbAQeeV-oNgONpKaNb9O7ksxMDD
+    gdrive_acknowledge_abuse = true
+    gdrive_client_id = 329159821578-l2bnu4md74v5isros0q4u0tus7dtghls.apps.googleusercontent.com
+    gdrive_client_secret = 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
