@@ -118,7 +118,7 @@ def test_psf_beads_analysis_run(dataset):
         ),
         unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(
             input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
-                fitting_r2_threshold=st.just(0.7),  # TODO: Remove this?
+                fitting_airy_r2_threshold=st.just(0.7),  # TODO: remove this at some point
                 intensity_robust_z_score_threshold=st.just(4.0),
             )
         ),
@@ -245,7 +245,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
             input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
                 # We want to be very permissive with the fitting or otherwise
                 # clustering beads will be thrown away.
-                fitting_r2_threshold=st.just(0.2),
+                fitting_airy_r2_threshold=st.just(0.2),
             )
         ),
     )
@@ -286,7 +286,7 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
             input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
                 # We want to be very permissive with the fitting or otherwise
                 # clustering beads will be thrown away.
-                fitting_r2_threshold=st.just(0.1),
+                fitting_airy_r2_threshold=st.just(0.1),
                 # intensity_robust_z_score_threshold=st.just(4.0),
                 # We want to limit the sigma range to avoid finding noise as beads.
                 sigma_min=st.just(1.1),
