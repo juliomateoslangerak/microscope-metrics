@@ -133,7 +133,7 @@ def _average_beads(
     # it has to be dropped from the dataframe before getting the properties
     average_beads_properties = average_beads_properties.dropna(subset=["average_bead"])
 
-    # If, after dropping image-channels without beads we keep nothing, we return
+    # If after dropping image-channels without beads we keep nothing, we return
     if average_beads_properties.empty:
         mm.logger.warning("No average beads were computed")
         return None, bead_profiles_z, bead_profiles_y, bead_profiles_x, None
@@ -169,7 +169,7 @@ def _average_beads(
             ],
         )
 
-        # We dont need the average bead arrays anymore
+        # We don't need the average bead arrays anymore
         average_beads_properties.drop("average_bead", axis=1, inplace=True)
 
         average_beads_properties = average_beads_properties.add_prefix("average_bead_")
@@ -339,7 +339,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
 
     reindex_bead_properties_df = bead_properties.reset_index()
 
-    # Add a all True column to count the total number of beads
+    # Add an all True column to count the total number of beads
     reindex_bead_properties_df["total_bead"] = True
 
     # We aggregate counts for each channel on beads according to their status
@@ -531,7 +531,7 @@ def _find_beads(
     background_std = channel[channel <= background_estimate].std()
     snr_estimate = (signal_estimate - background_estimate) / background_std
 
-    # If signal region is too large (>50%) or SNR is too low, channel is likely too noisy
+    # If the signal region is too large (>50%) or SNR is too low, the channel is likely too noisy
     if snr_estimate < snr_threshold:
         mm.logger.warning(
             f"Channel appears too noisy for reliable bead detection. Estimated SNR: {snr_estimate:.2f}. "
@@ -940,7 +940,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_profiles_y = _extract_profiles(bead_properties, "y")
     bead_profiles_x = _extract_profiles(bead_properties, "x")
 
-    # Calculate average beads, extract their profiles, and create average bead image
+    # Calculate average beads, extract their profiles, and create the average bead image
     (
         average_beads_properties,
         bead_profiles_z,
@@ -956,7 +956,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         source_images=dataset.input_data.psf_beads_images,
     )
 
-    # We don't need te bead arrays anymore
+    # We don't need the bead arrays anymore
     bead_properties.drop("beads", axis=1, inplace=True)
 
     # At this point we know if we found valid beads, and we raise an exception
