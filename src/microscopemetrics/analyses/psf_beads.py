@@ -390,11 +390,14 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
         return {
             "z_raw": np.nan,
-            "z_fitted": np.nan,
+            "z_fitted_airy": np.nan,
+            "z_fitted_gaussian": np.nan,
             "y_raw": np.nan,
-            "y_fitted": np.nan,
+            "y_fitted_airy": np.nan,
+            "y_fitted_gaussian": np.nan,
             "x_raw": np.nan,
-            "x_fitted": np.nan,
+            "x_fitted_airy": np.nan,
+            "x_fitted_gaussian": np.nan,
             "fit_airy_r2_z": np.nan,
             "fit_airy_r2_y": np.nan,
             "fit_airy_r2_x": np.nan,
@@ -468,11 +471,14 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
         mm.logger.error(f"Error while fitting the profiles for bead: {e}")
         return {
             "z_raw": np.nan,
-            "z_fitted": np.nan,
+            "z_fitted_airy": np.nan,
+            "z_fitted_gaussian": np.nan,
             "y_raw": np.nan,
-            "y_fitted": np.nan,
+            "y_fitted_airy": np.nan,
+            "y_fitted_gaussian": np.nan,
             "x_raw": np.nan,
-            "x_fitted": np.nan,
+            "x_fitted_airy": np.nan,
+            "x_fitted_gaussian": np.nan,
             "fit_airy_r2_z": np.nan,
             "fit_airy_r2_y": np.nan,
             "fit_airy_r2_x": np.nan,
@@ -524,11 +530,14 @@ def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float
 
     return {
         "z_raw": profile_z_raw,
-        "z_fitted": profile_z_fitted_airy,
+        "z_fitted_airy": profile_z_fitted_airy,
+        "z_fitted_gaussian": profile_z_fitted_gauss,
         "y_raw": profile_y_raw,
-        "y_fitted": profile_y_fitted_airy,
+        "y_fitted_airy": profile_y_fitted_airy,
+        "y_fitted_gaussian": profile_y_fitted_gauss,
         "x_raw": profile_x_raw,
-        "x_fitted": profile_x_fitted_airy,
+        "x_fitted_airy": profile_x_fitted_airy,
+        "x_fitted_gaussian": profile_x_fitted_gauss,
         "fit_airy_r2_z": airy_r2_z,
         "fit_airy_r2_y": airy_r2_y,
         "fit_airy_r2_x": airy_r2_x,
@@ -867,7 +876,8 @@ def _generate_center_roi(
 def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
     profile_col_names = [
         f"{axis}_raw",
-        f"{axis}_fitted",
+        f"{axis}_fitted_airy",
+        f"{axis}_fitted_gaussian",
     ]
     column_indexes = [i for i in bead_properties.index.names if i != "channel_name"]
 
