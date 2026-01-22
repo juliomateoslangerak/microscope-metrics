@@ -9,7 +9,7 @@ from scipy import ndimage
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 
-from microscopemetrics import AnalysisError
+from microscopemetrics import AnalysisError, DataFormatError
 from microscopemetrics.analyses import psf_beads
 from microscopemetrics.analyses.tools import fit_gaussian
 from microscopemetrics.strategies.psf_beads import (
@@ -165,6 +165,72 @@ def test_psf_beads_analysis_no_beads(dataset):
     ][0]
     # Should raise AnalysisError
     with pytest.raises(AnalysisError):
+        psf_beads.analyse_psf_beads(psf_beads_dataset)
+
+
+@given(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
+            nr_images=st.just(2),
+            z_image_shape=st.just(31),
+            y_image_shape=st.just(512),
+            x_image_shape=st.just(512),
+            c_image_shape=st.just(2),
+            dtype=st.just(np.uint16),
+            min_lateral_distance_factor=st.just(20),
+            signal=st.just(0.01),
+            background=st.just(0.005),
+            nr_valid_beads=st.just(5),
+            nr_edge_beads=st.just(0),
+            nr_out_of_focus_beads=st.just(0),
+            nr_clustering_beads=st.just(0),
+        ),
+    )
+)
+def test_psf_beads_analysis_different_lateral_shapes(dataset):
+    psf_beads_dataset = dataset["unprocessed_dataset"]
+    psf_beads_dataset.input_data.psf_beads_images[0].shape_x = (
+        psf_beads_dataset.input_data.psf_beads_images[0].shape_x - 1
+    )
+    psf_beads_dataset.input_data.psf_beads_images[0].array_data = (
+        psf_beads_dataset.input_data.psf_beads_images[0].array_data[:, :, :, 1:, :]
+    )
+
+    # Should raise DataFormatError
+    with pytest.raises(DataFormatError):
+        psf_beads.analyse_psf_beads(psf_beads_dataset)
+
+
+@given(
+    st_psf_beads_dataset(
+        test_data=st_psf_beads_test_data(
+            nr_images=st.just(2),
+            z_image_shape=st.just(31),
+            y_image_shape=st.just(512),
+            x_image_shape=st.just(512),
+            c_image_shape=st.just(2),
+            dtype=st.just(np.uint16),
+            min_lateral_distance_factor=st.just(20),
+            signal=st.just(0.01),
+            background=st.just(0.005),
+            nr_valid_beads=st.just(5),
+            nr_edge_beads=st.just(0),
+            nr_out_of_focus_beads=st.just(0),
+            nr_clustering_beads=st.just(0),
+        ),
+    )
+)
+def test_psf_beads_analysis_different_pixel_size(dataset):
+    psf_beads_dataset = dataset["unprocessed_dataset"]
+    psf_beads_dataset.input_data.psf_beads_images[0].voxel_size_x_micron = 0.2
+    psf_beads_dataset.input_data.psf_beads_images[0].voxel_size_y_micron = 0.2
+    psf_beads_dataset.input_data.psf_beads_images[0].voxel_size_z_micron = 0.6
+    psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_x_micron = 0.3
+    psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_y_micron = 0.3
+    psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_z_micron = 0.6
+
+    # Should raise DataFormatError
+    with pytest.raises(DataFormatError):
         psf_beads.analyse_psf_beads(psf_beads_dataset)
 
 

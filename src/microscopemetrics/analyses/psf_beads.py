@@ -86,7 +86,7 @@ def _average_beads_group(
 
 def _average_beads(
     bead_properties: pd.DataFrame,
-    voxel_sizes_micron: dict,
+    voxel_sizes_micron: tuple[float, float, float],
     bead_profiles_z: pd.DataFrame,
     bead_profiles_y: pd.DataFrame,
     bead_profiles_x: pd.DataFrame,
@@ -109,17 +109,6 @@ def _average_beads(
     - bead_profiles_x: DataFrame with x profiles (including average if computed)
     - average_bead_image: mm_schema.Image or None
     """
-    # Before averaging any bead we need to verify that voxel sizes of every image are equal
-    voxel_sizes_micron = set(voxel_sizes_micron.values())
-    if len(voxel_sizes_micron) != 1:
-        mm.logger.error(
-            "Voxel sizes are not equal among images. Skipping average bead calculation."
-        )
-        return None, bead_profiles_z, bead_profiles_y, bead_profiles_x, None
-
-    # Get the common voxel size (all are equal)
-    voxel_sizes_micron = voxel_sizes_micron.pop()
-
     # Do the actual averaging grouped by image and channel
     average_beads_properties = pd.DataFrame(
         {
@@ -907,7 +896,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Containers for input data and input parameters
     images = {}
-    voxel_sizes_micron = {}
+    images_shape = None
+    voxel_sizes_micron = None
     min_distance_px = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input_parameters.snr_threshold
     fitting_airy_r2_threshold = dataset.input_parameters.fitting_airy_r2_threshold
@@ -918,7 +908,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     bead_properties = []
 
     # First loop to prepare data and do checks
-    images_shape = None
     for image in dataset.input_data.psf_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
@@ -947,6 +936,24 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
                 "Not all images have the same sizes. Please make sure that"
                 "all dimensions (TZYXC) are consistent.",
                 "In a future version, only ZYX will be required to be equal.",
+            )
+
+        # Check all pixel sizes equal
+        if voxel_sizes_micron is None:
+            voxel_sizes_micron = (
+                image.voxel_size_z_micron,
+                image.voxel_size_y_micron,
+                image.voxel_size_x_micron,
+            )
+        elif voxel_sizes_micron != (
+            image.voxel_size_z_micron,
+            image.voxel_size_y_micron,
+            image.voxel_size_x_micron,
+        ):
+            mm.logger.error("Not all images have the same voxel sizes")
+            raise mm.DataFormatError(
+                "Not all images have the same voxel sizes. "
+                "Please make sure that all input data have the same voxel sizes.",
             )
 
         # Check image saturation
