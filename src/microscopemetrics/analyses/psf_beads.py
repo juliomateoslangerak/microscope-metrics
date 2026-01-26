@@ -86,7 +86,7 @@ def _average_beads_group(
 
 def _average_beads(
     bead_properties: pd.DataFrame,
-    voxel_sizes_micron: tuple[float, float, float],
+    voxel_size_micron: tuple[float, float, float],
     bead_profiles_z: pd.DataFrame,
     bead_profiles_y: pd.DataFrame,
     bead_profiles_x: pd.DataFrame,
@@ -112,7 +112,7 @@ def _average_beads(
     # Do the actual averaging grouped by image and channel
     average_beads_properties = pd.DataFrame(
         {
-            keys: _average_beads_group(group, voxel_size_micron=voxel_sizes_micron)
+            keys: _average_beads_group(group, voxel_size_micron=voxel_size_micron)
             for keys, group in bead_properties.groupby(["channel_nr", "channel_name"])
         }
     ).T
@@ -897,7 +897,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     # Containers for input data and input parameters
     images = {}
     images_shape = None
-    voxel_sizes_micron = None
+    voxel_size_micron = None
     min_distance_px = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input_parameters.snr_threshold
     fitting_airy_r2_threshold = dataset.input_parameters.fitting_airy_r2_threshold
@@ -939,13 +939,13 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             )
 
         # Check all pixel sizes equal
-        if voxel_sizes_micron is None:
-            voxel_sizes_micron = (
+        if voxel_size_micron is None:
+            voxel_size_micron = (
                 image.voxel_size_z_micron,
                 image.voxel_size_y_micron,
                 image.voxel_size_x_micron,
             )
-        elif voxel_sizes_micron != (
+        elif voxel_size_micron != (
             image.voxel_size_z_micron,
             image.voxel_size_y_micron,
             image.voxel_size_x_micron,
@@ -975,11 +975,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     for image in dataset.input_data.psf_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         mm.logger.info(f"Processing image {image_id}...")
-        voxel_sizes_micron[image_id] = (
-            image.voxel_size_z_micron,
-            image.voxel_size_y_micron,
-            image.voxel_size_x_micron,
-        )
 
         image_bead_properties = _process_image(
             image=image,
@@ -1037,7 +1032,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         average_bead,
     ) = _average_beads(
         bead_properties=bead_properties,
-        voxel_sizes_micron=voxel_sizes_micron,
+        voxel_size_micron=voxel_size_micron,
         bead_profiles_z=bead_profiles_z,
         bead_profiles_y=bead_profiles_y,
         bead_profiles_x=bead_profiles_x,
