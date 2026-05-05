@@ -257,8 +257,8 @@ def csv_power_measurements_parser(csv_file):
     power_meters = {pm["name"]: mm_schema.PowerMeter(**pm) for pm in power_meters}
     power_measurements = [
         mm_schema.PowerMeasurement(
-            # light_source=light_sources[pms.pop("light_source")],
-            # power_meter=power_meters[pms.pop("power_meter")],
+            light_source=light_sources[pms.pop("light_source")],
+            power_meter=power_meters[pms.pop("power_meter")],
             **pms,
         )
         for pms in input_data["power_measurements"]
