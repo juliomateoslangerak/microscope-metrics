@@ -53,7 +53,7 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
 
 def _average_beads_group(
     group: pd.DataFrame,
-    voxel_size_micron: tuple[float, float, float] | tuple[None, None, None] | None,
+    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
 ) -> pd.Series:
     """
     Averages the beads in a group by first aligning them to the center of the image and then averaging them.
@@ -87,7 +87,7 @@ def _average_beads_group(
 
 def _average_beads(
     bead_properties: pd.DataFrame,
-    voxel_size_micron: tuple[float, float, float],
+    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
     bead_profiles_z: pd.DataFrame,
     bead_profiles_y: pd.DataFrame,
     bead_profiles_x: pd.DataFrame,
@@ -378,7 +378,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
 
 def _process_bead(
     bead: np.ndarray,
-    voxel_size_micron: tuple[float, float, float] | tuple[None, None, None] | None,
+    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
 ):
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
         return {
@@ -706,7 +706,7 @@ def _process_channel(
     fitting_airy_r2_threshold: float,
     fitting_gaussian_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
-    voxel_size_micron: tuple[float, float, float],
+    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
 ) -> pd.DataFrame:
     bead_properties = _find_beads(
         channel=channel,
