@@ -13,6 +13,10 @@ import microscopemetrics as mm
 from microscopemetrics.analyses import tools as mm_tools
 
 MAX_NR_PEAKS = 100
+# We establish an arbitrary value that defines:
+# - the tolerance for a bead to be considered too close to the axial edge
+# - the size of the window (times fwhm) for the z profiles
+Z_PROFILE_FWHM_HALF_WINDOW = 4
 
 
 def _add_column_name_level(df: pd.DataFrame, level_name: str, level_value: str):
@@ -132,6 +136,26 @@ def _average_beads(
     # considered axial edge or not. For the average bead, this is not
     # relevant, so we drop this column.
     average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
+
+    # Crop average bead z profiles to match individual bead crops (±4x median FWHM per channel)
+    median_fwhm_by_channel = (
+        bead_properties[bead_properties["considered_valid"]]
+        .groupby(level="channel_nr")["fwhm_pixel_z"]
+        .median()
+    )
+    channel_nr_level = average_beads_properties.index.names.index("channel_nr")
+    for idx, row in average_beads_properties.iterrows():
+        channel_nr = idx[channel_nr_level] if isinstance(idx, tuple) else idx
+        if channel_nr not in median_fwhm_by_channel.index:
+            continue
+        half_window = int(Z_PROFILE_FWHM_HALF_WINDOW * median_fwhm_by_channel[channel_nr])
+        for col in ["z_raw", "z_fitted_airy", "z_fitted_gaussian"]:
+            profile = row[col]
+            if isinstance(profile, np.ndarray):
+                center_z = profile.shape[0] // 2  # average bead is centered by construction
+                crop_start = max(0, center_z - half_window)
+                crop_end = min(len(profile), center_z + half_window)
+                average_beads_properties.at[idx, col] = profile[crop_start:crop_end]
 
     # Extract profiles from average beads and join with existing profiles
     bead_profiles_z = bead_profiles_z.join(_extract_profiles(average_beads_properties, "z"))
@@ -491,10 +515,8 @@ def _process_bead(
         gauss_fwhm_micron_x = np.nan
 
     considered_axial_edge = (
-        # TODO: review the tolerance values for considering beads at axial edge
-        # a 4x FWHM tolerance is used and that is a bit arbitrary
-        gauss_center_pos_z < gauss_fwhm_z * 4
-        or profile_z_raw.shape[0] - gauss_center_pos_z < gauss_fwhm_z * 4
+        gauss_center_pos_z < gauss_fwhm_z * Z_PROFILE_FWHM_HALF_WINDOW
+        or profile_z_raw.shape[0] - gauss_center_pos_z < gauss_fwhm_z * Z_PROFILE_FWHM_HALF_WINDOW
     )
 
     result = {
@@ -853,6 +875,34 @@ def _generate_center_roi(
     return rois
 
 
+def _crop_z_profiles(bead_properties: pd.DataFrame) -> None:
+    """Crop z profiles in-place to ±4x median FWHM around center_z, per channel.
+
+    The median FWHM is computed from valid beads only, giving a total window of 8x the
+    median FWHM. Profiles that extend beyond the array bounds are clamped (e.g. axial-edge
+    beads will produce shorter profiles).
+    """
+    profile_cols = ["z_raw", "z_fitted_airy", "z_fitted_gaussian"]
+    median_fwhm_by_channel = (
+        bead_properties[bead_properties["considered_valid"]]
+        .groupby(level="channel_nr")["fwhm_pixel_z"]
+        .median()
+    )
+    channel_nr_level = bead_properties.index.names.index("channel_nr")
+    for idx, row in bead_properties.iterrows():
+        channel_nr = idx[channel_nr_level]
+        if channel_nr not in median_fwhm_by_channel.index:
+            continue
+        half_window = int(Z_PROFILE_FWHM_HALF_WINDOW * median_fwhm_by_channel[channel_nr])
+        center_z = int(row["center_z"])
+        crop_start = max(0, center_z - half_window)
+        for col in profile_cols:
+            profile = row[col]
+            if isinstance(profile, np.ndarray):
+                crop_end = min(len(profile), center_z + half_window)
+                bead_properties.at[idx, col] = profile[crop_start:crop_end]
+
+
 def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
     profile_col_names = [
         f"{axis}_raw",
@@ -1008,6 +1058,9 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             message="No valid or invalid beads found in any image",
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
+
+    # Crop z profiles to a consistent length (±4x median FWHM per channel) before extraction
+    _crop_z_profiles(bead_properties)
 
     # Extract bead profiles first (needed by _average_beads)
     bead_profiles_z = _extract_profiles(bead_properties, "z")
