@@ -52,7 +52,8 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
 
 
 def _average_beads_group(
-    group: pd.DataFrame, voxel_size_micron: tuple[float, float, float]
+    group: pd.DataFrame,
+    voxel_size_micron: tuple[float, float, float] | tuple[None, None, None] | None,
 ) -> pd.Series:
     """
     Averages the beads in a group by first aligning them to the center of the image and then averaging them.
@@ -375,7 +376,10 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     return key_measurements
 
 
-def _process_bead(bead: np.ndarray, voxel_size_micron: tuple[float, float, float]):
+def _process_bead(
+    bead: np.ndarray,
+    voxel_size_micron: tuple[float, float, float] | tuple[None, None, None] | None,
+):
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
         return {
             "z_raw": np.nan,
