@@ -67,7 +67,7 @@ def _average_beads_group(
         mm.logger.warning("Less than 2 valid beads to average.")
         return pd.Series({"average_bead": np.nan})
     aligned_beads = [
-        ndimage.shift(row.beads, _find_bead_shifts(row.beads), mode="nearest", order=1)
+        ndimage.shift(row.beads, (row.shift_z, row.shift_y, row.shift_x), mode="nearest", order=1)
         for row in group.itertuples()
         if row.considered_valid
     ]
@@ -170,37 +170,6 @@ def _average_beads(
         bead_profiles_y,
         bead_profiles_x,
         average_bead_image,
-    )
-
-
-def _find_bead_shifts(data1, data2=None):
-    """Cross-correlates two 2D or 3D arrays and returns the shifts.
-    If a second array is not provided, a Gaussian is used as a reference."""
-    if data2 is None:
-        data2 = np.zeros_like(data1)
-        slices = []
-        for dim in data2.shape:
-            if dim % 2 == 0:
-                slices.append(slice(dim // 2))
-            else:
-                slices.append(slice(dim // 2, dim // 2 + 1))
-        data2[tuple(slices)] = 1
-        data2 = gaussian(data2, sigma=1, preserve_range=True)
-
-    if data1.ndim != data2.ndim:
-        raise ValueError("Data1 and Data2 must have the same number of dimensions.")
-
-    corr_arr = signal.correlate(data1, data2, mode="same")
-
-    profiles = []
-    max_pos = np.unravel_index(np.argmax(corr_arr), corr_arr.shape)
-    for dim in range(corr_arr.ndim):
-        pos_slices = [slice(pos, pos + 1) for pos in max_pos]
-        pos_slices[dim] = slice(None)
-        profiles.append(np.squeeze(corr_arr[tuple(pos_slices)]))
-
-    return tuple(
-        mm_tools.fit_gaussian(profile)[3][2] - profile.shape[0] // 2 for profile in profiles
     )
 
 
@@ -379,9 +348,10 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
 def _process_bead(
     bead: np.ndarray,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
+    calculate_shifts: bool = False,
 ):
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
-        return {
+        result = {
             "z_raw": np.nan,
             "z_fitted_airy": np.nan,
             "z_fitted_gaussian": np.nan,
@@ -410,6 +380,9 @@ def _process_bead(
             "intensity_min": np.nan,
             "intensity_std": np.nan,
         }
+        if calculate_shifts:
+            result.update({"shift_z": np.nan, "shift_y": np.nan, "shift_x": np.nan})
+        return result
 
     intensity_max = bead.max()
     intensity_min = bead.min()
@@ -462,7 +435,7 @@ def _process_bead(
         )
     except RuntimeError as e:
         mm.logger.error(f"Error while fitting the profiles for bead: {e}")
-        return {
+        result = {
             "z_raw": np.nan,
             "z_fitted_airy": np.nan,
             "z_fitted_gaussian": np.nan,
@@ -491,6 +464,9 @@ def _process_bead(
             "intensity_min": intensity_min,
             "intensity_std": intensity_std,
         }
+        if calculate_shifts:
+            result.update({"shift_z": np.nan, "shift_y": np.nan, "shift_x": np.nan})
+        return result
 
     airy_fwhm_lateral_asymmetry_ratio = max(airy_fwhm_y, airy_fwhm_x) / min(
         airy_fwhm_y, airy_fwhm_x
@@ -521,7 +497,7 @@ def _process_bead(
         or profile_z_raw.shape[0] - gauss_center_pos_z < gauss_fwhm_z * 4
     )
 
-    return {
+    result = {
         "z_raw": profile_z_raw,
         "z_fitted_airy": profile_z_fitted_airy,
         "z_fitted_gaussian": profile_z_fitted_gauss,
@@ -551,6 +527,15 @@ def _process_bead(
         "intensity_min": intensity_min,
         "intensity_std": intensity_std,
     }
+    if calculate_shifts:
+        result.update(
+            {
+                "shift_z": (profile_z_raw.shape[0] // 2) - gauss_center_pos_z,
+                "shift_y": (profile_y_raw.shape[0] // 2) - gauss_center_pos_y,
+                "shift_x": (profile_x_raw.shape[0] // 2) - gauss_center_pos_x,
+            }
+        )
+    return result
 
 
 def _find_beads(
@@ -725,7 +710,9 @@ def _process_channel(
     )
 
     bead_properties = bead_properties.join(
-        bead_properties["beads"].apply(lambda x: pd.Series(_process_bead(x, voxel_size_micron)))
+        bead_properties["beads"].apply(
+            lambda x: pd.Series(_process_bead(x, voxel_size_micron, calculate_shifts=True))
+        )
     )
     bead_properties["considered_bad_fit_airy_z"] = (
         bead_properties["fit_airy_r2_z"] < fitting_airy_r2_threshold
@@ -1043,8 +1030,11 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         source_images=dataset.input_data.psf_beads_images,
     )
 
-    # We don't need the bead arrays anymore
+    # At this point we need to drop some data that we don't need anymore
+    # bead arrays
     bead_properties.drop("beads", axis=1, inplace=True)
+    # shifts for average bead calculation
+    bead_properties.drop(["shift_z", "shift_y", "shift_x"], axis=1, inplace=True)
 
     # At this point we know if we found valid beads, and we raise an exception
     # if there are no beads. Depending on the number of invalid beads and their
