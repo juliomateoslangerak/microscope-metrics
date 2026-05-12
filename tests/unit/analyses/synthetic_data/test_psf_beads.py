@@ -57,7 +57,15 @@ def test_average_beads(shifts, signal, background, sigma_axial, sigma_lateral):
         ref_beads.append(ref_bead)
 
     averaged_bead = psf_beads._average_beads_group(
-        pd.DataFrame({"beads": beads, "considered_valid": True}),
+        pd.DataFrame(
+            {
+                "beads": beads,
+                "shift_z": [s[0] for s in shifts],
+                "shift_y": [s[1] for s in shifts],
+                "shift_x": [s[2] for s in shifts],
+                "considered_valid": True,
+            }
+        ),
         voxel_size_micron=(None, None, None),
     ).values[0]
     ref_bead = np.mean(ref_beads, axis=0)
