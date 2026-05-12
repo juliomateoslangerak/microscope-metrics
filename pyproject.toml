@@ -48,29 +48,28 @@ classifiers = [
 version = "0.0.0"
 
 [tool.poetry.dependencies]
-virtualenv = ">=20.26.6,<20.33.0"  # https://github.com/python-poetry/poetry/issues/10504
-numpy = "^2"
-scikit-image = "^0"
-scipy = "^1"
-pandas = "^2"
-microscopemetrics-schema = "0.0.5"
+numpy = ">=2.0,<3"
+scikit-image = ">=0.1,<1"
+scipy = ">=1.0,<2"
+pandas = ">=2.0,<3"
+microscopemetrics-schema = "==0.0.5"
 #microscopemetrics-schema = { git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev" }
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8"
-hypothesis = "^6"
-tox = "^3"
-coverage = "^7"
-pytest-parallel = "^0.1.1"
-dvc = "^3"
-dvc-gdrive = "^3"
-pyOpenSSL = "^25"
+pytest = ">=8.0,<9"
+hypothesis = ">=6.0,<7"
+tox = ">=3.0,<4"
+coverage = ">=7.0,<8"
+pytest-parallel = ">=0.1.1,<0.2"
+dvc = ">=3.0,<4"
+dvc-gdrive = ">=3.0,<4"
+pyOpenSSL = ">=25.0,<26"
 
 [tool.poetry.group.dev.dependencies]
-black = "^25"
-poetry = "^2"
-isort = "^6"
-pre-commit = "^4"
+black = ">=25.0,<26"
+poetry = ">=2.0,<3"
+isort = ">=6.0,<7"
+pre-commit = ">=4.0,<5"
 
 [tool.poetry.requires-plugins]
 poetry-dynamic-versioning = ">=1.5.2"
