@@ -111,8 +111,8 @@ def st_light_source_power_test_data(
             power_measurements.append(
                 mm_schema.PowerMeasurement(
                     acquisition_datetime=current_datetime,
-                    light_source=light_source.name,
-                    power_meter=_power_meter.name,
+                    light_source=light_source,
+                    power_meter=_power_meter,
                     measuring_location=_measuring_location,
                     power_set_point=set_power_value,
                     power_mw=measured_power,
@@ -137,8 +137,8 @@ def st_light_source_power_test_data(
             power_measurements.append(
                 mm_schema.PowerMeasurement(
                     acquisition_datetime=current_datetime,
-                    light_source=light_source.name,
-                    power_meter=_power_meter.name,
+                    light_source=light_source,
+                    power_meter=_power_meter,
                     measuring_location=_measuring_location,
                     power_set_point=set_power_value,
                     power_mw=measured_power,
@@ -163,8 +163,8 @@ def st_light_source_power_test_data(
             power_measurements.append(
                 mm_schema.PowerMeasurement(
                     acquisition_datetime=current_datetime,
-                    light_source=light_source.name,
-                    power_meter=_power_meter.name,
+                    light_source=light_source,
+                    power_meter=_power_meter,
                     measuring_location=_measuring_location,
                     power_set_point=set_power_value,
                     power_mw=measured_power,
