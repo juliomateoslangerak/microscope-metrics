@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=1.7.0", "poetry-dynamic-versioning"]
+requires = ["poetry-core>=2.4.0", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [project]
@@ -15,7 +15,7 @@ maintainers = [
 keywords = ["microscopy", "metrology"]
 license = {text = "GPL-3.0-only"}
 readme = "README.md"
-requires-python = ">=3.9.18,<3.13"
+requires-python = ">=3.10.0,<3.13"
 include = [
     "README.md",
     "src/microscopemetrics",
@@ -38,7 +38,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -48,7 +47,7 @@ classifiers = [
 version = "0.0.0"
 
 [tool.poetry.dependencies]
-numpy = ">=2.0,<3"
+numpy = ">=2.2.6,<3"
 scikit-image = ">=0.1,<1"
 scipy = ">=1.0,<2"
 pandas = ">=2.0,<3"
@@ -56,19 +55,19 @@ microscopemetrics-schema = "==0.0.5"
 #microscopemetrics-schema = { git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev" }
 
 [tool.poetry.group.test.dependencies]
-pytest = ">=8.0,<9"
-hypothesis = ">=6.0,<7"
-tox = ">=3.0,<4"
-coverage = ">=7.0,<8"
-pytest-parallel = ">=0.1.1,<0.2"
+pytest = ">=9.0.3,<10"
+hypothesis = ">=6.152.7,<7"
+tox = ">=4.54.0,<5"
+coverage = ">=7.14,<8"
+pytest-xdist = ">=3.0,<4"
 dvc = ">=3.0,<4"
 dvc-gdrive = ">=3.0,<4"
-pyOpenSSL = ">=25.0,<26"
+pyOpenSSL = ">=26.2.0,<27"
 
 [tool.poetry.group.dev.dependencies]
-black = ">=25.0,<26"
+black = ">=26.0,<27"
 poetry = ">=2.0,<3"
-isort = ">=6.0,<7"
+isort = ">=8.0.1,<9"
 pre-commit = ">=4.0,<5"
 
 [tool.poetry.requires-plugins]
@@ -81,7 +80,7 @@ style = "pep440"
 strict = true
 
 [tool.pytest.ini_options]
-addopts = "--hypothesis-show-statistics --hypothesis-profile=pre_release --workers=auto"
+addopts = "--hypothesis-show-statistics --hypothesis-profile=pre_release -n auto"
 testpaths = [
     "tests"
 ]
