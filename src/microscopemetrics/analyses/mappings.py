@@ -12,22 +12,24 @@ from microscopemetrics.analyses import (
     psf_beads,
 )
 
-Mapping = namedtuple("Mapping", ["sample_class", "analysis_function", "dataset_class"])
+Mapping = namedtuple("Mapping", ["analysis_function", "sample_classes"])
 
-MAPPINGS = [
-    Mapping(
-        mm_schema.FluorescentHomogeneousThinField,
-        field_illumination.analyse_field_illumination,
-        mm_schema.FieldIlluminationDataset,
+MAPPINGS = {
+    mm_schema.FieldIlluminationDataset: Mapping(
+        analysis_function=field_illumination.analyse_field_illumination,
+        sample_classes=[
+            mm_schema.FluorescentHomogeneousThinField,
+            mm_schema.FluorescentHomogeneousThickField,
+        ],
     ),
-    Mapping(
-        mm_schema.FluorescentHomogeneousThickField,
-        field_illumination.analyse_field_illumination,
-        mm_schema.FieldIlluminationDataset,
+    mm_schema.PSFBeadsDataset: Mapping(
+        analysis_function=psf_beads.analyse_psf_beads,
+        sample_classes=[mm_schema.PSFBeads],
     ),
-    Mapping(mm_schema.PSFBeads, psf_beads.analyse_psf_beads, mm_schema.PSFBeadsDataset),
-    Mapping(None, light_source_power.analyse_light_source_power, mm_schema.LightSourcePowerDataset),
-]
+    mm_schema.LightSourcePowerDataset: Mapping(
+        analysis_function=light_source_power.analyse_light_source_power, sample_classes=[]
+    ),
+}
 
 # TEST = {
 #     mm_schema.FieldIlluminationDataset: {

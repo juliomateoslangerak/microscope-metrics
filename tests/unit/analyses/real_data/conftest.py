@@ -60,14 +60,11 @@ def generate_missing_key_measurements(
 
 
 def analyse_dataset(dataset: mm_schema.MetricsDataset):
-    mapping = mappings.MAPPINGS
-    for m in mapping:
-        if isinstance(dataset, m.dataset_class):
-            # We are ignoring here the sample class for the moment.
-            m.analysis_function(dataset)
-            return dataset
-
-    raise ValueError(f"No analysis function found for the {dataset.class_name} dataset type.")
+    try:
+        mappings.MAPPINGS[dataset].analysis_function(dataset)
+        return dataset
+    except KeyError as e:
+        raise ValueError(f"No analysis function found for the {dataset.class_name} dataset type.")
 
 
 def build_dataset_from_dir(
