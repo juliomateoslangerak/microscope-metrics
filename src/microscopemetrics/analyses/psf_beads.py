@@ -123,14 +123,17 @@ def _average_beads(
     ).T
     average_beads_properties.index.names = ["channel_nr", "channel_name"]
 
-    # If a channel does not have any beads, the average bead is NaN, and
-    # it has to be dropped from the dataframe before getting the properties
-    average_beads_properties = average_beads_properties.dropna(subset=["average_bead"])
-
     # If after dropping image-channels without beads we keep nothing, we return
-    if average_beads_properties.empty:
+    if average_beads_properties.dropna(subset=["average_bead"]).empty:
         mm.logger.warning("No average beads were computed")
         return None, bead_profiles_z, bead_profiles_y, bead_profiles_x, None
+
+    # If a channel does not have any beads, the average bead is NaN, and
+    # it has to be replaced by a zeroed array
+    zero_bead = np.zeros_like(average_beads_properties["average_bead"].dropna().iloc[0])
+    average_beads_properties["average_bead"] = average_beads_properties["average_bead"].apply(
+        lambda x: zero_bead.copy() if isinstance(x, float) and np.isnan(x) else x
+    )
 
     # it is the _process_bead function that decides if a bead is
     # considered axial edge or not. For the average bead, this is not
