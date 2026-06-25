@@ -2,3 +2,5 @@ unit/.hypothesis
 unit/.coverage
 .coverage
 monkeytype.sqlite3
+/unit/analyses/.hypothesis/
+/unit/analyses/synthetic_data/.hypothesis/

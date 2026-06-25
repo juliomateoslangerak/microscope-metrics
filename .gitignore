@@ -11,3 +11,6 @@
 /tests/.coverage
 /tests/*/.coverage
 /tests/*/*/.coverage
+/tests/data/
+/.idea/
+/.junie/
