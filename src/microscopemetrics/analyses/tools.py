@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 from scipy import ndimage, special
 from scipy.optimize import curve_fit, fsolve
-from scipy.spatial.distance import cdist
-from skimage.feature import peak_local_max
+from scipy.spatial import distance, distance_matrix
+from skimage.feature import blob_log, peak_local_max
 from skimage.filters import apply_hysteresis_threshold, gaussian, threshold_otsu
 from skimage.measure import label, regionprops
 from skimage.morphology import ball, closing, cube, octahedron, square
@@ -264,6 +264,148 @@ def segment_image(
     return labels_image
 
 
+def find_beads(
+    channel: np.ndarray,
+    sigma_min: float,
+    sigma_max: float,
+    min_distance_px: float,
+    snr_threshold: float,
+    max_num_peaks: int,
+):
+    """
+    This function finds the beads in a channel by applying a Gaussian filter and then finding the local maxima.
+    """
+    logger.debug("Finding beads in channel...")
+
+    half_min_distance_px = min_distance_px // 2
+
+    # Estimate SNR
+    signal_estimate = channel[channel > np.percentile(channel, 99.9)].mean()
+    background_estimate = np.percentile(channel, 50)
+    background_std = channel[channel <= background_estimate].std()
+    snr_estimate = (signal_estimate - background_estimate) / background_std
+
+    # If the signal region is too large (>50%) or SNR is too low, the channel is likely too noisy
+    if snr_estimate < snr_threshold:
+        logger.warning(
+            f"Channel appears too noisy for reliable bead detection. Estimated SNR: {snr_estimate:.2f}. "
+            "Consider improving image quality or adjusting detection parameters."
+        )
+        return pd.DataFrame(
+            columns=[
+                "center_y",
+                "center_x",
+                "sigma_LoG",
+                "center_z",
+                "considered_self_proximity",
+                "considered_lateral_edge",
+                "considered_valid",
+                "beads",
+            ]
+        )
+
+    # We find the beads in the AIP for performance and to avoid anisotropy issues in the axial direction
+    channel_aip = np.mean(channel, axis=0)
+
+    # Find all bead centers
+    positions_all = blob_log(
+        image=channel_aip,
+        min_sigma=sigma_min,
+        max_sigma=sigma_max,
+        num_sigma=20,
+        threshold=None,
+        threshold_rel=0.3,
+        exclude_border=False,
+    )
+
+    # Where images are noisy, a lot of beads are detected that match the
+    # sigma_min. We may remove them here.
+    positions_all = positions_all[positions_all[:, 2] > sigma_min]
+
+    # We assume that reaching a maximum number of beads is a sign of a bad thresholding
+    # and noise in the image. We report this as an error.
+    if len(positions_all) == max_num_peaks:
+        logger.warning(
+            f"Too many beads detected {len(positions_all)}. Maximum number of peaks is ({max_num_peaks}). Image is probably too noisy"
+        )
+
+    # Find beads that are too close to the edge of the image
+    positions_edge = []
+    for pos in positions_all:
+        if any(
+            [
+                0 <= pos[0] < half_min_distance_px + 1,
+                0 <= pos[1] < half_min_distance_px + 1,
+                channel_aip.shape[0] - half_min_distance_px - 1 <= pos[0] < channel_aip.shape[0],
+                channel_aip.shape[1] - half_min_distance_px - 1 <= pos[1] < channel_aip.shape[1],
+            ]
+        ):
+            positions_edge.append(pos)
+
+    # Find beads that are too close to each other
+    dist_matrix = distance_matrix(
+        positions_all,
+        positions_all,
+        p=2,
+    )
+    np.fill_diagonal(dist_matrix, np.inf)
+    proximity_mask = dist_matrix < min_distance_px
+    proximity_pairs = np.argwhere(proximity_mask)
+    proximity_indexes = {i for i, _ in proximity_pairs}
+    positions_proximity = [positions_all[i] for i in proximity_indexes]
+
+    positions_df = pd.DataFrame(
+        positions_all,
+        columns=["center_y", "center_x", "sigma_LoG"],
+        index=pd.Index(range(len(positions_all)), name="bead_id"),
+    )
+    positions_df["center_z"] = [
+        channel[:, int(y), int(x)].argmax()
+        for y, x in zip(positions_df["center_y"], positions_df["center_x"])
+    ]
+    positions_df["considered_self_proximity"] = [
+        any(np.array_equal(arr, prox_arr) for prox_arr in positions_proximity)
+        for arr in positions_df[["center_y", "center_x", "sigma_LoG"]].to_numpy()
+    ]
+    positions_df["considered_lateral_edge"] = [
+        any(np.array_equal(arr, prox_arr) for prox_arr in positions_edge)
+        for arr in positions_df[["center_y", "center_x", "sigma_LoG"]].to_numpy()
+    ]
+    positions_df["considered_valid"] = [
+        not any([edge, prox])
+        for edge, prox in zip(
+            positions_df["considered_lateral_edge"],
+            positions_df["considered_self_proximity"],
+        )
+    ]
+    logger.debug(f"Beads found: {len(positions_df)}")
+    logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
+    logger.debug(
+        f"Beads considered for being to close to the edge: {positions_df['considered_lateral_edge'].sum()}"
+    )
+    logger.debug(
+        f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
+    )
+
+    def get_bead_image(row, ch, hmd):
+        return ch[
+            :,
+            int(max(0, (row["center_y"] - hmd))) : int(
+                min(ch.shape[1], (row["center_y"] + hmd + 1))
+            ),
+            int(max(0, (row["center_x"] - hmd))) : int(
+                min(ch.shape[2], (row["center_x"] + hmd + 1))
+            ),
+        ]
+
+    positions_df["beads"] = positions_df.apply(
+        get_bead_image, axis=1, args=(channel, half_min_distance_px)
+    )
+    positions_df["channel_snr_estimate"] = snr_estimate
+
+    return positions_df
+
+
 def _compute_channel_spots_properties(
     channel, label_channel, remove_center_cross=False, pixel_size=None
 ):
@@ -341,7 +483,7 @@ def compute_distances_matrix(positions, max_distance, pixel_size=None):
     distances_rows = []
 
     for a, b in channel_permutations:
-        distances_matrix = cdist(positions[a], positions[b], w=pixel_size)
+        distances_matrix = distance.cdist(positions[a], positions[b], w=pixel_size)
 
         distances_rows.extend(
             {

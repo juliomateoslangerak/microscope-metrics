@@ -51,8 +51,8 @@ numpy = ">=2.2.6,<3"
 scikit-image = ">=0.1,<1"
 scipy = ">=1.0,<2"
 pandas = ">=2.0,<3"
-microscopemetrics-schema = "==0.0.5"
-#microscopemetrics-schema = { git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev" }
+#microscopemetrics-schema = "==0.0.5"
+microscopemetrics-schema = { git = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git", branch = "dev" }
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=9.0.3,<10"
