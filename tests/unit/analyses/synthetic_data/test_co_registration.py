@@ -10,82 +10,19 @@ from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 
 from microscopemetrics import AnalysisError, DataFormatError
-from microscopemetrics.analyses import psf_beads
+from microscopemetrics.analyses import co_registration
 from microscopemetrics.analyses.tools import fit_gaussian
-from microscopemetrics.strategies import st_beads_test_data
-from microscopemetrics.strategies.psf_beads import st_psf_beads_dataset
-
-
-@given(
-    shifts=st.lists(
-        st.tuples(
-            st.floats(min_value=0.1, max_value=0.49),
-            st.floats(min_value=0.1, max_value=0.49),
-            st.floats(min_value=0.1, max_value=0.49),
-        ),
-        min_size=3,
-        max_size=10,
-    ),
-    signal=st.integers(min_value=2000, max_value=10000),
-    background=st.integers(min_value=40, max_value=400),
-    sigma_axial=st.floats(min_value=1.0, max_value=3.0),
-    sigma_lateral=st.floats(min_value=1.0, max_value=2.0),
+from microscopemetrics.strategies.co_registration import (
+    st_co_registration_dataset,
+    st_co_registration_test_data,
 )
-def test_average_beads(shifts, signal, background, sigma_axial, sigma_lateral):
-    beads = []
-    ref_beads = []
-
-    for shift in shifts:
-        # Reproducing acquisition flow:
-        # - bead real position shifted
-        # - bead is blurred by microscope PSF (gaussian?)
-        # - bead is noised by Poisson noise in the camera
-        # a replica is caught as reference before shifting
-        bead = np.zeros((61, 21, 21), dtype=np.uint16)
-        bead[30, 10, 10] = 1
-        bead = gaussian(
-            bead, sigma=(sigma_axial, sigma_lateral, sigma_lateral), preserve_range=False
-        )
-        bead = np.astype(rescale_intensity(bead, out_range=(background, signal)), np.uint16)
-        ref_bead = bead.copy()
-        bead = ndimage.shift(bead, shift, mode="nearest", order=1)
-        bead = np.random.poisson(bead)
-        ref_bead = np.random.poisson(ref_bead)
-        beads.append(bead)
-        ref_beads.append(ref_bead)
-
-    averaged_bead = psf_beads._average_beads_group(
-        pd.DataFrame(
-            {
-                "beads": beads,
-                "shift_z": [s[0] for s in shifts],
-                "shift_y": [s[1] for s in shifts],
-                "shift_x": [s[2] for s in shifts],
-                "considered_valid": True,
-            }
-        ),
-        voxel_size_micron=(None, None, None),
-    ).values[0]
-    ref_bead = np.mean(ref_beads, axis=0)
-
-    averaged_sigma_z = fit_gaussian(np.squeeze(averaged_bead[:, 10, 10]))[3][3]
-    averaged_sigma_y = fit_gaussian(np.squeeze(averaged_bead[30, :, 10]))[3][3]
-    averaged_sigma_x = fit_gaussian(np.squeeze(averaged_bead[30, 10, :]))[3][3]
-
-    ref_sigma_z = fit_gaussian(np.squeeze(ref_bead[:, 10, 10]))[3][3]
-    ref_sigma_y = fit_gaussian(np.squeeze(ref_bead[30, :, 10]))[3][3]
-    ref_sigma_x = fit_gaussian(np.squeeze(ref_bead[30, 10, :]))[3][3]
-
-    assert averaged_sigma_z == pytest.approx(ref_sigma_z, abs=0.3)
-    assert averaged_sigma_y == pytest.approx(ref_sigma_y, abs=0.3)
-    assert averaged_sigma_x == pytest.approx(ref_sigma_x, abs=0.3)
 
 
-@given(st_psf_beads_dataset())
+@given(st_co_registration_dataset())
 @settings(max_examples=1)
-def test_psf_beads_analysis_instantiation(dataset):
+def test_co_registration_analysis_instantiation(dataset):
     dataset = dataset["unprocessed_dataset"]
-    assert isinstance(dataset, mm_schema.PSFBeadsDataset)
+    assert isinstance(dataset, mm_schema.CoRegistrationDataset)
     assert dataset.name
     assert dataset.description
     assert dataset.microscope
@@ -93,25 +30,25 @@ def test_psf_beads_analysis_instantiation(dataset):
 
 
 @given(
-    st_psf_beads_dataset(
-        unprocessed_dataset=st_mm_analyses_schema.st_mm_psf_beads_unprocessed_dataset(
-            input_parameters=st_mm_analyses_schema.st_mm_psf_beads_input_parameters(
+    st_co_registration_dataset(
+        unprocessed_dataset=st_mm_analyses_schema.st_mm_co_registration_unprocessed_dataset(
+            input_parameters=st_mm_analyses_schema.st_mm_co_registration_input_parameters(
                 sigma_min=st.just(0.7),
             )
         ),
     )
 )
 @settings(max_examples=1)
-def test_psf_beads_analysis_run(dataset):
+def test_co_registration_analysis_run(dataset):
     dataset = dataset["unprocessed_dataset"]
     assert not dataset.processed
-    assert psf_beads.analyse_psf_beads(dataset)
+    assert co_registration.analyse_co_registration(dataset)
     assert dataset.processed
 
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -147,7 +84,7 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -176,7 +113,7 @@ def test_psf_beads_analysis_no_beads(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             nr_images=st.just(2),
             z_image_shape=st.just(31),
             y_image_shape=st.just(512),
@@ -209,7 +146,7 @@ def test_psf_beads_analysis_different_lateral_shapes(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             nr_images=st.just(2),
             z_image_shape=st.just(31),
             y_image_shape=st.just(512),
@@ -242,7 +179,7 @@ def test_psf_beads_analysis_different_pixel_size(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -270,7 +207,7 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(71),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -295,7 +232,7 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),
@@ -336,7 +273,7 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
 
 @given(
     st_psf_beads_dataset(
-        test_data=st_beads_test_data(
+        test_data=st_psf_beads_test_data(
             z_image_shape=st.just(61),
             y_image_shape=st.just(512),
             x_image_shape=st.just(512),

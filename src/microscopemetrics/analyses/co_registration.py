@@ -1,9 +1,11 @@
 from datetime import datetime
+from itertools import combinations, permutations
 from typing import Optional, Tuple
 
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
+from numpy.random.mtrand import permutation
 from scipy.signal import correlate
 
 import microscopemetrics as mm
@@ -29,7 +31,9 @@ def _add_row_index_level(df: pd.DataFrame, level_name: str, level_value: str):
     df.index = new_index
 
 
-def _cross_correlation_translations(array1, array2, window_size):
+def _cross_correlation_translations(
+    array1: np.ndarray, array2: np.ndarray, window_size: int
+) -> dict:
     """Cross-correlate two arrays and return the maximum value after a fitting."""
     correlated_array = correlate(array1, array2, mode="valid", method="fft")
     max_index = np.unravel_index(np.argmax(correlated_array), correlated_array.shape)
@@ -62,12 +66,12 @@ def _cross_correlation_translations(array1, array2, window_size):
         )
     except RuntimeError as e:
         mm.logger.error(f"Error while computing the shifts: {e}")
-        return (np.nan, np.nan, np.nan)
+        return {"translation_z": np.nan, "translation_y": np.nan, "translation_x": np.nan}
 
     return {
-        "shift_z": gauss_center_pos_z,
-        "shift_y": gauss_center_pos_y,
-        "shift_x": gauss_center_pos_x,
+        "translation_z": gauss_center_pos_z,
+        "translation_y": gauss_center_pos_y,
+        "translation_x": gauss_center_pos_x,
     }
 
 
@@ -96,7 +100,6 @@ def _locate_beads(
     sigma_max: float,
     min_distance_px: float,
     snr_threshold: float,
-    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
 ) -> pd.DataFrame:
     bead_properties = mm_tools.find_beads(
         channel=channels_merge,
@@ -105,6 +108,7 @@ def _locate_beads(
         min_distance_px=min_distance_px,
         snr_threshold=snr_threshold,
         max_num_peaks=MAX_NR_PEAKS,
+        return_bead_images=False,
     )
 
     if len(bead_properties) == 0:
@@ -126,6 +130,8 @@ def _process_image(
     snr_threshold: float,
 ) -> tuple:
     channel_names = [c.name for c in image.channel_series.channels]
+    channel_combinations = combinations(range(len(channel_names)), 2)
+    channel_permutations = permutations(range(len(channel_names)), 2)
     voxel_size_micron = (
         image.voxel_size_z_micron,
         image.voxel_size_y_micron,
@@ -133,10 +139,10 @@ def _process_image(
     )
 
     # Get image data and remove the time dimension
-    image = image.array_data[0, ...]
+    image_data = image.array_data[0, ...]
 
     # Some images (e.g. OMX-3D-SIM) may contain negative values.
-    image = np.clip(image, a_min=0, a_max=None)
+    image_data = np.clip(image_data, a_min=0, a_max=None)
 
     bead_properties = _locate_beads(
         channels_merge=np.max(image, axis=-1),
@@ -144,8 +150,70 @@ def _process_image(
         sigma_max=sigma_max,
         min_distance_px=min_distance_px,
         snr_threshold=snr_threshold,
-        voxel_size_micron=voxel_size_micron,
     )
+
+    # Image level properties
+    image_rows = []
+    bead_rows = []
+    for ch_a, ch_b in channel_combinations:
+        image_translations = {
+            "image_id": mm.analyses.get_object_id(image) or image.name,
+            "channel_nr_a": ch_a,
+            "channel_nr_b": ch_b,
+            "channel_name_a": channel_names[ch_a],
+            "channel_name_b": channel_names[ch_b],
+        }
+        image_translations |= _cross_correlation_translations(
+            image_data[..., ch_a], image[..., ch_b], int(sigma_max)
+        )
+        image_rows.append(image_translations)
+
+        for index, row in bead_properties.iterrows():
+            bead_translations = {
+                "image_id": mm.analyses.get_object_id(image) or image.name,
+                "channel_nr_a": ch_a,
+                "channel_nr_b": ch_b,
+                "channel_name_a": channel_names[ch_a],
+                "channel_name_b": channel_names[ch_b],
+                "bead_id": index,
+                "sigma_LoG": row.sigma_Log,
+                "center_z": row.center_z,
+                "center_y": row.center_y,
+                "center_x": row.center_x,
+                "considered_self_proximity": row.considered_self_proximity,
+                "considered_lateral_edge": row.considered_lateral_edge,
+                "considered_valid": row.considered_valid,
+            }
+            if row.considered_valid:
+                bead_translations |= _cross_correlation_translations(
+                    image_data[
+                        ...,
+                        int(row.center_y - sigma_max) : int(row.center_y + sigma_max),
+                        int(row.center_x - sigma_max) : int(row.center_x + sigma_max),
+                        ch_a,
+                    ],
+                    image_data[
+                        ...,
+                        int(row.center_y - sigma_max) : int(row.center_y + sigma_max),
+                        int(row.center_x - sigma_max) : int(row.center_x + sigma_max),
+                        ch_b,
+                    ],
+                    int(sigma_max),
+                )
+
+            bead_rows.append(bead_translations)
+
+    return image_rows, bead_rows
+
+    """
+        "center_y",
+        "center_x",
+        "sigma_LoG",
+        "center_z",
+        "considered_self_proximity",
+        "considered_lateral_edge",
+        "considered_valid",
+    """
 
     nr_channels = image.shape[-1]
 
@@ -255,7 +323,7 @@ def _make_suggestion(bead_properties, input_parameters):
     return "Exemple suggestion"
 
 
-def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
+def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
     mm.analyses.validate_requirements()
 
     # Containers for input data and input parameters

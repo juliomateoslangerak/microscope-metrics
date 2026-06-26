@@ -271,6 +271,7 @@ def find_beads(
     min_distance_px: float,
     snr_threshold: float,
     max_num_peaks: int,
+    return_bead_images: bool = True,
 ):
     """
     This function finds the beads in a channel by applying a Gaussian filter and then finding the local maxima.
@@ -291,18 +292,18 @@ def find_beads(
             f"Channel appears too noisy for reliable bead detection. Estimated SNR: {snr_estimate:.2f}. "
             "Consider improving image quality or adjusting detection parameters."
         )
-        return pd.DataFrame(
-            columns=[
-                "center_y",
-                "center_x",
-                "sigma_LoG",
-                "center_z",
-                "considered_self_proximity",
-                "considered_lateral_edge",
-                "considered_valid",
-                "beads",
-            ]
-        )
+        columns = [
+            "center_y",
+            "center_x",
+            "sigma_LoG",
+            "center_z",
+            "considered_self_proximity",
+            "considered_lateral_edge",
+            "considered_valid",
+        ]
+        if return_bead_images:
+            columns.append("beads")
+        return pd.DataFrame(columns=columns)
 
     # We find the beads in the AIP for performance and to avoid anisotropy issues in the axial direction
     channel_aip = np.mean(channel, axis=0)
@@ -378,6 +379,8 @@ def find_beads(
             positions_df["considered_self_proximity"],
         )
     ]
+    positions_df["channel_snr_estimate"] = snr_estimate
+
     logger.debug(f"Beads found: {len(positions_df)}")
     logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
     logger.debug(
@@ -387,21 +390,22 @@ def find_beads(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
 
-    def get_bead_image(row, ch, hmd):
-        return ch[
-            :,
-            int(max(0, (row["center_y"] - hmd))) : int(
-                min(ch.shape[1], (row["center_y"] + hmd + 1))
-            ),
-            int(max(0, (row["center_x"] - hmd))) : int(
-                min(ch.shape[2], (row["center_x"] + hmd + 1))
-            ),
-        ]
+    if return_bead_iamges:
 
-    positions_df["beads"] = positions_df.apply(
-        get_bead_image, axis=1, args=(channel, half_min_distance_px)
-    )
-    positions_df["channel_snr_estimate"] = snr_estimate
+        def get_bead_image(row, ch, hmd):
+            return ch[
+                :,
+                int(max(0, (row["center_y"] - hmd))) : int(
+                    min(ch.shape[1], (row["center_y"] + hmd + 1))
+                ),
+                int(max(0, (row["center_x"] - hmd))) : int(
+                    min(ch.shape[2], (row["center_x"] + hmd + 1))
+                ),
+            ]
+
+        positions_df["beads"] = positions_df.apply(
+            get_bead_image, axis=1, args=(channel, half_min_distance_px)
+        )
 
     return positions_df
 
