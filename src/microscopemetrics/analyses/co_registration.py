@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
+from scipy.signal import correlate
 
 import microscopemetrics as mm
 from microscopemetrics.analyses import tools as mm_tools
@@ -28,9 +29,50 @@ def _add_row_index_level(df: pd.DataFrame, level_name: str, level_value: str):
     df.index = new_index
 
 
+def _cross_correlation_translations(array1, array2, window_size):
+    """Cross-correlate two arrays and return the maximum value after a fitting."""
+    correlated_array = correlate(array1, array2, mode="valid", method="fft")
+    max_index = np.unravel_index(np.argmax(correlated_array), correlated_array.shape)
+    # Generate profiles
+    profile_z_raw = np.squeeze(correlated_array[:, max_index[1], max_index[2]])
+    profile_y_raw = np.squeeze(correlated_array[max_index[0], :, max_index[2]])
+    profile_x_raw = np.squeeze(correlated_array[max_index[0], max_index[1], :])
+
+    # Normalize the profiles and subtract the background
+    profile_z_raw = (profile_z_raw - profile_z_raw.min()) / (
+        profile_z_raw.max() - profile_z_raw.min()
+    )
+    profile_y_raw = (profile_y_raw - profile_y_raw.min()) / (
+        profile_y_raw.max() - profile_y_raw.min()
+    )
+    profile_x_raw = (profile_x_raw - profile_x_raw.min()) / (
+        profile_x_raw.max() - profile_x_raw.min()
+    )
+
+    # Fitting the profiles
+    try:
+        profile_z_fitted_gauss, gauss_r2_z, gauss_fwhm_z, (_, _, gauss_center_pos_z, _) = (
+            mm_tools.fit_gaussian(profile_z_raw)
+        )
+        profile_y_fitted_gauss, gauss_r2_y, gauss_fwhm_y, (_, _, gauss_center_pos_y, _) = (
+            mm_tools.fit_gaussian(profile_y_raw)
+        )
+        profile_x_fitted_gauss, gauss_r2_x, gauss_fwhm_x, (_, _, gauss_center_pos_x, _) = (
+            mm_tools.fit_gaussian(profile_x_raw)
+        )
+    except RuntimeError as e:
+        mm.logger.error(f"Error while computing the shifts: {e}")
+        return (np.nan, np.nan, np.nan)
+
+    return {
+        "shift_z": gauss_center_pos_z,
+        "shift_y": gauss_center_pos_y,
+        "shift_x": gauss_center_pos_x,
+    }
+
+
 def _compute_bead_intensities(
     bead: np.ndarray,
-    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
 ):
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
         return {
@@ -70,9 +112,7 @@ def _locate_beads(
         return pd.DataFrame()
 
     bead_properties = bead_properties.join(
-        bead_properties["beads"].apply(
-            lambda x: pd.Series(_compute_bead_intensities(x, voxel_size_micron))
-        )
+        bead_properties["beads"].apply(lambda x: pd.Series(_compute_bead_intensities(x)))
     )
 
     return bead_properties
@@ -98,28 +138,19 @@ def _process_image(
     # Some images (e.g. OMX-3D-SIM) may contain negative values.
     image = np.clip(image, a_min=0, a_max=None)
 
+    bead_properties = _locate_beads(
+        channels_merge=np.max(image, axis=-1),
+        sigma_min=sigma_min,
+        sigma_max=sigma_max,
+        min_distance_px=min_distance_px,
+        snr_threshold=snr_threshold,
+        voxel_size_micron=voxel_size_micron,
+    )
+
     nr_channels = image.shape[-1]
 
-    bead_properties = []
 
-    for ch in range(nr_channels):
-        ch_bead_positions = _locate_beads(
-            channels_merge=image[..., ch],
-            sigma_min=sigma_min,
-            sigma_max=sigma_max,
-            min_distance_px=min_distance_px,
-            snr_threshold=snr_threshold,
-            voxel_size_micron=voxel_size_micron,
-        )
-
-        _add_row_index_level(ch_bead_positions, "channel_nr", ch)
-        _add_row_index_level(ch_bead_positions, "channel_name", channel_names[ch])
-        bead_properties.append(ch_bead_positions)
-
-    return pd.concat(bead_properties)
-
-
-def _estimate_min_bead_distance(dataset: mm_schema.PSFBeadsDataset) -> float:
+def _estimate_min_bead_distance(dataset: mm_schema.CoRegistrationDataset) -> float:
     # TODO: get the resolution somewhere or pass it as a metadata and remove it from the schema
     # Assuming we are imaging using nyquist criterium,
     # the min distance factor should be roughly twice the min_lateral_distance_factor
@@ -127,7 +158,7 @@ def _estimate_min_bead_distance(dataset: mm_schema.PSFBeadsDataset) -> float:
 
 
 def _generate_center_roi(
-    dataset: mm_schema.PSFBeadsDataset,
+    dataset: mm_schema.CoRegistrationDataset,
     positions,
     root_name,
     color,
@@ -226,7 +257,6 @@ def _make_suggestion(bead_properties, input_parameters):
 
 def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
     mm.analyses.validate_requirements()
-    # TODO: Implement Nyquist validation??
 
     # Containers for input data and input parameters
     images = {}
@@ -234,15 +264,13 @@ def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
     voxel_size_micron = None
     min_distance_px = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input_parameters.snr_threshold
-    fitting_airy_r2_threshold = dataset.input_parameters.fitting_airy_r2_threshold
-    fitting_gaussian_r2_threshold = dataset.input_parameters.fitting_gaussian_r2_threshold
 
     # Containers for output data
     saturated_channels = {}
     bead_properties = []
 
     # First loop to prepare data and do checks
-    for image in dataset.input_data.psf_beads_images:
+    for image in dataset.input_data.multiwaavelength_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
 
@@ -306,7 +334,7 @@ def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
         raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
 
     # Second loop main image analysis
-    for image in dataset.input_data.psf_beads_images:
+    for image in dataset.input_data.multiwaavelength_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         mm.logger.info(f"Processing image {image_id}...")
 
@@ -316,9 +344,6 @@ def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
             sigma_max=dataset.input_parameters.sigma_max,
             min_distance_px=min_distance_px,
             snr_threshold=snr_threshold,
-            fitting_airy_r2_threshold=fitting_airy_r2_threshold,
-            fitting_gaussian_r2_threshold=fitting_gaussian_r2_threshold,
-            intensity_robust_z_score_threshold=dataset.input_parameters.intensity_robust_z_score_threshold,
         )
 
         if len(image_bead_properties) == 0:
@@ -360,22 +385,6 @@ def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
     bead_profiles_y = _extract_profiles(bead_properties, "y")
     bead_profiles_x = _extract_profiles(bead_properties, "x")
 
-    # Calculate average beads, extract their profiles, and create the average bead image
-    (
-        average_beads_properties,
-        bead_profiles_z,
-        bead_profiles_y,
-        bead_profiles_x,
-        average_bead,
-    ) = _average_beads(
-        bead_properties=bead_properties,
-        voxel_size_micron=voxel_size_micron,
-        bead_profiles_z=bead_profiles_z,
-        bead_profiles_y=bead_profiles_y,
-        bead_profiles_x=bead_profiles_x,
-        source_images=dataset.input_data.psf_beads_images,
-    )
-
     # At this point we need to drop some data that we don't need anymore
     # bead arrays
     bead_properties.drop("beads", axis=1, inplace=True)
@@ -404,83 +413,10 @@ def analyse_psf_beads(dataset: mm_schema.CoRegistrationDataset) -> bool:
         color=(0, 255, 0, 100),
         stroke_width=8,
     )
-    considered_lateral_edge_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_lateral_edge],
-        root_name="considered_lateral_edge_bead_centers",
-        color=(255, 0, 0, 100),
-        stroke_width=4,
-    )
-    considered_self_proximity_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_self_proximity],
-        root_name="considered_self_proximity_bead_centers",
-        color=(255, 0, 0, 100),
-        stroke_width=4,
-    )
-    considered_axial_edge_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_axial_edge],
-        root_name="considered_axial_edge_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_intensity_outlier_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_intensity_outlier],
-        root_name="considered_intensity_outlier_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_bad_fit_airy_z_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_fit_airy_z],
-        root_name="considered_bad_fit_airy_z_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_bad_fit_airy_y_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_fit_airy_y],
-        root_name="considered_bad_fit_airy_y_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_bad_fit_airy_x_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_fit_airy_x],
-        root_name="considered_bad_fit_airy_x_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_bad_fit_gaussian_z_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_fit_gaussian_z],
-        root_name="considered_bad_fit_gaussian_z_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_bad_fit_gaussian_y_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_fit_gaussian_y],
-        root_name="considered_bad_fit_gaussian_y_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
-    considered_bad_fit_gaussian_x_bead_centers = _generate_center_roi(
-        dataset=dataset,
-        positions=bead_properties[bead_properties.considered_bad_fit_gaussian_x],
-        root_name="considered_bad_fit_gaussian_x_bead_centers",
-        color=(0, 0, 255, 100),
-        stroke_width=4,
-    )
 
     bead_properties = mm.analyses.df_to_table(bead_properties.reset_index(), "bead_properties")
-    bead_profiles_z = mm.analyses.df_to_table(bead_profiles_z, "bead_profiles_z")
-    bead_profiles_y = mm.analyses.df_to_table(bead_profiles_y, "bead_profiles_y")
-    bead_profiles_x = mm.analyses.df_to_table(bead_profiles_x, "bead_profiles_x")
 
-    dataset.output = mm_schema.PSFBeadsOutput(
+    dataset.output = mm_schema.CoRegistrationOutput(
         processing_application=mm.__name__,
         processing_version=mm.__version__,
         processing_datetime=datetime.now(),
