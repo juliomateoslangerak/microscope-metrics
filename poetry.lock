@@ -2343,7 +2343,7 @@ linkml-runtime = ">=1.9.4"
 [package.source]
 type = "git"
 url = "https://github.com/juliomateoslangerak/microscopemetrics-schema.git"
-reference = "dev"
+reference = "dev_coalignment"
 resolved_reference = "e9e3d159d66bbcfffbb23fe7c145011756d35948"
 
 [[package]]
@@ -5721,4 +5721,4 @@ test = ["zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10.0,<3.13"
-content-hash = "ab98555959acbd803ad6be50f41a2533cd47aa037454e615ef48e87c01448f3a"
+content-hash = "15b2f3d38ca435e7f1723c1ace9b8af062c91343ed4115d96717e9915b7fdc06"
