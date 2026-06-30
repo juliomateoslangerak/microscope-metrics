@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+from scipy.ndimage import rotate, shift
 from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
 
@@ -13,11 +14,32 @@ except ImportError as e:
     ) from e
 
 
+def _apply_co_registration_transformations(
+    image, translations_z, translations_y, translations_x, rotations_z
+):
+    transformed_image = np.zeros_like(image)
+    for ch in range(image.shape[-1]):
+        transformed_image[..., ch] = shift(
+            input=image[..., ch],
+            shift=[translations_z[ch], translations_y[ch], translations_x[ch]],
+            mode="nearest",
+        )
+        transformed_image[..., ch] = rotate(
+            input=transformed_image[..., ch],
+            angle=rotations_z[ch],
+            axes=(1, 2),
+            reshape=False,
+            mode="nearest",
+        )
+
+    return transformed_image
+
+
 def gen_psf_beads_channel():
     pass
 
 
-def gen_psf_beads_image(
+def gen_beads_image(
     z_image_shape: int,
     y_image_shape: int,
     x_image_shape: int,
@@ -36,6 +58,11 @@ def gen_psf_beads_image(
     background: float,
     do_noise: bool,
     dtype: np.dtype,
+    # coregistration args
+    translations_z: list[float] | None = None,
+    translations_y: list[float] | None = None,
+    translations_x: list[float] | None = None,
+    rotations_z: list[float] | None = None,
 ):
     # Generate the image as float64
     image = np.zeros(
@@ -154,6 +181,20 @@ def gen_psf_beads_image(
                 image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
             )
 
+    # Apply co-registration transformations
+    if any([translations_z, translations_y, translations_x, rotations_z]):
+        if translations_z is None:
+            translations_z = [0.0 for _ in range(c_image_shape)]
+        if translations_y is None:
+            translations_y = [0.0 for _ in range(c_image_shape)]
+        if translations_x is None:
+            translations_x = [0.0 for _ in range(c_image_shape)]
+        if rotations_z is None:
+            rotations_z = [0.0 for _ in range(c_image_shape)]
+        image = _apply_co_registration_transformations(
+            image, translations_z, translations_y, translations_x, rotations_z
+        )
+
     # Normalize the image to the target range before applying noise
     image_normalized = (
         skimage_rescale_intensity(
@@ -186,7 +227,7 @@ def st_beads_test_data(
     draw,
     nr_images=st.integers(min_value=1, max_value=3),
     # We want an odd number of slices, so we can have a center slice
-    z_image_shape=st.integers(min_value=51, max_value=71).filter(lambda x: x % 2 != 0),
+    z_image_shape=st.integers(min_value=51, max_value=61).filter(lambda x: x % 2 != 0),
     y_image_shape=st.integers(min_value=512, max_value=1024),
     x_image_shape=st.integers(min_value=512, max_value=1024),
     c_image_shape=st.integers(min_value=1, max_value=3),
@@ -203,6 +244,10 @@ def st_beads_test_data(
     nr_edge_beads=st.integers(min_value=0, max_value=3),
     nr_out_of_focus_beads=st.integers(min_value=0, max_value=3),
     nr_clustering_beads=st.integers(min_value=0, max_value=3),
+    translations_z=st.floats(min_value=-1.0, max_value=1.0),
+    translations_y=st.floats(min_value=-1.0, max_value=1.0),
+    translations_x=st.floats(min_value=-1.0, max_value=1.0),
+    rotations_z=st.floats(min_value=-1.0, max_value=1.0),
 ):
     output = {
         "images": [],
@@ -215,6 +260,10 @@ def st_beads_test_data(
         "signal": [],
         "background": [],
         "do_noise": [],
+        "translations_z": [],
+        "translations_y": [],
+        "translations_x": [],
+        "rotations_z": [],
     }
 
     z_image_shape = draw(z_image_shape)
@@ -233,6 +282,12 @@ def st_beads_test_data(
     min_lateral_distance_factor = draw(min_lateral_distance_factor)
     min_distance_x_px = min_distance_y_px = 2 * min_lateral_distance_factor
     min_distance_z_px = min_distance_x_px // 3
+
+    # Draw co-registration values
+    _translations_z = [draw(translations_z) for _ in range(c_image_shape)]
+    _translations_y = [draw(translations_y) for _ in range(c_image_shape)]
+    _translations_x = [draw(translations_x) for _ in range(c_image_shape)]
+    _rotations_z = [draw(rotations_z) for _ in range(c_image_shape)]
 
     for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
@@ -264,7 +319,7 @@ def st_beads_test_data(
             valid_bead_positions,
             out_of_focus_bead_positions,
             clustering_bead_positions,
-        ) = gen_psf_beads_image(
+        ) = gen_beads_image(
             z_image_shape=z_image_shape,
             y_image_shape=y_image_shape,
             x_image_shape=x_image_shape,
@@ -283,6 +338,10 @@ def st_beads_test_data(
             background=_background,
             do_noise=do_noise,
             dtype=dtype,
+            translations_z=_translations_z,
+            translations_y=_translations_y,
+            translations_x=_translations_x,
+            rotations_z=_rotations_z,
         )
 
         output["images"].append(image)
@@ -295,5 +354,9 @@ def st_beads_test_data(
         output["signal"].append(_signal)
         output["background"].append(_background)
         output["do_noise"].append(do_noise)
+        output["translations_z"].append(_translations_z)
+        output["translations_y"].append(_translations_y)
+        output["translations_x"].append(_translations_x)
+        output["rotations_z"].append(_rotations_z)
 
     return output

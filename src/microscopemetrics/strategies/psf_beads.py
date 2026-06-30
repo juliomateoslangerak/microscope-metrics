@@ -17,11 +17,10 @@ from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
 
 from microscopemetrics.analyses import numpy_to_mm_image
-from microscopemetrics.strategies import gen_psf_beads_image, st_beads_test_data
+from microscopemetrics.strategies import st_beads_test_data
+
 
 # Strategies for PSF beads
-
-
 @st.composite
 def st_psf_beads_dataset(
     draw,
