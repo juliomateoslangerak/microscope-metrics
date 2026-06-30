@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from numpy.random.mtrand import permutation
 from scipy.signal import correlate
+from skimage.registration import phase_cross_correlation
 
 import microscopemetrics as mm
 from microscopemetrics.analyses import tools as mm_tools
@@ -87,7 +88,7 @@ def _compute_bead_intensities(
         }
 
     return {
-        "intensity_integrated": (bead - intensity_min).sum(),
+        "intensity_integrated": (bead - bead.min()).sum(),
         "intensity_max": bead.max(),
         "intensity_min": bead.min(),
         "intensity_std": bead.std(),
@@ -108,7 +109,7 @@ def _locate_beads(
         min_distance_px=min_distance_px,
         snr_threshold=snr_threshold,
         max_num_peaks=MAX_NR_PEAKS,
-        return_bead_images=False,
+        return_bead_images=True,
     )
 
     if len(bead_properties) == 0:
@@ -145,7 +146,7 @@ def _process_image(
     image_data = np.clip(image_data, a_min=0, a_max=None)
 
     bead_properties = _locate_beads(
-        channels_merge=np.max(image, axis=-1),
+        channels_merge=np.max(image_data, axis=-1),
         sigma_min=sigma_min,
         sigma_max=sigma_max,
         min_distance_px=min_distance_px,
@@ -156,17 +157,21 @@ def _process_image(
     image_rows = []
     bead_rows = []
     for ch_a, ch_b in channel_combinations:
+        image_shift, image_error, image_phasediff = phase_cross_correlation(
+            image_data[..., ch_a], image_data[..., ch_b]
+        )
         image_translations = {
             "image_id": mm.analyses.get_object_id(image) or image.name,
             "channel_nr_a": ch_a,
             "channel_nr_b": ch_b,
             "channel_name_a": channel_names[ch_a],
             "channel_name_b": channel_names[ch_b],
+            "translation_z": image_shift[0],
+            "translation_y": image_shift[1],
+            "translation_x": image_shift[2],
+            "translation_error": image_error,
+            "phase_diff": image_phasediff,
         }
-        image_translations |= _cross_correlation_translations(
-            image_data[..., ch_a], image[..., ch_b], int(sigma_max)
-        )
-        image_rows.append(image_translations)
 
         for index, row in bead_properties.iterrows():
             bead_translations = {
@@ -176,7 +181,7 @@ def _process_image(
                 "channel_name_a": channel_names[ch_a],
                 "channel_name_b": channel_names[ch_b],
                 "bead_id": index,
-                "sigma_LoG": row.sigma_Log,
+                "sigma_LoG": row.sigma_LoG,
                 "center_z": row.center_z,
                 "center_y": row.center_y,
                 "center_x": row.center_x,
@@ -222,7 +227,7 @@ def _estimate_min_bead_distance(dataset: mm_schema.CoRegistrationDataset) -> flo
     # TODO: get the resolution somewhere or pass it as a metadata and remove it from the schema
     # Assuming we are imaging using nyquist criterium,
     # the min distance factor should be roughly twice the min_lateral_distance_factor
-    return dataset.input_parameters.min_lateral_distance_factor * 2
+    return dataset.input_parameters.sigma_max * 4
 
 
 def _generate_center_roi(

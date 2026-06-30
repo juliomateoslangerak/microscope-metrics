@@ -108,7 +108,7 @@ def multi_airy_fun(x: np.ndarray, *params) -> np.ndarray:
 
 def is_saturated(
     channel: np.ndarray,
-    threshold: float = 0.0,
+    threshold: float | None = None,
     detector_bit_depth: Optional[int] = None,
 ) -> bool:
     """
@@ -174,6 +174,9 @@ def is_saturated(
 
     saturation_matrix = channel == max_limit
     saturation_ratio = np.count_nonzero(saturation_matrix) / channel.size
+
+    if threshold is None:
+        threshold = 0.0
 
     return saturation_ratio > threshold
 
@@ -390,7 +393,7 @@ def find_beads(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
 
-    if return_bead_iamges:
+    if return_bead_images:
 
         def get_bead_image(row, ch, hmd):
             return ch[
