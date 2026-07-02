@@ -96,14 +96,14 @@ def _compute_bead_intensities(
 
 
 def _locate_beads(
-    channels_merge: np.ndarray,
+    channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
     min_distance_px: float,
     snr_threshold: float,
 ) -> pd.DataFrame:
     bead_properties = mm_tools.find_beads(
-        channel=channels_merge,
+        channel=channel,
         sigma_min=sigma_min,
         sigma_max=sigma_max,
         min_distance_px=min_distance_px,
@@ -129,10 +129,10 @@ def _process_image(
     sigma_max: float,
     min_distance_px: float,
     snr_threshold: float,
-) -> tuple:
+    reference_channel_nr: int,
+):
     channel_names = [c.name for c in image.channel_series.channels]
-    channel_combinations = combinations(range(len(channel_names)), 2)
-    channel_permutations = permutations(range(len(channel_names)), 2)
+    moving_channel_nbs = [ch for ch in range(len(channel_names)) if ch != reference_channel_nr]
     voxel_size_micron = (
         image.voxel_size_z_micron,
         image.voxel_size_y_micron,
@@ -146,7 +146,7 @@ def _process_image(
     image_data = np.clip(image_data, a_min=0, a_max=None)
 
     bead_properties = _locate_beads(
-        channels_merge=np.max(image_data, axis=-1),
+        channel=image_data[..., reference_channel_nr],
         sigma_min=sigma_min,
         sigma_max=sigma_max,
         min_distance_px=min_distance_px,
@@ -156,16 +156,18 @@ def _process_image(
     # Image level properties
     image_rows = []
     bead_rows = []
-    for ch_a, ch_b in channel_combinations:
+    for moving_channel_nb in moving_channel_nbs:
         image_shift, image_error, image_phasediff = phase_cross_correlation(
-            image_data[..., ch_a], image_data[..., ch_b]
+            image_data[..., reference_channel_nr],
+            image_data[..., moving_channel_nb],
+            upsample_factor=10,
         )
         image_translations = {
             "image_id": mm.analyses.get_object_id(image) or image.name,
-            "channel_nr_a": ch_a,
-            "channel_nr_b": ch_b,
-            "channel_name_a": channel_names[ch_a],
-            "channel_name_b": channel_names[ch_b],
+            "reference_channel_nr": reference_channel_nr,
+            "moving_channel_nr": moving_channel_nb,
+            "reference_channel_name": channel_names[reference_channel_nr],
+            "moving_channel_name": channel_names[moving_channel_nb],
             "translation_z": image_shift[0],
             "translation_y": image_shift[1],
             "translation_x": image_shift[2],
@@ -174,53 +176,80 @@ def _process_image(
         }
 
         for index, row in bead_properties.iterrows():
-            bead_translations = {
-                "image_id": mm.analyses.get_object_id(image) or image.name,
-                "channel_nr_a": ch_a,
-                "channel_nr_b": ch_b,
-                "channel_name_a": channel_names[ch_a],
-                "channel_name_b": channel_names[ch_b],
-                "bead_id": index,
-                "sigma_LoG": row.sigma_LoG,
-                "center_z": row.center_z,
-                "center_y": row.center_y,
-                "center_x": row.center_x,
-                "considered_self_proximity": row.considered_self_proximity,
-                "considered_lateral_edge": row.considered_lateral_edge,
-                "considered_valid": row.considered_valid,
-            }
             if row.considered_valid:
-                bead_translations |= _cross_correlation_translations(
+                bead_shift, bead_error, bead_phase_diff = phase_cross_correlation(
                     image_data[
-                        ...,
+                        int(row.center_z - sigma_max) : int(row.center_z + sigma_max),
                         int(row.center_y - sigma_max) : int(row.center_y + sigma_max),
                         int(row.center_x - sigma_max) : int(row.center_x + sigma_max),
-                        ch_a,
+                        reference_channel_nr,
                     ],
                     image_data[
-                        ...,
+                        int(row.center_z - sigma_max) : int(row.center_z + sigma_max),
                         int(row.center_y - sigma_max) : int(row.center_y + sigma_max),
                         int(row.center_x - sigma_max) : int(row.center_x + sigma_max),
-                        ch_b,
+                        moving_channel_nb,
                     ],
-                    int(sigma_max),
+                    upsample_factor=10,
+                    disambiguate=True,
                 )
+                if all(voxel_size_micron):
+                    bead_shift_micron = (
+                        bead_shift[0] * voxel_size_micron[0],
+                        bead_shift[1] * voxel_size_micron[1],
+                        bead_shift[2] * voxel_size_micron[2],
+                    )
+                    distance_3d_micron = np.sqrt(np.sum([s**2 for s in bead_shift_micron]))
+                else:
+                    bead_shift_micron = (np.nan, np.nan, np.nan)
+                    distance_3d_micron = np.nan
+                bead_translations = {
+                    "image_id": mm.analyses.get_object_id(image) or image.name,
+                    "bead_id": index,
+                    "reference_channel_nr": reference_channel_nr,
+                    "moving_channel_nr": moving_channel_nb,
+                    "reference_channel_name": channel_names[reference_channel_nr],
+                    "moving_channel_name": channel_names[moving_channel_nb],
+                    "sigma_LoG": row.sigma_LoG,
+                    "center_z": row.center_z,
+                    "center_y": row.center_y,
+                    "center_x": row.center_x,
+                    "considered_self_proximity": row.considered_self_proximity,
+                    "considered_lateral_edge": row.considered_lateral_edge,
+                    "considered_valid": row.considered_valid,
+                    "translation_z_px": bead_shift[0],
+                    "translation_y_px": bead_shift[1],
+                    "translation_x_px": bead_shift[2],
+                    "translation_error_px": bead_error,
+                    "translation_z_micron": bead_shift_micron[0],
+                    "translation_y_micron": bead_shift_micron[1],
+                    "translation_x_micron": bead_shift_micron[2],
+                    "distance_3d_micron": distance_3d_micron,
+                    "phase_diff": bead_phase_diff,
+                }
+
+            else:
+                bead_translations = {
+                    "image_id": mm.analyses.get_object_id(image) or image.name,
+                    "bead_id": index,
+                    "reference_channel_nr": reference_channel_nr,
+                    "moving_channel_nr": moving_channel_nb,
+                    "reference_channel_name": channel_names[reference_channel_nr],
+                    "moving_channel_name": channel_names[moving_channel_nb],
+                    "sigma_LoG": row.sigma_LoG,
+                    "center_z": row.center_z,
+                    "center_y": row.center_y,
+                    "center_x": row.center_x,
+                    "considered_self_proximity": row.considered_self_proximity,
+                    "considered_lateral_edge": row.considered_lateral_edge,
+                    "considered_valid": row.considered_valid,
+                }
 
             bead_rows.append(bead_translations)
 
+        image_rows.append(image_translations)
+
     return image_rows, bead_rows
-
-    """
-        "center_y",
-        "center_x",
-        "sigma_LoG",
-        "center_z",
-        "considered_self_proximity",
-        "considered_lateral_edge",
-        "considered_valid",
-    """
-
-    nr_channels = image.shape[-1]
 
 
 def _estimate_min_bead_distance(dataset: mm_schema.CoRegistrationDataset) -> float:
@@ -239,19 +268,17 @@ def _generate_center_roi(
 ):
     rois = []
 
-    for image in dataset.input_data.psf_beads_images:
+    for image in dataset.input_data.multiwavelength_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
-        if positions.empty or image_id not in positions.index.get_level_values("image_id"):
-            continue
         points = []
-        for index, row in positions.xs(image_id, level="image_id").iterrows():
+        for row in positions[positions.image_id == image_id].itertuples():
             points.append(
                 mm_schema.Point(
-                    name=index[positions.index.names[1:].index("bead_id")],
-                    z=row["center_z"],
-                    y=row["center_y"] + 0.5,  # Rois are centered on the voxel
-                    x=row["center_x"] + 0.5,
-                    c=index[positions.index.names[1:].index("channel_nr")],
+                    name=row.bead_id,
+                    z=row.center_z,
+                    y=row.center_y + 0.5,  # Rois are centered on the voxel
+                    x=row.center_x + 0.5,
+                    c=row.reference_channel_nr,
                     stroke_color=mm_schema.Color(
                         r=color[0], g=color[1], b=color[2], alpha=color[3]
                     ),
@@ -272,63 +299,13 @@ def _generate_center_roi(
     return rois
 
 
-def _crop_z_profiles(bead_properties: pd.DataFrame) -> None:
-    """Crop z profiles in-place to ±4x median FWHM around center_z, per channel.
-
-    The median FWHM is computed from valid beads only, giving a total window of 8x the
-    median FWHM. Profiles that extend beyond the array bounds are clamped (e.g. axial-edge
-    beads will produce shorter profiles).
-    """
-    profile_cols = ["z_raw", "z_fitted_airy", "z_fitted_gaussian"]
-    median_fwhm_by_channel = (
-        bead_properties[bead_properties["considered_valid"]]
-        .groupby(level="channel_nr")["fwhm_pixel_z"]
-        .median()
-    )
-    channel_nr_level = bead_properties.index.names.index("channel_nr")
-    for idx, row in bead_properties.iterrows():
-        channel_nr = idx[channel_nr_level]
-        if channel_nr not in median_fwhm_by_channel.index:
-            continue
-        half_window = int(Z_PROFILE_FWHM_HALF_WINDOW * median_fwhm_by_channel[channel_nr])
-        center_z = int(row["center_z"])
-        crop_start = max(0, center_z - half_window)
-        for col in profile_cols:
-            profile = row[col]
-            if isinstance(profile, np.ndarray):
-                crop_end = min(len(profile), center_z + half_window)
-                bead_properties.at[idx, col] = profile[crop_start:crop_end]
-
-
-def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
-    profile_col_names = [
-        f"{axis}_raw",
-        f"{axis}_fitted_airy",
-        f"{axis}_fitted_gaussian",
-    ]
-    column_indexes = [i for i in bead_properties.index.names if i != "channel_name"]
-
-    profiles = {}
-    for index, row in bead_properties.iterrows():
-        if isinstance(index, (list, tuple)):
-            index = [index[bead_properties.index.names.index(col_i)] for col_i in column_indexes]
-
-            index_str = "_".join([str(i) for i in index])
-        else:
-            index_str = str(index)
-        for profile_name in profile_col_names:
-            profiles[f"{index_str}_{profile_name}"] = pd.Series(row[profile_name])
-
-    bead_properties.drop(columns=profile_col_names, inplace=True)
-
-    return pd.DataFrame(profiles)
-
-
 def _make_suggestion(bead_properties, input_parameters):
     return "Exemple suggestion"
 
 
-def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
+def analyse_co_registration(
+    dataset: mm_schema.CoRegistrationDataset, total_bead_count=None
+) -> bool:
     mm.analyses.validate_requirements()
 
     # Containers for input data and input parameters
@@ -337,13 +314,13 @@ def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
     voxel_size_micron = None
     min_distance_px = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input_parameters.snr_threshold
+    reference_channel_nr = dataset.input_parameters.reference_channel_nr
 
     # Containers for output data
     saturated_channels = {}
-    bead_properties = []
 
     # First loop to prepare data and do checks
-    for image in dataset.input_data.multiwaavelength_beads_images:
+    for image in dataset.input_data.multiwavelength_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         images[image_id] = image.array_data[0, ...]
 
@@ -406,43 +383,40 @@ def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
         mm.logger.error(f"Channels {saturated_channels} are saturated")
         raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
 
+    image_properties = []
+    bead_properties = []
+
     # Second loop main image analysis
-    for image in dataset.input_data.multiwaavelength_beads_images:
+    for image in dataset.input_data.multiwavelength_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
         mm.logger.info(f"Processing image {image_id}...")
 
-        image_bead_properties = _process_image(
+        image_bead_rows = _process_image(
             image=image,
             sigma_min=dataset.input_parameters.sigma_min,
             sigma_max=dataset.input_parameters.sigma_max,
             min_distance_px=min_distance_px,
             snr_threshold=snr_threshold,
+            reference_channel_nr=reference_channel_nr,
         )
+        image_properties.extend(image_bead_rows[0])
+        bead_properties.extend(image_bead_rows[1])
 
-        if len(image_bead_properties) == 0:
+        if len(image_bead_rows[1]) == 0:
             mm.logger.warning(f"No beads found in image {image.name}")
             continue
 
         mm.logger.info(
             f"Image {image_id} processed."
-            f"    {image_bead_properties.considered_valid.sum()} beads considered valid."
-            f"    {image_bead_properties.considered_lateral_edge.sum()} beads considered lateral edge."
-            f"    {image_bead_properties.considered_self_proximity.sum()} beads considered self proximity."
-            f"    {image_bead_properties.considered_axial_edge.sum()} beads considered axial edge."
-            f"    {image_bead_properties.considered_intensity_outlier.sum()} beads considered intensity outlier."
-            f"    {image_bead_properties.considered_bad_fit_airy_z.sum()} beads considered bad Airy fit in z."
-            f"    {image_bead_properties.considered_bad_fit_airy_y.sum()} beads considered bad Airy fit in y."
-            f"    {image_bead_properties.considered_bad_fit_airy_x.sum()} beads considered bad Airy fit in x."
-            f"    {image_bead_properties.considered_bad_fit_gaussian_z.sum()} beads considered bad Gaussian fit in z."
-            f"    {image_bead_properties.considered_bad_fit_gaussian_y.sum()} beads considered bad Gaussian fit in y."
-            f"    {image_bead_properties.considered_bad_fit_gaussian_x.sum()} beads considered bad Gaussian fit in x."
+            f"    {sum([1 for r in bead_properties if r['considered_valid']])} beads considered valid."
+            f"    {sum([1 for r in bead_properties if r['considered_lateral_edge']])} beads considered lateral edge."
+            f"    {sum([1 for r in bead_properties if r['considered_self_proximity']])} beads considered self proximity."
         )
 
-        _add_row_index_level(image_bead_properties, "image_id", image_id)
-        bead_properties.append(image_bead_properties)
+    image_properties = pd.DataFrame(image_properties)
 
     if bead_properties:
-        bead_properties = pd.concat(bead_properties)
+        bead_properties = pd.DataFrame(bead_properties)
     else:  # No beads found
         mm.logger.error("No valid or invalid beads found in any image")
         raise mm.AnalysisError(
@@ -450,34 +424,20 @@ def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
 
-    # Crop z profiles to a consistent length (±4x median FWHM per channel) before extraction
-    _crop_z_profiles(bead_properties)
-
-    # Extract bead profiles first (needed by _average_beads)
-    bead_profiles_z = _extract_profiles(bead_properties, "z")
-    bead_profiles_y = _extract_profiles(bead_properties, "y")
-    bead_profiles_x = _extract_profiles(bead_properties, "x")
-
-    # At this point we need to drop some data that we don't need anymore
-    # bead arrays
-    bead_properties.drop("beads", axis=1, inplace=True)
-    # shifts for average bead calculation
-    bead_properties.drop(["shift_z", "shift_y", "shift_x"], axis=1, inplace=True)
-
-    # At this point we know if we found valid beads, and we raise an exception
-    # if there are no beads. Depending on the number of invalid beads and their
-    # classes
     if bead_properties["considered_valid"].sum() == 0:
         mm.logger.error("No valid beads found in any image")
         raise mm.AnalysisError(
             message="No beads valid found in any image",
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
-
-    key_measurements = _generate_key_measurements(
-        bead_properties=bead_properties,
-        average_bead_properties=average_beads_properties,
-    )
+    if bead_properties["considered_valid"].sum() < 3:
+        mm.logger.error(
+            f"Only {bead_properties['considered_valid'].sum()} valid beads found in all images combined"
+        )
+        raise mm.AnalysisError(
+            message=f"Only {bead_properties['considered_valid'].sum()} valid beads found in all images combined",
+            suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
+        )
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
@@ -486,7 +446,47 @@ def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
         color=(0, 255, 0, 100),
         stroke_width=8,
     )
+    considered_lateral_edge_bead_centers = _generate_center_roi(
+        dataset=dataset,
+        positions=bead_properties[bead_properties.considered_lateral_edge],
+        root_name="considered_lateral_edge_bead_centers",
+        color=(255, 0, 0, 100),
+        stroke_width=4,
+    )
+    considered_self_proximity_bead_centers = _generate_center_roi(
+        dataset=dataset,
+        positions=bead_properties[bead_properties.considered_self_proximity],
+        root_name="considered_self_proximity_bead_centers",
+        color=(255, 0, 0, 100),
+        stroke_width=4,
+    )
 
+    key_measurements = []
+    for moving_channel_nb in bead_properties.moving_channel_nr.unique():
+        key_rowset = bead_properties[bead_properties.moving_channel_nr == moving_channel_nb]
+        key_measurements.append(
+            mm_schema.CoRegistrationKeyMeasurement(
+                reference_channel_nr=key_rowset.reference_channel_nr.iloc[0],
+                reference_channel_name=key_rowset.reference_channel_name.iloc[0],
+                moving_channel_nr=moving_channel_nb,
+                moving_channel_name=key_rowset.moving_channel_name.iloc[0],
+                total_bead_count=len(key_rowset),
+                considered_valid_count=key_rowset.considered_valid.sum(),
+                considered_self_proximity_count=key_rowset.considered_self_proximity.sum(),
+                considered_lateral_edge_count=key_rowset.considered_lateral_edge.sum(),
+                considered_axial_edge_count=False,
+                translation_abs_mean_pixel_x=key_rowset.translation_x_px.abs().mean(),
+                translation_abs_mean_pixel_y=key_rowset.translation_y_px.abs().mean(),
+                translation_abs_mean_pixel_z=key_rowset.translation_z_px.abs().mean(),
+                translation_abs_mean_micron_x=key_rowset.translation_x_micron.abs().mean(),
+                translation_abs_mean_micron_y=key_rowset.translation_y_micron.abs().mean(),
+                translation_abs_mean_micron_z=key_rowset.translation_z_micron.abs().mean(),
+                distance_mean_micron_3d=key_rowset.distance_3d_micron.mean(),
+                rotation_z_mean=np.nan,  # TODO: rotation is not implemented
+            )
+        )
+
+    image_properties = mm.analyses.df_to_table(image_properties, "image_properties")
     bead_properties = mm.analyses.df_to_table(bead_properties.reset_index(), "bead_properties")
 
     dataset.output = mm_schema.CoRegistrationOutput(
@@ -496,20 +496,9 @@ def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
         analyzed_bead_centers=considered_valid_bead_centers,
         considered_bead_centers_lateral_edge=considered_lateral_edge_bead_centers,
         considered_bead_centers_self_proximity=considered_self_proximity_bead_centers,
-        considered_bead_centers_axial_edge=considered_axial_edge_bead_centers,
-        considered_bead_centers_intensity_outlier=considered_intensity_outlier_bead_centers,
-        considered_bead_centers_z_fit_airy_quality=considered_bad_fit_airy_z_bead_centers,
-        considered_bead_centers_y_fit_airy_quality=considered_bad_fit_airy_y_bead_centers,
-        considered_bead_centers_x_fit_airy_quality=considered_bad_fit_airy_x_bead_centers,
-        considered_bead_centers_z_fit_gaussian_quality=considered_bad_fit_gaussian_z_bead_centers,
-        considered_bead_centers_y_fit_gaussian_quality=considered_bad_fit_gaussian_y_bead_centers,
-        considered_bead_centers_x_fit_gaussian_quality=considered_bad_fit_gaussian_x_bead_centers,
         key_measurements=key_measurements,
+        image_properties=image_properties,
         bead_properties=bead_properties,
-        bead_profiles_z=bead_profiles_z,
-        bead_profiles_y=bead_profiles_y,
-        bead_profiles_x=bead_profiles_x,
-        average_bead=average_bead,
     )
 
     dataset.description = (
@@ -519,14 +508,7 @@ def analyse_co_registration(dataset: mm_schema.CoRegistrationDataset) -> bool:
         f"- Valid: {bead_properties.table_data['considered_valid'].sum()}\n"
         f"- Invalid: {len(bead_properties.table_data) - bead_properties.table_data['considered_valid'].sum()}\n"
         f"  - Lateral_edge: {bead_properties.table_data['considered_lateral_edge'].sum()}\n"
-        f"  - Axial_edge: {bead_properties.table_data['considered_axial_edge'].sum()}\n"
-        f"  - Bad_airy_fit_x: {bead_properties.table_data['considered_bad_fit_airy_x'].sum()}\n"
-        f"  - Bad_airy_fit_y: {bead_properties.table_data['considered_bad_fit_airy_y'].sum()}\n"
-        f"  - Bad_airy_fit_z: {bead_properties.table_data['considered_bad_fit_airy_z'].sum()}\n"
-        f"  - Bad_gaussian_fit_x: {bead_properties.table_data['considered_bad_fit_gaussian_x'].sum()}\n"
-        f"  - Bad_gaussian_fit_y: {bead_properties.table_data['considered_bad_fit_gaussian_y'].sum()}\n"
-        f"  - Bad_gaussian_fit_z: {bead_properties.table_data['considered_bad_fit_gaussian_z'].sum()}\n"
-        f"  - Intensity_outlier: {bead_properties.table_data['considered_intensity_outlier'].sum()}"
+        f"  - Self_proximity: {bead_properties.table_data['considered_self_proximity'].sum()}\n"
     )
 
     dataset.processed = True

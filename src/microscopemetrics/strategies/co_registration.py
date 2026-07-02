@@ -27,7 +27,7 @@ def st_co_registration_dataset(
     test_data = draw(test_data)
     co_registration_unprocessed_dataset = draw(unprocessed_dataset)
 
-    co_registration_unprocessed_dataset.input_data.multiwaavelength_beads_images = [
+    co_registration_unprocessed_dataset.input_data.multiwavelength_beads_images = [
         numpy_to_mm_image(
             array=image,
             name=f"multiwavelength_beads_image_{i}",
@@ -50,7 +50,7 @@ def st_co_registration_dataset(
     # Setting the bit depth to the data type of the image
     image_dtype = {
         a.array_data.dtype
-        for a in co_registration_unprocessed_dataset.input_data.multiwaavelength_beads_images
+        for a in co_registration_unprocessed_dataset.input_data.multiwavelength_beads_images
     }
     if len(image_dtype) != 1:
         raise ValueError("All images should have the same data type")
