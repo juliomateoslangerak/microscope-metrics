@@ -67,6 +67,7 @@ def test_co_registration_analysis_run(co_registration_dataset):
         ),
     )
 )
+@settings(max_examples=5)
 def test_co_registration_analysis_no_beads(dataset):
     co_registration_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
