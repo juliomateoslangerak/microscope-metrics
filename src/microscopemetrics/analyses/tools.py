@@ -324,6 +324,11 @@ def find_beads(
 
     # Where images are noisy, a lot of beads are detected that match the
     # sigma_min. We may remove them here.
+    if len(positions_all[positions_all[:, 2] > sigma_min]) < len(
+        positions_all[positions_all[:, 2] <= sigma_min]
+    ):
+        logger.warning("Many beads are matching sigma_min. This image is probably very noisy.")
+    # TODO: Consider adding here an error when a lot of beads matching min_sigma
     positions_all = positions_all[positions_all[:, 2] > sigma_min]
 
     # We assume that reaching a maximum number of beads is a sign of a bad thresholding
