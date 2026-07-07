@@ -14,21 +14,21 @@ from microscopemetrics.strategies.field_illumination import (
 @given(st_field_illumination_dataset())
 @settings(max_examples=1)
 def test_field_illumination_analysis_instantiation(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert isinstance(dataset, mm_schema.FieldIlluminationDataset)
-    assert dataset.name
-    assert dataset.description
-    assert dataset.microscope
-    assert dataset.input_parameters
+    field_illumination_dataset = dataset["unprocessed_dataset"]
+    assert isinstance(field_illumination_dataset, mm_schema.FieldIlluminationDataset)
+    assert field_illumination_dataset.name
+    assert field_illumination_dataset.description
+    assert field_illumination_dataset.microscope
+    assert field_illumination_dataset.input_parameters
 
 
 @given(st_field_illumination_dataset())
 @settings(max_examples=1)
 def test_field_illumination_analysis_run(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert not dataset.processed
-    assert field_illumination.analyse_field_illumination(dataset)
-    assert dataset.processed
+    field_illumination_dataset = dataset["unprocessed_dataset"]
+    assert not field_illumination_dataset.processed
+    assert field_illumination.analyse_field_illumination(field_illumination_dataset)
+    assert field_illumination_dataset.processed
 
 
 @given(
