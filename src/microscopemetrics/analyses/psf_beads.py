@@ -142,6 +142,7 @@ def _average_beads(
         bead_properties[bead_properties["considered_valid"]]
         .groupby(level="channel_nr")["fwhm_pixel_z"]
         .median()
+        .dropna()
     )
     channel_nr_level = average_beads_properties.index.names.index("channel_nr")
     for idx, row in average_beads_properties.iterrows():
@@ -703,6 +704,7 @@ def _crop_z_profiles(bead_properties: pd.DataFrame) -> None:
         bead_properties[bead_properties["considered_valid"]]
         .groupby(level="channel_nr")["fwhm_pixel_z"]
         .median()
+        .dropna()
     )
     channel_nr_level = bead_properties.index.names.index("channel_nr")
     for idx, row in bead_properties.iterrows():
