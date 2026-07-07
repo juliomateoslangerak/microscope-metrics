@@ -115,40 +115,28 @@ def test_co_registration_analysis_different_lateral_shapes(dataset):
         co_registration.analyse_co_registration(co_registration_dataset)
 
 
-#
-#
-# @given(
-#     st_psf_beads_dataset(
-#         test_data=st_psf_beads_test_data(
-#             nr_images=st.just(2),
-#             z_image_shape=st.just(31),
-#             y_image_shape=st.just(512),
-#             x_image_shape=st.just(512),
-#             c_image_shape=st.just(2),
-#             dtype=st.just(np.uint16),
-#             min_lateral_distance_factor=st.just(20),
-#             signal=st.just(0.01),
-#             background=st.just(0.005),
-#             nr_valid_beads=st.just(5),
-#             nr_edge_beads=st.just(0),
-#             nr_out_of_focus_beads=st.just(0),
-#             nr_clustering_beads=st.just(0),
-#         ),
-#     )
-# )
-# def test_psf_beads_analysis_different_pixel_size(dataset):
-#     psf_beads_dataset = dataset["unprocessed_dataset"]
-#     psf_beads_dataset.input_data.psf_beads_images[0].voxel_size_x_micron = 0.2
-#     psf_beads_dataset.input_data.psf_beads_images[0].voxel_size_y_micron = 0.2
-#     psf_beads_dataset.input_data.psf_beads_images[0].voxel_size_z_micron = 0.6
-#     psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_x_micron = 0.3
-#     psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_y_micron = 0.3
-#     psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_z_micron = 0.6
-#
-#     # Should raise DataFormatError
-#     with pytest.raises(DataFormatError):
-#         psf_beads.analyse_psf_beads(psf_beads_dataset)
-#
+@given(
+    st_co_registration_dataset(
+        test_data=st_beads_test_data(
+            nr_images=st.just(2),
+        ),
+    )
+)
+@settings(max_examples=1)
+def test_co_registration_analysis_different_pixel_size(dataset):
+    co_registration_dataset = dataset["unprocessed_dataset"]
+    co_registration_dataset.input_data.multiwavelength_beads_images[0].voxel_size_x_micron = 0.2
+    co_registration_dataset.input_data.multiwavelength_beads_images[0].voxel_size_y_micron = 0.2
+    co_registration_dataset.input_data.multiwavelength_beads_images[0].voxel_size_z_micron = 0.6
+    co_registration_dataset.input_data.multiwavelength_beads_images[1].voxel_size_x_micron = 0.3
+    co_registration_dataset.input_data.multiwavelength_beads_images[1].voxel_size_y_micron = 0.3
+    co_registration_dataset.input_data.multiwavelength_beads_images[1].voxel_size_z_micron = 0.6
+
+    # Should raise DataFormatError
+    with pytest.raises(DataFormatError):
+        co_registration.analyse_co_registration(co_registration_dataset)
+
+
 #
 # @given(
 #     st_psf_beads_dataset(
