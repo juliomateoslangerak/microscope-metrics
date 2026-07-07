@@ -391,7 +391,7 @@ def analyse_co_registration(
         image_id = mm.analyses.get_object_id(image) or image.name
         mm.logger.info(f"Processing image {image_id}...")
 
-        image_bead_rows = _process_image(
+        image_rows, bead_rows = _process_image(
             image=image,
             sigma_min=dataset.input_parameters.sigma_min,
             sigma_max=dataset.input_parameters.sigma_max,
@@ -399,10 +399,10 @@ def analyse_co_registration(
             snr_threshold=snr_threshold,
             reference_channel_nr=reference_channel_nr,
         )
-        image_properties.extend(image_bead_rows[0])
-        bead_properties.extend(image_bead_rows[1])
+        image_properties.extend(image_rows)
+        bead_properties.extend(bead_rows)
 
-        if len(image_bead_rows[1]) == 0:
+        if len(bead_rows) == 0:
             mm.logger.warning(f"No beads found in image {image.name}")
             continue
 
