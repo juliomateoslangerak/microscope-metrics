@@ -66,7 +66,7 @@ def test_co_registration_analysis_no_beads(dataset):
     co_registration_dataset.input_parameters.min_lateral_distance_factor = expected_output[
         "min_lateral_distance_factor"
     ][0]
-    # Should raise AnalysisError
+
     with pytest.raises(AnalysisError):
         co_registration.analyse_co_registration(co_registration_dataset)
 
@@ -90,7 +90,6 @@ def test_co_registration_analysis_different_lateral_shapes(dataset):
         ]
     )
 
-    # Should raise DataFormatError
     with pytest.raises(DataFormatError):
         co_registration.analyse_co_registration(co_registration_dataset)
 
@@ -112,7 +111,6 @@ def test_co_registration_analysis_different_pixel_size(dataset):
     co_registration_dataset.input_data.multiwavelength_beads_images[1].voxel_size_y_micron = 0.3
     co_registration_dataset.input_data.multiwavelength_beads_images[1].voxel_size_z_micron = 0.6
 
-    # Should raise DataFormatError
     with pytest.raises(DataFormatError):
         co_registration.analyse_co_registration(co_registration_dataset)
 

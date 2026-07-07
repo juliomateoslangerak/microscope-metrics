@@ -157,7 +157,7 @@ def test_psf_beads_analysis_no_beads(dataset):
     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
         "min_lateral_distance_factor"
     ][0]
-    # Should raise AnalysisError
+
     with pytest.raises(AnalysisError):
         psf_beads.analyse_psf_beads(psf_beads_dataset)
 
@@ -179,7 +179,6 @@ def test_psf_beads_analysis_different_lateral_shapes(dataset):
         psf_beads_dataset.input_data.psf_beads_images[0].array_data[:, :, :, 1:, :]
     )
 
-    # Should raise DataFormatError
     with pytest.raises(DataFormatError):
         psf_beads.analyse_psf_beads(psf_beads_dataset)
 
@@ -200,7 +199,6 @@ def test_psf_beads_analysis_different_pixel_size(dataset):
     psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_y_micron = 0.3
     psf_beads_dataset.input_data.psf_beads_images[1].voxel_size_z_micron = 0.6
 
-    # Should raise DataFormatError
     with pytest.raises(DataFormatError):
         psf_beads.analyse_psf_beads(psf_beads_dataset)
 
