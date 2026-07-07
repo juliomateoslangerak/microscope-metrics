@@ -284,14 +284,10 @@ def st_beads_test_data(
     min_distance_z_px = min_distance_x_px // 3
 
     # Draw co-registration values
-    # _translations_z = [draw(translations_z) for _ in range(c_image_shape)]
-    # _translations_y = [draw(translations_y) for _ in range(c_image_shape)]
-    # _translations_x = [draw(translations_x) for _ in range(c_image_shape)]
-    # _rotations_z = [draw(rotations_z) for _ in range(c_image_shape)]
-    _translations_z = [0.0, 0.5]
-    _translations_y = [0.0, 5.0]
-    _translations_x = [0.0, 5.0]
-    _rotations_z = [0.0, 0.0]
+    _translations_z = [draw(translations_z) for _ in range(c_image_shape)]
+    _translations_y = [draw(translations_y) for _ in range(c_image_shape)]
+    _translations_x = [draw(translations_x) for _ in range(c_image_shape)]
+    _rotations_z = [draw(rotations_z) for _ in range(c_image_shape)]
 
     for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
