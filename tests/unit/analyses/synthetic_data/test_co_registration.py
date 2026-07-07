@@ -49,34 +49,35 @@ def test_co_registration_analysis_run(co_registration_dataset):
     assert co_registration_dataset.processed
 
 
-# @given(
-#     st_co_registration_dataset(
-#         test_data=st_beads_test_data(
-#             z_image_shape=st.just(61),
-#             y_image_shape=st.just(512),
-#             x_image_shape=st.just(512),
-#             c_image_shape=st.just(3),
-#             dtype=st.just(np.uint16),
-#             min_lateral_distance_factor=st.just(20),
-#             signal=st.just(0.01),
-#             background=st.just(0.005),
-#             nr_valid_beads=st.just(0),
-#             nr_edge_beads=st.just(0),
-#             nr_out_of_focus_beads=st.just(0),
-#             nr_clustering_beads=st.just(0),
-#         ),
-#     )
-# )
-# def test_psf_beads_analysis_no_beads(dataset):
-#     psf_beads_dataset = dataset["unprocessed_dataset"]
-#     expected_output = dataset["expected_output"]
-#     psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-#         "min_lateral_distance_factor"
-#     ][0]
-#     # Should raise AnalysisError
-#     with pytest.raises(AnalysisError):
-#         psf_beads.analyse_psf_beads(psf_beads_dataset)
-#
+@given(
+    st_co_registration_dataset(
+        test_data=st_beads_test_data(
+            z_image_shape=st.just(61),
+            y_image_shape=st.just(512),
+            x_image_shape=st.just(512),
+            c_image_shape=st.just(3),
+            dtype=st.just(np.uint16),
+            min_lateral_distance_factor=st.just(20),
+            signal=st.just(0.01),
+            background=st.just(0.005),
+            nr_valid_beads=st.just(0),
+            nr_edge_beads=st.just(0),
+            nr_out_of_focus_beads=st.just(0),
+            nr_clustering_beads=st.just(0),
+        ),
+    )
+)
+def test_co_registration_analysis_no_beads(dataset):
+    co_registration_dataset = dataset["unprocessed_dataset"]
+    expected_output = dataset["expected_output"]
+    co_registration_dataset.input_parameters.min_lateral_distance_factor = expected_output[
+        "min_lateral_distance_factor"
+    ][0]
+    # Should raise AnalysisError
+    with pytest.raises(AnalysisError):
+        co_registration.analyse_co_registration(co_registration_dataset)
+
+
 #
 # @given(
 #     st_psf_beads_dataset(
