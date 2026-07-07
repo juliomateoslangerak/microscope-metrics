@@ -227,7 +227,7 @@ def st_beads_test_data(
     draw,
     nr_images=st.integers(min_value=1, max_value=3),
     # We want an odd number of slices, so we can have a center slice
-    z_image_shape=st.just(51),
+    z_image_shape=st.just(61),
     y_image_shape=st.just(512),
     x_image_shape=st.just(512),
     c_image_shape=st.integers(min_value=1, max_value=3),

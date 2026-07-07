@@ -112,11 +112,7 @@ def test_psf_beads_analysis_run(dataset):
 @given(
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
-            z_image_shape=st.just(61),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
             c_image_shape=st.just(3),
-            min_lateral_distance_factor=st.just(20),
             nr_valid_beads=st.integers(min_value=1, max_value=10),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
@@ -148,14 +144,6 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 @given(
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
-            z_image_shape=st.just(61),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
-            c_image_shape=st.just(3),
-            dtype=st.just(np.uint16),
-            min_lateral_distance_factor=st.just(20),
-            signal=st.just(0.01),
-            background=st.just(0.005),
             nr_valid_beads=st.just(0),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
@@ -178,18 +166,6 @@ def test_psf_beads_analysis_no_beads(dataset):
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
             nr_images=st.just(2),
-            z_image_shape=st.just(31),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
-            c_image_shape=st.just(2),
-            dtype=st.just(np.uint16),
-            min_lateral_distance_factor=st.just(20),
-            signal=st.just(0.01),
-            background=st.just(0.005),
-            nr_valid_beads=st.just(5),
-            nr_edge_beads=st.just(0),
-            nr_out_of_focus_beads=st.just(0),
-            nr_clustering_beads=st.just(0),
         ),
     )
 )
@@ -212,18 +188,6 @@ def test_psf_beads_analysis_different_lateral_shapes(dataset):
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
             nr_images=st.just(2),
-            z_image_shape=st.just(31),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
-            c_image_shape=st.just(2),
-            dtype=st.just(np.uint16),
-            min_lateral_distance_factor=st.just(20),
-            signal=st.just(0.01),
-            background=st.just(0.005),
-            nr_valid_beads=st.just(5),
-            nr_edge_beads=st.just(0),
-            nr_out_of_focus_beads=st.just(0),
-            nr_clustering_beads=st.just(0),
         ),
     )
 )
@@ -244,9 +208,6 @@ def test_psf_beads_analysis_different_pixel_size(dataset):
 @given(
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
-            z_image_shape=st.just(61),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             nr_valid_beads=st.just(3),
             nr_edge_beads=st.integers(min_value=1, max_value=3),
@@ -273,8 +234,6 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
             z_image_shape=st.just(71),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             nr_valid_beads=st.just(2),
             nr_edge_beads=st.just(0),
@@ -297,16 +256,12 @@ def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
 @given(
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
-            z_image_shape=st.just(61),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             nr_valid_beads=st.just(12),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.integers(min_value=1, max_value=2),
             # To find the outliers we need to ensure that all images have the same intensity related parameters
-            dtype=st.just(np.uint16),
             do_noise=st.just(True),
             signal=st.just(0.1),
             background=st.just(0.005),
@@ -338,16 +293,12 @@ def test_psf_beads_analysis_nr_intensity_outliers_beads(dataset):
 @given(
     st_psf_beads_dataset(
         test_data=st_beads_test_data(
-            z_image_shape=st.just(61),
-            y_image_shape=st.just(512),
-            x_image_shape=st.just(512),
             c_image_shape=st.just(3),
             nr_valid_beads=st.integers(min_value=3, max_value=20),
             nr_edge_beads=st.just(0),
             nr_out_of_focus_beads=st.just(0),
             nr_clustering_beads=st.just(0),
             # We create very noisy images.
-            dtype=st.just(np.uint16),
             do_noise=st.just(True),
             signal=st.just(0.003),
             background=st.just(0.001),
