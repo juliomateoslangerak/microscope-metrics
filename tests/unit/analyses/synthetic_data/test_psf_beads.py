@@ -105,7 +105,7 @@ def test_psf_beads_analysis_instantiation(dataset):
 def test_psf_beads_analysis_run(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     assert not psf_beads_dataset.processed
-    assert psf_beads_dataset.analyse_psf_beads(dataset)
+    assert psf_beads.analyse_psf_beads(psf_beads_dataset)
     assert psf_beads_dataset.processed
 
 
