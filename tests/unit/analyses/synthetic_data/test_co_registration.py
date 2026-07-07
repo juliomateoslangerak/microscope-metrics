@@ -23,13 +23,13 @@ from microscopemetrics.strategies.co_registration import st_co_registration_data
     )
 )
 @settings(max_examples=1)
-def test_co_registration_analysis_instantiation(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert isinstance(dataset, mm_schema.CoRegistrationDataset)
-    assert dataset.name
-    assert dataset.description
-    assert dataset.microscope
-    assert dataset.input_parameters
+def test_co_registration_analysis_instantiation(co_registration_dataset):
+    co_registration_dataset = co_registration_dataset["unprocessed_dataset"]
+    assert isinstance(co_registration_dataset, mm_schema.CoRegistrationDataset)
+    assert co_registration_dataset.name
+    assert co_registration_dataset.description
+    assert co_registration_dataset.microscope
+    assert co_registration_dataset.input_parameters
 
 
 @given(
@@ -42,11 +42,11 @@ def test_co_registration_analysis_instantiation(dataset):
     )
 )
 @settings(max_examples=1)
-def test_co_registration_analysis_run(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert not dataset.processed
-    assert co_registration.analyse_co_registration(dataset)
-    assert dataset.processed
+def test_co_registration_analysis_run(co_registration_dataset):
+    co_registration_dataset = co_registration_dataset["unprocessed_dataset"]
+    assert not co_registration_dataset.processed
+    assert co_registration.analyse_co_registration(co_registration_dataset)
+    assert co_registration_dataset.processed
 
 
 # @given(
