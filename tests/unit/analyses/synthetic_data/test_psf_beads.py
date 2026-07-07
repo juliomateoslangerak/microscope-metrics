@@ -84,12 +84,12 @@ def test_average_beads(shifts, signal, background, sigma_axial, sigma_lateral):
 @given(st_psf_beads_dataset())
 @settings(max_examples=1)
 def test_psf_beads_analysis_instantiation(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert isinstance(dataset, mm_schema.PSFBeadsDataset)
-    assert dataset.name
-    assert dataset.description
-    assert dataset.microscope
-    assert dataset.input_parameters
+    psf_beads_dataset = dataset["unprocessed_dataset"]
+    assert isinstance(psf_beads_dataset, mm_schema.PSFBeadsDataset)
+    assert psf_beads_dataset.name
+    assert psf_beads_dataset.description
+    assert psf_beads_dataset.microscope
+    assert psf_beads_dataset.input_parameters
 
 
 @given(
@@ -103,10 +103,10 @@ def test_psf_beads_analysis_instantiation(dataset):
 )
 @settings(max_examples=1)
 def test_psf_beads_analysis_run(dataset):
-    dataset = dataset["unprocessed_dataset"]
-    assert not dataset.processed
-    assert psf_beads.analyse_psf_beads(dataset)
-    assert dataset.processed
+    psf_beads_dataset = dataset["unprocessed_dataset"]
+    assert not psf_beads_dataset.processed
+    assert psf_beads_dataset.analyse_psf_beads(dataset)
+    assert psf_beads_dataset.processed
 
 
 @given(
