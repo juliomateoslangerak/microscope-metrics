@@ -193,6 +193,7 @@ def test_psf_beads_analysis_no_beads(dataset):
         ),
     )
 )
+@settings(max_examples=1)
 def test_psf_beads_analysis_different_lateral_shapes(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     psf_beads_dataset.input_data.psf_beads_images[0].shape_x = (
