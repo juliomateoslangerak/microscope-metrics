@@ -61,7 +61,7 @@ def generate_missing_key_measurements(
 
 def analyse_dataset(dataset: mm_schema.MetricsDataset):
     try:
-        mappings.MAPPINGS[dataset].analysis_function(dataset)
+        mappings.MAPPINGS[dataset.class_class_curie].analysis_function(dataset)
         return dataset
     except KeyError as e:
         raise ValueError(f"No analysis function found for the {dataset.class_name} dataset type.")
