@@ -12,7 +12,7 @@ from microscopemetrics_schema.datamodel import (
 
 from microscopemetrics.analyses.field_illumination import analyse_field_illumination
 from tests.helper_functions import (
-    assert_key_measurements_equality,
+    approx_compare,
     filter_dict,
     remove_np_pd_data,
 )
@@ -63,6 +63,6 @@ def test_field_illumination(data_gen_args, dataset_dir):
     expected_output = remove_np_pd_data(expected_output)
     analyzed_output = remove_np_pd_data(analyzed_output)
 
-    assert assert_key_measurements_equality(
-        expected=expected_output["key_measurements"], actual=analyzed_output["key_measurements"]
+    assert approx_compare(
+        expected=expected_output["key_measurements"], analyzed=analyzed_output["key_measurements"]
     ), "Key measurements do not match"

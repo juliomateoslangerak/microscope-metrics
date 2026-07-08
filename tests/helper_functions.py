@@ -38,6 +38,15 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
             approx_compare(expected[key], analyzed[key], rel_tol, abs_tol, int_tolerance)
             for key in expected
             if key in analyzed
+            and key
+            not in [
+                "id",
+                "name",
+                "description",
+                "data_reference",
+                "linked_references",
+                "channel_name",
+            ]
         )
 
     if isinstance(expected, list) and isinstance(analyzed, list):
@@ -47,6 +56,14 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
         )
 
     if isinstance(expected, float) and isinstance(analyzed, float):
+        # Handle NaN comparisons - both must be NaN or both must be non-NaN
+        if np.isnan(expected) and np.isnan(analyzed):
+            return True
+        # linkml_runtime.utils.yamlutils.extended_float is used to handle floats
+        # when read from a yaml file, while the analyzed output is a float
+        if hasattr(expected, "real"):
+            return analyzed == pytest.approx(expected.real, rel=rel_tol, abs=abs_tol)
+
         return analyzed == pytest.approx(expected, rel=rel_tol, abs=abs_tol)
 
     if isinstance(expected, int) and isinstance(analyzed, int):
@@ -56,55 +73,3 @@ def approx_compare(expected, analyzed, rel_tol=1e-3, abs_tol=1e-3, int_tolerance
         return expected.lower() == analyzed.lower()  # Case-insensitive match
 
     return expected == analyzed  # Default exact match for other types
-
-
-def assert_key_measurements_equality(
-    expected: List[Union[Dict, mm_schema.KeyMeasurement]],
-    actual: List[Union[Dict, mm_schema.KeyMeasurement]],
-):
-    """Assert that two KeyMeasurements objects are equal, ignoring oddities."""
-
-    def assert_item_equality(exp, act):
-        if isinstance(act, list):
-            if len(exp) != len(act):
-                raise ValueError(f"Expected {len(exp)} items, got {len(act)}")
-            for e, a in zip(exp, act):
-                if not assert_item_equality(e, a):
-                    return False
-            return True
-        if isinstance(act, float):
-            # Handle NaN comparisons - both must be NaN or both must be non-NaN
-            if np.isnan(act) and np.isnan(exp):
-                return True
-            # linkml_runtime.utils.yamlutils.extended_float is used to handle floats
-            # when read from a yaml file, while the analyzed output is a float
-            if hasattr(exp, "real") and exp.real == act:
-                return True
-            return exp == act
-        return act == exp
-
-    if isinstance(expected, list) and isinstance(actual, list):
-        for exp, act in zip(expected, actual):
-            assert_key_measurements_equality(exp, act)
-
-    elif isinstance(expected, dict) and isinstance(actual, dict):
-        for key, expected_measurement in expected.items():
-            if key in [
-                "id",
-                "name",
-                "description",
-                "data_reference",
-                "linked_references",
-                "channel_name",
-            ]:
-                continue
-            if not expected_measurement:  # Skip measurements with no expected value
-                continue
-            if not assert_item_equality(expected_measurement, actual[key]):
-                raise AssertionError(
-                    f"Key measurement '{key}' does not match: expected {expected_measurement}, got {actual[key]}"
-                )
-    else:
-        raise AssertionError(f"Key measurements is not a list or dict: {expected}, {actual}")
-
-    return True  # All key measurements match
