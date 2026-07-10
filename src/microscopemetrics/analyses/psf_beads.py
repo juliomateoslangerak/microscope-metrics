@@ -750,90 +750,39 @@ def _make_suggestion(bead_properties, input_parameters):
 
 
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
-    mm.analyses.validate_requirements()
+
+    mm.analyses.validate_requirements(
+        images_list=dataset.input_data.psf_beads_images,
+        axis_to_check_shape=[1, 2, 3, 4],
+        saturation_threshold=dataset.input_parameters.saturation_threshold,
+        bit_depth=dataset.input_parameters.bit_depth,
+    )
     # TODO: Implement Nyquist validation??
 
     # Containers for input data and input parameters
-    images = {}
-    images_shape = None
-    voxel_size_micron = None
     min_distance_px = _estimate_min_bead_distance(dataset)
     snr_threshold = dataset.input_parameters.snr_threshold
     fitting_airy_r2_threshold = dataset.input_parameters.fitting_airy_r2_threshold
     fitting_gaussian_r2_threshold = dataset.input_parameters.fitting_gaussian_r2_threshold
 
     # Containers for output data
-    saturated_channels = {}
     bead_properties = []
 
-    # First loop to prepare data and do checks
+    # Second loop main image analysis
     for image in dataset.input_data.psf_beads_images:
         image_id = mm.analyses.get_object_id(image) or image.name
-        images[image_id] = image.array_data[0, ...]
-
-        saturated_channels[image_id] = []
-
-        # Check image shape
-        mm.logger.info(f"Checking image {image_id} shape...")
-        if len(image.array_data.shape) != 5:
-            mm.logger.error(f"Image {image_id} must be 5D")
-            raise mm.DataFormatError(
-                f"Image {image_id} must be 5D (TZYXC). {len(image.array_data.shape)}D was provided. "
-            )
+        mm.logger.info(f"Processing image {image_id}...")
 
         if image.array_data.shape[0] != 1:
             mm.logger.warning(
                 f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
 
-        # Check all shapes equal
-        if images_shape is None:
-            images_shape = image.array_data.shape
-        elif images_shape != image.array_data.shape:
-            mm.logger.error("Not all images have the same dimensions")
-            raise mm.DataFormatError(
-                "Not all images have the same sizes. Please make sure that"
-                "all dimensions (TZYXC) are consistent.",
-                "In a future version, only ZYX will be required to be equal.",
-            )
-
-        # Check all pixel sizes equal
-        if voxel_size_micron is None:
-            voxel_size_micron = (
-                image.voxel_size_z_micron,
-                image.voxel_size_y_micron,
-                image.voxel_size_x_micron,
-            )
-        elif voxel_size_micron != (
+        voxel_size_micron = (
             image.voxel_size_z_micron,
             image.voxel_size_y_micron,
             image.voxel_size_x_micron,
-        ):
-            mm.logger.error("Not all images have the same voxel sizes")
-            raise mm.DataFormatError(
-                "Not all images have the same voxel sizes. "
-                "Please make sure that all input data have the same voxel sizes.",
-            )
-
-        # Check image saturation
-        mm.logger.info(f"Checking image {image_id} saturation...")
-        for c in range(image.array_data.shape[-1]):
-            if mm_tools.is_saturated(
-                channel=image.array_data[..., c],
-                threshold=dataset.input_parameters.saturation_threshold,
-                detector_bit_depth=dataset.input_parameters.bit_depth,
-            ):
-                mm.logger.error(f"Image {image_id}: channel {c} is saturated")
-                saturated_channels[image_id].append(c)
-
-    if any(len(saturated_channels[name]) for name in saturated_channels):
-        mm.logger.error(f"Channels {saturated_channels} are saturated")
-        raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
-
-    # Second loop main image analysis
-    for image in dataset.input_data.psf_beads_images:
-        image_id = mm.analyses.get_object_id(image) or image.name
-        mm.logger.info(f"Processing image {image_id}...")
+        )
 
         image_bead_properties = _process_image(
             image=image,

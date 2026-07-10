@@ -7,7 +7,8 @@ import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
 
-from microscopemetrics import logger
+from microscopemetrics import DataFormatError, SaturationError, logger
+from microscopemetrics.analyses.tools import is_saturated
 
 
 # TODO: This function is getting the id from OMERO. It should be more general
@@ -181,10 +182,101 @@ def df_to_table(
     )
 
 
-def validate_requirements() -> bool:
+def validate_requirements(
+    images_list: list[mm_schema.Image],
+    required_dimensions: int = 5,
+    require_equal_shapes: bool = True,
+    axis_to_check_shape: list[int] | None = None,
+    require_equal_channels: bool = True,
+    require_lateral_voxel_size: bool = False,
+    require_axial_voxel_size: bool = False,
+    require_equal_voxel_size: bool = True,
+    saturation_threshold: float | None = None,
+    bit_depth: int | None = None,
+) -> bool:
     logger.info("Validating requirements...")
-    # TODO: check image dimensions/shape
-    return True
+    if not images_list:
+        logger.error("No images provided")
+        raise DataFormatError("No images provided")
+
+    images_shape = images_list[0].array_data.shape
+    images_channels = images_list[0].channel_series.channels
+    voxel_size_micron = (
+        images_list[0].voxel_size_z_micron,
+        images_list[0].voxel_size_y_micron,
+        images_list[0].voxel_size_x_micron,
+    )
+    saturated_channels = {}
+
+    if require_equal_shapes and axis_to_check_shape is None:
+        axis_to_check_shape = list(range(required_dimensions))
+
+    for image in images_list:
+        # Check required dimensions
+        if len(image.array_data.shape) != required_dimensions:
+            logger.error(f"Image {image.name} must be {required_dimensions}D")
+            raise DataFormatError(
+                f"Image {image.name} must be {required_dimensions}D. {len(image.array_data.shape)}D was provided."
+            )
+
+        # Check shapes
+        if require_equal_shapes:
+            logger.info(f"Checking image {image.name} shape...")
+            for axis in axis_to_check_shape:
+                if images_shape[axis] != image.array_data.shape[axis]:
+                    logger.error("Not all images have the same required shape")
+                    raise DataFormatError(
+                        "Not all images have the same shapes where required. Please make sure that"
+                        "all dimensions are consistent.",
+                    )
+
+        # Check channels
+        if require_equal_channels:
+            logger.info(f"Checking image {image.name} channels...")
+            if image.channel_series.channels != images_channels:
+                logger.error("Not all images have the same channels")
+                raise DataFormatError(
+                    "Not all images have the same channels. Please make sure that"
+                    "all channels are consistent.",
+                )
+
+        # Check pixel sizes
+        if require_equal_voxel_size:
+            logger.info(f"Checking image {image.name} voxel sizes...")
+            if voxel_size_micron != (
+                image.voxel_size_z_micron,
+                image.voxel_size_y_micron,
+                image.voxel_size_x_micron,
+            ):
+                logger.error("Not all images have the same voxel sizes")
+                raise DataFormatError(
+                    "Not all images have the same voxel sizes. "
+                    "Please make sure that all input data have the same voxel sizes.",
+                )
+        if require_lateral_voxel_size and (not voxel_size_micron[1] or not voxel_size_micron[2]):
+            logger.error("No physical lateral voxel size provided")
+            raise DataFormatError("No physical lateral voxel size provided")
+        if require_axial_voxel_size and not voxel_size_micron[0]:
+            logger.error("No axial voxel size provided")
+            raise DataFormatError("No axial voxel size provided")
+
+        # Check image saturation
+        if saturation_threshold is not None:
+            logger.info(f"Checking image {image.name} saturation...")
+            saturated_channels[image.name] = []
+
+            for c in range(image.array_data.shape[-1]):
+                if is_saturated(
+                    channel=image.array_data[..., c],
+                    threshold=saturation_threshold,
+                    detector_bit_depth=bit_depth,
+                ):
+                    logger.error(f"Image {image.name}: channel {c} is saturated")
+                    saturated_channels[image.name].append(c)
+
+    if any(len(saturated_channels[name]) for name in saturated_channels):
+        logger.error(f"Channels {saturated_channels} are saturated")
+        raise SaturationError(f"Channels {saturated_channels} are saturated")
 
 
 def csv_power_measurements_parser(csv_file):
