@@ -343,53 +343,20 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
 
 
 def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
-    mm.analyses.validate_requirements()
+    mm.analyses.validate_requirements(
+        images_list=dataset.input_data.field_illumination_images,
+        axis_to_check_shape=[1, 2, 3],
+        require_equal_channels=False,
+        require_unique_channel_names=True,
+        saturation_threshold=dataset.input_parameters.saturation_threshold,
+        bit_depth=dataset.input_parameters.bit_depth,
+    )
 
-    channel_names = []
     for image in dataset.input_data.field_illumination_images:
-        image_id = mm.analyses.get_object_id(image) or image.name
-        # We want to verify that the input images all have different channel names
-        # As it does not make sense to average file illumination between images from the same channel
-        if image.channel_series is not None:
-            mm.logger.info("Checking duplicate channel names...")
-            for channel in image.channel_series.channels:
-                if channel.name in channel_names:
-                    mm.logger.error(
-                        f"Channel name {channel.name} is not unique. "
-                        "We cannot average field illumination between images from the same channel."
-                    )
-                    raise mm.DataFormatError(
-                        "Image channel name must be unique. That is only one channel may be provided.",
-                        "In a future version, we will support averaging channels.",
-                    )
-                channel_names.append(channel.name)
-
-        # Check image shape
-        mm.logger.info("Checking image shape...")
-        if len(image.array_data.shape) != 5:
-            mm.logger.error("Image must be 5D")
-            raise mm.DataFormatError(
-                f"Image {image_id} must be 5D (TZYXC). {len(image.array_data.shape)}D was provided. "
-            )
         if image.array_data.shape[0] != 1 or image.array_data.shape[1] != 1:
             mm.logger.warning(
                 "Image must be in TZYXC order, single z and single time-point. Using first z and time-point."
             )
-
-        # Check image saturation
-        mm.logger.info("Checking image saturation...")
-        saturated_channels = []
-        for c in range(image.array_data.shape[-1]):
-            if mm_tools.is_saturated(
-                channel=image.array_data[..., c],
-                threshold=dataset.input_parameters.saturation_threshold,
-                detector_bit_depth=dataset.input_parameters.bit_depth,
-            ):
-                mm.logger.error(f"Channel {c} is saturated")
-                saturated_channels.append(c)
-        if len(saturated_channels):
-            mm.logger.error(f"Channels {saturated_channels} are saturated")
-            raise mm.SaturationError(f"Channels {saturated_channels} are saturated")
 
     image_properties = _image_properties(
         images=dataset.input_data.field_illumination_images,

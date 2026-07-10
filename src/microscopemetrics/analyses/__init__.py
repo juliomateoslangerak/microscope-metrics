@@ -188,6 +188,7 @@ def validate_requirements(
     require_equal_shapes: bool = True,
     axis_to_check_shape: list[int] | None = None,
     require_equal_channels: bool = True,
+    require_unique_channel_names: bool = True,
     require_lateral_voxel_size: bool = False,
     require_axial_voxel_size: bool = False,
     require_equal_voxel_size: bool = True,
@@ -239,6 +240,20 @@ def validate_requirements(
                     "Not all images have the same channels. Please make sure that"
                     "all channels are consistent.",
                 )
+        if require_unique_channel_names:
+            logger.info("Checking duplicate channel names...")
+            channel_names = []
+            for channel in image.channel_series.channels:
+                if channel.name in channel_names:
+                    logger.error(
+                        f"Channel name {channel.name} is not unique. "
+                        "We cannot average field illumination between images from the same channel."
+                    )
+                    raise DataFormatError(
+                        "Image channel name must be unique. That is only one channel may be provided.",
+                        "In a future version, we will support averaging channels.",
+                    )
+                channel_names.append(channel.name)
 
         # Check pixel sizes
         if require_equal_voxel_size:
