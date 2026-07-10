@@ -460,16 +460,3 @@ def analyse_co_registration(
     dataset.processed = True
 
     return True
-
-
-# Calculate 2D FFT
-# slice_2d = raw_img[17, ...].reshape([1, n_channels, x_size, y_size])
-# fft_2D = fft_2d(slice_2d)
-
-# Calculate 3D FFT
-# fft_3D = fft_3d(spots_image)
-#
-# plt.imshow(np.log(fft_3D[2, :, :, 1]))  # , cmap='hot')
-# # plt.imshow(np.log(fft_3D[2, 23, :, :]))  # , cmap='hot')
-# plt.show()
-#
