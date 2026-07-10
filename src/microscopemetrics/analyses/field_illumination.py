@@ -343,7 +343,7 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
 
 
 def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
-    mm.analyses.validate_requirements(
+    mm.analyses.validate_images_requirements(
         images_list=dataset.input_data.field_illumination_images,
         axis_to_check_shape=[1, 2, 3],
         require_equal_channels=False,

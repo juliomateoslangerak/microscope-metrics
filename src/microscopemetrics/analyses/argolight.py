@@ -11,7 +11,11 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from skimage.transform import hough_line  # hough_line_peaks, probabilistic_hough_line
 
-from microscopemetrics.analyses import logger, numpy_to_mm_image, validate_requirements
+from microscopemetrics.analyses import (
+    logger,
+    numpy_to_mm_image,
+    validate_images_requirements,
+)
 from microscopemetrics.analyses.tools import (
     airy_fun,
     compute_distances_matrix,
@@ -225,7 +229,7 @@ def _compute_resolution(
 
 
 def analyse_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
-    validate_requirements()
+    validate_images_requirements()
 
     # Check image shape
     logger.info("Checking image shape...")
@@ -404,7 +408,7 @@ def analyse_argolight_b(dataset: mm_schema.ArgolightBDataset) -> bool:
 
 
 def analyse_argolight_e(dataset: mm_schema.ArgolightEDataset) -> bool:
-    validate_requirements()
+    validate_images_requirements()
 
     # Check image shape
     pass  # TODO: implement

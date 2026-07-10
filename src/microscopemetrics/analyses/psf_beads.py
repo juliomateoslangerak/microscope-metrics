@@ -751,7 +751,7 @@ def _make_suggestion(bead_properties, input_parameters):
 
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
-    mm.analyses.validate_requirements(
+    mm.analyses.validate_images_requirements(
         images_list=dataset.input_data.psf_beads_images,
         axis_to_check_shape=[1, 2, 3, 4],
         saturation_threshold=dataset.input_parameters.saturation_threshold,

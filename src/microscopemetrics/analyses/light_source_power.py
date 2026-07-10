@@ -319,7 +319,6 @@ def _compute_light_source_power_key_measurements(
 
 
 def analyse_light_source_power(dataset: mm_schema.LightSourcePowerDataset) -> bool:
-    mm.analyses.validate_requirements()
 
     key_measurements = _compute_light_source_power_key_measurements(
         power_measurements=dataset.input_data.power_measurements,

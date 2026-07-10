@@ -182,7 +182,7 @@ def df_to_table(
     )
 
 
-def validate_requirements(
+def validate_images_requirements(
     images_list: list[mm_schema.Image],
     required_dimensions: int = 5,
     require_equal_shapes: bool = True,
