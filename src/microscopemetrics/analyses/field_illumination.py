@@ -313,7 +313,8 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
                     "image_id",
                     "channel_name",
                     "channel_nr",
-                    "channel_id",
+                    "excitation_wavelength_nm",
+                    "emission_wavelength_nm",
                 ]
             )
             ch_properties.loc[0] = [
@@ -321,7 +322,8 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
                 mm.analyses.get_object_id(image),
                 image.channel_series.channels[c].name,
                 c,
-                mm.analyses.get_object_id(image.channel_series.channels[c]),
+                image.channel_series.channels[c].excitation_wavelength_nm,
+                image.channel_series.channels[c].emission_wavelength_nm,
             ]
             ch_properties = ch_properties.join(
                 pd.DataFrame(

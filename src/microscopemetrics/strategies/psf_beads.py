@@ -29,12 +29,18 @@ def st_psf_beads_dataset(
 ):
     test_data = draw(test_data)
     psf_beads_unprocessed_dataset = draw(unprocessed_dataset)
+    excitation_wavelengths_nm = [405.0, 488.0, 561.0, 642.0, 705.0]
+    emission_wavelengths_nm = [435.0, 525.0, 605.0, 692.0, 750.0]
 
     psf_beads_unprocessed_dataset.input_data.psf_beads_images = [
         numpy_to_mm_image(
             array=image,
             name=f"PSF_image_{i}",
             channel_names=[f"Channel_{c}" for c in range(image.shape[-1])],
+            excitation_wavelengths_nm=[
+                excitation_wavelengths_nm[c] for c in range(image.shape[-1])
+            ],
+            emission_wavelengths_nm=[emission_wavelengths_nm[c] for c in range(image.shape[-1])],
         )
         for i, image in enumerate(test_data.pop("images"))
     ]

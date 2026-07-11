@@ -115,10 +115,17 @@ def _average_beads(
     average_beads_properties = pd.DataFrame(
         {
             keys: _average_beads_group(group, voxel_size_micron=voxel_size_micron)
-            for keys, group in bead_properties.groupby(["channel_nr", "channel_name"])
+            for keys, group in bead_properties.groupby(
+                ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+            )
         }
     ).T
-    average_beads_properties.index.names = ["channel_nr", "channel_name"]
+    average_beads_properties.index.names = [
+        "channel_nr",
+        "channel_name",
+        "excitation_wavelength_nm",
+        "emission_wavelength_nm",
+    ]
 
     # If after dropping image-channels without beads we keep nothing, we return
     if average_beads_properties.dropna(subset=["average_bead"]).empty:
@@ -180,6 +187,14 @@ def _average_beads(
             source_images=source_images,
             channel_names=[
                 i[average_beads_properties.index.names.index("channel_name")]
+                for i in average_beads_properties.index
+            ],
+            excitation_wavelengths_nm=[
+                i[average_beads_properties.index.names.index("excitation_wavelength_nm")]
+                for i in average_beads_properties.index
+            ],
+            emission_wavelengths_nm=[
+                i[average_beads_properties.index.names.index("emission_wavelength_nm")]
                 for i in average_beads_properties.index
             ],
         )
@@ -251,6 +266,8 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     measurement_aggregation_columns = [
         "channel_name",
         "channel_nr",
+        "excitation_wavelength_nm",
+        "emission_wavelength_nm",
         "intensity_max",
         "intensity_min",
         "intensity_std",
@@ -271,6 +288,8 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     count_aggregation_columns = [
         "channel_name",
         "channel_nr",
+        "excitation_wavelength_nm",
+        "emission_wavelength_nm",
         "total_bead",
         "considered_valid",
         "considered_self_proximity",
@@ -293,7 +312,9 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     # We aggregate counts for each channel on beads according to their status
     channel_counts = (
         reindex_bead_properties_df[count_aggregation_columns]
-        .groupby(["channel_nr", "channel_name"])
+        .groupby(
+            ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+        )
         .agg(["sum"])
     )
     channel_counts.columns = [
@@ -306,7 +327,9 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     ]
     channel_measurements = (
         valid_bead_properties_df[measurement_aggregation_columns]
-        .groupby(["channel_nr", "channel_name"])
+        .groupby(
+            ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+        )
         .agg(["mean", "median", "std"])
     )
     channel_measurements.columns = [
@@ -607,6 +630,8 @@ def _process_image(
     intensity_robust_z_score_threshold: float,
 ) -> tuple:
     channel_names = [c.name for c in image.channel_series.channels]
+    excitation_wavelengths_nm = [c.excitation_wavelength_nm for c in image.channel_series.channels]
+    emission_wavelengths_nm = [c.emission_wavelength_nm for c in image.channel_series.channels]
     voxel_size_micron = (
         image.voxel_size_z_micron,
         image.voxel_size_y_micron,
@@ -636,6 +661,12 @@ def _process_image(
             voxel_size_micron=voxel_size_micron,
         )
 
+        _add_row_index_level(
+            ch_bead_positions, "emission_wavelength_nm", emission_wavelengths_nm[ch]
+        )
+        _add_row_index_level(
+            ch_bead_positions, "excitation_wavelength_nm", excitation_wavelengths_nm[ch]
+        )
         _add_row_index_level(ch_bead_positions, "channel_nr", ch)
         _add_row_index_level(ch_bead_positions, "channel_name", channel_names[ch])
         bead_properties.append(ch_bead_positions)
@@ -727,7 +758,11 @@ def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
         f"{axis}_fitted_airy",
         f"{axis}_fitted_gaussian",
     ]
-    column_indexes = [i for i in bead_properties.index.names if i != "channel_name"]
+    column_indexes = [
+        i
+        for i in bead_properties.index.names
+        if i not in ["channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+    ]
 
     profiles = {}
     for index, row in bead_properties.iterrows():

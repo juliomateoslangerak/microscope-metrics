@@ -196,12 +196,18 @@ def st_field_illumination_dataset(
 ):
     test_data = draw(test_data)
     field_illumination_unprocessed_dataset = draw(unprocessed_dataset)
+    excitation_wavelengths_nm = [405.0, 488.0, 561.0, 642.0, 705.0]
+    emission_wavelengths_nm = [435.0, 525.0, 605.0, 692.0, 750.0]
 
     field_illumination_unprocessed_dataset.input_data.field_illumination_images = [
         numpy_to_mm_image(
             array=image,
             name=f"FI_image_{i}",
             channel_names=[f"Channel_{i}{j}" for j in range(image.shape[-1])],
+            excitation_wavelengths_nm=[
+                excitation_wavelengths_nm[c] for c in range(image.shape[-1])
+            ],
+            emission_wavelengths_nm=[emission_wavelengths_nm[c] for c in range(image.shape[-1])],
         )
         for i, image in enumerate(test_data.pop("images"))
     ]

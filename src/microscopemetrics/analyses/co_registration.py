@@ -132,6 +132,8 @@ def _process_image(
     reference_channel_nr: int,
 ):
     channel_names = [c.name for c in image.channel_series.channels]
+    excitation_wavelengths_nm = [c.excitation_wavelength_nm for c in image.channel_series.channels]
+    emission_wavelengths_nm = [c.emission_wavelength_nm for c in image.channel_series.channels]
     moving_channel_nbs = [ch for ch in range(len(channel_names)) if ch != reference_channel_nr]
     voxel_size_micron = (
         image.voxel_size_z_micron,
@@ -165,9 +167,11 @@ def _process_image(
         image_translations = {
             "image_id": mm.analyses.get_object_id(image) or image.name,
             "reference_channel_nr": reference_channel_nr,
-            "moving_channel_nr": moving_channel_nb,
             "reference_channel_name": channel_names[reference_channel_nr],
-            "moving_channel_name": channel_names[moving_channel_nb],
+            "channel_nr": moving_channel_nb,
+            "channel_name": channel_names[moving_channel_nb],
+            "excitation_wavelength_nm": excitation_wavelengths_nm[moving_channel_nb],
+            "emission_wavelength_nm": emission_wavelengths_nm[moving_channel_nb],
             "translation_z": image_shift[0],
             "translation_y": image_shift[1],
             "translation_x": image_shift[2],
@@ -207,9 +211,11 @@ def _process_image(
                     "image_id": mm.analyses.get_object_id(image) or image.name,
                     "bead_id": index,
                     "reference_channel_nr": reference_channel_nr,
-                    "moving_channel_nr": moving_channel_nb,
                     "reference_channel_name": channel_names[reference_channel_nr],
-                    "moving_channel_name": channel_names[moving_channel_nb],
+                    "channel_nr": moving_channel_nb,
+                    "channel_name": channel_names[moving_channel_nb],
+                    "excitation_wavelength_nm": excitation_wavelengths_nm[moving_channel_nb],
+                    "emission_wavelength_nm": emission_wavelengths_nm[moving_channel_nb],
                     "sigma_LoG": row.sigma_LoG,
                     "center_z": row.center_z,
                     "center_y": row.center_y,
@@ -233,9 +239,11 @@ def _process_image(
                     "image_id": mm.analyses.get_object_id(image) or image.name,
                     "bead_id": index,
                     "reference_channel_nr": reference_channel_nr,
-                    "moving_channel_nr": moving_channel_nb,
                     "reference_channel_name": channel_names[reference_channel_nr],
-                    "moving_channel_name": channel_names[moving_channel_nb],
+                    "channel_nr": moving_channel_nb,
+                    "channel_name": channel_names[moving_channel_nb],
+                    "excitation_wavelength_nm": excitation_wavelengths_nm[moving_channel_nb],
+                    "emission_wavelength_nm": emission_wavelengths_nm[moving_channel_nb],
                     "sigma_LoG": row.sigma_LoG,
                     "center_z": row.center_z,
                     "center_y": row.center_y,
@@ -331,12 +339,6 @@ def analyse_co_registration(
                 f"Image {image_id} must be in TZYXC order and single time-point. Using first time-point."
             )
 
-        voxel_size_micron = (
-            image.voxel_size_z_micron,
-            image.voxel_size_y_micron,
-            image.voxel_size_x_micron,
-        )
-
         image_rows, bead_rows = _process_image(
             image=image,
             sigma_min=dataset.input_parameters.sigma_min,
@@ -408,14 +410,16 @@ def analyse_co_registration(
     )
 
     key_measurements = []
-    for moving_channel_nb in bead_properties.moving_channel_nr.unique():
-        key_rowset = bead_properties[bead_properties.moving_channel_nr == moving_channel_nb]
+    for channel_nb in bead_properties.channel_nr.unique():
+        key_rowset = bead_properties[bead_properties.channel_nr == channel_nb]
         key_measurements.append(
             mm_schema.CoRegistrationKeyMeasurement(
                 reference_channel_nr=key_rowset.reference_channel_nr.iloc[0],
                 reference_channel_name=key_rowset.reference_channel_name.iloc[0],
-                moving_channel_nr=moving_channel_nb,
-                moving_channel_name=key_rowset.moving_channel_name.iloc[0],
+                channel_nr=channel_nb,
+                channel_name=key_rowset.channel_name.iloc[0],
+                excitation_wavelength_nm=key_rowset.excitation_wavelength_nm.iloc[0],
+                emission_wavelength_nm=key_rowset.emission_wavelength_nm.iloc[0],
                 total_bead_count=len(key_rowset),
                 considered_valid_count=key_rowset.considered_valid.sum(),
                 considered_self_proximity_count=key_rowset.considered_self_proximity.sum(),
