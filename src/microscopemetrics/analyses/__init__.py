@@ -185,6 +185,7 @@ def df_to_table(
 def validate_images_requirements(
     images_list: list[mm_schema.Image],
     required_dimensions: int = 5,
+    require_unique_image_ids: bool = True,
     require_equal_shapes: bool = True,
     axis_to_check_shape: list[int] | None = None,
     require_equal_channels: bool = True,
@@ -208,6 +209,11 @@ def validate_images_requirements(
         images_list[0].voxel_size_x_micron,
     )
     saturated_channels = {}
+
+    if require_unique_image_ids:
+        if len(set(image.id for image in images_list)) != len(images_list):
+            logger.error("Not all images have unique IDs")
+            raise DataFormatError("Not all images have unique IDs")
 
     if require_equal_shapes and axis_to_check_shape is None:
         axis_to_check_shape = list(range(required_dimensions))
