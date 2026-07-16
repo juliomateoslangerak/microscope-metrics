@@ -185,7 +185,7 @@ def df_to_table(
 def validate_images_requirements(
     images_list: list[mm_schema.Image],
     required_dimensions: int = 5,
-    require_unique_image_ids: bool = True,
+    require_unique_image_names: bool = True,
     require_equal_shapes: bool = True,
     axis_to_check_shape: list[int] | None = None,
     require_equal_channels: bool = True,
@@ -202,7 +202,7 @@ def validate_images_requirements(
         raise DataFormatError("No images provided")
 
     images_shape = images_list[0].array_data.shape
-    images_channels = images_list[0].channel_series.channels
+    images_channels = [ch.name for ch in images_list[0].channel_series.channels]
     voxel_size_micron = (
         images_list[0].voxel_size_z_micron,
         images_list[0].voxel_size_y_micron,
@@ -210,10 +210,10 @@ def validate_images_requirements(
     )
     saturated_channels = {}
 
-    if require_unique_image_ids:
-        if len(set(image.id for image in images_list)) != len(images_list):
-            logger.error("Not all images have unique IDs")
-            raise DataFormatError("Not all images have unique IDs")
+    if require_unique_image_names:
+        if len(set(image.name for image in images_list)) != len(images_list):
+            logger.error("Not all images have unique names")
+            raise DataFormatError("Not all images have unique names")
 
     if require_equal_shapes and axis_to_check_shape is None:
         axis_to_check_shape = list(range(required_dimensions))
@@ -240,7 +240,7 @@ def validate_images_requirements(
         # Check channels
         if require_equal_channels:
             logger.info(f"Checking image {image.name} channels...")
-            if image.channel_series.channels != images_channels:
+            if [ch.name for ch in image.channel_series.channels] != images_channels:
                 logger.error("Not all images have the same channels")
                 raise DataFormatError(
                     "Not all images have the same channels. Please make sure that"
