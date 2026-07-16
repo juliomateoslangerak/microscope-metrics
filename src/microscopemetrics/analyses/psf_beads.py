@@ -116,7 +116,13 @@ def _average_beads(
         {
             keys: _average_beads_group(group, voxel_size_micron=voxel_size_micron)
             for keys, group in bead_properties.groupby(
-                ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+                [
+                    "channel_nr",
+                    "channel_name",
+                    "excitation_wavelength_nm",
+                    "emission_wavelength_nm",
+                ],
+                dropna=False,  # often wavelengths are NaN
             )
         }
     ).T
@@ -313,7 +319,8 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     channel_counts = (
         reindex_bead_properties_df[count_aggregation_columns]
         .groupby(
-            ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+            ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"],
+            dropna=False,  # often wavelengths are not present
         )
         .agg(["sum"])
     )
@@ -328,7 +335,8 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     channel_measurements = (
         valid_bead_properties_df[measurement_aggregation_columns]
         .groupby(
-            ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"]
+            ["channel_nr", "channel_name", "excitation_wavelength_nm", "emission_wavelength_nm"],
+            dropna=False,  # often wavelengths are not present
         )
         .agg(["mean", "median", "std"])
     )
