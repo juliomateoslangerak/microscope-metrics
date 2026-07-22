@@ -18,6 +18,36 @@ def _add_seconds_to_datetime(datetime: dt.datetime, seconds: float) -> dt.dateti
     return datetime + dt.timedelta(seconds=seconds)
 
 
+def _generate_power_measurement(
+    set_power_value: float,
+    target_intensity_std_rel,
+    target_intensity_mw,
+    datetime,
+    light_source,
+    power_meter,
+    measuring_location,
+    linearity_integration_time_seconds,
+):
+    measured_power = max(
+        0.0,
+        np.random.normal(
+            loc=set_power_value,
+            scale=target_intensity_std_rel,
+        )
+        * target_intensity_mw,
+    )
+
+    return mm_schema.PowerMeasurement(
+        acquisition_datetime=datetime,
+        light_source=light_source,
+        power_meter=power_meter,
+        measuring_location=measuring_location,
+        power_set_point=set_power_value,
+        power_mw=measured_power,
+        integration_time_seconds=linearity_integration_time_seconds,
+    )
+
+
 # Strategies for Light Source Power
 @st.composite
 def st_light_source_power_test_data(
@@ -42,137 +72,116 @@ def st_light_source_power_test_data(
 ):
     power_measurements = []
 
-    current_datetime = draw(acquisition_start_datetime)
-    light_sources = draw(light_sources)
+    _current_datetime = draw(acquisition_start_datetime)
+    _light_sources = draw(light_sources)
 
     # We don't want to "draw" the same value for all measurements
-    nr_linearity_measurements = draw(nr_linearity_measurements)
-    linearity_interval_seconds = draw(linearity_interval_seconds)
-    linearity_integration_time_seconds = draw(linearity_integration_time_seconds)
-    target_intensity_std_rel = draw(target_intensity_std_rel)
-    nr_short_term_stability_measurements = draw(nr_short_term_stability_measurements)
-    short_term_stability_interval_seconds = draw(short_term_stability_interval_seconds)
-    short_term_stability_integration_time_seconds = draw(
+    _nr_linearity_measurements = draw(nr_linearity_measurements)
+    _linearity_interval_seconds = draw(linearity_interval_seconds)
+    _linearity_integration_time_seconds = draw(linearity_integration_time_seconds)
+    _target_intensity_std_rel = draw(target_intensity_std_rel)
+    _nr_short_term_stability_measurements = draw(nr_short_term_stability_measurements)
+    _short_term_stability_interval_seconds = draw(short_term_stability_interval_seconds)
+    _short_term_stability_set_power_value = draw(short_term_stability_set_power_value)
+    _long_term_stability_set_power_value = draw(long_term_stability_set_power_value)
+    _short_term_stability_integration_time_seconds = draw(
         short_term_stability_integration_time_seconds
     )
-    nr_long_term_stability_measurements = draw(nr_long_term_stability_measurements)
-    long_term_stability_interval_seconds = draw(long_term_stability_interval_seconds)
-    long_term_stability_integration_time_seconds = draw(
+    _nr_long_term_stability_measurements = draw(nr_long_term_stability_measurements)
+    _long_term_stability_interval_seconds = draw(long_term_stability_interval_seconds)
+    _long_term_stability_integration_time_seconds = draw(
         long_term_stability_integration_time_seconds
     )
 
     input_parameters = draw(
         st_mm_analyses_schema.st_mm_light_source_power_input_parameters(
             linearity_required_measurements=st.integers(
-                min_value=nr_linearity_measurements,
-                max_value=nr_linearity_measurements + 10,
+                min_value=_nr_linearity_measurements,
+                max_value=_nr_linearity_measurements + 10,
             ),
             short_term_stability_measurement_interval_seconds=st.just(
-                short_term_stability_interval_seconds
+                _short_term_stability_interval_seconds
             ),
             short_term_stability_required_measurements=st.integers(
-                min_value=nr_short_term_stability_measurements,
-                max_value=nr_short_term_stability_measurements + 50,
+                min_value=_nr_short_term_stability_measurements,
+                max_value=_nr_short_term_stability_measurements + 50,
             ),
             short_term_stability_required_integration_time_seconds=st.floats(
-                min_value=short_term_stability_integration_time_seconds,
-                max_value=short_term_stability_integration_time_seconds + 0.1,
+                min_value=_short_term_stability_integration_time_seconds,
+                max_value=_short_term_stability_integration_time_seconds + 0.1,
             ),
             long_term_stability_measurement_interval_seconds=st.just(
-                long_term_stability_interval_seconds
+                _long_term_stability_interval_seconds
             ),
             long_term_stability_required_measurements=st.integers(
-                min_value=nr_long_term_stability_measurements,
-                max_value=nr_long_term_stability_measurements + 100,
+                min_value=_nr_long_term_stability_measurements,
+                max_value=_nr_long_term_stability_measurements + 100,
             ),
             long_term_stability_required_integration_time_seconds=st.floats(
-                min_value=long_term_stability_integration_time_seconds,
-                max_value=long_term_stability_integration_time_seconds + 1.0,
+                min_value=_long_term_stability_integration_time_seconds,
+                max_value=_long_term_stability_integration_time_seconds + 1.0,
             ),
         )
     )
 
-    for light_source in light_sources:
+    for light_source in _light_sources:
         _power_meter = draw(power_meter)
         _measuring_location = draw(measuring_location)
         _target_intensity_mw = draw(target_intensity_mw)
 
         # Generating linearity measurements
-        set_power_values = np.linspace(0.0, 1.0, nr_linearity_measurements)
+        set_power_values = np.linspace(0.0, 1.0, _nr_linearity_measurements)
         for set_power_value in set_power_values:
-            measured_power = max(
-                0.0,
-                np.random.normal(
-                    loc=set_power_value,
-                    scale=target_intensity_std_rel,
-                )
-                * _target_intensity_mw,
-            )
             power_measurements.append(
-                mm_schema.PowerMeasurement(
-                    acquisition_datetime=current_datetime,
+                _generate_power_measurement(
+                    set_power_value=set_power_value,
+                    target_intensity_std_rel=_target_intensity_std_rel,
+                    target_intensity_mw=_target_intensity_mw,
+                    datetime=_current_datetime,
                     light_source=light_source,
                     power_meter=_power_meter,
                     measuring_location=_measuring_location,
-                    power_set_point=set_power_value,
-                    power_mw=measured_power,
-                    integration_time_seconds=linearity_integration_time_seconds,
+                    linearity_integration_time_seconds=_linearity_integration_time_seconds,
                 )
             )
-            current_datetime = _add_seconds_to_datetime(
-                current_datetime, linearity_interval_seconds
+            _current_datetime = _add_seconds_to_datetime(
+                _current_datetime, _linearity_interval_seconds
             )
 
         # Generating short-term stability measurements
-        set_power_value = draw(short_term_stability_set_power_value)
-        for _ in range(nr_short_term_stability_measurements):
-            measured_power = max(
-                0.0,
-                np.random.normal(
-                    loc=set_power_value,
-                    scale=target_intensity_std_rel,
-                )
-                * _target_intensity_mw,
-            )
+        for _ in range(_nr_short_term_stability_measurements):
             power_measurements.append(
-                mm_schema.PowerMeasurement(
-                    acquisition_datetime=current_datetime,
+                _generate_power_measurement(
+                    set_power_value=_short_term_stability_set_power_value,
+                    target_intensity_std_rel=_target_intensity_std_rel,
+                    target_intensity_mw=_target_intensity_mw,
+                    datetime=_current_datetime,
                     light_source=light_source,
                     power_meter=_power_meter,
                     measuring_location=_measuring_location,
-                    power_set_point=set_power_value,
-                    power_mw=measured_power,
-                    integration_time_seconds=short_term_stability_integration_time_seconds,
+                    linearity_integration_time_seconds=_linearity_integration_time_seconds,
                 )
             )
-            current_datetime = _add_seconds_to_datetime(
-                current_datetime, short_term_stability_interval_seconds
+            _current_datetime = _add_seconds_to_datetime(
+                _current_datetime, _short_term_stability_interval_seconds
             )
 
         # Generating long-term stability measurements
-        set_power_value = draw(long_term_stability_set_power_value)
-        for _ in range(nr_long_term_stability_measurements):
-            measured_power = max(
-                0.0,
-                np.random.normal(
-                    loc=set_power_value,
-                    scale=target_intensity_std_rel,
-                )
-                * _target_intensity_mw,
-            )
+        for _ in range(_nr_long_term_stability_measurements):
             power_measurements.append(
-                mm_schema.PowerMeasurement(
-                    acquisition_datetime=current_datetime,
+                _generate_power_measurement(
+                    set_power_value=_long_term_stability_set_power_value,
+                    target_intensity_std_rel=_target_intensity_std_rel,
+                    target_intensity_mw=_target_intensity_mw,
+                    datetime=_current_datetime,
                     light_source=light_source,
                     power_meter=_power_meter,
                     measuring_location=_measuring_location,
-                    power_set_point=set_power_value,
-                    power_mw=measured_power,
-                    integration_time_seconds=long_term_stability_integration_time_seconds,
+                    linearity_integration_time_seconds=_linearity_integration_time_seconds,
                 )
             )
-            current_datetime = _add_seconds_to_datetime(
-                current_datetime, long_term_stability_interval_seconds
+            _current_datetime = _add_seconds_to_datetime(
+                _current_datetime, _long_term_stability_interval_seconds
             )
 
     return {
