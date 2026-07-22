@@ -300,6 +300,44 @@ def validate_images_requirements(
         raise SaturationError(f"Channels {saturated_channels} are saturated")
 
 
+def _mm_obj_list_as_df(obj_list: list, unique: bool = True):
+    obj_list = [obj._as_dict for obj in obj_list]
+    df = pd.DataFrame(obj_list)
+    if unique:
+        df = df.drop_duplicates()
+
+    return df
+
+
+def extract_power_measurements_csv(
+    light_source_power_dataset: mm_schema.LightSourcePowerDataset, output_path: str
+) -> None:
+    light_sources = _mm_obj_list_as_df(
+        [pm.light_source for pm in light_source_power_dataset.input_data.power_measurements]
+    )
+    power_meters = _mm_obj_list_as_df(
+        [pm.power_meter for pm in light_source_power_dataset.input_data.power_measurements]
+    )
+    input_data = _mm_obj_list_as_df(
+        [pm for pm in light_source_power_dataset.input_data.power_measurements], unique=False
+    )
+    input_data["light_source"] = input_data["light_source"].apply(lambda x: x["name"])
+    input_data["power_meter"] = input_data["power_meter"].apply(lambda x: x["name"])
+    input_data["measuring_location"] = input_data["measuring_location"].apply(
+        lambda x: x["_code"]["text"]
+    )
+
+    sections = [
+        ("# light_sources", light_sources),
+        ("# power_meters", power_meters),
+        ("# input_data\n## power_measurements", input_data),
+    ]
+    with open(output_path, "w") as f:
+        for name, df in sections:
+            f.write(f"{name}\n")
+            f.write(df.to_csv(index=False))
+
+
 def csv_power_measurements_parser(csv_file):
     """
     This function parses the csv file containing input data for input power measurements
