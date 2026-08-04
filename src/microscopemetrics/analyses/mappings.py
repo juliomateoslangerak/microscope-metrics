@@ -7,6 +7,7 @@ from collections import namedtuple
 from microscopemetrics_schema import datamodel as mm_schema
 
 from microscopemetrics.analyses import (
+    co_registration,
     field_illumination,
     light_source_power,
     psf_beads,
@@ -28,6 +29,10 @@ MAPPINGS = {
     ),
     mm_schema.LightSourcePowerDataset.class_class_curie: Mapping(
         analysis_function=light_source_power.analyse_light_source_power, sample_classes=[]
+    ),
+    mm_schema.CoRegistrationDataset.class_class_curie: Mapping(
+        analysis_function=co_registration.analyse_co_registration,
+        sample_classes=[mm_schema.MultiWavelengthBeads],
     ),
 }
 
