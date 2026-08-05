@@ -414,24 +414,24 @@ def analyse_co_registration(
         key_rowset = bead_properties[bead_properties.channel_nr == channel_nb]
         key_measurements.append(
             mm_schema.CoRegistrationKeyMeasurement(
-                reference_channel_nr=key_rowset.reference_channel_nr.iloc[0],
+                reference_channel_nr=int(key_rowset.reference_channel_nr.iloc[0]),
                 reference_channel_name=key_rowset.reference_channel_name.iloc[0],
                 channel_nr=channel_nb,
                 channel_name=key_rowset.channel_name.iloc[0],
-                excitation_wavelength_nm=key_rowset.excitation_wavelength_nm.iloc[0],
-                emission_wavelength_nm=key_rowset.emission_wavelength_nm.iloc[0],
+                excitation_wavelength_nm=float(key_rowset.excitation_wavelength_nm.iloc[0]),
+                emission_wavelength_nm=float(key_rowset.emission_wavelength_nm.iloc[0]),
                 total_bead_count=len(key_rowset),
                 considered_valid_count=key_rowset.considered_valid.sum(),
                 considered_self_proximity_count=key_rowset.considered_self_proximity.sum(),
                 considered_lateral_edge_count=key_rowset.considered_lateral_edge.sum(),
                 considered_axial_edge_count=False,
-                translation_abs_mean_pixel_x=key_rowset.translation_x_px.abs().mean(),
-                translation_abs_mean_pixel_y=key_rowset.translation_y_px.abs().mean(),
-                translation_abs_mean_pixel_z=key_rowset.translation_z_px.abs().mean(),
-                translation_abs_mean_micron_x=key_rowset.translation_x_micron.abs().mean(),
-                translation_abs_mean_micron_y=key_rowset.translation_y_micron.abs().mean(),
-                translation_abs_mean_micron_z=key_rowset.translation_z_micron.abs().mean(),
-                distance_mean_micron_3d=key_rowset.distance_3d_micron.mean(),
+                translation_abs_mean_pixel_x=float(key_rowset.translation_x_px.abs().mean()),
+                translation_abs_mean_pixel_y=float(key_rowset.translation_y_px.abs().mean()),
+                translation_abs_mean_pixel_z=float(key_rowset.translation_z_px.abs().mean()),
+                translation_abs_mean_micron_x=float(key_rowset.translation_x_micron.abs().mean()),
+                translation_abs_mean_micron_y=float(key_rowset.translation_y_micron.abs().mean()),
+                translation_abs_mean_micron_z=float(key_rowset.translation_z_micron.abs().mean()),
+                distance_mean_micron_3d=float(key_rowset.distance_3d_micron.mean()),
                 rotation_z_mean=np.nan,  # TODO: rotation is not implemented
             )
         )
