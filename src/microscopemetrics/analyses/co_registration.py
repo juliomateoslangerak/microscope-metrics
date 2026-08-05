@@ -412,14 +412,22 @@ def analyse_co_registration(
     key_measurements = []
     for channel_nb in bead_properties.channel_nr.unique():
         key_rowset = bead_properties[bead_properties.channel_nr == channel_nb]
+        excitation_wavelength_nm = key_rowset.excitation_wavelength_nm.iloc[0]
+        emission_wavelength_nm = key_rowset.emission_wavelength_nm.iloc[0]
         key_measurements.append(
             mm_schema.CoRegistrationKeyMeasurement(
                 reference_channel_nr=int(key_rowset.reference_channel_nr.iloc[0]),
                 reference_channel_name=key_rowset.reference_channel_name.iloc[0],
                 channel_nr=channel_nb,
                 channel_name=key_rowset.channel_name.iloc[0],
-                excitation_wavelength_nm=key_rowset.excitation_wavelength_nm.iloc[0].item(),
-                emission_wavelength_nm=key_rowset.emission_wavelength_nm.iloc[0].item(),
+                excitation_wavelength_nm=(
+                    excitation_wavelength_nm.item()
+                    if excitation_wavelength_nm is not None
+                    else None
+                ),
+                emission_wavelength_nm=(
+                    emission_wavelength_nm.item() if emission_wavelength_nm is not None else None
+                ),
                 total_bead_count=len(key_rowset),
                 considered_valid_count=key_rowset.considered_valid.sum(),
                 considered_self_proximity_count=key_rowset.considered_self_proximity.sum(),
