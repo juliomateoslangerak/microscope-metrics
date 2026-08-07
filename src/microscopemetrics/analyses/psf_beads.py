@@ -858,7 +858,16 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     if bead_properties["considered_valid"].sum() == 0:
         mm.logger.error("No valid beads found in any image")
         raise mm.AnalysisError(
-            message="No beads valid found in any image",
+            message="No beads valid found in any image\n"
+            f"  - Lateral_edge: {bead_properties.table_data['considered_lateral_edge'].sum()}\n"
+            f"  - Axial_edge: {bead_properties.table_data['considered_axial_edge'].sum()}\n"
+            f"  - Bad_airy_fit_x: {bead_properties.table_data['considered_bad_fit_airy_x'].sum()}\n"
+            f"  - Bad_airy_fit_y: {bead_properties.table_data['considered_bad_fit_airy_y'].sum()}\n"
+            f"  - Bad_airy_fit_z: {bead_properties.table_data['considered_bad_fit_airy_z'].sum()}\n"
+            f"  - Bad_gaussian_fit_x: {bead_properties.table_data['considered_bad_fit_gaussian_x'].sum()}\n"
+            f"  - Bad_gaussian_fit_y: {bead_properties.table_data['considered_bad_fit_gaussian_y'].sum()}\n"
+            f"  - Bad_gaussian_fit_z: {bead_properties.table_data['considered_bad_fit_gaussian_z'].sum()}\n"
+            f"  - Intensity_std_outlier: {bead_properties.table_data['considered_intensity_std_outlier'].sum()}",
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
 
