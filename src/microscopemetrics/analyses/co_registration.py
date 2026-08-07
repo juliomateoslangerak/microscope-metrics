@@ -387,6 +387,12 @@ def analyse_co_registration(
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
 
+    mm_tools.calculate_bead_outliers(
+        bead_properties=bead_properties,
+        robust_z_score_threshold=dataset.input_parameters.robust_z_score_threshold,
+        measurements=["distance_3d_micron"],
+    )
+
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_valid],
@@ -405,6 +411,13 @@ def analyse_co_registration(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_self_proximity],
         root_name="considered_self_proximity_bead_centers",
+        color=(255, 0, 0, 100),
+        stroke_width=4,
+    )
+    considered_outlier_bead_centers = _generate_center_roi(
+        dataset=dataset,
+        positions=bead_properties[bead_properties.considered_distance_3d_micron_outlier],
+        root_name="considered_outlier_bead_centers",
         color=(255, 0, 0, 100),
         stroke_width=4,
     )
@@ -433,13 +446,14 @@ def analyse_co_registration(
                 considered_self_proximity_count=key_rowset.considered_self_proximity.sum(),
                 considered_lateral_edge_count=key_rowset.considered_lateral_edge.sum(),
                 considered_axial_edge_count=False,
-                translation_abs_mean_pixel_x=key_rowset.translation_x_px.abs().mean().item(),
-                translation_abs_mean_pixel_y=key_rowset.translation_y_px.abs().mean().item(),
-                translation_abs_mean_pixel_z=key_rowset.translation_z_px.abs().mean().item(),
-                translation_abs_mean_micron_x=key_rowset.translation_x_micron.abs().mean().item(),
-                translation_abs_mean_micron_y=key_rowset.translation_y_micron.abs().mean().item(),
-                translation_abs_mean_micron_z=key_rowset.translation_z_micron.abs().mean().item(),
-                distance_mean_micron_3d=key_rowset.distance_3d_micron.mean().item(),
+                considered_outlier_count=key_rowset.considered_distance_3d_micron_outlier.sum(),
+                translation_abs_mean_pixel_x=float(key_rowset.translation_x_px.abs().mean()),
+                translation_abs_mean_pixel_y=float(key_rowset.translation_y_px.abs().mean()),
+                translation_abs_mean_pixel_z=float(key_rowset.translation_z_px.abs().mean()),
+                translation_abs_mean_micron_x=float(key_rowset.translation_x_micron.abs().mean()),
+                translation_abs_mean_micron_y=float(key_rowset.translation_y_micron.abs().mean()),
+                translation_abs_mean_micron_z=float(key_rowset.translation_z_micron.abs().mean()),
+                distance_mean_micron_3d=float(key_rowset.distance_3d_micron.mean()),
                 rotation_z_mean=np.nan,  # TODO: rotation is not implemented
             )
         )
@@ -454,6 +468,7 @@ def analyse_co_registration(
         analyzed_bead_centers=considered_valid_bead_centers,
         considered_bead_centers_lateral_edge=considered_lateral_edge_bead_centers,
         considered_bead_centers_self_proximity=considered_self_proximity_bead_centers,
+        considered_bead_centers_outlier=considered_outlier_bead_centers,
         key_measurements=key_measurements,
         image_properties=image_properties,
         bead_properties=bead_properties,

@@ -895,10 +895,10 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
-    considered_intensity_std_outlier_bead_centers = _generate_center_roi(
+    considered_outlier_bead_centers = _generate_center_roi(
         dataset=dataset,
         positions=bead_properties[bead_properties.considered_intensity_std_outlier],
-        root_name="considered_intensity_std_outlier_bead_centers",
+        root_name="considered_outlier_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
@@ -958,7 +958,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         considered_bead_centers_lateral_edge=considered_lateral_edge_bead_centers,
         considered_bead_centers_self_proximity=considered_self_proximity_bead_centers,
         considered_bead_centers_axial_edge=considered_axial_edge_bead_centers,
-        considered_bead_centers_intensity_std_outlier=considered_intensity_std_outlier_bead_centers,
+        considered_bead_centers_outlier=considered_outlier_bead_centers,
         considered_bead_centers_z_fit_airy_quality=considered_bad_fit_airy_z_bead_centers,
         considered_bead_centers_y_fit_airy_quality=considered_bad_fit_airy_y_bead_centers,
         considered_bead_centers_x_fit_airy_quality=considered_bad_fit_airy_x_bead_centers,
