@@ -219,55 +219,6 @@ def _average_beads(
     )
 
 
-def _calculate_bead_intensity_outliers(
-    bead_properties: pd.DataFrame, robust_z_score_threshold: float
-) -> None:
-    bead_properties["max_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_properties["std_intensity_robust_z_score"] = pd.Series(dtype="float")
-    bead_properties["considered_intensity_outlier"] = pd.Series(dtype="bool")
-
-    if len(bead_properties[bead_properties.considered_valid]) == 1:
-        bead_properties["max_intensity_robust_z_score"] = 0
-        bead_properties["std_intensity_robust_z_score"] = 0
-        bead_properties["considered_intensity_outlier"] = False
-    else:
-        max_int_mean = bead_properties[bead_properties.considered_valid]["intensity_max"].mean()
-        max_int_median = bead_properties[bead_properties.considered_valid]["intensity_max"].median()
-        max_int_mad = (
-            (bead_properties[bead_properties.considered_valid]["intensity_max"] - max_int_mean)
-            .abs()
-            .mean()
-        )
-
-        std_int_mean = bead_properties[bead_properties.considered_valid]["intensity_std"].mean()
-        std_int_median = bead_properties[bead_properties.considered_valid]["intensity_std"].median()
-        std_int_mad = (
-            (bead_properties[bead_properties.considered_valid]["intensity_std"] - std_int_mean)
-            .abs()
-            .mean()
-        )
-
-        bead_properties["max_intensity_robust_z_score"] = (
-            0.6745 * (bead_properties["intensity_max"] - max_int_median) / max_int_mad
-        )
-        bead_properties["std_intensity_robust_z_score"] = (
-            0.6745 * (bead_properties["intensity_std"] - std_int_median) / std_int_mad
-        )
-
-        if 1 < len(bead_properties[bead_properties.considered_valid]) < 6:
-            bead_properties["considered_intensity_outlier"] = False
-        else:
-            bead_properties["considered_intensity_outlier"] = (
-                # abs(bead_positions["max_intensity_robust_z_score"]) > robust_z_score_threshold
-                abs(bead_properties["std_intensity_robust_z_score"])
-                > robust_z_score_threshold
-            )
-
-    bead_properties["considered_intensity_outlier"] = bead_properties[
-        "considered_intensity_outlier"
-    ].astype(bool)
-
-
 def _generate_key_measurements(bead_properties, average_bead_properties):
     measurement_aggregation_columns = [
         "channel_name",
@@ -301,7 +252,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
         "considered_self_proximity",
         "considered_lateral_edge",
         "considered_axial_edge",
-        "considered_intensity_outlier",
+        "considered_intensity_std_outlier",
         "considered_bad_fit_airy_z",
         "considered_bad_fit_airy_y",
         "considered_bad_fit_airy_x",
@@ -576,7 +527,7 @@ def _process_channel(
         return pd.DataFrame()
 
     bead_properties = bead_properties.assign(
-        considered_intensity_outlier=pd.Series(dtype=bool),
+        considered_intensity_std_outlier=pd.Series(dtype=bool),
     )
 
     bead_properties = bead_properties.join(
@@ -603,8 +554,10 @@ def _process_channel(
         bead_properties["fit_gaussian_r2_x"] < fitting_gaussian_r2_threshold
     )
 
-    _calculate_bead_intensity_outliers(
-        bead_properties, robust_z_score_threshold=intensity_robust_z_score_threshold
+    mm_tools.calculate_bead_outliers(
+        bead_properties=bead_properties,
+        robust_z_score_threshold=intensity_robust_z_score_threshold,
+        measurements=["intensity_std"],
     )
 
     # We need to invalidate all the bad fits and outliers
@@ -620,7 +573,7 @@ def _process_channel(
             bead_properties["considered_bad_fit_gaussian_z"],
             bead_properties["considered_bad_fit_gaussian_y"],
             bead_properties["considered_bad_fit_gaussian_x"],
-            bead_properties["considered_intensity_outlier"],
+            bead_properties["considered_intensity_std_outlier"],
         )
     ]
 
@@ -848,7 +801,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             f"    {image_bead_properties.considered_lateral_edge.sum()} beads considered lateral edge."
             f"    {image_bead_properties.considered_self_proximity.sum()} beads considered self proximity."
             f"    {image_bead_properties.considered_axial_edge.sum()} beads considered axial edge."
-            f"    {image_bead_properties.considered_intensity_outlier.sum()} beads considered intensity outlier."
+            f"    {image_bead_properties.considered_intensity_std_outlier.sum()} beads considered intensity std outlier."
             f"    {image_bead_properties.considered_bad_fit_airy_z.sum()} beads considered bad Airy fit in z."
             f"    {image_bead_properties.considered_bad_fit_airy_y.sum()} beads considered bad Airy fit in y."
             f"    {image_bead_properties.considered_bad_fit_airy_x.sum()} beads considered bad Airy fit in x."
@@ -942,10 +895,10 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
-    considered_intensity_outlier_bead_centers = _generate_center_roi(
+    considered_intensity_std_outlier_bead_centers = _generate_center_roi(
         dataset=dataset,
-        positions=bead_properties[bead_properties.considered_intensity_outlier],
-        root_name="considered_intensity_outlier_bead_centers",
+        positions=bead_properties[bead_properties.considered_intensity_std_outlier],
+        root_name="considered_intensity_std_outlier_bead_centers",
         color=(0, 0, 255, 100),
         stroke_width=4,
     )
@@ -1005,7 +958,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         considered_bead_centers_lateral_edge=considered_lateral_edge_bead_centers,
         considered_bead_centers_self_proximity=considered_self_proximity_bead_centers,
         considered_bead_centers_axial_edge=considered_axial_edge_bead_centers,
-        considered_bead_centers_intensity_outlier=considered_intensity_outlier_bead_centers,
+        considered_bead_centers_intensity_std_outlier=considered_intensity_std_outlier_bead_centers,
         considered_bead_centers_z_fit_airy_quality=considered_bad_fit_airy_z_bead_centers,
         considered_bead_centers_y_fit_airy_quality=considered_bad_fit_airy_y_bead_centers,
         considered_bead_centers_x_fit_airy_quality=considered_bad_fit_airy_x_bead_centers,
@@ -1034,7 +987,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         f"  - Bad_gaussian_fit_x: {bead_properties.table_data['considered_bad_fit_gaussian_x'].sum()}\n"
         f"  - Bad_gaussian_fit_y: {bead_properties.table_data['considered_bad_fit_gaussian_y'].sum()}\n"
         f"  - Bad_gaussian_fit_z: {bead_properties.table_data['considered_bad_fit_gaussian_z'].sum()}\n"
-        f"  - Intensity_outlier: {bead_properties.table_data['considered_intensity_outlier'].sum()}"
+        f"  - Intensity_std_outlier: {bead_properties.table_data['considered_intensity_std_outlier'].sum()}"
     )
 
     dataset.processed = True

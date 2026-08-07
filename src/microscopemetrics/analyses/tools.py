@@ -621,3 +621,34 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     g *= int(g * 255)
     g *= int(g * 255)
     return r, g, b
+
+
+def calculate_bead_outliers(
+    bead_properties: pd.DataFrame, robust_z_score_threshold: float, measurements: list[str]
+) -> None:
+    for m in measurements:
+        bead_properties[f"{m}_robust_z_score"] = pd.Series(dtype="float")
+        bead_properties[f"considered_{m}_outlier"] = pd.Series(dtype="bool")
+
+        if len(bead_properties[bead_properties.considered_valid]) == 1:
+            bead_properties[f"{m}_robust_z_score"] = 0
+            bead_properties[f"considered_{m}_outlier"] = False
+        else:
+            measurement_mean = bead_properties[bead_properties.considered_valid][m].mean()
+            measurement_median = bead_properties[bead_properties.considered_valid][m].median()
+            measurement_mad = (
+                (bead_properties[bead_properties.considered_valid][m] - measurement_mean)
+                .abs()
+                .mean()
+            )
+
+            bead_properties[f"{m}_robust_z_score"] = (
+                0.6745 * (bead_properties[m] - measurement_median) / measurement_mad
+            )
+
+            if 1 < len(bead_properties[bead_properties.considered_valid]) < 6:
+                bead_properties[f"considered_{m}_outlier"] = False
+            else:
+                bead_properties[f"considered_{m}_outlier"] = (
+                    abs(bead_properties[f"{m}_robust_z_score"]) > robust_z_score_threshold
+                )
