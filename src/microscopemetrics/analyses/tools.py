@@ -271,7 +271,7 @@ def find_beads(
     channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
-    min_distance_px: float,
+    min_lateral_distance_px: float,
     snr_threshold: float,
     max_num_peaks: int,
     return_bead_images: bool = True,
@@ -281,7 +281,7 @@ def find_beads(
     """
     logger.debug("Finding beads in channel...")
 
-    half_min_distance_px = min_distance_px // 2
+    half_min_distance_px = min_lateral_distance_px // 2
 
     # Estimate SNR
     signal_estimate = channel[channel > np.percentile(channel, 99.9)].mean()
@@ -358,7 +358,7 @@ def find_beads(
         p=2,
     )
     np.fill_diagonal(dist_matrix, np.inf)
-    proximity_mask = dist_matrix < min_distance_px
+    proximity_mask = dist_matrix < min_lateral_distance_px
     proximity_pairs = np.argwhere(proximity_mask)
     proximity_indexes = {i for i, _ in proximity_pairs}
     positions_proximity = [positions_all[i] for i in proximity_indexes]

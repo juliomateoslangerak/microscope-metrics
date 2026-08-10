@@ -239,7 +239,8 @@ def st_beads_test_data(
     sigma_z=st.floats(min_value=1.4, max_value=1.7),
     sigma_x=st.floats(min_value=1.4, max_value=1.7),
     sigma_y=st.floats(min_value=1.4, max_value=1.7),
-    min_lateral_distance_factor=st.just(20),
+    min_lateral_distance_px=st.just(40),
+    min_axial_distance_px=st.just(16),
     nr_valid_beads=st.just(5),
     nr_edge_beads=st.just(1),
     nr_out_of_focus_beads=st.just(1),
@@ -256,7 +257,8 @@ def st_beads_test_data(
         "out_of_focus_bead_positions": [],
         "clustering_bead_positions": [],
         "applied_sigmas": [],
-        "min_lateral_distance_factor": [],
+        "min_lateral_distance_px": [],
+        "min_axial_distance_px": [],
         "signal": [],
         "background": [],
         "do_noise": [],
@@ -279,9 +281,8 @@ def st_beads_test_data(
     # declared in the input data. Logic being that this distance is declared as
     # times the FWHM and so, if a correct nyquist is used, double the number of pixels.
     # As for the z min distance, we just take the ratio z-fwhm and xy-fwhm of 3
-    min_lateral_distance_factor = draw(min_lateral_distance_factor)
-    min_distance_x_px = min_distance_y_px = 2 * min_lateral_distance_factor
-    min_distance_z_px = min_distance_x_px // 3
+    _min_lateral_distance_px = draw(min_lateral_distance_px)
+    _min_axial_distance_px = draw(min_axial_distance_px)
 
     # Draw co-registration values
     _translations_z = [draw(translations_z) for _ in range(c_image_shape)]
@@ -328,9 +329,9 @@ def st_beads_test_data(
             nr_edge_beads=_nr_edge_beads,
             nr_out_of_focus_beads=_nr_out_of_focus_beads,
             nr_clustering_beads=_nr_clustering_beads,
-            min_distance_z_px=min_distance_z_px,
-            min_distance_y_px=min_distance_y_px,
-            min_distance_x_px=min_distance_x_px,
+            min_distance_z_px=_min_axial_distance_px,
+            min_distance_y_px=_min_lateral_distance_px,
+            min_distance_x_px=_min_lateral_distance_px,
             sigma_z=_sigma_z,
             sigma_y=_sigma_y,
             sigma_x=_sigma_x,
@@ -350,7 +351,8 @@ def st_beads_test_data(
         output["out_of_focus_bead_positions"].append(out_of_focus_bead_positions)
         output["clustering_bead_positions"].append(clustering_bead_positions)
         output["applied_sigmas"].append(applied_sigmas)
-        output["min_lateral_distance_factor"].append(min_lateral_distance_factor)
+        output["min_lateral_distance_px"].append(_min_lateral_distance_px)
+        output["min_axial_distance_px"].append(_min_axial_distance_px)
         output["signal"].append(_signal)
         output["background"].append(_background)
         output["do_noise"].append(do_noise)

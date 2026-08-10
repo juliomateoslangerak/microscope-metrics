@@ -106,7 +106,7 @@ def _locate_beads(
         channel=channel,
         sigma_min=sigma_min,
         sigma_max=sigma_max,
-        min_distance_px=min_distance_px,
+        min_lateral_distance_px=min_distance_px,
         snr_threshold=snr_threshold,
         max_num_peaks=MAX_NR_PEAKS,
         return_bead_images=True,

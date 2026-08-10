@@ -65,6 +65,7 @@ def test_average_beads(shifts, signal, background, sigma_axial, sigma_lateral):
             }
         ),
         voxel_size_micron=(None, None, None),
+        min_axial_distance_px=9.0,
     ).values[0]
     ref_bead = np.mean(ref_beads, axis=0)
 
@@ -129,8 +130,11 @@ def test_psf_beads_analysis_run(dataset):
 def test_psf_beads_analysis_nr_valid_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_lateral_distance_factor"
+    psf_beads_dataset.input_parameters.min_lateral_distance_px = expected_output[
+        "min_lateral_distance_px"
+    ][0]
+    psf_beads_dataset.input_parameters.min_axial_distance_px = expected_output[
+        "min_axial_distance_px"
     ][0]
 
     psf_beads.analyse_psf_beads(psf_beads_dataset)
@@ -154,8 +158,11 @@ def test_psf_beads_analysis_nr_valid_beads(dataset):
 def test_psf_beads_analysis_no_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_lateral_distance_factor"
+    psf_beads_dataset.input_parameters.min_lateral_distance_px = expected_output[
+        "min_lateral_distance_px"
+    ][0]
+    psf_beads_dataset.input_parameters.min_axial_distance_px = expected_output[
+        "min_axial_distance_px"
     ][0]
 
     with pytest.raises(AnalysisError):
@@ -218,8 +225,11 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
-    psf_beads_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_lateral_distance_factor"
+    psf_beads_dataset.input_parameters.min_axial_distance_px = expected_output[
+        "min_axial_distance_px"
+    ][0]
+    psf_beads_dataset.input_parameters.min_axial_distance_px = expected_output[
+        "min_axial_distance_px"
     ][0]
 
     expected = sum(len(im_ebp) for im_ebp in expected_output["edge_bead_positions"])
@@ -243,6 +253,12 @@ def test_psf_beads_analysis_nr_lateral_edge_beads(dataset):
 def test_psf_beads_analysis_nr_axial_edge_beads(dataset):
     psf_beads_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
+    psf_beads_dataset.input_parameters.min_axial_distance_px = expected_output[
+        "min_axial_distance_px"
+    ][0]
+    psf_beads_dataset.input_parameters.min_axial_distance_px = expected_output[
+        "min_axial_distance_px"
+    ][0]
     psf_beads.analyse_psf_beads(psf_beads_dataset)
 
     expected = sum(len(im_ofbp) for im_ofbp in expected_output["out_of_focus_bead_positions"])

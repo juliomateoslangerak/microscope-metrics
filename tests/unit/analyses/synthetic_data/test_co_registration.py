@@ -63,9 +63,6 @@ def test_co_registration_analysis_run(co_registration_dataset):
 def test_co_registration_analysis_no_beads(dataset):
     co_registration_dataset = dataset["unprocessed_dataset"]
     expected_output = dataset["expected_output"]
-    co_registration_dataset.input_parameters.min_lateral_distance_factor = expected_output[
-        "min_lateral_distance_factor"
-    ][0]
 
     with pytest.raises(AnalysisError):
         co_registration.analyse_co_registration(co_registration_dataset)
