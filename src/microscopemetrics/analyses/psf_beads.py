@@ -685,7 +685,7 @@ def _generate_center_roi(
     return rois
 
 
-def _crop_z_profiles(bead_properties: pd.DataFrame, min_axial_distance_px: float) -> None:
+def _crop_z_profiles(bead_properties: pd.DataFrame, min_axial_distance_px: int) -> None:
     """Crop z profiles in-place to min_axial_distance around center_z, per channel.
 
     The median FWHM is computed from valid beads only, giving a total window of 8x the
@@ -693,25 +693,27 @@ def _crop_z_profiles(bead_properties: pd.DataFrame, min_axial_distance_px: float
     beads will produce shorter profiles).
     """
     profile_cols = ["z_raw", "z_fitted_airy", "z_fitted_gaussian"]
-    median_fwhm_by_channel = (
-        bead_properties[bead_properties["considered_valid"]]
-        .groupby(level="channel_nr")["fwhm_pixel_z"]
-        .median()
-        .dropna()
-    )
-    channel_nr_level = bead_properties.index.names.index("channel_nr")
     for idx, row in bead_properties.iterrows():
-        channel_nr = idx[channel_nr_level]
-        if channel_nr not in median_fwhm_by_channel.index:
-            continue
-        half_window = int(min_axial_distance_px)
         center_z = int(row["center_z"])
-        crop_start = max(0, center_z - half_window)
+        z_top = int(row.center_z) - min_axial_distance_px
+        z_bottom = int(row.center_z) + min_axial_distance_px
         for col in profile_cols:
             profile = row[col]
             if isinstance(profile, np.ndarray):
-                crop_end = min(len(profile), center_z + half_window)
-                bead_properties.at[idx, col] = profile[crop_start:crop_end]
+                # Cuts the relevant section
+                profile = profile[max(0, z_top) : min(profile.shape[0], z_bottom)]
+                # Pads with "empty" data to get constant length
+                profile = np.pad(
+                    profile,
+                    (
+                        (
+                            abs(z_top) if z_top < 0 else 0,
+                            abs(z_bottom - profile.shape[0]) if z_bottom > profile.shape[0] else 0,
+                        )
+                    ),
+                )
+
+                bead_properties.at[idx, col] = profile
 
 
 def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
@@ -826,7 +828,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         )
 
     # Crop z profiles to a consistent length before extraction
-    _crop_z_profiles(bead_properties, min_axial_diatance_px)
+    _crop_z_profiles(bead_properties, int(min_axial_diatance_px))
 
     # Extract bead profiles first (needed by _average_beads)
     bead_profiles_z = _extract_profiles(bead_properties, "z")
