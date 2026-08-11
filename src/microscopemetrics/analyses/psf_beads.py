@@ -711,6 +711,7 @@ def _crop_z_profiles(bead_properties: pd.DataFrame, min_axial_distance_px: int) 
                             abs(z_bottom - profile.shape[0]) if z_bottom > profile.shape[0] else 0,
                         )
                     ),
+                    constant_values=np.nan,
                 )
 
                 bead_properties.at[idx, col] = profile
