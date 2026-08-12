@@ -99,14 +99,16 @@ def _locate_beads(
     channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
-    min_distance_px: float,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     snr_threshold: float,
 ) -> pd.DataFrame:
     bead_properties = mm_tools.find_beads(
         channel=channel,
         sigma_min=sigma_min,
         sigma_max=sigma_max,
-        min_lateral_distance_px=min_distance_px,
+        min_lateral_distance_px=min_lateral_distance_px,
+        min_axial_distance_px=min_axial_distance_px,
         snr_threshold=snr_threshold,
         max_num_peaks=MAX_NR_PEAKS,
         return_bead_images=True,
@@ -127,7 +129,8 @@ def _process_image(
     image: mm_schema.Image,
     sigma_min: float,
     sigma_max: float,
-    min_distance_px: float,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     snr_threshold: float,
     reference_channel_nr: int,
 ):
@@ -151,13 +154,16 @@ def _process_image(
         channel=image_data[..., reference_channel_nr],
         sigma_min=sigma_min,
         sigma_max=sigma_max,
-        min_distance_px=min_distance_px,
+        min_lateral_distance_px=min_lateral_distance_px,
+        min_axial_distance_px=min_axial_distance_px,
         snr_threshold=snr_threshold,
     )
 
     # Image level properties
     image_rows = []
     bead_rows = []
+    half_lateral_distance = min_lateral_distance_px // 2
+    half_axial_distance = min_axial_distance_px // 2
     for moving_channel_nb in moving_channel_nbs:
         image_shift, image_error, image_phasediff = phase_cross_correlation(
             image_data[..., reference_channel_nr],
@@ -183,15 +189,27 @@ def _process_image(
             if row.considered_valid:
                 bead_shift, bead_error, bead_phase_diff = phase_cross_correlation(
                     image_data[
-                        int(row.center_z - sigma_max) : int(row.center_z + sigma_max),
-                        int(row.center_y - sigma_max) : int(row.center_y + sigma_max),
-                        int(row.center_x - sigma_max) : int(row.center_x + sigma_max),
+                        int(row.center_z - half_axial_distance) : int(
+                            row.center_z + half_axial_distance
+                        ),
+                        int(row.center_y - half_lateral_distance) : int(
+                            row.center_y + half_lateral_distance
+                        ),
+                        int(row.center_x - half_lateral_distance) : int(
+                            row.center_x + half_lateral_distance
+                        ),
                         reference_channel_nr,
                     ],
                     image_data[
-                        int(row.center_z - sigma_max) : int(row.center_z + sigma_max),
-                        int(row.center_y - sigma_max) : int(row.center_y + sigma_max),
-                        int(row.center_x - sigma_max) : int(row.center_x + sigma_max),
+                        int(row.center_z - half_axial_distance) : int(
+                            row.center_z + half_axial_distance
+                        ),
+                        int(row.center_y - half_lateral_distance) : int(
+                            row.center_y + half_lateral_distance
+                        ),
+                        int(row.center_x - half_lateral_distance) : int(
+                            row.center_x + half_lateral_distance
+                        ),
                         moving_channel_nb,
                     ],
                     upsample_factor=10,
@@ -203,9 +221,18 @@ def _process_image(
                         bead_shift[1] * voxel_size_micron[1],
                         bead_shift[2] * voxel_size_micron[2],
                     )
+                    distance_lateral_micron = np.sqrt(
+                        np.sum(
+                            [
+                                bead_shift_micron[1] ** 2,
+                                bead_shift_micron[2] ** 2,
+                            ]
+                        )
+                    )
                     distance_3d_micron = np.sqrt(np.sum([s**2 for s in bead_shift_micron]))
                 else:
                     bead_shift_micron = (np.nan, np.nan, np.nan)
+                    distance_lateral_micron = np.nan
                     distance_3d_micron = np.nan
                 bead_translations = {
                     "image_id": mm.analyses.get_object_id(image) or image.name,
@@ -230,6 +257,7 @@ def _process_image(
                     "translation_z_micron": bead_shift_micron[0],
                     "translation_y_micron": bead_shift_micron[1],
                     "translation_x_micron": bead_shift_micron[2],
+                    "distance_lateral_micron": distance_lateral_micron,
                     "distance_3d_micron": distance_3d_micron,
                     "phase_diff": bead_phase_diff,
                 }
@@ -258,13 +286,6 @@ def _process_image(
         image_rows.append(image_translations)
 
     return image_rows, bead_rows
-
-
-def _estimate_min_bead_distance(dataset: mm_schema.CoRegistrationDataset) -> float:
-    # TODO: get the resolution somewhere or pass it as a metadata and remove it from the schema
-    # Assuming we are imaging using nyquist criterium,
-    # the min distance factor should be roughly twice the min_lateral_distance_factor
-    return dataset.input_parameters.sigma_max * 4
 
 
 def _generate_center_roi(
@@ -322,7 +343,8 @@ def analyse_co_registration(
     )
 
     # Containers for input data and input parameters
-    min_distance_px = _estimate_min_bead_distance(dataset)
+    min_lateral_distance_px = int(dataset.input_parameters.min_lateral_distance_px)
+    min_axial_distance_px = int(dataset.input_parameters.min_axial_distance_px)
     snr_threshold = dataset.input_parameters.snr_threshold
     reference_channel_nr = dataset.input_parameters.reference_channel_nr
 
@@ -343,7 +365,8 @@ def analyse_co_registration(
             image=image,
             sigma_min=dataset.input_parameters.sigma_min,
             sigma_max=dataset.input_parameters.sigma_max,
-            min_distance_px=min_distance_px,
+            min_lateral_distance_px=min_lateral_distance_px,
+            min_axial_distance_px=min_axial_distance_px,
             snr_threshold=snr_threshold,
             reference_channel_nr=reference_channel_nr,
         )
@@ -445,7 +468,7 @@ def analyse_co_registration(
                 considered_valid_count=key_rowset.considered_valid.sum(),
                 considered_self_proximity_count=key_rowset.considered_self_proximity.sum(),
                 considered_lateral_edge_count=key_rowset.considered_lateral_edge.sum(),
-                considered_axial_edge_count=False,
+                considered_axial_edge_count=key_rowset.considered_axial_edge.sum(),
                 considered_outlier_count=key_rowset.considered_distance_3d_micron_outlier.sum(),
                 translation_abs_mean_pixel_x=float(key_rowset.translation_x_px.abs().mean()),
                 translation_abs_mean_pixel_y=float(key_rowset.translation_y_px.abs().mean()),
@@ -481,6 +504,7 @@ def analyse_co_registration(
         f"- Valid: {bead_properties.table_data['considered_valid'].sum()}\n"
         f"- Invalid: {len(bead_properties.table_data) - bead_properties.table_data['considered_valid'].sum()}\n"
         f"  - Lateral_edge: {bead_properties.table_data['considered_lateral_edge'].sum()}\n"
+        f"  - Axial_edge: {bead_properties.table_data['considered_axial_edge'].sum()}\n"
         f"  - Self_proximity: {bead_properties.table_data['considered_self_proximity'].sum()}\n"
     )
 

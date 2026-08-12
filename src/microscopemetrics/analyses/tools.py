@@ -271,7 +271,8 @@ def find_beads(
     channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
-    min_lateral_distance_px: float,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     snr_threshold: float,
     max_num_peaks: int,
     return_bead_images: bool = True,
@@ -281,7 +282,7 @@ def find_beads(
     """
     logger.debug("Finding beads in channel...")
 
-    half_min_distance_px = min_lateral_distance_px // 2
+    half_min_lateral_distance_px = min_lateral_distance_px // 2
 
     # Estimate SNR
     signal_estimate = channel[channel > np.percentile(channel, 99.9)].mean()
@@ -343,10 +344,14 @@ def find_beads(
     for pos in positions_all:
         if any(
             [
-                0 <= pos[0] < half_min_distance_px + 1,
-                0 <= pos[1] < half_min_distance_px + 1,
-                channel_aip.shape[0] - half_min_distance_px - 1 <= pos[0] < channel_aip.shape[0],
-                channel_aip.shape[1] - half_min_distance_px - 1 <= pos[1] < channel_aip.shape[1],
+                0 <= pos[0] < half_min_lateral_distance_px + 1,
+                0 <= pos[1] < half_min_lateral_distance_px + 1,
+                channel_aip.shape[0] - half_min_lateral_distance_px - 1
+                <= pos[0]
+                < channel_aip.shape[0],
+                channel_aip.shape[1] - half_min_lateral_distance_px - 1
+                <= pos[1]
+                < channel_aip.shape[1],
             ]
         ):
             positions_edge.append(pos)
@@ -380,6 +385,10 @@ def find_beads(
         any(np.array_equal(arr, prox_arr) for prox_arr in positions_edge)
         for arr in positions_df[["center_y", "center_x", "sigma_LoG"]].to_numpy()
     ]
+    positions_df["considered_axial_edge"] = [
+        z < min_axial_distance_px or channel.shape[0] - z < min_axial_distance_px
+        for z in positions_df["center_z"]
+    ]
     positions_df["considered_valid"] = [
         not any([edge, prox])
         for edge, prox in zip(
@@ -412,7 +421,7 @@ def find_beads(
             ]
 
         positions_df["beads"] = positions_df.apply(
-            get_bead_image, axis=1, args=(channel, half_min_distance_px)
+            get_bead_image, axis=1, args=(channel, half_min_lateral_distance_px)
         )
 
     return positions_df

@@ -51,7 +51,6 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
 def _average_beads_group(
     group: pd.DataFrame,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
-    min_axial_distance_px: float,
 ) -> pd.Series:
     """
     Averages the beads in a group by first aligning them to the center of the image and then averaging them.
@@ -74,7 +73,7 @@ def _average_beads_group(
     average_bead = np.mean(aligned_beads, axis=0).astype(dtype.pop())
 
     # Process the average bead to get measurements
-    measurements = _process_bead(average_bead, voxel_size_micron, min_axial_distance_px)
+    measurements = _process_bead(average_bead, voxel_size_micron)
 
     # Add the average bead array to the measurements
     result = pd.Series({"average_bead": average_bead})
@@ -86,7 +85,7 @@ def _average_beads_group(
 def _average_beads(
     bead_properties: pd.DataFrame,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
-    min_axial_distance_px: float,
+    min_axial_distance_px: int,
     bead_profiles_z: pd.DataFrame,
     bead_profiles_y: pd.DataFrame,
     bead_profiles_x: pd.DataFrame,
@@ -115,7 +114,6 @@ def _average_beads(
             keys: _average_beads_group(
                 group,
                 voxel_size_micron=voxel_size_micron,
-                min_axial_distance_px=min_axial_distance_px,
             )
             for keys, group in bead_properties.groupby(
                 [
@@ -147,11 +145,6 @@ def _average_beads(
         lambda x: zero_bead.copy() if isinstance(x, float) and np.isnan(x) else x
     )
 
-    # it is the _process_bead function that decides if a bead is
-    # considered axial edge or not. For the average bead, this is not
-    # relevant, so we drop this column.
-    average_beads_properties.drop(columns=["considered_axial_edge"], inplace=True)
-
     # Crop average bead z profiles to match individual bead crops (±4x median FWHM per channel)
     median_fwhm_by_channel = (
         bead_properties[bead_properties["considered_valid"]]
@@ -164,13 +157,12 @@ def _average_beads(
         channel_nr = idx[channel_nr_level] if isinstance(idx, tuple) else idx
         if channel_nr not in median_fwhm_by_channel.index:
             continue
-        half_window = int(min_axial_distance_px)
         for col in ["z_raw", "z_fitted_airy", "z_fitted_gaussian"]:
             profile = row[col]
             if isinstance(profile, np.ndarray):
                 center_z = profile.shape[0] // 2  # average bead is centered by construction
-                crop_start = max(0, center_z - half_window)
-                crop_end = min(len(profile), center_z + half_window)
+                crop_start = max(0, center_z - min_axial_distance_px)
+                crop_end = min(len(profile), center_z + min_axial_distance_px)
                 average_beads_properties.at[idx, col] = profile[crop_start:crop_end]
 
     # Extract profiles from average beads and join with existing profiles
@@ -315,7 +307,6 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
 def _process_bead(
     bead: np.ndarray,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
-    min_axial_distance_px: float,
     calculate_shifts: bool = False,
 ):
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
@@ -342,7 +333,6 @@ def _process_bead(
             "fwhm_micron_y": np.nan,
             "fwhm_micron_x": np.nan,
             "fwhm_lateral_asymmetry_ratio": np.nan,
-            "considered_axial_edge": np.nan,
             "intensity_integrated": np.nan,
             "intensity_max": np.nan,
             "intensity_min": np.nan,
@@ -426,7 +416,6 @@ def _process_bead(
             "fwhm_micron_y": np.nan,
             "fwhm_micron_x": np.nan,
             "fwhm_lateral_asymmetry_ratio": np.nan,
-            "considered_axial_edge": False,
             "intensity_integrated": intensity_integrated,
             "intensity_max": intensity_max,
             "intensity_min": intensity_min,
@@ -459,11 +448,6 @@ def _process_bead(
         gauss_fwhm_micron_y = np.nan
         gauss_fwhm_micron_x = np.nan
 
-    considered_axial_edge = (
-        gauss_center_pos_z < min_axial_distance_px
-        or profile_z_raw.shape[0] - gauss_center_pos_z < min_axial_distance_px
-    )
-
     result = {
         "z_raw": profile_z_raw,
         "z_fitted_airy": profile_z_fitted_airy,
@@ -488,7 +472,6 @@ def _process_bead(
         "fwhm_micron_y": gauss_fwhm_micron_y,
         "fwhm_micron_x": gauss_fwhm_micron_x,
         "fwhm_lateral_asymmetry_ratio": gauss_fwhm_lateral_asymmetry_ratio,
-        "considered_axial_edge": considered_axial_edge,
         "intensity_integrated": intensity_integrated,
         "intensity_max": intensity_max,
         "intensity_min": intensity_min,
@@ -509,8 +492,8 @@ def _process_channel(
     channel: np.ndarray,
     sigma_min: float,
     sigma_max: float,
-    min_lateral_distance_px: float,
-    min_axial_distance_px: float,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     snr_threshold: float,
     fitting_airy_r2_threshold: float,
     fitting_gaussian_r2_threshold: float,
@@ -522,6 +505,7 @@ def _process_channel(
         sigma_min=sigma_min,
         sigma_max=sigma_max,
         min_lateral_distance_px=min_lateral_distance_px,
+        min_axial_distance_px=min_axial_distance_px,
         snr_threshold=snr_threshold,
         max_num_peaks=MAX_NR_PEAKS,
     )
@@ -536,9 +520,7 @@ def _process_channel(
 
     bead_properties = bead_properties.join(
         bead_properties["beads"].apply(
-            lambda x: pd.Series(
-                _process_bead(x, voxel_size_micron, min_axial_distance_px, calculate_shifts=True)
-            )
+            lambda x: pd.Series(_process_bead(x, voxel_size_micron, calculate_shifts=True))
         )
     )
     bead_properties["considered_bad_fit_airy_z"] = (
@@ -590,8 +572,8 @@ def _process_image(
     image: mm_schema.Image,
     sigma_min: float,
     sigma_max: float,
-    min_lateral_distance_px: float,
-    min_axial_distance_px: float,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     snr_threshold: float,
     fitting_airy_r2_threshold: float,
     fitting_gaussian_r2_threshold: float,
@@ -760,8 +742,8 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     # TODO: Implement Nyquist validation??
 
     # Containers for input data and input parameters
-    min_lateral_distance_px = dataset.input_parameters.min_lateral_distance_px
-    min_axial_diatance_px = dataset.input_parameters.min_axial_distance_px
+    min_lateral_distance_px = int(dataset.input_parameters.min_lateral_distance_px)
+    min_axial_distance_px = int(dataset.input_parameters.min_axial_distance_px)
     snr_threshold = dataset.input_parameters.snr_threshold
     fitting_airy_r2_threshold = dataset.input_parameters.fitting_airy_r2_threshold
     fitting_gaussian_r2_threshold = dataset.input_parameters.fitting_gaussian_r2_threshold
@@ -790,7 +772,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             sigma_min=dataset.input_parameters.sigma_min,
             sigma_max=dataset.input_parameters.sigma_max,
             min_lateral_distance_px=min_lateral_distance_px,
-            min_axial_distance_px=min_axial_diatance_px,
+            min_axial_distance_px=min_axial_distance_px,
             snr_threshold=snr_threshold,
             fitting_airy_r2_threshold=fitting_airy_r2_threshold,
             fitting_gaussian_r2_threshold=fitting_gaussian_r2_threshold,
@@ -829,7 +811,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         )
 
     # Crop z profiles to a consistent length before extraction
-    _crop_z_profiles(bead_properties, int(min_axial_diatance_px))
+    _crop_z_profiles(bead_properties, min_axial_distance_px)
 
     # Extract bead profiles first (needed by _average_beads)
     bead_profiles_z = _extract_profiles(bead_properties, "z")
@@ -846,7 +828,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     ) = _average_beads(
         bead_properties=bead_properties,
         voxel_size_micron=voxel_size_micron,
-        min_axial_distance_px=min_axial_diatance_px,
+        min_axial_distance_px=min_axial_distance_px,
         bead_profiles_z=bead_profiles_z,
         bead_profiles_y=bead_profiles_y,
         bead_profiles_x=bead_profiles_x,
