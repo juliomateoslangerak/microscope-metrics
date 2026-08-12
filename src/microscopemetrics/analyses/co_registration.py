@@ -397,6 +397,22 @@ def analyse_co_registration(
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
 
+    mm_tools.calculate_bead_outliers(
+        bead_properties=bead_properties,
+        robust_z_score_threshold=dataset.input_parameters.robust_z_score_threshold,
+        measurements=["distance_3d_micron"],
+    )
+    # We need to invalidate all the bad fits and outliers
+    bead_properties["considered_valid"] = [
+        not any([prox, l_edge, a_edge, i_out])
+        for prox, l_edge, a_edge, i_out in zip(
+            bead_properties["considered_self_proximity"],
+            bead_properties["considered_lateral_edge"],
+            bead_properties["considered_axial_edge"],
+            bead_properties["considered_distance_3d_micron_outlier"],
+        )
+    ]
+
     if bead_properties["considered_valid"].sum() == 0:
         mm.logger.error("No valid beads found in any image")
         raise mm.AnalysisError(
@@ -411,12 +427,6 @@ def analyse_co_registration(
             message=f"Only {bead_properties['considered_valid'].sum()} valid beads found in all images combined",
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
-
-    mm_tools.calculate_bead_outliers(
-        bead_properties=bead_properties,
-        robust_z_score_threshold=dataset.input_parameters.robust_z_score_threshold,
-        measurements=["distance_3d_micron"],
-    )
 
     considered_valid_bead_centers = _generate_center_roi(
         dataset=dataset,
