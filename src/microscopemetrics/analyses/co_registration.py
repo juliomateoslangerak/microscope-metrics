@@ -249,6 +249,7 @@ def _process_image(
                     "center_x": row.center_x,
                     "considered_self_proximity": row.considered_self_proximity,
                     "considered_lateral_edge": row.considered_lateral_edge,
+                    "considered_axial_edge": row.considered_axial_edge,
                     "considered_valid": row.considered_valid,
                     "translation_z_px": bead_shift[0],
                     "translation_y_px": bead_shift[1],
@@ -278,6 +279,7 @@ def _process_image(
                     "center_x": row.center_x,
                     "considered_self_proximity": row.considered_self_proximity,
                     "considered_lateral_edge": row.considered_lateral_edge,
+                    "considered_axial_edge": row.considered_axial_edge,
                     "considered_valid": row.considered_valid,
                 }
 
