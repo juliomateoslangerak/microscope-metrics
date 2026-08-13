@@ -50,6 +50,8 @@ def _concatenate_index_levels(index_names, index_values, pattern="{level_name}-{
 
 def _average_beads_group(
     group: pd.DataFrame,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
 ) -> pd.Series:
     """
@@ -73,7 +75,12 @@ def _average_beads_group(
     average_bead = np.mean(aligned_beads, axis=0).astype(dtype.pop())
 
     # Process the average bead to get measurements
-    measurements = _process_bead(average_bead, voxel_size_micron)
+    measurements = _process_bead(
+        average_bead,
+        voxel_size_micron,
+        min_lateral_distance_px,
+        min_axial_distance_px,
+    )
 
     # Add the average bead array to the measurements
     result = pd.Series({"average_bead": average_bead})
@@ -85,6 +92,7 @@ def _average_beads_group(
 def _average_beads(
     bead_properties: pd.DataFrame,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
+    min_lateral_distance_px: int,
     min_axial_distance_px: int,
     bead_profiles_z: pd.DataFrame,
     bead_profiles_y: pd.DataFrame,
@@ -113,6 +121,8 @@ def _average_beads(
         {
             keys: _average_beads_group(
                 group,
+                min_lateral_distance_px=min_lateral_distance_px,
+                min_axial_distance_px=min_axial_distance_px,
                 voxel_size_micron=voxel_size_micron,
             )
             for keys, group in bead_properties.groupby(
@@ -304,9 +314,28 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
     return key_measurements
 
 
+def _pad_profile(profile: np.array, center: int, half_shape: int):
+    left = center - half_shape
+    right = center + half_shape + 1
+    original_shape = profile.shape[0]
+    profile = profile[max(0, left) : min(original_shape, right)]
+
+    return np.pad(
+        profile,
+        (
+            (
+                abs(left) if left < 0 else 0,
+                abs(right - original_shape) if right > original_shape else 0,
+            )
+        ),
+    )
+
+
 def _process_bead(
     bead: np.ndarray,
     voxel_size_micron: tuple[float | None, float | None, float | None] | None,
+    min_lateral_distance_px: int,
+    min_axial_distance_px: int,
     calculate_shifts: bool = False,
 ):
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
@@ -449,15 +478,15 @@ def _process_bead(
         gauss_fwhm_micron_x = np.nan
 
     result = {
-        "z_raw": profile_z_raw,
-        "z_fitted_airy": profile_z_fitted_airy,
-        "z_fitted_gaussian": profile_z_fitted_gauss,
-        "y_raw": profile_y_raw,
-        "y_fitted_airy": profile_y_fitted_airy,
-        "y_fitted_gaussian": profile_y_fitted_gauss,
-        "x_raw": profile_x_raw,
-        "x_fitted_airy": profile_x_fitted_airy,
-        "x_fitted_gaussian": profile_x_fitted_gauss,
+        "z_raw": _pad_profile(profile_z_raw, z_focus, min_axial_distance_px),
+        "z_fitted_airy": _pad_profile(profile_z_fitted_airy, z_focus, min_axial_distance_px),
+        "z_fitted_gaussian": _pad_profile(profile_z_fitted_gauss, z_focus, min_axial_distance_px),
+        "y_raw": _pad_profile(profile_y_raw, y_focus, min_lateral_distance_px),
+        "y_fitted_airy": _pad_profile(profile_y_fitted_airy, y_focus, min_lateral_distance_px),
+        "y_fitted_gaussian": _pad_profile(profile_y_fitted_gauss, y_focus, min_lateral_distance_px),
+        "x_raw": _pad_profile(profile_x_raw, x_focus, min_lateral_distance_px),
+        "x_fitted_airy": _pad_profile(profile_x_fitted_airy, x_focus, min_lateral_distance_px),
+        "x_fitted_gaussian": _pad_profile(profile_x_fitted_gauss, x_focus, min_lateral_distance_px),
         "fit_airy_r2_z": airy_r2_z,
         "fit_airy_r2_y": airy_r2_y,
         "fit_airy_r2_x": airy_r2_x,
@@ -520,7 +549,15 @@ def _process_channel(
 
     bead_properties = bead_properties.join(
         bead_properties["beads"].apply(
-            lambda x: pd.Series(_process_bead(x, voxel_size_micron, calculate_shifts=True))
+            lambda x: pd.Series(
+                _process_bead(
+                    x,
+                    voxel_size_micron,
+                    min_lateral_distance_px,
+                    min_axial_distance_px,
+                    calculate_shifts=True,
+                )
+            )
         )
     )
     bead_properties["considered_bad_fit_airy_z"] = (
@@ -667,38 +704,6 @@ def _generate_center_roi(
     return rois
 
 
-def _crop_z_profiles(bead_properties: pd.DataFrame, min_axial_distance_px: int) -> None:
-    """Crop z profiles in-place to min_axial_distance around center_z, per channel.
-
-    The median FWHM is computed from valid beads only, giving a total window of 8x the
-    median FWHM. Profiles that extend beyond the array bounds are clamped (e.g. axial-edge
-    beads will produce shorter profiles).
-    """
-    profile_cols = ["z_raw", "z_fitted_airy", "z_fitted_gaussian"]
-    for idx, row in bead_properties.iterrows():
-        center_z = int(row["center_z"])
-        z_top = int(row.center_z) - min_axial_distance_px
-        z_bottom = int(row.center_z) + min_axial_distance_px
-        for col in profile_cols:
-            profile = row[col]
-            if isinstance(profile, np.ndarray):
-                # Cuts the relevant section
-                profile = profile[max(0, z_top) : min(profile.shape[0], z_bottom)]
-                # Pads with "empty" data to get constant length
-                profile = np.pad(
-                    profile,
-                    (
-                        (
-                            abs(z_top) if z_top < 0 else 0,
-                            abs(z_bottom - profile.shape[0]) if z_bottom > profile.shape[0] else 0,
-                        )
-                    ),
-                    constant_values=np.nan,
-                )
-
-                bead_properties.at[idx, col] = profile
-
-
 def _extract_profiles(bead_properties, axis: str) -> pd.DataFrame:
     profile_col_names = [
         f"{axis}_raw",
@@ -810,9 +815,6 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
 
-    # Crop z profiles to a consistent length before extraction
-    _crop_z_profiles(bead_properties, min_axial_distance_px)
-
     # Extract bead profiles first (needed by _average_beads)
     bead_profiles_z = _extract_profiles(bead_properties, "z")
     bead_profiles_y = _extract_profiles(bead_properties, "y")
@@ -828,6 +830,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
     ) = _average_beads(
         bead_properties=bead_properties,
         voxel_size_micron=voxel_size_micron,
+        min_lateral_distance_px=min_lateral_distance_px,
         min_axial_distance_px=min_axial_distance_px,
         bead_profiles_z=bead_profiles_z,
         bead_profiles_y=bead_profiles_y,

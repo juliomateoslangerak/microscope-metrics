@@ -282,8 +282,6 @@ def find_beads(
     """
     logger.debug("Finding beads in channel...")
 
-    half_min_lateral_distance_px = min_lateral_distance_px // 2
-
     # Estimate SNR
     signal_estimate = channel[channel > np.percentile(channel, 99.9)].mean()
     background_estimate = np.percentile(channel, 50)
@@ -344,14 +342,10 @@ def find_beads(
     for pos in positions_all:
         if any(
             [
-                0 <= pos[0] < half_min_lateral_distance_px + 1,
-                0 <= pos[1] < half_min_lateral_distance_px + 1,
-                channel_aip.shape[0] - half_min_lateral_distance_px - 1
-                <= pos[0]
-                < channel_aip.shape[0],
-                channel_aip.shape[1] - half_min_lateral_distance_px - 1
-                <= pos[1]
-                < channel_aip.shape[1],
+                0 <= pos[0] < min_lateral_distance_px + 1,
+                0 <= pos[1] < min_lateral_distance_px + 1,
+                channel_aip.shape[0] - min_lateral_distance_px - 1 <= pos[0] < channel_aip.shape[0],
+                channel_aip.shape[1] - min_lateral_distance_px - 1 <= pos[1] < channel_aip.shape[1],
             ]
         ):
             positions_edge.append(pos)
@@ -363,7 +357,7 @@ def find_beads(
         p=2,
     )
     np.fill_diagonal(dist_matrix, np.inf)
-    proximity_mask = dist_matrix < min_lateral_distance_px
+    proximity_mask = dist_matrix < (min_lateral_distance_px * 2)
     proximity_pairs = np.argwhere(proximity_mask)
     proximity_indexes = {i for i, _ in proximity_pairs}
     positions_proximity = [positions_all[i] for i in proximity_indexes]
@@ -421,7 +415,7 @@ def find_beads(
             ]
 
         positions_df["beads"] = positions_df.apply(
-            get_bead_image, axis=1, args=(channel, half_min_lateral_distance_px)
+            get_bead_image, axis=1, args=(channel, min_lateral_distance_px)
         )
 
     return positions_df

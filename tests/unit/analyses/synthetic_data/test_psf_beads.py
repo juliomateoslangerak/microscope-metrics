@@ -64,6 +64,8 @@ def test_average_beads(shifts, signal, background, sigma_axial, sigma_lateral):
                 "considered_valid": True,
             }
         ),
+        min_lateral_distance_px=20,
+        min_axial_distance_px=20,
         voxel_size_micron=(None, None, None),
     ).values[0]
     ref_bead = np.mean(ref_beads, axis=0)
