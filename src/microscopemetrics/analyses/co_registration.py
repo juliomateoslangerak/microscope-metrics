@@ -518,6 +518,7 @@ def analyse_co_registration(
         f"  - Lateral_edge: {bead_properties.table_data['considered_lateral_edge'].sum()}\n"
         f"  - Axial_edge: {bead_properties.table_data['considered_axial_edge'].sum()}\n"
         f"  - Self_proximity: {bead_properties.table_data['considered_self_proximity'].sum()}\n"
+        f"  - Outliers: {bead_properties.table_data['considered_distance_3d_micron_outlier'].sum()}\n"
     )
 
     dataset.processed = True
