@@ -463,16 +463,16 @@ def _process_bead(
     )
 
     if all(voxel_size_micron):
-        airy_fwhm_micron_z = airy_fwhm_z * voxel_size_micron[0]
-        airy_fwhm_micron_y = airy_fwhm_y * voxel_size_micron[1]
-        airy_fwhm_micron_x = airy_fwhm_x * voxel_size_micron[2]
+        # airy_fwhm_micron_z = airy_fwhm_z * voxel_size_micron[0]
+        # airy_fwhm_micron_y = airy_fwhm_y * voxel_size_micron[1]
+        # airy_fwhm_micron_x = airy_fwhm_x * voxel_size_micron[2]
         gauss_fwhm_micron_z = gauss_fwhm_z * voxel_size_micron[0]
         gauss_fwhm_micron_y = gauss_fwhm_y * voxel_size_micron[1]
         gauss_fwhm_micron_x = gauss_fwhm_x * voxel_size_micron[2]
     else:
-        airy_fwhm_micron_z = np.nan
-        airy_fwhm_micron_y = np.nan
-        airy_fwhm_micron_x = np.nan
+        # airy_fwhm_micron_z = np.nan
+        # airy_fwhm_micron_y = np.nan
+        # airy_fwhm_micron_x = np.nan
         gauss_fwhm_micron_z = np.nan
         gauss_fwhm_micron_y = np.nan
         gauss_fwhm_micron_x = np.nan
