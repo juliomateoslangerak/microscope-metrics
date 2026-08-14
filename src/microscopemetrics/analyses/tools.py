@@ -304,6 +304,8 @@ def find_beads(
             "considered_lateral_edge",
             "considered_valid",
         ]
+        if fitting_gaussian_r2_threshold is not None:
+            columns.append("considered_bad_fit_gaussian")
         if return_bead_images:
             columns.append("beads")
         return pd.DataFrame(columns=columns)
@@ -487,6 +489,10 @@ def find_beads(
     logger.debug(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
+    if fitting_gaussian_r2_threshold is not None:
+        logger.debug(
+            f"Beads considered for having a bad gaussian fit: {positions_df['considered_bad_fit_gaussian'].sum()}"
+        )
 
     return positions_df
 

@@ -252,6 +252,7 @@ def _process_image(
                     "considered_self_proximity": row.considered_self_proximity,
                     "considered_lateral_edge": row.considered_lateral_edge,
                     "considered_axial_edge": row.considered_axial_edge,
+                    "considered_bad_fit_gaussian": row.considered_bad_fit_gaussian,
                     "considered_valid": row.considered_valid,
                     "translation_z_px": bead_shift[0],
                     "translation_y_px": bead_shift[1],
@@ -282,6 +283,7 @@ def _process_image(
                     "considered_self_proximity": row.considered_self_proximity,
                     "considered_lateral_edge": row.considered_lateral_edge,
                     "considered_axial_edge": row.considered_axial_edge,
+                    "considered_bad_fit_gaussian": row.considered_bad_fit_gaussian,
                     "considered_valid": row.considered_valid,
                 }
 
@@ -383,10 +385,11 @@ def analyse_co_registration(
             mm.logger.warning(f"No beads found in image {image.name}")
             continue
 
-        mm.logger.info(
+        mm.logger.debug(
             f"Image {image_id} processed."
             f"    {sum([1 for r in bead_properties if r['considered_valid']])} beads considered valid."
             f"    {sum([1 for r in bead_properties if r['considered_lateral_edge']])} beads considered lateral edge."
+            f"    {sum([1 for r in bead_properties if r['considered_axial_edge']])} beads considered axial edge."
             f"    {sum([1 for r in bead_properties if r['considered_self_proximity']])} beads considered self proximity."
         )
 
@@ -408,12 +411,13 @@ def analyse_co_registration(
     )
     # We need to invalidate all the bad fits and outliers
     bead_properties["considered_valid"] = [
-        not any([prox, l_edge, a_edge, i_out])
-        for prox, l_edge, a_edge, i_out in zip(
+        not any([prox, l_edge, a_edge, d_out, fit])
+        for prox, l_edge, a_edge, d_out, fit in zip(
             bead_properties["considered_self_proximity"],
             bead_properties["considered_lateral_edge"],
             bead_properties["considered_axial_edge"],
             bead_properties["considered_distance_3d_micron_outlier"],
+            bead_properties["considered_bad_fit_gaussian"],
         )
     ]
 
