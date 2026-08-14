@@ -102,6 +102,7 @@ def _locate_beads(
     min_lateral_distance_px: int,
     min_axial_distance_px: int,
     snr_threshold: float,
+    fitting_gaussian_r2_threshold: float,
 ) -> pd.DataFrame:
     bead_properties = mm_tools.find_beads(
         channel=channel,
@@ -111,6 +112,7 @@ def _locate_beads(
         min_axial_distance_px=min_axial_distance_px,
         snr_threshold=snr_threshold,
         max_num_peaks=MAX_NR_PEAKS,
+        fitting_gaussian_r2_threshold=fitting_gaussian_r2_threshold,
         return_bead_images=True,
     )
 
@@ -132,6 +134,7 @@ def _process_image(
     min_lateral_distance_px: int,
     min_axial_distance_px: int,
     snr_threshold: float,
+    fitting_gaussian_r2_threshold: float,
     reference_channel_nr: int,
 ):
     channel_names = [c.name for c in image.channel_series.channels]
@@ -157,13 +160,12 @@ def _process_image(
         min_lateral_distance_px=min_lateral_distance_px,
         min_axial_distance_px=min_axial_distance_px,
         snr_threshold=snr_threshold,
+        fitting_gaussian_r2_threshold=fitting_gaussian_r2_threshold,
     )
 
     # Image level properties
     image_rows = []
     bead_rows = []
-    half_lateral_distance = min_lateral_distance_px // 2
-    half_axial_distance = min_axial_distance_px // 2
     for moving_channel_nb in moving_channel_nbs:
         image_shift, image_error, image_phasediff = phase_cross_correlation(
             image_data[..., reference_channel_nr],
@@ -189,26 +191,26 @@ def _process_image(
             if row.considered_valid:
                 bead_shift, bead_error, bead_phase_diff = phase_cross_correlation(
                     image_data[
-                        int(row.center_z - half_axial_distance) : int(
-                            row.center_z + half_axial_distance
+                        int(row.center_z - min_axial_distance_px) : int(
+                            row.center_z + min_axial_distance_px + 1
                         ),
-                        int(row.center_y - half_lateral_distance) : int(
-                            row.center_y + half_lateral_distance
+                        int(row.center_y - min_lateral_distance_px) : int(
+                            row.center_y + min_lateral_distance_px + 1
                         ),
-                        int(row.center_x - half_lateral_distance) : int(
-                            row.center_x + half_lateral_distance
+                        int(row.center_x - min_lateral_distance_px) : int(
+                            row.center_x + min_lateral_distance_px + 1
                         ),
                         reference_channel_nr,
                     ],
                     image_data[
-                        int(row.center_z - half_axial_distance) : int(
-                            row.center_z + half_axial_distance
+                        int(row.center_z - min_axial_distance_px) : int(
+                            row.center_z + min_axial_distance_px + 1
                         ),
-                        int(row.center_y - half_lateral_distance) : int(
-                            row.center_y + half_lateral_distance
+                        int(row.center_y - min_lateral_distance_px) : int(
+                            row.center_y + min_lateral_distance_px + 1
                         ),
-                        int(row.center_x - half_lateral_distance) : int(
-                            row.center_x + half_lateral_distance
+                        int(row.center_x - min_lateral_distance_px) : int(
+                            row.center_x + min_lateral_distance_px + 1
                         ),
                         moving_channel_nb,
                     ],
@@ -348,6 +350,7 @@ def analyse_co_registration(
     min_lateral_distance_px = int(dataset.input_parameters.min_lateral_distance_px)
     min_axial_distance_px = int(dataset.input_parameters.min_axial_distance_px)
     snr_threshold = dataset.input_parameters.snr_threshold
+    fitting_gaussian_r2_threshold = dataset.input_parameters.fitting_gaussian_r2_threshold
     reference_channel_nr = dataset.input_parameters.reference_channel_nr
 
     image_properties = []
@@ -370,6 +373,7 @@ def analyse_co_registration(
             min_lateral_distance_px=min_lateral_distance_px,
             min_axial_distance_px=min_axial_distance_px,
             snr_threshold=snr_threshold,
+            fitting_gaussian_r2_threshold=fitting_gaussian_r2_threshold,
             reference_channel_nr=reference_channel_nr,
         )
         image_properties.extend(image_rows)
@@ -483,12 +487,32 @@ def analyse_co_registration(
                 considered_axial_edge_count=key_rowset.considered_axial_edge.sum(),
                 considered_outlier_count=key_rowset.considered_distance_3d_micron_outlier.sum(),
                 translation_abs_mean_pixel_x=float(key_rowset.translation_x_px.abs().mean()),
+                translation_abs_median_pixel_x=float(key_rowset.translation_x_px.abs().median()),
+                translation_abs_std_pixel_x=float(key_rowset.translation_x_px.abs().std()),
                 translation_abs_mean_pixel_y=float(key_rowset.translation_y_px.abs().mean()),
+                translation_abs_median_pixel_y=float(key_rowset.translation_y_px.abs().median()),
+                translation_abs_std_pixel_y=float(key_rowset.translation_y_px.abs().std()),
                 translation_abs_mean_pixel_z=float(key_rowset.translation_z_px.abs().mean()),
+                translation_abs_median_pixel_z=float(key_rowset.translation_z_px.abs().median()),
+                translation_abs_std_pixel_z=float(key_rowset.translation_z_px.abs().std()),
                 translation_abs_mean_micron_x=float(key_rowset.translation_x_micron.abs().mean()),
+                translation_abs_median_micron_x=float(
+                    key_rowset.translation_x_micron.abs().median()
+                ),
+                translation_abs_std_micron_x=float(key_rowset.translation_x_micron.abs().std()),
                 translation_abs_mean_micron_y=float(key_rowset.translation_y_micron.abs().mean()),
+                translation_abs_median_micron_y=float(
+                    key_rowset.translation_y_micron.abs().median()
+                ),
+                translation_abs_std_micron_y=float(key_rowset.translation_y_micron.abs().std()),
                 translation_abs_mean_micron_z=float(key_rowset.translation_z_micron.abs().mean()),
+                translation_abs_median_micron_z=float(
+                    key_rowset.translation_z_micron.abs().median()
+                ),
+                translation_abs_std_micron_z=float(key_rowset.translation_z_micron.abs().std()),
                 distance_mean_micron_3d=float(key_rowset.distance_3d_micron.mean()),
+                distance_median_micron_3d=float(key_rowset.distance_3d_micron.median()),
+                distance_std_micron_3d=float(key_rowset.distance_3d_micron.std()),
                 rotation_z_mean=np.nan,  # TODO: rotation is not implemented
             )
         )

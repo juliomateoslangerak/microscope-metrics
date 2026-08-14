@@ -275,6 +275,7 @@ def find_beads(
     min_axial_distance_px: int,
     snr_threshold: float,
     max_num_peaks: int,
+    fitting_gaussian_r2_threshold: float | None = None,
     return_bead_images: bool = True,
 ):
     """
@@ -371,6 +372,7 @@ def find_beads(
         channel[:, int(y), int(x)].argmax()
         for y, x in zip(positions_df["center_y"], positions_df["center_x"])
     ]
+    positions_df["channel_snr_estimate"] = snr_estimate
     positions_df["considered_self_proximity"] = [
         any(np.array_equal(arr, prox_arr) for prox_arr in positions_proximity)
         for arr in positions_df[["center_y", "center_x", "sigma_LoG"]].to_numpy()
@@ -383,14 +385,99 @@ def find_beads(
         z < min_axial_distance_px or channel.shape[0] - z < min_axial_distance_px
         for z in positions_df["center_z"]
     ]
-    positions_df["considered_valid"] = [
-        not any([edge, prox])
-        for edge, prox in zip(
-            positions_df["considered_lateral_edge"],
-            positions_df["considered_self_proximity"],
-        )
-    ]
-    positions_df["channel_snr_estimate"] = snr_estimate
+
+    def get_bead_image(row):
+        return channel[
+            :,
+            int(max(0, (row["center_y"] - min_lateral_distance_px))) : int(
+                min(channel.shape[1], (row["center_y"] + min_lateral_distance_px + 1))
+            ),
+            int(max(0, (row["center_x"] - min_lateral_distance_px))) : int(
+                min(channel.shape[2], (row["center_x"] + min_lateral_distance_px + 1))
+            ),
+        ]
+
+    if return_bead_images:
+        positions_df["beads"] = positions_df.apply(get_bead_image, axis=1)
+
+    if fitting_gaussian_r2_threshold is not None:
+
+        def fit_bead(row):
+            if return_bead_images:
+                bead = row["beads"]
+            else:
+                bead = get_bead_image(row)
+
+            # Find the strongest sections to generate profiles
+            z_focus = np.argmax(np.max(bead, axis=(1, 2)))
+            y_focus = np.argmax(np.max(bead, axis=(0, 2)))
+            x_focus = np.argmax(np.max(bead, axis=(0, 1)))
+
+            # Generate profiles
+            profile_z_raw = np.squeeze(bead[:, y_focus, x_focus])
+            profile_y_raw = np.squeeze(bead[z_focus, :, x_focus])
+            profile_x_raw = np.squeeze(bead[z_focus, y_focus, :])
+
+            # Normalize the profiles and subtract the background
+            profile_z_raw = (profile_z_raw - profile_z_raw.min()) / (
+                profile_z_raw.max() - profile_z_raw.min()
+            )
+            profile_y_raw = (profile_y_raw - profile_y_raw.min()) / (
+                profile_y_raw.max() - profile_y_raw.min()
+            )
+            profile_x_raw = (profile_x_raw - profile_x_raw.min()) / (
+                profile_x_raw.max() - profile_x_raw.min()
+            )
+
+            try:
+                _, gauss_r2_z, _, (_, _, gauss_center_pos_z, _) = fit_gaussian(profile_z_raw)
+                _, gauss_r2_y, _, (_, _, gauss_center_pos_y, _) = fit_gaussian(profile_y_raw)
+                _, gauss_r2_x, _, (_, _, gauss_center_pos_x, _) = fit_gaussian(profile_x_raw)
+
+            except RuntimeError as e:
+                return np.nan, np.nan, np.nan, True
+
+            return (
+                gauss_r2_z,
+                gauss_r2_y,
+                gauss_r2_x,
+                any(
+                    [
+                        gauss_r2_z < fitting_gaussian_r2_threshold,
+                        gauss_r2_y < fitting_gaussian_r2_threshold,
+                        gauss_r2_x < fitting_gaussian_r2_threshold,
+                    ]
+                ),
+            )
+
+        positions_df[
+            [
+                "fit_gaussian_r2_z",
+                "fit_gaussian_r2_y",
+                "fit_gaussian_r2_x",
+                "considered_bad_fit_gaussian",
+            ]
+        ] = positions_df.apply(fit_bead, axis=1, result_type="expand")
+
+        positions_df["considered_valid"] = [
+            not any([l_edge, a_edge, prox, fit])
+            for l_edge, a_edge, prox, fit in zip(
+                positions_df["considered_lateral_edge"],
+                positions_df["considered_axial_edge"],
+                positions_df["considered_self_proximity"],
+                positions_df["considered_bad_fit_gaussian"],
+            )
+        ]
+
+    else:
+        positions_df["considered_valid"] = [
+            not any([l_edge, a_edge, prox])
+            for l_edge, a_edge, prox in zip(
+                positions_df["considered_lateral_edge"],
+                positions_df["considered_axial_edge"],
+                positions_df["considered_self_proximity"],
+            )
+        ]
 
     logger.debug(f"Beads found: {len(positions_df)}")
     logger.debug(f"Beads kept for further analysis: {positions_df['considered_valid'].sum()}")
@@ -400,23 +487,6 @@ def find_beads(
     logger.debug(
         f"Beads considered for being to close to each other: {positions_df['considered_self_proximity'].sum()}"
     )
-
-    if return_bead_images:
-
-        def get_bead_image(row, ch, hmd):
-            return ch[
-                :,
-                int(max(0, (row["center_y"] - hmd))) : int(
-                    min(ch.shape[1], (row["center_y"] + hmd + 1))
-                ),
-                int(max(0, (row["center_x"] - hmd))) : int(
-                    min(ch.shape[2], (row["center_x"] + hmd + 1))
-                ),
-            ]
-
-        positions_df["beads"] = positions_df.apply(
-            get_bead_image, axis=1, args=(channel, min_lateral_distance_px)
-        )
 
     return positions_df
 
