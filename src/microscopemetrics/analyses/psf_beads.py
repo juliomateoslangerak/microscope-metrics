@@ -242,6 +242,7 @@ def _generate_key_measurements(bead_properties, average_bead_properties):
         "fwhm_pixel_y",
         "fwhm_pixel_x",
         "fwhm_lateral_asymmetry_ratio",
+        "fwhm_axial_asymmetry_ratio",
         "fwhm_micron_z",
         "fwhm_micron_y",
         "fwhm_micron_x",
@@ -362,6 +363,7 @@ def _process_bead(
             "fwhm_micron_y": np.nan,
             "fwhm_micron_x": np.nan,
             "fwhm_lateral_asymmetry_ratio": np.nan,
+            "fwhm_axial_asymmetry_ratio": np.nan,
             "intensity_integrated": np.nan,
             "intensity_max": np.nan,
             "intensity_min": np.nan,
@@ -445,6 +447,7 @@ def _process_bead(
             "fwhm_micron_y": np.nan,
             "fwhm_micron_x": np.nan,
             "fwhm_lateral_asymmetry_ratio": np.nan,
+            "fwhm_axial_asymmetry_ratio": np.nan,
             "intensity_integrated": intensity_integrated,
             "intensity_max": intensity_max,
             "intensity_min": intensity_min,
@@ -455,12 +458,13 @@ def _process_bead(
 
         return result
 
-    airy_fwhm_lateral_asymmetry_ratio = max(airy_fwhm_y, airy_fwhm_x) / min(
-        airy_fwhm_y, airy_fwhm_x
-    )
+    # airy_fwhm_lateral_asymmetry_ratio = max(airy_fwhm_y, airy_fwhm_x) / min(
+    #     airy_fwhm_y, airy_fwhm_x
+    # )
     gauss_fwhm_lateral_asymmetry_ratio = max(gauss_fwhm_y, gauss_fwhm_x) / min(
         gauss_fwhm_y, gauss_fwhm_x
     )
+    gauss_fwhm_axial_asymmetry_ratio = gauss_fwhm_z / ((gauss_fwhm_y + gauss_fwhm_x) / 2)
 
     if all(voxel_size_micron):
         # airy_fwhm_micron_z = airy_fwhm_z * voxel_size_micron[0]
@@ -501,6 +505,7 @@ def _process_bead(
         "fwhm_micron_y": gauss_fwhm_micron_y,
         "fwhm_micron_x": gauss_fwhm_micron_x,
         "fwhm_lateral_asymmetry_ratio": gauss_fwhm_lateral_asymmetry_ratio,
+        "fwhm_axial_asymmetry_ratio": gauss_fwhm_axial_asymmetry_ratio,
         "intensity_integrated": intensity_integrated,
         "intensity_max": intensity_max,
         "intensity_min": intensity_min,
