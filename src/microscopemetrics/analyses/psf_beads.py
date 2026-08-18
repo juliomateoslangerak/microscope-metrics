@@ -458,14 +458,6 @@ def _process_bead(
 
         return result
 
-    # airy_fwhm_lateral_asymmetry_ratio = max(airy_fwhm_y, airy_fwhm_x) / min(
-    #     airy_fwhm_y, airy_fwhm_x
-    # )
-    gauss_fwhm_lateral_asymmetry_ratio = max(gauss_fwhm_y, gauss_fwhm_x) / min(
-        gauss_fwhm_y, gauss_fwhm_x
-    )
-    gauss_fwhm_axial_asymmetry_ratio = gauss_fwhm_z / ((gauss_fwhm_y + gauss_fwhm_x) / 2)
-
     if all(voxel_size_micron):
         # airy_fwhm_micron_z = airy_fwhm_z * voxel_size_micron[0]
         # airy_fwhm_micron_y = airy_fwhm_y * voxel_size_micron[1]
@@ -473,6 +465,16 @@ def _process_bead(
         gauss_fwhm_micron_z = gauss_fwhm_z * voxel_size_micron[0]
         gauss_fwhm_micron_y = gauss_fwhm_y * voxel_size_micron[1]
         gauss_fwhm_micron_x = gauss_fwhm_x * voxel_size_micron[2]
+        # airy_fwhm_lateral_asymmetry_ratio = max(airy_fwhm_y, airy_fwhm_x) / min(
+        #     airy_fwhm_y, airy_fwhm_x
+        # )
+        gauss_fwhm_lateral_asymmetry_ratio = max(gauss_fwhm_micron_y, gauss_fwhm_micron_x) / min(
+            gauss_fwhm_micron_y, gauss_fwhm_micron_x
+        )
+        gauss_fwhm_axial_asymmetry_ratio = gauss_fwhm_micron_z / (
+            (gauss_fwhm_micron_y + gauss_fwhm_micron_x) / 2
+        )
+
     else:
         # airy_fwhm_micron_z = np.nan
         # airy_fwhm_micron_y = np.nan
@@ -480,6 +482,8 @@ def _process_bead(
         gauss_fwhm_micron_z = np.nan
         gauss_fwhm_micron_y = np.nan
         gauss_fwhm_micron_x = np.nan
+        gauss_fwhm_lateral_asymmetry_ratio = np.nan
+        gauss_fwhm_axial_asymmetry_ratio = np.nan
 
     result = {
         "z_raw": _pad_profile(profile_z_raw, z_focus, min_axial_distance_px),
