@@ -334,7 +334,7 @@ def _pad_profile(profile: np.array, center: int, half_shape: int):
 
 def _process_bead(
     bead: np.ndarray,
-    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
+    voxel_size_micron: tuple[float | None, float | None, float | None],
     min_lateral_distance_px: int,
     min_axial_distance_px: int,
     calculate_shifts: bool = False,
@@ -536,7 +536,7 @@ def _process_channel(
     fitting_airy_r2_threshold: float,
     fitting_gaussian_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
-    voxel_size_micron: tuple[float | None, float | None, float | None] | None,
+    voxel_size_micron: tuple[float | None, float | None, float | None],
 ) -> pd.DataFrame:
     bead_properties = mm_tools.find_beads(
         channel=channel,
@@ -624,15 +624,11 @@ def _process_image(
     fitting_airy_r2_threshold: float,
     fitting_gaussian_r2_threshold: float,
     intensity_robust_z_score_threshold: float,
+    voxel_size_micron: tuple[float | None, float | None, float | None],
 ) -> tuple:
     channel_names = [c.name for c in image.channel_series.channels]
     excitation_wavelengths_nm = [c.excitation_wavelength_nm for c in image.channel_series.channels]
     emission_wavelengths_nm = [c.emission_wavelength_nm for c in image.channel_series.channels]
-    voxel_size_micron = (
-        image.voxel_size_z_micron,
-        image.voxel_size_y_micron,
-        image.voxel_size_x_micron,
-    )
 
     # Get image data and remove the time dimension
     image = image.array_data[0, ...]
@@ -791,6 +787,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
             fitting_airy_r2_threshold=fitting_airy_r2_threshold,
             fitting_gaussian_r2_threshold=fitting_gaussian_r2_threshold,
             intensity_robust_z_score_threshold=dataset.input_parameters.intensity_robust_z_score_threshold,
+            voxel_size_micron=voxel_size_micron,
         )
 
         if len(image_bead_properties) == 0:
