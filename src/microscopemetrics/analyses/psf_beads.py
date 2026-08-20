@@ -81,6 +81,9 @@ def _average_beads_group(
         min_lateral_distance_px,
         min_axial_distance_px,
     )
+    # Crop average bead to the right z size
+    z_crop = (average_bead.shape[0] - len(measurements["z_raw"])) // 2
+    average_bead = average_bead[z_crop:-z_crop]
 
     # Add the average bead array to the measurements
     result = pd.Series({"average_bead": average_bead})
@@ -338,7 +341,7 @@ def _process_bead(
     min_lateral_distance_px: int,
     min_axial_distance_px: int,
     calculate_shifts: bool = False,
-):
+) -> dict:
     if not isinstance(bead, np.ndarray) and np.isnan(bead):
         result = {
             "z_raw": np.nan,
