@@ -468,12 +468,12 @@ def _process_bead(
         # airy_fwhm_lateral_asymmetry_ratio = max(airy_fwhm_y, airy_fwhm_x) / min(
         #     airy_fwhm_y, airy_fwhm_x
         # )
-        gauss_fwhm_lateral_asymmetry_ratio = max(gauss_fwhm_micron_y, gauss_fwhm_micron_x) / min(
+        gauss_fwhm_lateral_asymmetry_ratio = min(gauss_fwhm_micron_y, gauss_fwhm_micron_x) / max(
             gauss_fwhm_micron_y, gauss_fwhm_micron_x
         )
-        gauss_fwhm_axial_asymmetry_ratio = gauss_fwhm_micron_z / (
+        gauss_fwhm_axial_asymmetry_ratio = (
             (gauss_fwhm_micron_y + gauss_fwhm_micron_x) / 2
-        )
+        ) / gauss_fwhm_micron_z
 
     else:
         # airy_fwhm_micron_z = np.nan
