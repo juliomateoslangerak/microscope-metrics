@@ -7,7 +7,8 @@ import pandas as pd
 from scipy import ndimage
 
 import microscopemetrics as mm
-from microscopemetrics.analyses import tools as mm_tools
+from microscopemetrics.analyses import analysis_tools as mm_analysis_tools
+from microscopemetrics.analyses import schema_tools as mm_schema_tools
 
 MAX_NR_PEAKS = 100
 
@@ -187,7 +188,7 @@ def _average_beads(
     average_bead_image = None
     # TODO: get more metadata from the source images
     if len(average_beads_properties["average_bead"]):
-        average_bead_image = mm.analyses.numpy_to_mm_image(
+        average_bead_image = mm_schema_tools.numpy_to_mm_image(
             array=np.expand_dims(
                 np.stack(
                     [c for c in average_beads_properties["average_bead"]],
@@ -405,25 +406,25 @@ def _process_bead(
     # Fitting the profiles
     try:
         # Airy profiles
-        profile_z_fitted_airy, airy_r2_z, airy_fwhm_z, (airy_center_pos_z, _) = mm_tools.fit_airy(
-            profile_z_raw
+        profile_z_fitted_airy, airy_r2_z, airy_fwhm_z, (airy_center_pos_z, _) = (
+            mm_analysis_tools.fit_airy(profile_z_raw)
         )
-        profile_y_fitted_airy, airy_r2_y, airy_fwhm_y, (airy_center_pos_y, _) = mm_tools.fit_airy(
-            profile_y_raw
+        profile_y_fitted_airy, airy_r2_y, airy_fwhm_y, (airy_center_pos_y, _) = (
+            mm_analysis_tools.fit_airy(profile_y_raw)
         )
-        profile_x_fitted_airy, airy_r2_x, airy_fwhm_x, (airy_center_pos_x, _) = mm_tools.fit_airy(
-            profile_x_raw
+        profile_x_fitted_airy, airy_r2_x, airy_fwhm_x, (airy_center_pos_x, _) = (
+            mm_analysis_tools.fit_airy(profile_x_raw)
         )
 
         # Gaussian profiles
         profile_z_fitted_gauss, gauss_r2_z, gauss_fwhm_z, (_, _, gauss_center_pos_z, _) = (
-            mm_tools.fit_gaussian(profile_z_raw)
+            mm_analysis_tools.fit_gaussian(profile_z_raw)
         )
         profile_y_fitted_gauss, gauss_r2_y, gauss_fwhm_y, (_, _, gauss_center_pos_y, _) = (
-            mm_tools.fit_gaussian(profile_y_raw)
+            mm_analysis_tools.fit_gaussian(profile_y_raw)
         )
         profile_x_fitted_gauss, gauss_r2_x, gauss_fwhm_x, (_, _, gauss_center_pos_x, _) = (
-            mm_tools.fit_gaussian(profile_x_raw)
+            mm_analysis_tools.fit_gaussian(profile_x_raw)
         )
     except RuntimeError as e:
         mm.logger.error(f"Error while fitting the profiles for bead: {e}")
@@ -541,7 +542,7 @@ def _process_channel(
     intensity_robust_z_score_threshold: float,
     voxel_size_micron: tuple[float | None, float | None, float | None],
 ) -> pd.DataFrame:
-    bead_properties = mm_tools.find_beads(
+    bead_properties = mm_analysis_tools.find_beads(
         channel=channel,
         sigma_min=sigma_min,
         sigma_max=sigma_max,
@@ -591,7 +592,7 @@ def _process_channel(
         bead_properties["fit_gaussian_r2_x"] < fitting_gaussian_r2_threshold
     )
 
-    mm_tools.calculate_bead_outliers(
+    mm_analysis_tools.calculate_bead_outliers(
         bead_properties=bead_properties,
         robust_z_score_threshold=intensity_robust_z_score_threshold,
         measurements=["intensity_std"],
@@ -680,7 +681,7 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input_data.psf_beads_images:
-        image_id = mm.analyses.get_object_id(image) or image.name
+        image_id = mm_schema_tools.get_object_id(image) or image.name
         if positions.empty or image_id not in positions.index.get_level_values("image_id"):
             continue
         points = []
@@ -746,7 +747,7 @@ def _make_suggestion(bead_properties, input_parameters):
 
 def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
-    mm.analyses.validate_images_requirements(
+    mm_schema_tools.validate_images_requirements(
         images_list=dataset.input_data.psf_beads_images,
         axis_to_check_shape=[1, 2, 3, 4],
         saturation_threshold=dataset.input_parameters.saturation_threshold,
@@ -766,7 +767,7 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
 
     # Second loop main image analysis
     for image in dataset.input_data.psf_beads_images:
-        image_id = mm.analyses.get_object_id(image) or image.name
+        image_id = mm_schema_tools.get_object_id(image) or image.name
         mm.logger.info(f"Processing image {image_id}...")
 
         if image.array_data.shape[0] != 1:
@@ -955,10 +956,10 @@ def analyse_psf_beads(dataset: mm_schema.PSFBeadsDataset) -> bool:
         stroke_width=4,
     )
 
-    bead_properties = mm.analyses.df_to_table(bead_properties.reset_index(), "bead_properties")
-    bead_profiles_z = mm.analyses.df_to_table(bead_profiles_z, "bead_profiles_z")
-    bead_profiles_y = mm.analyses.df_to_table(bead_profiles_y, "bead_profiles_y")
-    bead_profiles_x = mm.analyses.df_to_table(bead_profiles_x, "bead_profiles_x")
+    bead_properties = mm_schema_tools.df_to_table(bead_properties.reset_index(), "bead_properties")
+    bead_profiles_z = mm_schema_tools.df_to_table(bead_profiles_z, "bead_profiles_z")
+    bead_profiles_y = mm_schema_tools.df_to_table(bead_profiles_y, "bead_profiles_y")
+    bead_profiles_x = mm_schema_tools.df_to_table(bead_profiles_x, "bead_profiles_x")
 
     dataset.output = mm_schema.PSFBeadsOutput(
         processing_application=mm.__name__,

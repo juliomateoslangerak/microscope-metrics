@@ -5,10 +5,10 @@ from hypothesis import given, note, settings
 from hypothesis import strategies as st
 from microscopemetrics_schema import datamodel as mm_schema
 
-from microscopemetrics.analyses import (
+from microscopemetrics.analyses import light_source_power
+from microscopemetrics.analyses.schema_tools import (
     csv_power_measurements_parser,
     extract_power_measurements_csv,
-    light_source_power,
 )
 from microscopemetrics.strategies.light_source_power import (
     st_light_source_power_dataset,

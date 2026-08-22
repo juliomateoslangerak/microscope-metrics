@@ -10,7 +10,8 @@ from scipy.signal import correlate
 from skimage.registration import phase_cross_correlation
 
 import microscopemetrics as mm
-from microscopemetrics.analyses import tools as mm_tools
+from microscopemetrics.analyses import analysis_tools as mm_analysis_tools
+from microscopemetrics.analyses import schema_tools as mm_schema_tools
 
 MAX_NR_PEAKS = 100
 # We establish an arbitrary value that defines:
@@ -57,13 +58,13 @@ def _cross_correlation_translations(
     # Fitting the profiles
     try:
         profile_z_fitted_gauss, gauss_r2_z, gauss_fwhm_z, (_, _, gauss_center_pos_z, _) = (
-            mm_tools.fit_gaussian(profile_z_raw)
+            mm_analysis_tools.fit_gaussian(profile_z_raw)
         )
         profile_y_fitted_gauss, gauss_r2_y, gauss_fwhm_y, (_, _, gauss_center_pos_y, _) = (
-            mm_tools.fit_gaussian(profile_y_raw)
+            mm_analysis_tools.fit_gaussian(profile_y_raw)
         )
         profile_x_fitted_gauss, gauss_r2_x, gauss_fwhm_x, (_, _, gauss_center_pos_x, _) = (
-            mm_tools.fit_gaussian(profile_x_raw)
+            mm_analysis_tools.fit_gaussian(profile_x_raw)
         )
     except RuntimeError as e:
         mm.logger.error(f"Error while computing the shifts: {e}")
@@ -104,7 +105,7 @@ def _locate_beads(
     snr_threshold: float,
     fitting_gaussian_r2_threshold: float,
 ) -> pd.DataFrame:
-    bead_properties = mm_tools.find_beads(
+    bead_properties = mm_analysis_tools.find_beads(
         channel=channel,
         sigma_min=sigma_min,
         sigma_max=sigma_max,
@@ -173,7 +174,7 @@ def _process_image(
             upsample_factor=10,
         )
         image_translations = {
-            "image_id": mm.analyses.get_object_id(image) or image.name,
+            "image_id": mm_schema_tools.get_object_id(image) or image.name,
             "reference_channel_nr": reference_channel_nr,
             "reference_channel_name": channel_names[reference_channel_nr],
             "channel_nr": moving_channel_nb,
@@ -237,7 +238,7 @@ def _process_image(
                     distance_lateral_micron = np.nan
                     distance_3d_micron = np.nan
                 bead_translations = {
-                    "image_id": mm.analyses.get_object_id(image) or image.name,
+                    "image_id": mm_schema_tools.get_object_id(image) or image.name,
                     "bead_id": index,
                     "reference_channel_nr": reference_channel_nr,
                     "reference_channel_name": channel_names[reference_channel_nr],
@@ -268,7 +269,7 @@ def _process_image(
 
             else:
                 bead_translations = {
-                    "image_id": mm.analyses.get_object_id(image) or image.name,
+                    "image_id": mm_schema_tools.get_object_id(image) or image.name,
                     "bead_id": index,
                     "reference_channel_nr": reference_channel_nr,
                     "reference_channel_name": channel_names[reference_channel_nr],
@@ -304,7 +305,7 @@ def _generate_center_roi(
     rois = []
 
     for image in dataset.input_data.multiwavelength_beads_images:
-        image_id = mm.analyses.get_object_id(image) or image.name
+        image_id = mm_schema_tools.get_object_id(image) or image.name
         points = []
         for row in positions[positions.image_id == image_id].itertuples():
             points.append(
@@ -341,7 +342,7 @@ def _make_suggestion(bead_properties, input_parameters):
 def analyse_co_registration(
     dataset: mm_schema.CoRegistrationDataset, total_bead_count=None
 ) -> bool:
-    mm.analyses.validate_images_requirements(
+    mm_schema_tools.validate_images_requirements(
         images_list=dataset.input_data.multiwavelength_beads_images,
         axis_to_check_shape=[1, 2, 3, 4],
         saturation_threshold=dataset.input_parameters.saturation_threshold,
@@ -360,7 +361,7 @@ def analyse_co_registration(
 
     # Second loop main image analysis
     for image in dataset.input_data.multiwavelength_beads_images:
-        image_id = mm.analyses.get_object_id(image) or image.name
+        image_id = mm_schema_tools.get_object_id(image) or image.name
         mm.logger.info(f"Processing image {image_id}...")
 
         if image.array_data.shape[0] != 1:
@@ -404,7 +405,7 @@ def analyse_co_registration(
             suggestion=_make_suggestion(bead_properties, dataset.input_parameters),
         )
 
-    mm_tools.calculate_bead_outliers(
+    mm_analysis_tools.calculate_bead_outliers(
         bead_properties=bead_properties,
         robust_z_score_threshold=dataset.input_parameters.robust_z_score_threshold,
         measurements=["distance_3d_micron"],
@@ -521,8 +522,8 @@ def analyse_co_registration(
             )
         )
 
-    image_properties = mm.analyses.df_to_table(image_properties, "image_properties")
-    bead_properties = mm.analyses.df_to_table(bead_properties.reset_index(), "bead_properties")
+    image_properties = mm_schema_tools.df_to_table(image_properties, "image_properties")
+    bead_properties = mm_schema_tools.df_to_table(bead_properties.reset_index(), "bead_properties")
 
     dataset.output = mm_schema.CoRegistrationOutput(
         processing_application=mm.__name__,

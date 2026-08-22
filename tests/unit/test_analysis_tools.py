@@ -2,7 +2,7 @@ import numpy as np
 from hypothesis import given
 from hypothesis import strategies as st
 
-from microscopemetrics.analyses.tools import is_saturated
+from microscopemetrics.analyses.analysis_tools import is_saturated
 
 
 @given(st.sampled_from([np.uint8, np.uint16, np.float32]))

@@ -9,7 +9,7 @@ import pandas as pd
 import scipy
 
 import microscopemetrics as mm
-from microscopemetrics.analyses import tools as mm_tools
+from microscopemetrics.analyses import analysis_tools as mm_tools
 
 # TODO: Determine what are we going to consider the threshold for measuring stability
 

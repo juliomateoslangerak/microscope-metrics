@@ -16,7 +16,7 @@ from microscopemetrics.analyses import (
     numpy_to_mm_image,
     validate_images_requirements,
 )
-from microscopemetrics.analyses.tools import (
+from microscopemetrics.analyses.analysis_tools import (
     airy_fun,
     compute_distances_matrix,
     compute_spots_properties,

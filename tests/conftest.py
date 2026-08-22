@@ -8,7 +8,7 @@ from hypothesis import HealthCheck, Verbosity, settings
 from linkml_runtime.loaders.yaml_loader import YAMLLoader
 from microscopemetrics_schema import datamodel as mm_schema
 
-from microscopemetrics.analyses import numpy_to_mm_image
+from microscopemetrics.analyses.schema_tools import numpy_to_mm_image
 
 _common_suppress = [
     HealthCheck.too_slow,

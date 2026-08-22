@@ -14,9 +14,9 @@ import pytest
 from linkml_runtime.dumpers import YAMLDumper
 from linkml_runtime.loaders import YAMLLoader
 
-from microscopemetrics.analyses import (
+from microscopemetrics.analyses import mappings
+from microscopemetrics.analyses.schema_tools import (
     csv_power_measurements_parser,
-    mappings,
     numpy_to_mm_image,
 )
 

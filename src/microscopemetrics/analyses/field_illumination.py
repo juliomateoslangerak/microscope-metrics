@@ -11,7 +11,8 @@ from skimage.filters import gaussian
 from skimage.measure import regionprops
 
 import microscopemetrics as mm
-from microscopemetrics.analyses import tools as mm_tools
+from microscopemetrics.analyses import analysis_tools as mm_analysis_tools
+from microscopemetrics.analyses import schema_tools as mm_schema_tools
 
 
 def _get_center_region_mask(channel: np.ndarray, fraction: float = 0.1) -> np.ndarray:
@@ -212,8 +213,8 @@ def _channel_max_intensity_properties(
         center_region_intensity_fraction = 1 / (n_bins - 1)
 
     # Fitting the intensity profile to a gaussian
-    _, _, _, (_, _, center_fitted_y, _) = mm_tools.fit_gaussian(np.max(channel, axis=1))
-    _, _, _, (_, _, center_fitted_x, _) = mm_tools.fit_gaussian(np.max(channel, axis=0))
+    _, _, _, (_, _, center_fitted_y, _) = mm_analysis_tools.fit_gaussian(np.max(channel, axis=1))
+    _, _, _, (_, _, center_fitted_x, _) = mm_analysis_tools.fit_gaussian(np.max(channel, axis=0))
 
     return {
         "center_region_intensity_fraction": center_region_intensity_fraction,
@@ -319,7 +320,7 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
             )
             ch_properties.loc[0] = [
                 image.name,
-                mm.analyses.get_object_id(image),
+                mm_schema_tools.get_object_id(image),
                 image.channel_series.channels[c].name,
                 c,
                 image.channel_series.channels[c].excitation_wavelength_nm,
@@ -345,7 +346,7 @@ def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sig
 
 
 def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> bool:
-    mm.analyses.validate_images_requirements(
+    mm_schema_tools.validate_images_requirements(
         images_list=dataset.input_data.field_illumination_images,
         axis_to_check_shape=[1, 2, 3],
         require_equal_channels=False,
@@ -372,7 +373,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
     ]
 
     intensity_profiles = [
-        mm.analyses.dict_to_table(
+        mm_schema_tools.dict_to_table(
             dictionary=_image_line_profile(image.array_data, profile_size=255),
             name=f"{image.name}_intensity_profiles",
             description=f"Intensity profiles of {image.name}",
@@ -499,7 +500,7 @@ def analyse_field_illumination(dataset: mm_schema.FieldIlluminationDataset) -> b
                     y=0,
                     x=0,
                     c=km["channel_nr"],
-                    mask=mm.analyses.numpy_to_mm_image(
+                    mask=mm_schema_tools.numpy_to_mm_image(
                         array=_get_center_region_mask(
                             image.array_data[0, 0, :, :, km["channel_nr"]]
                         )

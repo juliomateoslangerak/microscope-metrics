@@ -7,6 +7,8 @@ from scipy.ndimage import zoom
 from skimage.measure import profile_line
 
 import microscopemetrics as mm
+import microscopemetrics.analyses.analysis_tools as mm_analysis_tools
+import microscopemetrics.analyses.schema_tools as mm_schema_tools
 
 
 def _generate_profile(
@@ -60,8 +62,8 @@ def _generate_intensity_profiles(
             (
                 img
                 for img in dataset.input_data.user_experiment_images
-                if mm.analyses.get_object_id(roi.linked_references[0])
-                == mm.analyses.get_object_id(img)
+                if mm_schema_tools.get_object_id(roi.linked_references[0])
+                == mm_schema_tools.get_object_id(img)
             ),
             None,
         )
@@ -222,8 +224,8 @@ def _generate_orthogonal_images(
             (
                 img
                 for img in dataset.input_data.user_experiment_images
-                if mm.analyses.get_object_id(roi.linked_references[0])
-                == mm.analyses.get_object_id(img)
+                if mm_schema_tools.get_object_id(roi.linked_references[0])
+                == mm_schema_tools.get_object_id(img)
             ),
             None,
         )
@@ -250,7 +252,7 @@ def _get_key_measurements(
 
 
 def analyse_user_experiment(dataset: mm_schema.UserExperimentDataset) -> bool:
-    mm.analyses.validate_images_requirements(
+    mm_analysis_tools.validate_images_requirements(
         images_list=dataset.input_data.user_experiment_images,
         require_equal_shapes=False,
         axis_to_check_shape=[],

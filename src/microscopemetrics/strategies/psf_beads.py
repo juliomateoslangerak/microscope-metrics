@@ -16,7 +16,7 @@ from skimage.exposure import rescale_intensity as skimage_rescale_intensity
 from skimage.filters import gaussian as skimage_gaussian
 from skimage.util import random_noise as skimage_random_noise
 
-from microscopemetrics.analyses import numpy_to_mm_image
+from microscopemetrics.analyses.schema_tools import numpy_to_mm_image
 from microscopemetrics.strategies import st_beads_test_data
 
 

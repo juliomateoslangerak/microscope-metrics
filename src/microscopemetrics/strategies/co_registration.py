@@ -11,7 +11,7 @@ except ImportError as e:
     ) from e
 import microscopemetrics_schema.strategies.analyses as st_mm_analyses_schema
 
-from microscopemetrics.analyses import numpy_to_mm_image
+from microscopemetrics.analyses.schema_tools import numpy_to_mm_image
 from microscopemetrics.strategies import st_beads_test_data
 
 

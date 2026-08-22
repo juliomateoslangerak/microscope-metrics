@@ -11,7 +11,7 @@ from skimage.filters import gaussian
 
 from microscopemetrics import AnalysisError, DataFormatError
 from microscopemetrics.analyses import psf_beads
-from microscopemetrics.analyses.tools import fit_gaussian
+from microscopemetrics.analyses.analysis_tools import fit_gaussian
 from microscopemetrics.strategies import st_beads_test_data
 from microscopemetrics.strategies.psf_beads import st_psf_beads_dataset
 
