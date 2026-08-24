@@ -223,7 +223,8 @@ def _channel_max_intensity_properties(
         "center_of_mass_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
         "center_of_mass_x": properties[-2].centroid[1],
         "center_of_mass_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
-        "center_of_mass_distance_relative": hypot(
+        "center_of_mass_distance_relative": 1
+        - hypot(
             properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
             properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
         ),
@@ -231,7 +232,8 @@ def _channel_max_intensity_properties(
         "center_geometric_y_relative": properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
         "center_geometric_x": properties[-2].centroid[1],
         "center_geometric_x_relative": properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
-        "center_geometric_distance_relative": hypot(
+        "center_geometric_distance_relative": 1
+        - hypot(
             properties[-2].centroid[0] / (channel.shape[0] / 2) - 1,
             properties[-2].centroid[1] / (channel.shape[1] / 2) - 1,
         ),
@@ -239,7 +241,8 @@ def _channel_max_intensity_properties(
         "center_fitted_y_relative": center_fitted_y / (channel.shape[0] / 2) - 1,
         "center_fitted_x": center_fitted_x,
         "center_fitted_x_relative": center_fitted_x / (channel.shape[1] / 2) - 1,
-        "center_fitted_distance_relative": hypot(
+        "center_fitted_distance_relative": 1
+        - hypot(
             center_fitted_y / (channel.shape[0] / 2) - 1,
             center_fitted_x / (channel.shape[1] / 2) - 1,
         ),
@@ -248,7 +251,8 @@ def _channel_max_intensity_properties(
         "max_intensity_pos_y_relative": properties[-1].centroid[0] / (channel.shape[0] / 2) - 1,
         "max_intensity_pos_x": properties[-1].centroid[1],
         "max_intensity_pos_x_relative": properties[-1].centroid[1] / (channel.shape[1] / 2) - 1,
-        "max_intensity_distance_relative": hypot(
+        "max_intensity_distance_relative": 1
+        - hypot(
             properties[-1].centroid[0] / (channel.shape[0] / 2) - 1,
             properties[-1].centroid[1] / (channel.shape[1] / 2) - 1,
         ),
