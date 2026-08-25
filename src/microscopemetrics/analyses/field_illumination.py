@@ -247,6 +247,7 @@ def _channel_max_intensity_properties(
             center_fitted_x / (channel.shape[1] / 2) - 1,
         ),
         "max_intensity": properties[-2].intensity_max,
+        "max_min_intensity_ratio": channel.min() / properties[-2].intensity_max,
         "max_intensity_pos_y": properties[-1].centroid[0],
         "max_intensity_pos_y_relative": properties[-1].centroid[0] / (channel.shape[0] / 2) - 1,
         "max_intensity_pos_x": properties[-1].centroid[1],
@@ -268,7 +269,7 @@ def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> d
     cr_y = int((channel.shape[0] - cfp) / 2)
     cr_x = int((channel.shape[1] - cfp) / 2)
 
-    return {
+    corner_props = {
         "top_left_intensity_mean": np.mean(channel[0:cfp, 0:cfp]),
         "top_left_intensity_ratio": np.mean(channel[0:cfp, 0:cfp]) / max_intensity,
         "top_center_intensity_mean": np.mean(channel[0:cfp, cr_x:-cr_x]),
@@ -288,6 +289,27 @@ def _channel_corner_properties(channel: np.ndarray, corner_fraction: float) -> d
         "bottom_right_intensity_mean": np.mean(channel[-cfp:-1, -cfp:-1]),
         "bottom_right_intensity_ratio": np.mean(channel[-cfp:-1, -cfp:-1]) / max_intensity,
     }
+
+    corner_props["mean_corner_intensity_ratio"] = (
+        (
+            corner_props["top_left_intensity_mean"]
+            + corner_props["top_right_intensity_mean"]
+            + corner_props["bottom_left_intensity_mean"]
+            + corner_props["bottom_right_intensity_mean"]
+        )
+        / 4
+    ) / max_intensity
+    corner_props["min_corner_intensity_ratio"] = (
+        min(
+            corner_props["top_left_intensity_mean"],
+            corner_props["top_right_intensity_mean"],
+            corner_props["bottom_left_intensity_mean"],
+            corner_props["bottom_right_intensity_mean"],
+        )
+        / max_intensity
+    )
+
+    return corner_props
 
 
 def _image_properties(images: list[mm_schema.Image], corner_fraction: float, sigma: float):
