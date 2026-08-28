@@ -23,7 +23,7 @@ def st_stage_drift_dataset(
         y_image_shape=st.just(256),
         x_image_shape=st.just(256),
         c_image_shape=st.just(1),
-        t_image_shape=st.just(10),
+        t_image_shape=st.just(5),
         nr_valid_beads=st.just(1),
         nr_edge_beads=st.just(0),
         nr_out_of_focus_beads=st.just(0),

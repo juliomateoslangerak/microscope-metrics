@@ -37,6 +37,7 @@ def _apply_co_registration_transformations(
 
 def _apply_drift_transformations(image, drift_z, drift_y, drift_x):
     transformed_image = np.zeros_like(image)
+    transformed_image[0] = image[0]
     for t in range(1, image.shape[0]):
         transformed_image[t] = shift(
             input=image[t],
