@@ -21,14 +21,31 @@ def _apply_co_registration_transformations(
     for ch in range(image.shape[-1]):
         transformed_image[..., ch] = shift(
             input=image[..., ch],
-            shift=[translations_z[ch], translations_y[ch], translations_x[ch]],
+            shift=[0.0, translations_z[ch], translations_y[ch], translations_x[ch]],
             mode="nearest",
         )
         transformed_image[..., ch] = rotate(
             input=transformed_image[..., ch],
             angle=rotations_z[ch],
-            axes=(1, 2),
+            axes=(2, 3),
             reshape=False,
+            mode="nearest",
+        )
+
+    return transformed_image
+
+
+def _apply_drift_transformations(image, drift_z, drift_y, drift_x):
+    transformed_image = np.zeros_like(image)
+    for t in range(1, image.shape[0]):
+        transformed_image[t] = shift(
+            input=image[t],
+            shift=[
+                0 if drift_z is None else np.random.uniform(-drift_z, drift_z),
+                0 if drift_y is None else np.random.uniform(-drift_y, drift_y),
+                0 if drift_x is None else np.random.uniform(-drift_x, drift_x),
+                0,  # No shift between channels
+            ],
             mode="nearest",
         )
 
@@ -44,6 +61,7 @@ def gen_beads_image(
     y_image_shape: int,
     x_image_shape: int,
     c_image_shape: int,
+    t_image_shape: int,
     nr_valid_beads: int,
     nr_edge_beads: int,
     nr_out_of_focus_beads: int,
@@ -63,10 +81,14 @@ def gen_beads_image(
     translations_y: list[float] | None = None,
     translations_x: list[float] | None = None,
     rotations_z: list[float] | None = None,
+    # drift args
+    drift_z: float | None = None,
+    drift_y: float | None = None,
+    drift_x: float | None = None,
 ):
     # Generate the image as float64
     image = np.zeros(
-        shape=(z_image_shape, y_image_shape, x_image_shape, c_image_shape),
+        shape=(t_image_shape, z_image_shape, y_image_shape, x_image_shape, c_image_shape),
         dtype="float32",
     )
 
@@ -152,33 +174,34 @@ def gen_beads_image(
                 pos_1[1] + random.choice([-1, 1]),
                 pos_1[2] + random.choice([-1, 1]),
             )
-            image[pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(signal * 1.5, signal / 10)
-            image[pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(signal * 1.5, signal / 10)
+            image[:, pos_1[0], pos_1[1], pos_1[2], :] = np.random.normal(signal * 1.5, signal / 10)
+            image[:, pos_2[0], pos_2[1], pos_2[2], :] = np.random.normal(signal * 1.5, signal / 10)
             clustering_bead_positions.append(
                 (pos_1[0], (pos_1[1] + pos_2[1]) // 2, (pos_1[2] + pos_2[2]) // 2)
             )
 
         # Fill the image with the beads and adding some normal distributed random intensity
         for pos in edge_bead_positions:
-            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            image[:, pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
         for pos in non_edge_bead_positions:
-            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            image[:, pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
             valid_bead_positions.append(pos)
         for pos in out_of_focus_bead_positions:
-            image[pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
+            image[:, pos[0], pos[1], pos[2], :] = np.random.normal(signal, signal / 50)
 
         # Apply a gaussian filter to the image
         for ch in range(c_image_shape):
             sigma_correction = 1 + ch * 0.1
             applied_sigmas.append(
                 (
+                    0,  # the sigma for time is 0
                     sigma_z * sigma_correction,
                     sigma_y * sigma_correction,
                     sigma_x * sigma_correction,
                 )
             )
-            image[:, :, :, ch] = skimage_gaussian(
-                image[:, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
+            image[:, :, :, :, ch] = skimage_gaussian(
+                image[:, :, :, :, ch], sigma=applied_sigmas[-1], preserve_range=True
             )
 
     # Apply co-registration transformations
@@ -195,6 +218,10 @@ def gen_beads_image(
             image, translations_z, translations_y, translations_x, rotations_z
         )
 
+    # Apply drift over time
+    if any([drift_z, drift_y, drift_x]):
+        image = _apply_drift_transformations(image, drift_z, drift_y, drift_x)
+
     # Normalize the image to the target range before applying noise
     image_normalized = (
         skimage_rescale_intensity(
@@ -209,7 +236,6 @@ def gen_beads_image(
         image_normalized = np.random.poisson(image_normalized)
 
     image_normalized = np.astype(image_normalized, dtype)
-    image_normalized = np.expand_dims(image_normalized, 0)
 
     return (
         image_normalized,
@@ -231,6 +257,7 @@ def st_beads_test_data(
     y_image_shape=st.just(512),
     x_image_shape=st.just(512),
     c_image_shape=st.integers(min_value=1, max_value=3),
+    t_image_shape=st.just(1),
     # testing with uint8 works most of the time but it produces flaky results
     dtype=st.sampled_from([np.uint16]),
     signal=st.just(0.4),
@@ -249,6 +276,9 @@ def st_beads_test_data(
     translations_y=st.floats(min_value=-1.0, max_value=1.0),
     translations_x=st.floats(min_value=-1.0, max_value=1.0),
     rotations_z=st.floats(min_value=-1.0, max_value=1.0),
+    drift_z=st.just(None),
+    drift_y=st.just(None),
+    drift_x=st.just(None),
 ):
     output = {
         "images": [],
@@ -266,12 +296,16 @@ def st_beads_test_data(
         "translations_y": [],
         "translations_x": [],
         "rotations_z": [],
+        "drift_z": [],
+        "drift_y": [],
+        "drift_x": [],
     }
 
     z_image_shape = draw(z_image_shape)
     y_image_shape = draw(y_image_shape)
     x_image_shape = draw(x_image_shape)
     c_image_shape = draw(c_image_shape)
+    t_image_shape = draw(t_image_shape)
 
     do_noise = draw(do_noise)
 
@@ -285,10 +319,26 @@ def st_beads_test_data(
     _min_axial_distance_px = draw(min_axial_distance_px)
 
     # Draw co-registration values
-    _translations_z = [draw(translations_z) for _ in range(c_image_shape)]
-    _translations_y = [draw(translations_y) for _ in range(c_image_shape)]
-    _translations_x = [draw(translations_x) for _ in range(c_image_shape)]
-    _rotations_z = [draw(rotations_z) for _ in range(c_image_shape)]
+    if c_image_shape > 1:
+        _translations_z = [draw(translations_z) for _ in range(c_image_shape)]
+        _translations_y = [draw(translations_y) for _ in range(c_image_shape)]
+        _translations_x = [draw(translations_x) for _ in range(c_image_shape)]
+        _rotations_z = [draw(rotations_z) for _ in range(c_image_shape)]
+    else:
+        _translations_z = None
+        _translations_y = None
+        _translations_x = None
+        _rotations_z = None
+
+    # Draw drift values
+    if t_image_shape > 1:
+        _drift_z = draw(drift_z)
+        _drift_y = draw(drift_y)
+        _drift_x = draw(drift_x)
+    else:
+        _drift_z = None
+        _drift_y = None
+        _drift_x = None
 
     for _ in range(draw(nr_images)):
         _nr_valid_beads = draw(nr_valid_beads)
@@ -325,6 +375,7 @@ def st_beads_test_data(
             y_image_shape=y_image_shape,
             x_image_shape=x_image_shape,
             c_image_shape=c_image_shape,
+            t_image_shape=t_image_shape,
             nr_valid_beads=_nr_valid_beads,
             nr_edge_beads=_nr_edge_beads,
             nr_out_of_focus_beads=_nr_out_of_focus_beads,
@@ -343,6 +394,9 @@ def st_beads_test_data(
             translations_y=_translations_y,
             translations_x=_translations_x,
             rotations_z=_rotations_z,
+            drift_z=_drift_z,
+            drift_y=_drift_y,
+            drift_x=_drift_x,
         )
 
         output["images"].append(image)
@@ -360,5 +414,8 @@ def st_beads_test_data(
         output["translations_y"].append(_translations_y)
         output["translations_x"].append(_translations_x)
         output["rotations_z"].append(_rotations_z)
+        output["drift_z"].append(_drift_z)
+        output["drift_y"].append(_drift_y)
+        output["drift_x"].append(_drift_x)
 
     return output

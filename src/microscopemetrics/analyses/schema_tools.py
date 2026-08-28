@@ -146,8 +146,8 @@ def get_object_id(
 
 def numpy_to_mm_image(
     array: np.ndarray,
-    name: str = None,
-    description: str = None,
+    name: str | None = None,
+    description: str | None = None,
     source_images: List[mm_schema.Image] = None,
     acquisition_datetime: str = None,
     channel_names: List[str] = None,
