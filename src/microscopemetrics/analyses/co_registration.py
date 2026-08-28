@@ -340,7 +340,7 @@ def _make_suggestion(bead_properties, input_parameters):
 
 
 def analyse_co_registration(
-    dataset: mm_schema.CoRegistrationDataset, total_bead_count=None
+    dataset: mm_schema.CoRegistrationDataset,
 ) -> bool:
     mm_schema_tools.validate_images_requirements(
         images_list=dataset.input_data.multiwavelength_beads_images,
