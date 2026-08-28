@@ -258,7 +258,7 @@ def st_beads_test_data(
     x_image_shape=st.just(512),
     c_image_shape=st.integers(min_value=1, max_value=3),
     t_image_shape=st.just(1),
-    # testing with uint8 works most of the time but it produces flaky results
+    # testing with uint8 works most of the time, but it produces flaky results
     dtype=st.sampled_from([np.uint16]),
     signal=st.just(0.4),
     background=st.just(0.005),
