@@ -3,7 +3,6 @@ from datetime import datetime
 import microscopemetrics_schema.datamodel as mm_schema
 import numpy as np
 import pandas as pd
-from debugpy.launcher import channel
 from scipy.signal import correlate
 from skimage.registration import phase_cross_correlation
 
@@ -17,97 +16,54 @@ def _compute_relative_positions(
     reference_frame: int,
     voxel_size_micron,
 ):
-    relative_positions = {
-        "relative_position_pixel_z": [],
-        "relative_position_pixel_y": [],
-        "relative_position_pixel_x": [],
-        "relative_position_micron_z": [],
-        "relative_position_micron_y": [],
-        "relative_position_micron_x": [],
-        "relative_position_micron_3d": [],
-    }
-    rel_pos_arr = np.ndarray(
+    relative_positions = pd.DataFrame(
         [
             phase_cross_correlation(
                 channel[reference_frame],
                 t_point_array,
                 upsample_factor=4,
-            )
+            )[0]
             for t_point_array in channel
-        ]
+        ],
+        columns=[
+            "relative_position_pixel_z",
+            "relative_position_pixel_y",
+            "relative_position_pixel_x",
+        ],
     )
-    # relative_positions["relative_position_pixel_z"].append(t_point_shift[0])
-    # relative_positions["relative_position_pixel_y"].append(t_point_shift[1])
-    # relative_positions["relative_position_pixel_x"].append(t_point_shift[2])
-    # relative_positions["relative_position_micron_z"].append(
-    #     np.nan if voxel_size_micron[0] is None else
-    #     t_point_shift[0] * voxel_size_micron[0]
-    # )
-    # relative_positions["relative_position_micron_y"].append(
-    #     np.nan if voxel_size_micron[1] is None else
-    #     t_point_shift[1] * voxel_size_micron[1]
-    # )
-    # relative_positions["relative_position_micron_x"].append(
-    #     np.nan if voxel_size_micron[2] is None else
-    #     t_point_shift[2] * voxel_size_micron[2]
-    # )
+    relative_positions["relative_position_micron_z"] = (
+        relative_positions["relative_position_micron_z"] * voxel_size_micron[0]
+    )
+    relative_positions["relative_position_micron_y"] = (
+        relative_positions["relative_position_micron_y"] * voxel_size_micron[1]
+    )
+    relative_positions["relative_position_micron_x"] = (
+        relative_positions["relative_position_micron_x"] * voxel_size_micron[2]
+    )
 
     return relative_positions
 
 
 def _compute_displacements(relative_positions, voxel_size_micron):
     all_micron_sizes = all(voxel_size_micron)
-    displacements = {
-        "displacement_pixel_z": [0.0],
-        "displacement_pixel_y": [0.0],
-        "displacement_pixel_x": [0.0],
-        "displacement_micron_z": [0.0 if voxel_size_micron[0] else np.nan],
-        "displacement_micron_y": [0.0 if voxel_size_micron[1] else np.nan],
-        "displacement_micron_x": [0.0 if voxel_size_micron[2] else np.nan],
-        "displacement_micron_3d": [0.0 if all_micron_sizes else np.nan],
-    }
-
-    for frame_nr in range(1, len(relative_positions["relative_position_micron_x"])):
-        displacements["displacement_pixel_z"].append(
-            relative_positions["relative_position_pixel_z"][frame_nr]
-            - relative_positions["relative_position_pixel_z"][frame_nr - 1]
-        )
-        displacements["displacement_pixel_y"].append(
-            relative_positions["relative_position_pixel_y"][frame_nr]
-            - relative_positions["relative_position_pixel_y"][frame_nr - 1]
-        )
-        displacements["displacement_pixel_x"].append(
-            relative_positions["relative_position_pixel_x"][frame_nr]
-            - relative_positions["relative_position_pixel_x"][frame_nr - 1]
-        )
-        displacements["displacement_micron_z"].append(
-            relative_positions["relative_position_micron_z"][frame_nr]
-            - relative_positions["relative_position_micron_z"][frame_nr - 1]
-        )
-        displacements["displacement_micron_y"].append(
-            relative_positions["relative_position_micron_y"][frame_nr]
-            - relative_positions["relative_position_micron_y"][frame_nr - 1]
-        )
-        displacements["displacement_micron_x"].append(
-            relative_positions["relative_position_micron_x"][frame_nr]
-            - relative_positions["relative_position_micron_x"][frame_nr - 1]
-        )
-        displacements["displacement_micron_3d"].append(
-            np.sqrt(
-                np.sum(
-                    [
-                        d**2
-                        for d in [
-                            displacements["displacement_micron_z"][-1],
-                            displacements["displacement_micron_y"][-1],
-                            displacements["displacement_micron_x"][-1],
-                        ]
-                    ]
-                )
-                if all_micron_sizes
-                else np.nan
-            )
-        )
+    displacements = pd.DataFrame()
+    displacements[
+        "displacement_pixel_z",
+        "displacement_pixel_y",
+        "displacement_pixel_x",
+        "displacement_micron_z",
+        "displacement_micron_y",
+        "displacement_micron_x",
+        "displacement_micron_3d",
+    ] = relative_positions[
+        "relative_position_pixel_z",
+        "relative_position_pixel_y",
+        "relative_position_pixel_x",
+        "relative_position_micron_z",
+        "relative_position_micron_y",
+        "relative_position_micron_x",
+        "relative_position_micron_3d",
+    ].diff()
 
     return displacements
 
@@ -140,9 +96,9 @@ def _process_image(
     mm.logger.info(f"Processing image {image_id}...")
 
     voxel_size_micron = (
-        image.voxel_size_z_micron,
-        image.voxel_size_y_micron,
-        image.voxel_size_x_micron,
+        image.voxel_size_z_micron or np.nan,
+        image.voxel_size_y_micron or np.nan,
+        image.voxel_size_x_micron or np.nan,
     )
 
     image_rows = {"image_id": image_id}
@@ -159,8 +115,6 @@ def _process_image(
         displacements,
         time_intervals=None,
     )
-
-    msd
 
     return image_rows
 
