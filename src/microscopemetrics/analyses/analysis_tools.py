@@ -3,6 +3,7 @@
 import csv
 import logging
 from itertools import permutations
+from math import sqrt
 from typing import List, Optional
 
 import numpy as np
@@ -21,6 +22,47 @@ logger = logging.getLogger(__name__)
 
 INT_DETECTOR_BIT_DEPTHS = [8, 10, 11, 12, 15, 16, 32]
 FLOAT_DETECTOR_BIT_DEPTHS = [32, 64]
+
+
+def resolution_calculator(
+    microscope_type: str,
+    numerical_aperture: float,
+    refractive_index: float,
+    em_wavelength_nm: float,
+    ex_wavelength_nm: float | None = None,
+    pinhole_au: float | None = None,
+    tolerance_factor: float = 1,
+):
+    # TODO: add references
+    match microscope_type:
+        case "spinning_disk":
+            lateral_res = (0.51 * em_wavelength_nm) / numerical_aperture
+            axial_res = em_wavelength_nm / refractive_index - sqrt(
+                refractive_index**2 - numerical_aperture**2
+            )
+        case "widefield":
+            lateral_res = (0.51 * em_wavelength_nm) / numerical_aperture
+            axial_res = (1.77 * refractive_index * em_wavelength_nm) / numerical_aperture**2
+        case "confocal":
+            if pinhole_au is None:
+                raise ValueError("A pinhole size in Airy Units must be provided")
+            if pinhole_au < 1.0:
+                raise ValueError("Pinhole size must be 1.0 or more")
+            if numerical_aperture < 0.5:
+                raise ValueError("Numerical aperture must be 0.5 or more")
+            lateral_res = (0.51 * ex_wavelength_nm) / numerical_aperture
+            axial_res = 0.88 * ex_wavelength_nm / refractive_index - sqrt(
+                refractive_index**2 - numerical_aperture**2
+            )
+        case _:
+            raise ValueError(
+                "Unsupported microscopy type. Must be either one of:"
+                "- widefield"
+                "- spinning_disk"
+                "- confocal"
+            )
+
+    return lateral_res * tolerance_factor, axial_res * tolerance_factor
 
 
 def airy_fun(
