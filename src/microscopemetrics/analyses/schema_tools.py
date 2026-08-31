@@ -148,6 +148,10 @@ def numpy_to_mm_image(
     array: np.ndarray,
     name: str | None = None,
     description: str | None = None,
+    voxel_size_micron_z: float = None,
+    voxel_size_micron_y: float = None,
+    voxel_size_micron_x: float = None,
+    time_intervals_sec: List[float] | float | None = None,
     source_images: List[mm_schema.Image] = None,
     acquisition_datetime: str = None,
     channel_names: List[str] = None,
@@ -166,6 +170,13 @@ def numpy_to_mm_image(
         raise NotImplementedError(
             f"Array of dimension {array.ndim} is not supported by this function. Image has to have either 5 or 2 dimensions"
         )
+
+    if time_intervals_sec is not None:
+        if isinstance(time_intervals_sec, (float, int)):
+            time_intervals_sec = [time_intervals_sec] * shape_t
+        time_series = mm_schema.TimeSeries(time_points_sec=time_intervals_sec)
+    else:
+        time_series = None
 
     if source_images:
         source_images_refs = [
@@ -222,6 +233,10 @@ def numpy_to_mm_image(
         shape_x=shape_x,
         shape_c=shape_c,
         acquisition_datetime=acquisition_datetime,
+        voxel_size_x_micron=voxel_size_micron_x,
+        voxel_size_y_micron=voxel_size_micron_y,
+        voxel_size_z_micron=voxel_size_micron_z,
+        time_series=time_series,
         channel_series=mm_schema.ChannelSeries(channels=channels),
     )
 
