@@ -19,6 +19,7 @@ def st_stage_drift_dataset(
     draw,
     unprocessed_dataset=st_mm_analyses_schema.st_mm_stage_drift_unprocessed_dataset(),
     test_data=st_beads_test_data(
+        nr_images=st.just(2),
         z_image_shape=st.just(1),
         y_image_shape=st.just(256),
         x_image_shape=st.just(256),
@@ -39,6 +40,9 @@ def st_stage_drift_dataset(
     stage_drift_unprocessed_dataset = draw(unprocessed_dataset)
     excitation_wavelengths_nm = [405.0, 488.0, 561.0, 642.0, 705.0]
     emission_wavelengths_nm = [435.0, 525.0, 605.0, 692.0, 750.0]
+    voxel_size_micron_z = 0.3
+    voxel_size_micron_y = voxel_size_micron_x = 0.1
+    time_intervals_sec = 60
 
     stage_drift_unprocessed_dataset.input_data.beads_images = [
         numpy_to_mm_image(
@@ -49,11 +53,14 @@ def st_stage_drift_dataset(
                 excitation_wavelengths_nm[c] for c in range(image.shape[-1])
             ],
             emission_wavelengths_nm=[emission_wavelengths_nm[c] for c in range(image.shape[-1])],
+            voxel_size_micron_z=voxel_size_micron_z,
+            voxel_size_micron_y=voxel_size_micron_y,
+            voxel_size_micron_x=voxel_size_micron_x,
+            time_intervals_sec=time_intervals_sec,
         )
         for i, image in enumerate(test_data.pop("images"))
     ]
 
-    # Setting the bit depth to the data type of the image
     # Setting the bit depth to the data type of the image
     image_dtype = {
         a.array_data.dtype for a in stage_drift_unprocessed_dataset.input_data.beads_images
