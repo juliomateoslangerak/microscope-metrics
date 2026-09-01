@@ -11,6 +11,7 @@ from microscopemetrics.analyses import (
     field_illumination,
     light_source_power,
     psf_beads,
+    stage_drift,
 )
 
 Mapping = namedtuple("Mapping", ["analysis_function", "sample_classes"])
@@ -33,6 +34,10 @@ MAPPINGS = {
     mm_schema.CoRegistrationDataset.class_class_curie: Mapping(
         analysis_function=co_registration.analyse_co_registration,
         sample_classes=[mm_schema.MultiWavelengthBeads],
+    ),
+    mm_schema.MicroscopeMetricsDataset.class_class_curie: Mapping(
+        analysis_function=stage_drift.analyse_stage_drift,
+        sample_classes=[mm_schema.NonPSFBeads],
     ),
 }
 
