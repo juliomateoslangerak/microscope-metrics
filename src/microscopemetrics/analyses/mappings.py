@@ -35,7 +35,7 @@ MAPPINGS = {
         analysis_function=co_registration.analyse_co_registration,
         sample_classes=[mm_schema.MultiWavelengthBeads],
     ),
-    mm_schema.MicroscopeMetricsDataset.class_class_curie: Mapping(
+    mm_schema.StageDriftDataset.class_class_curie: Mapping(
         analysis_function=stage_drift.analyse_stage_drift,
         sample_classes=[mm_schema.NonPSFBeads],
     ),
