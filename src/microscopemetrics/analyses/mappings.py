@@ -34,6 +34,10 @@ MAPPINGS = {
         analysis_function=co_registration.analyse_co_registration,
         sample_classes=[mm_schema.MultiWavelengthBeads],
     ),
+    mm_schema.MicroscopeMetricsDataset.class_class_curie: Mapping(
+        analysis_function=microscope_metrics.analyse_stage_drift,
+        sample_classes=[mm_schema.NonPSFBeads],
+    ),
 }
 
 # TEST = {
