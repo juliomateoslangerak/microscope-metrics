@@ -160,7 +160,16 @@ def _compute_velocities(
     time_intervals,
 ):
     if time_intervals is None:
-        time_intervals = [np.nan for _ in displacements["displacement_pixel_z"]]
+        nans_list = [np.nan for _ in displacements["displacement_pixel_z"]]
+        return pd.DataFrame(
+            {
+                "displacement_micron_z": nans_list,
+                "displacement_micron_y": nans_list,
+                "displacement_micron_x": nans_list,
+                "displacement_micron_3d": nans_list,
+                "time_interval": nans_list,
+            }
+        )
 
     velocities = (
         displacements[
@@ -345,7 +354,10 @@ def _process_image(
         image.voxel_size_y_micron or np.nan,
         image.voxel_size_x_micron or np.nan,
     )
-    time_intervals = image.time_series.time_points_sec
+    try:
+        time_intervals = image.time_series.time_points_sec
+    except AttributeError:
+        time_intervals = None
 
     relative_positions = _compute_relative_positions(
         channel=image.array_data[..., channel_nr],
