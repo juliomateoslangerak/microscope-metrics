@@ -163,10 +163,10 @@ def _compute_velocities(
         nans_list = [np.nan for _ in displacements["displacement_pixel_z"]]
         return pd.DataFrame(
             {
-                "displacement_micron_z": nans_list,
-                "displacement_micron_y": nans_list,
-                "displacement_micron_x": nans_list,
-                "displacement_micron_3d": nans_list,
+                "velocity_micron_per_sec_z": nans_list,
+                "velocity_micron_per_sec_y": nans_list,
+                "velocity_micron_per_sec_x": nans_list,
+                "velocity_micron_per_sec_3d": nans_list,
                 "time_interval": nans_list,
             }
         )
