@@ -214,3 +214,10 @@ def test_incompatible_images_rejected(global_dataset, local_dataset, tmp_path):
         chromagnon_apply.apply_correction(
             other_waves, _correction_path(global_dataset, tmp_path)
         )
+
+
+def test_key_measurement_channels(global_dataset):
+    kms = {km.channel_nr: km for km in global_dataset.output.key_measurements}
+    assert [kms[c].emission_wavelength_nm for c in (0, 1)] == WAVES
+    assert all(km.reference_channel_nr == 0 for km in kms.values())
+    assert all(km.reference_channel_name == "ref" for km in kms.values())

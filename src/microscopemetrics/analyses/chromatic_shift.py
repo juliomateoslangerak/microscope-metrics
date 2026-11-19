@@ -484,7 +484,8 @@ def _records_for_image(
     reference_channel_index: int,
 ) -> list[dict]:
     """Turn the raw Chromagnon parameters of one image into per-channel records."""
-    channel_names = [c.name for c in image.channel_series.channels]
+    channels = image.channel_series.channels
+    channel_names = [c.name for c in channels]
     voxel = (
         image.voxel_size_z_micron or np.nan,
         image.voxel_size_y_micron or np.nan,
@@ -513,6 +514,8 @@ def _records_for_image(
                 "image_id": image_id,
                 "channel_nr": ch_nr,
                 "channel_name": channel_names[ch_nr],
+                "excitation_wavelength_nm": channels[ch_nr].excitation_wavelength_nm,
+                "emission_wavelength_nm": channels[ch_nr].emission_wavelength_nm,
                 "reference_channel_nr": reference_channel_index,
                 "shift_z_pixel": float(tz),
                 "shift_y_pixel": float(ty),
@@ -563,6 +566,16 @@ def _generate_key_measurements(
     )
     # reference_channel_nr is a constant per dataset; keep it integer.
     aggregated["reference_channel_nr"] = aggregated["reference_channel_nr"].round().astype(int)
+    # Per-channel values that are not averaged: the wavelengths (taken from the
+    # first image) and the name of the reference channel.
+    first = records_df.drop_duplicates("channel_nr").set_index("channel_nr")
+    names = first["channel_name"].to_dict()
+    for column in ("excitation_wavelength_nm", "emission_wavelength_nm"):
+        aggregated[column] = [
+            None if pd.isna(v) else float(v)
+            for v in aggregated["channel_nr"].map(first[column])
+        ]
+    aggregated["reference_channel_name"] = aggregated["reference_channel_nr"].map(names)
 
     return [
         mm_schema.ChromaticShiftKeyMeasurement(**km)
