@@ -7,6 +7,7 @@ from collections import namedtuple
 from microscopemetrics_schema import datamodel as mm_schema
 
 from microscopemetrics.analyses import (
+    chromatic_shift,
     co_registration,
     field_illumination,
     light_source_power,
@@ -38,6 +39,10 @@ MAPPINGS = {
     mm_schema.StageDriftDataset.class_class_curie: Mapping(
         analysis_function=stage_drift.analyse_stage_drift,
         sample_classes=[mm_schema.NonPSFBeads],
+    ),
+    mm_schema.ChromaticShiftDataset.class_class_curie: Mapping(
+        analysis_function=chromatic_shift.analyse_chromatic_shift,
+        sample_classes=[mm_schema.ChromaticShiftSample],
     ),
 }
 
