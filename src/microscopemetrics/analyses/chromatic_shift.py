@@ -68,18 +68,25 @@ def _save_correction_bytes(an):
     local map, a .chromagnon.tif when there is), which can be re-loaded later via
     ``loadParm`` to apply the same correction to other images.
 
-    Returns (bytes, filename) or (None, None) on failure.
+    Returns (bytes, filename). The correction file is one of the outputs, so a
+    failure raises AnalysisError instead of returning a result without it.
     """
+    import shutil
     import tempfile
 
+    outdir = tempfile.mkdtemp(prefix="chromagnon_")
     try:
-        an.outdir = tempfile.mkdtemp(prefix="chromagnon_")
+        an.outdir = outdir
         fn = an.saveParm()
         with open(fn, "rb") as fh:
             return fh.read(), os.path.basename(fn)
     except Exception as e:
-        mm.logger.warning(f"Could not save the Chromagnon correction file: {e}")
-        return None, None
+        raise mm.AnalysisError(
+            message=f"Could not save the Chromagnon correction file: {e}",
+            suggestion="Check that tifffile is installed (needed for local alignment).",
+        ) from e
+    finally:
+        shutil.rmtree(outdir, ignore_errors=True)
 
 
 def _combine_images(images: list) -> mm_schema.Image:
@@ -96,8 +103,26 @@ def _combine_images(images: list) -> mm_schema.Image:
             "average_references requires all images to have the same shape; "
             f"got {sorted(shapes)}."
         )
-    combined = np.maximum.reduce(arrays)
+    # The images are combined pixel by pixel, so their channels and pixel sizes
+    # must match too (as when Chromagnon averages reference files).
     first = images[0]
+    for img in images[1:]:
+        if _channel_waves(img) != _channel_waves(first):
+            raise mm.DataFormatError(
+                "average_references requires the same channels (emission "
+                f"wavelengths) in all images; {img.name} differs from {first.name}."
+            )
+        for axis in ("z", "y", "x"):
+            a = getattr(img, f"voxel_size_{axis}_micron")
+            b = getattr(first, f"voxel_size_{axis}_micron")
+            if a and b and not np.isclose(a, b, rtol=1e-3):
+                raise mm.DataFormatError(
+                    "average_references requires the same pixel size in all "
+                    f"images; {img.name} differs from {first.name} in {axis}."
+                )
+    # Per-pixel maximum, as Chromagnon does (alignfuncs.averageImage): the beads
+    # of all images end up in one image without being dimmed by the others.
+    combined = np.maximum.reduce(arrays)
     # Strip the extension first, so that the name does not end in a pseudo
     # extension (".dv_combined_reference") that aligned_image_name would drop.
     root = os.path.splitext(first.name or "image")[0]
@@ -358,6 +383,20 @@ def _run_chromagnon(
     do_z = reader.nz > 1
 
     an = ch_aligner.Chromagnon(reader)
+    try:
+        return _align_and_correct(
+            an, image, reader, reference_channel_index, do_local_alignment,
+            max_shift_micron, phase_contrast, do_z,
+        )
+    finally:
+        an.close()
+
+
+def _align_and_correct(
+    an, image, reader, reference_channel_index, do_local_alignment,
+    max_shift_micron, phase_contrast, do_z,
+):
+    """Body of :func:`_run_chromagnon` (``an`` is closed by the caller)."""
     # Surface Chromagnon's progress messages through the installed sink (if any).
     an.setEchofunc(_ECHO_FUNC)
     if reference_channel_index is not None and reference_channel_index >= 0:
@@ -388,23 +427,33 @@ def _run_chromagnon(
     # (n_channels, 7) in ZYXRM_ENTRY order
     align_parms = np.array(an.alignParms[0], dtype=float)
 
-    # Build the corrected image (all channels), keeping the input frame size.
-    # NOTE: we deliberately do NOT call an.setRegionCutOut() so that the corrected
-    # image keeps the same shape as the input.
-    corrected_channels = []
-    for w in range(reader.nw):
-        if has_local:
-            aligned_zyx = an.get3DArrayRemapped(w=w, t=0)
-        else:
-            aligned_zyx = an.get3DArrayAligned(w=w, t=0)
-        corrected_channels.append(np.asarray(aligned_zyx))
+    # The alignment is measured on the first time point. Apply it to every time
+    # point, as a saved correction is (chromagnon_apply.apply_correction).
+    if reader.nt > 1:
+        an.alignParms[1:] = an.alignParms[0]
+        if has_local and an.mapyx is not None:
+            an.mapyx[1:] = an.mapyx[0]
 
-    # Residual mis-registration: RMSE of each aligned channel vs the reference,
-    # computed on the already-available aligned arrays (no extra registration pass).
-    registration_rmse = _registration_rmse(corrected_channels, reference_channel_index)
+    # Build the corrected image (all channels). an.setRegionCutOut() is not
+    # called, but Chromagnon may still crop the borders.
+    frames = []
+    for t in range(reader.nt):
+        channels = []
+        for w in range(reader.nw):
+            if has_local:
+                aligned_zyx = an.get3DArrayRemapped(w=w, t=t)
+            else:
+                aligned_zyx = an.get3DArrayAligned(w=w, t=t)
+            channels.append(np.asarray(aligned_zyx))
+        frames.append(channels)
 
-    # (z, y, x, c) -> (1, z, y, x, c) == TZYXC
-    corrected_array = np.expand_dims(np.stack(corrected_channels, axis=-1), axis=0)
+    # Residual mis-registration on the first time point: RMSE of each aligned
+    # channel vs the reference channel actually used (also when it was chosen
+    # automatically).
+    registration_rmse = _registration_rmse(frames[0], reference_channel)
+
+    # [t][c] of (z, y, x) -> TZYXC
+    corrected_array = np.stack([np.stack(f, axis=-1) for f in frames], axis=0)
 
     # Chromagnon's remapping returns floats; cast the corrected image back to the
     # input pixel type. OMERO creates the dumped image with the source (input)
@@ -423,8 +472,6 @@ def _run_chromagnon(
 
     # Re-applicable Chromagnon correction file (params + optional local map).
     correction_bytes, correction_name = _save_correction_bytes(an)
-
-    an.close()
 
     return (
         align_parms,
@@ -452,6 +499,9 @@ def _total_deviation_micron(parms, shape_zyx, voxel_zyx) -> float:
 
     tz, ty, tx, r, mz, my, mx = (float(p) for p in parms)
     nz, ny, nx = (int(n) for n in shape_zyx)
+    if any(not v for v in voxel_zyx[1:]) or (int(shape_zyx[0]) > 1 and not voxel_zyx[0]):
+        # Without the pixel size the displacement cannot be given in microns.
+        return float("nan")
     voxel = np.array([v if v else np.nan for v in voxel_zyx], dtype=float)
     start = (-0.5, -0.5)  # trans3D_affine: dzyx - 0.5 (dzyx = 0)
 
@@ -584,6 +634,10 @@ def _generate_key_measurements(
 
 
 def analyse_chromatic_shift(dataset: mm_schema.ChromaticShiftDataset) -> bool:
+    # A re-run must not leave the previous result marked as processed if it fails.
+    dataset.processed = False
+    dataset.output = None
+
     ch_aligner, imgio = _import_chromagnon()
 
     params = dataset.input_parameters
@@ -603,6 +657,11 @@ def analyse_chromatic_shift(dataset: mm_schema.ChromaticShiftDataset) -> bool:
         images_to_process = [_combine_images(input_images)]
     else:
         images_to_process = input_images
+
+    # In auto mode the reference is chosen on the first image and then used for
+    # the others, so that the shifts of all images (averaged per channel in the
+    # key measurements) are measured against the same channel.
+    locked_reference = reference_channel_index
 
     for image in images_to_process:
         image_id = mm_schema_tools.get_object_id(image) or image.name
@@ -650,13 +709,16 @@ def analyse_chromatic_shift(dataset: mm_schema.ChromaticShiftDataset) -> bool:
             image_correction_filename,
         ) = _run_chromagnon(
             image=image,
-            reference_channel_index=reference_channel_index,
+            reference_channel_index=locked_reference,
             do_local_alignment=params.do_local_alignment,
             max_shift_micron=params.max_shift_micron,
             phase_contrast=params.phase_contrast,
             ch_aligner=ch_aligner,
             imgio=imgio,
         )
+
+        if locked_reference is None or locked_reference < 0:
+            locked_reference = reference_channel
 
         # Keep the first available correction as the dataset-level correction file.
         if correction_file is None and image_correction_file is not None:
@@ -685,8 +747,17 @@ def analyse_chromatic_shift(dataset: mm_schema.ChromaticShiftDataset) -> bool:
                     "Chromatic-shift corrected image. All channels aligned onto "
                     f"channel {reference_channel}."
                 ),
+                voxel_size_micron_z=image.voxel_size_z_micron,
+                voxel_size_micron_y=image.voxel_size_y_micron,
+                voxel_size_micron_x=image.voxel_size_x_micron,
                 source_images=[image],
                 channel_names=[c.name for c in image.channel_series.channels],
+                excitation_wavelengths_nm=[
+                    c.excitation_wavelength_nm for c in image.channel_series.channels
+                ],
+                emission_wavelengths_nm=[
+                    c.emission_wavelength_nm for c in image.channel_series.channels
+                ],
             )
         )
 

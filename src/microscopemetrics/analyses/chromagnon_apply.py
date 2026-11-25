@@ -120,6 +120,21 @@ def apply_correction(image: mm_schema.Image, correction_path: str) -> np.ndarray
     reader = chromatic_shift._build_reader(image, imgio)
 
     an = ch_aligner.Chromagnon(reader)
+    try:
+        corrected = _apply_loaded(an, reader, info, correction_path)
+    finally:
+        an.close()
+
+    # Same as the analysis: Chromagnon returns floats, keep the input pixel type.
+    input_dtype = image.array_data.dtype
+    if np.issubdtype(input_dtype, np.integer):
+        info_dtype = np.iinfo(input_dtype)
+        corrected = np.clip(np.rint(corrected), info_dtype.min, info_dtype.max)
+    return corrected.astype(input_dtype, copy=False)
+
+
+def _apply_loaded(an, reader, info: dict, correction_path: str) -> np.ndarray:
+    """Load ``correction_path`` into ``an`` and return the corrected TZYXC floats."""
     an.setEchofunc(chromatic_shift._ECHO_FUNC)
     an.loadParm(correction_path)
 
@@ -141,14 +156,7 @@ def apply_correction(image: mm_schema.Image, correction_path: str) -> np.ndarray
                 arr = an.get3DArrayAligned(w=w, t=t)
             channels.append(np.asarray(arr))
         frames.append(np.stack(channels, axis=-1))  # ZYXC
-    corrected = np.stack(frames, axis=0)  # TZYXC
-
-    # Same as the analysis: Chromagnon returns floats, keep the input pixel type.
-    input_dtype = image.array_data.dtype
-    if np.issubdtype(input_dtype, np.integer):
-        info_dtype = np.iinfo(input_dtype)
-        corrected = np.clip(np.rint(corrected), info_dtype.min, info_dtype.max)
-    return corrected.astype(input_dtype, copy=False)
+    return np.stack(frames, axis=0)  # TZYXC
 
 
 def _section_aligner(image: mm_schema.Image, planes_cyx: np.ndarray, correction_path: str):
@@ -225,14 +233,21 @@ def correct_section(
             suggestion=" ".join(reasons),
         )
     an = _section_aligner(image, planes_cyx, correction_path)
-    an.alignParms[..., 0] = 0.0  # tz
-    an.alignParms[..., 4] = 1.0  # mz
-    has_local = an.mapyx is not None
-    out = []
-    for w in range(len(planes_cyx)):
-        arr = an.get3DArrayRemapped(w=w, t=0) if has_local else an.get3DArrayAligned(w=w, t=0)
-        out.append(np.asarray(arr, dtype=np.float32).reshape(arr.shape[-2:]))
-    return np.stack(out)
+    try:
+        an.alignParms[..., 0] = 0.0  # tz
+        an.alignParms[..., 4] = 1.0  # mz
+        has_local = an.mapyx is not None
+        out = []
+        for w in range(len(planes_cyx)):
+            arr = (
+                an.get3DArrayRemapped(w=w, t=0)
+                if has_local
+                else an.get3DArrayAligned(w=w, t=0)
+            )
+            out.append(np.asarray(arr, dtype=np.float32).reshape(arr.shape[-2:]))
+        return np.stack(out)
+    finally:
+        an.close()
 
 
 def correction_label(info: dict) -> str:

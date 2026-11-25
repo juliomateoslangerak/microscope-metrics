@@ -113,9 +113,11 @@ def test_global_shift_recovered(global_dataset):
     assert set(kms) == {0, 1}
     ref, mov = kms[0], kms[1]
 
+    # The reported shift is the displacement of the channel relative to the
+    # reference, so it has the sign of the shift applied to the synthetic image.
     measured = (mov.shift_z_pixel, mov.shift_y_pixel, mov.shift_x_pixel)
     for meas, true in zip(measured, TRUE_SHIFT):
-        assert abs(abs(meas) - true) <= 1.5
+        assert abs(meas - true) <= 0.5
     assert ref.total_deviation_micron == 0.0
     assert abs(mov.magnification_x - 1.0) < 0.02
     assert abs(mov.rotation_degrees) < 1.0
@@ -221,3 +223,47 @@ def test_key_measurement_channels(global_dataset):
     assert [kms[c].emission_wavelength_nm for c in (0, 1)] == WAVES
     assert all(km.reference_channel_nr == 0 for km in kms.values())
     assert all(km.reference_channel_name == "ref" for km in kms.values())
+
+
+def test_all_time_points_corrected():
+    dataset = _make_dataset(
+        local=False, images=[_make_image(seed=5, nt=2, name="timelapse")]
+    )
+    chromatic_shift.analyse_chromatic_shift(dataset)
+    corrected = dataset.output.corrected_images[0]
+    # Chromagnon may crop the borders, but every time point is kept.
+    assert corrected.array_data.shape[0] == 2
+    assert np.all(np.abs(_residual_shift(corrected.array_data[1:])) < 0.5)
+    # The corrected image keeps the calibration and the channel wavelengths.
+    assert corrected.voxel_size_z_micron == pytest.approx(0.20)
+    assert [c.emission_wavelength_nm for c in corrected.channel_series.channels] == WAVES
+
+
+def test_auto_reference():
+    dataset = _make_dataset(local=False)
+    dataset.input_parameters.reference_channel_index = -1
+    chromatic_shift.analyse_chromatic_shift(dataset)
+    kms = dataset.output.key_measurements
+    reference = {km.reference_channel_nr for km in kms}
+    assert len(reference) == 1
+    reference = reference.pop()
+    # The RMSE is measured against the channel actually chosen as reference.
+    assert {km.channel_nr: km for km in kms}[reference].registration_rmse == 0.0
+
+
+def test_average_references_rejects_different_channels():
+    images = [
+        _make_image(seed=6, name="a"),
+        _make_image(seed=7, waves=[520.0, 600.0], name="b"),
+    ]
+    dataset = _make_dataset(local=False, images=images, average=True)
+    with pytest.raises(Exception, match="same channels"):
+        chromatic_shift.analyse_chromatic_shift(dataset)
+    assert not dataset.processed
+
+
+def test_total_deviation_without_pixel_size():
+    parms = [0.8, 1.5, -2.0, 0.0, 1.0, 1.0, 1.0]
+    assert np.isnan(
+        chromatic_shift._total_deviation_micron(parms, (16, 128, 160), (0.2, None, None))
+    )
